@@ -71,6 +71,53 @@
   --danger: #e0837c;
 }
 
+/*
+ * Once the baby's sex is set, [data-sex] on <html> (toggled from App.vue,
+ * reacting to the babies store) retints just the brand accent - not the
+ * per-category colors above, those stay tied to what they log, not to
+ * the baby. Layered the same way as the light/dark blocks: a plain
+ * attribute selector for light, then the same prefers-color-scheme /
+ * data-theme pairing for dark, each one more specific than the neutral
+ * rule it's overriding.
+ */
+:root[data-sex='nina'] {
+  --brand: #c1557a;
+  --brand-teal: #8a5a96;
+  --focus: #c1557a;
+}
+
+:root[data-sex='nino'] {
+  --brand: #3f7ea6;
+  --brand-teal: #5b8f6d;
+  --focus: #3f7ea6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-sex='nina']:not([data-theme='light']) {
+    --brand: #f0a3c0;
+    --brand-teal: #caa3d9;
+    --focus: #f0a3c0;
+  }
+
+  :root[data-sex='nino']:not([data-theme='light']) {
+    --brand: #8fc6e6;
+    --brand-teal: #9fd0ab;
+    --focus: #8fc6e6;
+  }
+}
+
+:root[data-theme='dark'][data-sex='nina'] {
+  --brand: #f0a3c0;
+  --brand-teal: #caa3d9;
+  --focus: #f0a3c0;
+}
+
+:root[data-theme='dark'][data-sex='nino'] {
+  --brand: #8fc6e6;
+  --brand-teal: #9fd0ab;
+  --focus: #8fc6e6;
+}
+
 @theme {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

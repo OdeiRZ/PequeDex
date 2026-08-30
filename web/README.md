@@ -123,6 +123,19 @@ tamaños minúsculos, cosa que un icono de trazo propio no garantiza.
 (accesibilidad/SEO), no solo el `lang="es"` estático de `index.html`
 que sirve de valor por defecto antes de que cargue el JS.
 
+## Tema según el sexo del bebé
+
+En cuanto el bebé tiene `sex` (`nino`/`nina`), `App.vue` observa
+`babies.current?.sex` y pone `data-sex="nino"`/`"nina"` en `<html>` — se
+limpia solo al cerrar sesión porque `auth.logout()` ya resetea el store
+de bebés. `base.css` retinta solo `--brand`/`--brand-teal`/`--focus`
+(azul + verde salvia para "nino", rosa/berenjena + malva para "nina"),
+con su propia variante clara y oscura cada uno — el resto de tokens
+(fondo, texto, y los colores por categoría de registro) no cambian:
+esos identifican lo que se registra, no de quién es el bebé. Sin sexo
+configurado se queda en la paleta neutra original (rosa empolvado +
+verde azulado).
+
 ## Despliegue
 
 En producción ([pequedex.pages.dev](https://pequedex.pages.dev)): Cloudflare

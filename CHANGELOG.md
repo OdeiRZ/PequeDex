@@ -179,3 +179,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `AppHeader.vue` como en `favicon.svg` — se lee con claridad a
   cualquier tamaño sin necesitar un `favicon-64.png` de *fallback*
   (retirado).
+
+- La app cambia de acento de color según el sexo del bebé una vez
+  configurado: azul + verde salvia para "niño", rosa/berenjena + malva
+  para "niña" (con su propia variante en modo oscuro), sin tocar el
+  resto de la paleta ni los colores por categoría de registro. Sin
+  sexo configurado se queda en la paleta neutra original. Se aplica
+  vía `data-sex` en `<html>`, controlado desde `App.vue` reaccionando
+  al store de bebés — se limpia solo al cerrar sesión.

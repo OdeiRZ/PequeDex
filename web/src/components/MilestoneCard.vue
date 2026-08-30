@@ -23,7 +23,11 @@ defineEmits<{ open: []; delete: [] }>()
         :alt="photoAlt ?? ''"
         class="aspect-[4/3] w-full object-cover"
       />
-      <div v-else class="flex aspect-[4/3] w-full items-center justify-center" :class="categoryBg.milestone">
+      <div
+        v-else
+        class="flex aspect-[4/3] w-full items-center justify-center"
+        :class="categoryBg.milestone"
+      >
         <CategoryIcon category="milestone" class="h-10 w-10" :class="categoryText.milestone" />
       </div>
     </button>

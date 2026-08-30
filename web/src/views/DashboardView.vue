@@ -1249,10 +1249,15 @@ const sleepPredictionLabel = computed(() => {
           </button>
         </form>
 
-        <form class="flex flex-col gap-4 border-t border-border pt-5" @submit.prevent="onSubmitPassword">
+        <form
+          class="flex flex-col gap-4 border-t border-border pt-5"
+          @submit.prevent="onSubmitPassword"
+        >
           <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>
           <div>
-            <label for="current-password" class="field-label">{{ t('profile.currentPassword') }}</label>
+            <label for="current-password" class="field-label">{{
+              t('profile.currentPassword')
+            }}</label>
             <PasswordField
               id="current-password"
               v-model="currentPassword"
@@ -1262,7 +1267,12 @@ const sleepPredictionLabel = computed(() => {
           </div>
           <div>
             <label for="new-password" class="field-label">{{ t('profile.newPassword') }}</label>
-            <PasswordField id="new-password" v-model="newPassword" required autocomplete="new-password" />
+            <PasswordField
+              id="new-password"
+              v-model="newPassword"
+              required
+              autocomplete="new-password"
+            />
           </div>
           <div>
             <label for="new-password-confirmation" class="field-label">{{

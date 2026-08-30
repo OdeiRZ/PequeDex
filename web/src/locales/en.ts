@@ -42,12 +42,12 @@ export default {
   },
   dashboard: {
     onboarding: {
-      createTitle: 'Create a baby',
+      createTitle: 'Get started with your baby',
       name: 'Name (optional)',
       dueDate: 'Due date (optional)',
-      createError: 'Could not create the baby.',
-      create: 'Create',
-      joinTitle: 'Or join an existing baby',
+      createError: 'Could not save. Please try again.',
+      create: 'Get started',
+      joinTitle: 'Or join with an invite code',
       inviteCode: 'Invite code',
       joinError: 'Invalid code.',
       join: 'Join',

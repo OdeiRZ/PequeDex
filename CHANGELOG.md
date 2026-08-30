@@ -150,3 +150,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   inicial durante varios bloques de trabajo. Ahora el favicon reutiliza
   el mismo icono que la marca en `AppHeader.vue`, y `<html lang>` se
   mantiene sincronizado con el idioma activo en vez de quedarse fijo.
+
+- Texto de la pantalla de onboarding menos programático: "Crear un
+  bebé" sonaba a acción de un CRUD, no a algo que le diría la app a un
+  padre o madre reales. Ahora "Empieza con tu bebé" / "Empezar", y "O
+  unirme a un bebé existente" pasa a "O unirme con un código de
+  invitación" (mismo cambio en inglés). Encontrado probando la app ya
+  desplegada, no en desarrollo.

@@ -42,12 +42,12 @@ export default {
   },
   dashboard: {
     onboarding: {
-      createTitle: 'Crear un bebé',
+      createTitle: 'Empieza con tu bebé',
       name: 'Nombre (opcional)',
       dueDate: 'Fecha prevista de parto (opcional)',
-      createError: 'No se ha podido crear el bebé.',
-      create: 'Crear',
-      joinTitle: 'O unirme a un bebé existente',
+      createError: 'No se ha podido guardar. Inténtalo de nuevo.',
+      create: 'Empezar',
+      joinTitle: 'O unirme con un código de invitación',
       inviteCode: 'Código de invitación',
       joinError: 'Código no válido.',
       join: 'Unirme',

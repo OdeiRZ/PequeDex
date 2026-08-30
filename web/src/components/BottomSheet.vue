@@ -15,7 +15,7 @@ function close() {
       @click.self="close"
     >
       <div
-        class="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] max-w-md overflow-y-auto rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         :class="open ? 'translate-y-0' : 'translate-y-full'"
         style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom))"
       >

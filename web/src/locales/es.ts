@@ -7,6 +7,7 @@ export default {
     logout: 'Cerrar sesión',
     save: 'Guardar',
     cancel: 'Cancelar',
+    close: 'Cerrar',
     delete: 'Borrar',
     toggleTheme: 'Cambiar tema',
     showPassword: 'Mostrar contraseña',

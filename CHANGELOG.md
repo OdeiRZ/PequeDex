@@ -218,3 +218,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   nada contra lo que comparar. El día exacto del nacimiento sí es
   válido (`after_or_equal`, no `after`) — un hito de "Nacimiento" ese
   mismo día tiene que poder registrarse.
+
+- Hitos como mini-diario, no como fila de lista: la foto se mostraba a
+  40×40px sin ninguna forma de verla más grande — tocarla no hacía
+  nada. `MilestoneCard.vue` la muestra ahora a tamaño real de tarjeta
+  (formato 4:3, dos columnas en cuadrícula tipo álbum; sin foto, un
+  icono de estrella ocupa su sitio en vez de dejarlo vacío), y tocar la
+  tarjeta abre una hoja de detalle con la foto a tamaño completo,
+  título, fecha y la descripción entera (antes recortada a dos líneas
+  en la lista). `BottomSheet.vue` gana `max-h-[85vh]` y scroll propio,
+  necesario ahora que una foto grande puede superar la altura de la
+  pantalla.

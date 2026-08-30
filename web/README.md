@@ -108,12 +108,21 @@ verse bien en una captura:
   registro y su confirmación) llevan el icono de ojo para mostrar/
   ocultar, no solo el de login.
 - **`EntryCard.vue` / `CategoryIcon.vue` / `src/lib/category.ts`** —
-  la tarjeta compartida por línea temporal, crecimiento e hitos, con su
-  franja de color por categoría. Las clases de Tailwind por categoría
+  la tarjeta compartida por línea temporal y crecimiento, con su franja
+  de color por categoría. Las clases de Tailwind por categoría
   (`text-feed`, `bg-feed/15`, …) están en `category.ts` como tablas de
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal
   cual en el código fuente.
+- **`MilestoneCard.vue`** — los hitos no usan `EntryCard`: una miniatura
+  de 40×40px no dejaba ver la foto ni había forma de abrirla más
+  grande. En su lugar, una cuadrícula de dos columnas con la foto a
+  tamaño de tarjeta (formato 4:3; sin foto, un icono de estrella ocupa
+  su sitio) que al tocarla abre una hoja de detalle (`viewingMilestone`
+  en `DashboardView.vue`, no la misma hoja que el formulario de "+
+  Hito") con la foto a tamaño completo, título, fecha y la descripción
+  entera. `BottomSheet.vue` lleva `max-h-[85vh]` con scroll propio por
+  esto mismo — una foto grande puede superar la altura de la pantalla.
 
 ## Marca de la pestaña
 

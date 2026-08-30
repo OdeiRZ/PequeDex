@@ -10,6 +10,7 @@ import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
+import MilestoneCard from '@/components/MilestoneCard.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
 
@@ -318,6 +319,24 @@ async function onDeleteMilestone(id: number) {
   } catch {
     toast.show(t('dashboard.removeError.milestone'))
   }
+}
+
+// --- Detalle de un hito: la miniatura de la lista no dejaba ver la foto
+// entera ni la descripción completa - abre en una hoja de detalle propia,
+// no en la de "+ Hito" (esa es solo el formulario de creación). ---
+
+const viewingMilestone = ref<(typeof babies.milestones)[number] | null>(null)
+
+function closeMilestoneDetail() {
+  viewingMilestone.value = null
+}
+
+async function onDeleteViewingMilestone() {
+  if (!viewingMilestone.value) return
+
+  const id = viewingMilestone.value.id
+  closeMilestoneDetail()
+  await onDeleteMilestone(id)
 }
 
 const inviteCode = computed(() => babies.current?.invite_code ?? '')
@@ -678,21 +697,18 @@ const sleepPredictionLabel = computed(() => {
 
         <section class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.milestones.title') }}</h2>
-          <ul class="flex flex-col gap-2">
-            <EntryCard
+          <ul class="grid grid-cols-2 gap-2">
+            <MilestoneCard
               v-for="milestone in babies.milestones"
               :key="milestone.id"
-              category="milestone"
               :title="milestone.title"
               :meta="new Date(milestone.achieved_at).toLocaleDateString(dateLocale)"
               :description="milestone.description"
               :photo-src="milestone.photo_url"
               :photo-alt="milestone.title"
-            >
-              <template #actions>
-                <DeleteButton @click="onDeleteMilestone(milestone.id)" />
-              </template>
-            </EntryCard>
+              @open="viewingMilestone = milestone"
+              @delete="onDeleteMilestone(milestone.id)"
+            />
           </ul>
           <p
             v-if="babies.milestones.length === 0"
@@ -987,6 +1003,32 @@ const sleepPredictionLabel = computed(() => {
             </button>
           </div>
         </form>
+      </BottomSheet>
+
+      <BottomSheet :open="viewingMilestone !== null" @update:open="closeMilestoneDetail">
+        <template v-if="viewingMilestone">
+          <img
+            v-if="viewingMilestone.photo_url"
+            :src="viewingMilestone.photo_url"
+            :alt="viewingMilestone.title"
+            class="mb-4 max-h-[45vh] w-full rounded-xl object-cover"
+          />
+          <h3 class="font-display text-lg font-bold text-balance">{{ viewingMilestone.title }}</h3>
+          <p class="text-sm tabular-nums text-text-muted">
+            {{ new Date(viewingMilestone.achieved_at).toLocaleDateString(dateLocale) }}
+          </p>
+          <p v-if="viewingMilestone.description" class="mt-3 text-sm whitespace-pre-line">
+            {{ viewingMilestone.description }}
+          </p>
+          <div class="mt-5 flex gap-3">
+            <button type="button" class="btn-ghost flex-1" @click="onDeleteViewingMilestone">
+              {{ t('common.delete') }}
+            </button>
+            <button type="button" class="btn-primary flex-1" @click="closeMilestoneDetail">
+              {{ t('common.close') }}
+            </button>
+          </div>
+        </template>
       </BottomSheet>
 
       <BottomSheet :open="activeSheet === 'settings'" @update:open="closeSheet">

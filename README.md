@@ -55,6 +55,9 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 4. ✅ Crecimiento con percentiles OMS (peso/talla/perímetro craneal) e
    hitos con foto (subida real de archivo, sin fuente externa de la que
    sacarla por URL).
+5. ✅ Predicción de patrones de sueño: media móvil honesta sobre el
+   propio historial del bebé, sin datos suficientes dice "no lo sé" en
+   vez de inventar.
 
 ## Licencia
 

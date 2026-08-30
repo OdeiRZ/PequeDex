@@ -74,3 +74,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   editar, sin importar quién lo registró) y quedan cubiertas por tests
   Pest (15 tests nuevos, incluyendo el cálculo de percentiles y el
   ciclo de vida completo de la foto de un hito).
+
+- Predicción de patrones de sueño (`GET /babies/{baby}/sleep-prediction`),
+  estilo Huckleberry "SweetSpot" pero deliberadamente simple y honesto:
+  no es machine learning, es una media móvil del propio historial del
+  bebé (ventana de vigilia media entre siestas, duración media de
+  sueño), calculada solo sobre sus últimos registros reales. Con menos
+  de 3 siestas completas registradas devuelve explícitamente "datos
+  insuficientes" en vez de inventar una predicción. Si hay una siesta en
+  curso, predice la hora de despertar; si la última ya terminó, predice
+  la hora de la siguiente siesta.

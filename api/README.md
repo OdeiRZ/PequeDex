@@ -77,6 +77,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   que sacar por URL la foto de un bebé. El endpoint de edición es
   `POST`, no `PUT`, porque PHP nunca rellena `$_FILES` a partir del
   cuerpo `multipart/form-data` de una petición `PUT`.
+- `app/Services/Sleep/SleepPatternPredictor.php` — predicción de patrones
+  de sueño deliberadamente honesta: una media móvil sobre el propio
+  historial de siestas del bebé (ventana de vigilia media, duración
+  media), no un modelo entrenado ni una tabla de edades. Por debajo de 3
+  siestas completas en el historial, devuelve `has_enough_data: false`
+  en vez de una predicción inventada con tan pocos datos.
 
 ## Notas de arquitectura
 

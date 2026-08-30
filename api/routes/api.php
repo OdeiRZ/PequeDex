@@ -8,6 +8,7 @@ use App\Http\Controllers\Feeds\FeedController;
 use App\Http\Controllers\GrowthMeasurements\GrowthMeasurementController;
 use App\Http\Controllers\Milestones\MilestoneController;
 use App\Http\Controllers\Sleeps\SleepController;
+use App\Http\Controllers\Sleeps\SleepPredictionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/{baby}/sleeps', [SleepController::class, 'store']);
     Route::put('/babies/{baby}/sleeps/{sleep}', [SleepController::class, 'update']);
     Route::delete('/babies/{baby}/sleeps/{sleep}', [SleepController::class, 'destroy']);
+    Route::get('/babies/{baby}/sleep-prediction', [SleepPredictionController::class, 'show']);
 
     Route::get('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'index']);
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);

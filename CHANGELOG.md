@@ -295,3 +295,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `BabyController::update` (el endpoint tras "Sexo / fecha de
   nacimiento") no tenía ningún test — añadidos tres, igual que ya
   tenía el resto de endpoints de `Baby`.
+
+- Al abrir cualquier hoja inferior, un dedo (o una rueda de ratón) que
+  arrancaba sobre el fondo oscuro seguía moviendo el dashboard por
+  debajo — mismo fallo que ya se corrigió en LudoDex
+  (`GameDetailModal`), y el mismo arreglo: bloquear el scroll del
+  `body` mientras haya una hoja abierta, más `overscroll-behavior:
+  contain` en el propio panel para que el scroll dentro de la hoja no
+  "encadene" hacia la página al llegar a su límite. La diferencia con
+  LudoDex es que aquí `DashboardView.vue` tiene varias hojas montadas
+  a la vez (una por cada registro rápido, más ajustes y el detalle de
+  hito) — un simple guardar/restaurar por instancia de `BottomSheet`
+  se pisaría entre sí si dos llegaran a coincidir, así que el bloqueo
+  vive en un módulo aparte (`src/lib/bodyScrollLock.ts`) con contador
+  de referencias, no en el propio componente.

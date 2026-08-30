@@ -130,7 +130,13 @@ verse bien en una captura:
   `BottomSheet.vue` por encima del contenido en vez de un formulario
   que empuje la página — mismo patrón que cualquier app nativa. Los
   `<select>` de tipo (toma/pañal/sexo) son `SegmentedControl.vue`, no
-  desplegables.
+  desplegables. `src/lib/bodyScrollLock.ts` bloquea el scroll del
+  `body` mientras cualquier hoja está abierta (mismo arreglo que
+  LudoDex's `GameDetailModal` para el mismo fallo: un dedo sobre el
+  fondo oscuro movía el dashboard por debajo) — vive en un módulo
+  aparte, con contador de referencias, porque `DashboardView.vue`
+  tiene varias `BottomSheet` montadas a la vez y el estado de
+  `<script setup>` no se comparte entre instancias de un componente.
 - **`PasswordField.vue`** — todos los campos de contraseña (login,
   registro y su confirmación) llevan el icono de ojo para mostrar/
   ocultar, no solo el de login.

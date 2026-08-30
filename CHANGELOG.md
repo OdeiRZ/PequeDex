@@ -144,3 +144,9 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   "bucle infinito" durante el build (Cloudflare ya sirve `index.html`
   para cualquier ruta sin archivo estático automáticamente) — probado
   contra el despliegue real y retirado del repo.
+
+- Favicon e identidad de pestaña propios: se quedó sin tocar el
+  `<title>Vite App</title>` y el favicon genérico de Vue del scaffold
+  inicial durante varios bloques de trabajo. Ahora el favicon reutiliza
+  el mismo icono que la marca en `AppHeader.vue`, y `<html lang>` se
+  mantiene sincronizado con el idioma activo en vez de quedarse fijo.

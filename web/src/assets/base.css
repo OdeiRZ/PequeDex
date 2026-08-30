@@ -72,13 +72,16 @@
 }
 
 /*
- * Once the baby's sex is set, [data-sex] on <html> (toggled from App.vue,
- * reacting to the babies store) retints just the brand accent - not the
- * per-category colors above, those stay tied to what they log, not to
- * the baby. Layered the same way as the light/dark blocks: a plain
- * attribute selector for light, then the same prefers-color-scheme /
- * data-theme pairing for dark, each one more specific than the neutral
- * rule it's overriding.
+ * Once a baby exists, [data-sex] on <html> (toggled from DashboardView,
+ * reacting live to the settings form - not just after "Guardar") retints
+ * just the brand accent - not the per-category colors above, those stay
+ * tied to what they log, not to the baby. "combo" covers no sex chosen
+ * (and, in jest, twins of both sexes): a blended accent everywhere, plus
+ * an explicit blue-to-pink gradient on the one spot that actually shows
+ * two colors together, the baby card. Layered the same way as the
+ * light/dark blocks: a plain attribute selector for light, then the same
+ * prefers-color-scheme / data-theme pairing for dark, each one more
+ * specific than the neutral rule it's overriding.
  */
 :root[data-sex='nina'] {
   --brand: #c1557a;
@@ -90,6 +93,12 @@
   --brand: #3f7ea6;
   --brand-teal: #5b8f6d;
   --focus: #3f7ea6;
+}
+
+:root[data-sex='combo'] {
+  --brand: #806890;
+  --brand-teal: #c1557a;
+  --focus: #806890;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -104,6 +113,12 @@
     --brand-teal: #9fd0ab;
     --focus: #8fc6e6;
   }
+
+  :root[data-sex='combo']:not([data-theme='light']) {
+    --brand: #bfb4d3;
+    --brand-teal: #f0a3c0;
+    --focus: #bfb4d3;
+  }
 }
 
 :root[data-theme='dark'][data-sex='nina'] {
@@ -116,6 +131,12 @@
   --brand: #8fc6e6;
   --brand-teal: #9fd0ab;
   --focus: #8fc6e6;
+}
+
+:root[data-theme='dark'][data-sex='combo'] {
+  --brand: #bfb4d3;
+  --brand-teal: #f0a3c0;
+  --focus: #bfb4d3;
 }
 
 @theme {

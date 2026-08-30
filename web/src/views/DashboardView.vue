@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -313,6 +313,39 @@ const babySettingsButtonLabel = computed(() => {
   }
 
   return parts.length > 0 ? parts.join(' · ') : t('dashboard.babySettingsButton')
+})
+
+// Retints the brand accent (see base.css) as soon as a sex is picked in
+// the segmented control - not just after "Guardar" - by reading the
+// live form value while the settings sheet is open, falling back to the
+// saved value the rest of the time. "combo" blends both sex themes for
+// when no sex is set (or, in jest, for twins of both sexes).
+const themeSex = computed<'nino' | 'nina' | 'combo' | null>(() => {
+  if (activeSheet.value === 'settings') {
+    return babySex.value === 'nino' || babySex.value === 'nina' ? babySex.value : 'combo'
+  }
+
+  if (!babies.current) return null
+
+  return babies.current.sex === 'nino' || babies.current.sex === 'nina'
+    ? babies.current.sex
+    : 'combo'
+})
+
+watch(
+  themeSex,
+  (sex) => {
+    if (sex) {
+      document.documentElement.setAttribute('data-sex', sex)
+    } else {
+      document.documentElement.removeAttribute('data-sex')
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  document.documentElement.removeAttribute('data-sex')
 })
 
 async function onSaveBabySettings() {

@@ -125,16 +125,22 @@ que sirve de valor por defecto antes de que cargue el JS.
 
 ## Tema según el sexo del bebé
 
-En cuanto el bebé tiene `sex` (`nino`/`nina`), `App.vue` observa
-`babies.current?.sex` y pone `data-sex="nino"`/`"nina"` en `<html>` — se
-limpia solo al cerrar sesión porque `auth.logout()` ya resetea el store
-de bebés. `base.css` retinta solo `--brand`/`--brand-teal`/`--focus`
-(azul + verde salvia para "nino", rosa/berenjena + malva para "nina"),
-con su propia variante clara y oscura cada uno — el resto de tokens
-(fondo, texto, y los colores por categoría de registro) no cambian:
-esos identifican lo que se registra, no de quién es el bebé. Sin sexo
-configurado se queda en la paleta neutra original (rosa empolvado +
-verde azulado).
+`DashboardView.vue` calcula `themeSex` y pone `data-sex="nino"/"nina"/
+"combo"` en `<html>` (se quita al desmontar la vista, p. ej. al cerrar
+sesión). Cambia al momento al tocar el `SegmentedControl` del sexo, sin
+esperar a "Guardar": mientras la hoja de ajustes está abierta usa el
+valor todavía sin guardar del formulario; el resto del tiempo usa el
+valor ya guardado del bebé. `base.css` retinta solo
+`--brand`/`--brand-teal`/`--focus` (azul + verde salvia para "nino",
+rosa/berenjena + malva para "nina"), con su propia variante clara y
+oscura cada uno — el resto de tokens (fondo, texto, y los colores por
+categoría de registro) no cambian: esos identifican lo que se
+registra, no de quién es el bebé. "combo" mezcla ambos temas — un
+acento morado/malva en general, y un degradado azul→rosa explícito en
+la propia tarjeta del bebé — para cuando no hay sexo elegido (o, en
+broma, para gemelos de ambos sexos). Sin bebé todavía (login/registro/
+onboarding) no se pone ningún atributo y se ve la paleta neutra
+original (rosa empolvado + verde azulado).
 
 ## Despliegue
 

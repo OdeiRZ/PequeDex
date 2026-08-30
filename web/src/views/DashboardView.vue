@@ -301,20 +301,6 @@ const babySexOptions = computed(() => [
   { value: 'nina' as const, label: t('dashboard.babySettings.sexGirl') },
 ])
 
-const babyDetails = computed(() => {
-  if (!babies.current) return ''
-
-  const parts: string[] = []
-
-  if (babies.current.sex === 'nino') parts.push(t('dashboard.babySettings.sexBoy'))
-  if (babies.current.sex === 'nina') parts.push(t('dashboard.babySettings.sexGirl'))
-  if (babies.current.birth_date) {
-    parts.push(new Date(babies.current.birth_date).toLocaleDateString(dateLocale.value))
-  }
-
-  return parts.join(' · ')
-})
-
 async function onSaveBabySettings() {
   savingBabySettings.value = true
 
@@ -509,14 +495,9 @@ const sleepPredictionLabel = computed(() => {
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
         >
           <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <h1 class="font-display text-xl font-bold text-balance">
-                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
-              </h1>
-              <p v-if="babyDetails" class="mt-0.5 text-sm font-medium text-brand-ink/85">
-                {{ babyDetails }}
-              </p>
-            </div>
+            <h1 class="font-display text-xl font-bold text-balance">
+              {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
+            </h1>
             <button
               type="button"
               class="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold"

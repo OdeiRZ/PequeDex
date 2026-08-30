@@ -172,3 +172,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   de qué había configurado. Ahora el propio botón muestra el valor
   guardado (p. ej. "Niña · 7/9/2026") en vez del texto genérico, y
   sigue abriendo el mismo ajuste al pulsarlo.
+
+- El icono propio de la marca (trazo lineal en la cabecera y el
+  favicon) resultó ambiguo: a tamaño de pestaña no se distinguía qué
+  representaba. Sustituido directamente por el emoji 👶, tanto en
+  `AppHeader.vue` como en `favicon.svg` — se lee con claridad a
+  cualquier tamaño sin necesitar un `favicon-64.png` de *fallback*
+  (retirado).

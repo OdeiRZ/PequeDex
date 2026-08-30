@@ -112,12 +112,16 @@ verse bien en una captura:
 
 `index.html` traía sin tocar el `<title>Vite App</title>` y el favicon
 genérico de Vue del scaffold inicial — quedó así varios bloques de
-trabajo hasta notarlo. `favicon.svg` reutiliza el mismo icono que
-`AppHeader.vue` (mismo trazo, mismo color de marca) sobre un fondo
-redondeado, con `favicon-64.png` como *fallback* PNG para contextos sin
-soporte de favicon SVG. `src/i18n.ts` mantiene `<html lang>` sincronizado
-con el idioma activo (accesibilidad/SEO), no solo el `lang="es"` estático
-de `index.html` que sirve de valor por defecto antes de que cargue el JS.
+trabajo hasta notarlo. Un primer icono propio (trazo lineal, estilo
+Feather, en `AppHeader.vue` y `favicon.svg`) resultó demasiado
+ambiguo a tamaño de pestaña — no se distinguía qué representaba. Se
+sustituyó por el emoji 👶 directamente: en la cabecera como texto
+junto al nombre, y en `favicon.svg` centrado sobre un `<svg>` sin más
+decoración — un emoji ya está diseñado para leerse con claridad a
+tamaños minúsculos, cosa que un icono de trazo propio no garantiza.
+`src/i18n.ts` mantiene `<html lang>` sincronizado con el idioma activo
+(accesibilidad/SEO), no solo el `lang="es"` estático de `index.html`
+que sirve de valor por defecto antes de que cargue el JS.
 
 ## Despliegue
 

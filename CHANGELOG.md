@@ -113,3 +113,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `localStorage`. Los valores de los enums del backend (lado de la
   toma, tipo de pañal) se traducen en el punto de uso porque son datos
   internos en español, no texto de interfaz.
+
+- Identidad visual con Tailwind CSS v4: paleta cálida propia (marca en
+  rosa empolvado + verde azulado, un color semántico por categoría de
+  registro — no decorativo, para escanear la línea temporal por color e
+  icono), tipografía Quicksand para titulares, y modo claro/oscuro/
+  sistema persistido (el oscuro no es un capricho: es para las tomas de
+  madrugada). Interacción mobile-first: barra de acciones fija alcanzable
+  con el pulgar que abre una hoja inferior por encima del contenido en
+  vez de un formulario que empuje la página, y controles segmentados en
+  vez de `<select>` para tipo de toma/pañal/sexo. Campo de contraseña
+  con icono de mostrar/ocultar en login, registro y su confirmación.
+  Diseñado primero como propuesta visual (paleta, tipografía, layout) y
+  aprobado antes de tocar el código real. Verificado de punta a punta en
+  el navegador en ambos temas e idiomas.

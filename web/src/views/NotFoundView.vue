@@ -8,18 +8,13 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="not-found">
-    <h1>{{ t('notFound.title') }}</h1>
-    <RouterLink :to="{ name: auth.isAuthenticated ? 'dashboard' : 'login' }">{{
-      t('notFound.back')
-    }}</RouterLink>
-  </div>
+  <main class="flex flex-1 flex-col items-center justify-center gap-4 px-5 py-10 text-center">
+    <h1 class="font-display text-2xl font-bold">{{ t('notFound.title') }}</h1>
+    <RouterLink
+      :to="{ name: auth.isAuthenticated ? 'dashboard' : 'login' }"
+      class="font-semibold text-brand"
+    >
+      {{ t('notFound.back') }}
+    </RouterLink>
+  </main>
 </template>
-
-<style scoped>
-.not-found {
-  max-width: 380px;
-  margin: 4rem auto 0;
-  text-align: center;
-}
-</style>

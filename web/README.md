@@ -32,9 +32,8 @@ npm run test:unit      # Vitest
   `user` en memoria (recarga de página), pide `/api/user` una sola vez
   desde la raíz — vive ahí para que funcione sin importar en qué pantalla
   aterrice la recarga, no solo en el dashboard.
-- `src/views/{Login,Register}View.vue` — formularios mínimos sin diseño
-  todavía; funcionales y probados de punta a punta contra la API real,
-  pendientes de la identidad visual del proyecto.
+- `src/views/{Login,Register}View.vue` — formularios con la identidad
+  visual del proyecto, probados de punta a punta contra la API real.
 - `src/stores/babies.ts` — el bebé del usuario (crear/unirse por código),
   su línea temporal combinada, y CRUD de tomas/sueño/pañales. Cada acción
   de crear/borrar vuelve a pedir la línea temporal entera en vez de tocar
@@ -67,8 +66,44 @@ valores de los enums del backend (`izquierdo`/`derecho`/`ambos`,
 `mojado`/`sucio`/`ambos`) se traducen en el punto de uso — son valores
 internos en español, no texto de interfaz.
 
-## Sin diseño todavía
+## Diseño
 
-Esta SPA no tiene paleta/tipografía propia definida — se añadirá cuando
-haga falta, con las pantallas principales ya cerradas y probadas, no
-como infraestructura previa sin pantallas reales detrás.
+Tailwind CSS v4 (`@tailwindcss/vite`, configuración CSS-first vía
+`@theme` en `src/assets/base.css`) con una identidad propia pensada para
+el uso real de la app — registrar algo con una mano a las 3am —, no para
+verse bien en una captura:
+
+- **Tokens en `src/assets/base.css`**: paleta cálida (marca en rosa
+  empolvado + verde azulado, nada de crema+terracota genérico) con un
+  color semántico por categoría de registro (toma/sueño/pañal/
+  crecimiento/hito) — no decorativo: permite escanear la línea temporal
+  por color e icono sin leer cada línea. Los tokens son variables CSS
+  planas (`--brand`, `--feed`, etc.), no valores directos de `@theme`,
+  precisamente para poder repintarlas en tiempo de ejecución con el
+  cambio de tema (ver más abajo) — `@theme` solo las referencia
+  (`--color-brand: var(--brand)`), porque sus propios valores quedan
+  fijados en el CSS generado en tiempo de compilación.
+- **Tipografía**: Quicksand (redondeada, cálida) solo para titulares;
+  el resto usa la fuente del sistema — carga instantánea y cifras
+  tabulares (`tabular-nums`) para pesos, percentiles y horas.
+- **`src/theme.ts` / `ThemeToggle.vue`**: claro/oscuro/sistema,
+  persistido en `localStorage` (`pequedex_theme`) y aplicado antes del
+  montaje en `main.ts` para que no parpadee el tema equivocado en la
+  primera pintura. El oscuro no es un extra estético: es quien de
+  verdad se usa de noche para las tomas.
+- **Mobile-first con hoja inferior**: `ActionBar.vue` (barra fija con
+  los 5 registros rápidos, alcanzable con el pulgar) abre un
+  `BottomSheet.vue` por encima del contenido en vez de un formulario
+  que empuje la página — mismo patrón que cualquier app nativa. Los
+  `<select>` de tipo (toma/pañal/sexo) son `SegmentedControl.vue`, no
+  desplegables.
+- **`PasswordField.vue`** — todos los campos de contraseña (login,
+  registro y su confirmación) llevan el icono de ojo para mostrar/
+  ocultar, no solo el de login.
+- **`EntryCard.vue` / `CategoryIcon.vue` / `src/lib/category.ts`** —
+  la tarjeta compartida por línea temporal, crecimiento e hitos, con su
+  franja de color por categoría. Las clases de Tailwind por categoría
+  (`text-feed`, `bg-feed/15`, …) están en `category.ts` como tablas de
+  búsqueda literales, no interpoladas (`` `text-${category}` ``): el
+  escáner de Tailwind solo detecta nombres de clase que aparecen tal
+  cual en el código fuente.

@@ -61,6 +61,9 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 6. ✅ Pantallas de crecimiento, hitos y predicción de sueño, verificadas
    de punta a punta contra la API real (incluida la subida de una foto).
 7. ✅ Español (por defecto) e inglés, con selector de idioma persistente.
+8. ✅ Identidad visual propia (Tailwind CSS, mobile-first con barra de
+   acciones y hojas inferiores), pensada para registrar con una mano de
+   madrugada, no para una captura de pantalla.
 
 ## Licencia
 

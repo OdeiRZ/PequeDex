@@ -8,6 +8,9 @@ export default {
     save: 'Guardar',
     cancel: 'Cancelar',
     delete: 'Borrar',
+    toggleTheme: 'Cambiar tema',
+    showPassword: 'Mostrar contraseña',
+    hidePassword: 'Ocultar contraseña',
   },
   auth: {
     login: {

@@ -8,6 +8,9 @@ export default {
     save: 'Save',
     cancel: 'Cancel',
     delete: 'Delete',
+    toggleTheme: 'Toggle theme',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
   },
   auth: {
     login: {

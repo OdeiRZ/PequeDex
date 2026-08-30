@@ -1,86 +1,165 @@
-/* color palette from <https://github.com/vuejs/theme> */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
+@import 'tailwindcss';
+
+/*
+ * Design tokens live as plain custom properties (not directly inside
+ * @theme) so a runtime attribute switch (data-theme) can repaint them -
+ * @theme values are baked into the generated utilities at build time and
+ * can't be reassigned per element, only referenced.
+ */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  --bg: #fbf7f2;
+  --surface: #ffffff;
+  --surface-sunken: #f3ece4;
+  --text: #2b2420;
+  --text-muted: #7a6f66;
+  --border: #e8ddd0;
+  --brand: #a65a6b;
+  --brand-ink: #ffffff;
+  --brand-teal: #2f6e68;
+  --focus: #a65a6b;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+  --feed: #c98a3e;
+  --sleep: #5b5a8c;
+  --diaper: #6e9080;
+  --growth: #a65a6b;
+  --milestone: #b8952e;
+  --danger: #b3453f;
 
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
-
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
-
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+  --shadow-color: 43 36 32;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+  :root:not([data-theme='light']) {
+    --bg: #1c1b22;
+    --surface: #26252e;
+    --surface-sunken: #302e39;
+    --text: #f1ece5;
+    --text-muted: #a79e97;
+    --border: #3a3844;
+    --brand: #e08fa0;
+    --brand-ink: #201118;
+    --brand-teal: #6cb3ab;
+    --shadow-color: 0 0 0;
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
+    --feed: #dda158;
+    --sleep: #8886c9;
+    --diaper: #8ab09e;
+    --growth: #e08fa0;
+    --milestone: #d9b654;
+    --danger: #e0837c;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1c1b22;
+  --surface: #26252e;
+  --surface-sunken: #302e39;
+  --text: #f1ece5;
+  --text-muted: #a79e97;
+  --border: #3a3844;
+  --brand: #e08fa0;
+  --brand-ink: #201118;
+  --brand-teal: #6cb3ab;
+  --shadow-color: 0 0 0;
+
+  --feed: #dda158;
+  --sleep: #8886c9;
+  --diaper: #8ab09e;
+  --growth: #e08fa0;
+  --milestone: #d9b654;
+  --danger: #e0837c;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-teal: var(--brand-teal);
+  --color-feed: var(--feed);
+  --color-sleep: var(--sleep);
+  --color-diaper: var(--diaper);
+  --color-growth: var(--growth);
+  --color-milestone: var(--milestone);
+  --color-danger: var(--danger);
+
+  --font-display: 'Quicksand', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
-  font-weight: normal;
 }
 
 body {
+  margin: 0;
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
-  text-rendering: optimizeLegibility;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Shared form/button treatment, reused across auth forms and the
+   dashboard's quick-log sheets - kept as component classes instead of
+   repeating the same long utility strings on every input. */
+@layer components {
+  .field-label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .field-input {
+    width: 100%;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0.65rem 0.8rem;
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  .field-input:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+
+  .btn-primary {
+    border-radius: 0.75rem;
+    background: var(--brand);
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    color: var(--brand-ink);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+  }
+
+  .btn-ghost {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .card {
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow:
+      0 1px 2px rgb(var(--shadow-color) / 0.06),
+      0 8px 24px -12px rgb(var(--shadow-color) / 0.18);
+  }
 }

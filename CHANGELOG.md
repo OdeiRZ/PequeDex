@@ -84,3 +84,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   insuficientes" en vez de inventar una predicción. Si hay una siesta en
   curso, predice la hora de despertar; si la última ya terminó, predice
   la hora de la siguiente siesta.
+
+- Pantallas para crecimiento, hitos y predicción de sueño: formularios de
+  registro rápido de medida (peso/talla/perímetro craneal, con su
+  percentil OMS) y de hito (con subida de foto), un ajuste de sexo/fecha
+  de nacimiento del bebé (necesarios para el percentil), sus listas
+  correspondientes, y el aviso de predicción de la siguiente siesta o
+  la hora de despertar. Verificado de punta a punta en el navegador
+  contra la API real: crear el bebé, fijar sexo y fecha de nacimiento,
+  registrar una medida y ver su percentil, subir una foto real en un
+  hito y verla servida.
+
+- Dos fallos de configuración encontrados en esa verificación real (no
+  visibles en los tests, que no sirven archivos por HTTP): faltaba
+  `php artisan storage:link` en las instrucciones de instalación (sin
+  él, la foto de un hito da 403 aunque el archivo exista en disco), y
+  el `APP_URL` de ejemplo (`http://localhost`, sin puerto) no coincide
+  con el puerto real de `php artisan serve`, lo que rompe la URL
+  servida de la foto (`photo_url`) en cualquier instalación por
+  defecto. Corregidos ambos en `api/.env.example` y documentados en
+  `api/README.md`.

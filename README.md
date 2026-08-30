@@ -58,6 +58,8 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 5. ✅ Predicción de patrones de sueño: media móvil honesta sobre el
    propio historial del bebé, sin datos suficientes dice "no lo sé" en
    vez de inventar.
+6. ✅ Pantallas de crecimiento, hitos y predicción de sueño, verificadas
+   de punta a punta contra la API real (incluida la subida de una foto).
 
 ## Licencia
 

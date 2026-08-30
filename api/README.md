@@ -12,8 +12,15 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite   # desarrollo: SQLite; producción: Postgres
 php artisan migrate
+php artisan storage:link         # necesario para servir las fotos de los hitos
 php artisan serve
 ```
+
+Si `php artisan serve` se levanta en un puerto distinto al de `APP_URL`
+en `.env` (por ejemplo, con `--port`), actualiza `APP_URL` a juego — la
+URL de la foto de un hito (`photo_url`) se construye a partir de ese
+valor, así que un `APP_URL` desajustado hace que la imagen no cargue
+aunque el archivo exista.
 
 ## Scripts
 

@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
 import { apiClient } from '@/lib/api'
 
+export type BabySex = 'nino' | 'nina'
+
 export interface Baby {
   id: number
   name: string | null
   due_date: string | null
   birth_date: string | null
+  sex: BabySex | null
   invite_code: string
 }
 
@@ -43,6 +46,40 @@ export interface DiaperChange {
   notes: string | null
 }
 
+export interface GrowthMeasurement {
+  id: number
+  baby_id: number
+  user_id: number
+  measured_at: string
+  weight_grams: number | null
+  height_cm: number | null
+  head_circumference_cm: number | null
+  notes: string | null
+  weight_percentile: number | null
+  height_percentile: number | null
+  head_circumference_percentile: number | null
+}
+
+export interface Milestone {
+  id: number
+  baby_id: number
+  user_id: number
+  achieved_at: string
+  title: string
+  description: string | null
+  photo_path: string | null
+  photo_url: string | null
+}
+
+export interface SleepPrediction {
+  has_enough_data: boolean
+  sample_size: number
+  minimum_sample_size: number
+  average_sleep_duration_minutes: number | null
+  average_wake_window_minutes: number | null
+  prediction: { type: 'wake_up' | 'next_sleep'; at: string; based_on: string } | null
+}
+
 export type TimelineEntry =
   | { type: 'feed'; at: string; data: Feed }
   | { type: 'sleep'; at: string; data: Sleep }
@@ -69,15 +106,43 @@ interface CreateDiaperChangePayload {
   notes?: string | null
 }
 
+interface CreateGrowthMeasurementPayload {
+  measured_at: string
+  weight_grams?: number | null
+  height_cm?: number | null
+  head_circumference_cm?: number | null
+  notes?: string | null
+}
+
+interface CreateMilestonePayload {
+  achieved_at: string
+  title: string
+  description?: string | null
+  photo?: File | null
+}
+
+interface UpdateBabyPayload {
+  name?: string | null
+  due_date?: string | null
+  birth_date?: string | null
+  sex?: BabySex | null
+}
+
 interface BabiesState {
   current: Baby | null
   timeline: TimelineEntry[]
+  growthMeasurements: GrowthMeasurement[]
+  milestones: Milestone[]
+  sleepPrediction: SleepPrediction | null
 }
 
 export const useBabiesStore = defineStore('babies', {
   state: (): BabiesState => ({
     current: null,
     timeline: [],
+    growthMeasurements: [],
+    milestones: [],
+    sleepPrediction: null,
   }),
 
   actions: {
@@ -94,6 +159,11 @@ export const useBabiesStore = defineStore('babies', {
 
     async join(inviteCode: string) {
       const { data } = await apiClient.post('/babies/join', { invite_code: inviteCode })
+      this.current = data.data
+    },
+
+    async updateBaby(payload: UpdateBabyPayload) {
+      const { data } = await apiClient.put(`/babies/${this.current!.id}`, payload)
       this.current = data.data
     },
 
@@ -143,6 +213,65 @@ export const useBabiesStore = defineStore('babies', {
     async deleteDiaperChange(id: number) {
       await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
       await this.fetchTimeline()
+    },
+
+    async fetchGrowthMeasurements() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/growth-measurements`)
+      this.growthMeasurements = data.data
+    },
+
+    async createGrowthMeasurement(payload: CreateGrowthMeasurementPayload) {
+      await apiClient.post(`/babies/${this.current!.id}/growth-measurements`, payload)
+      await this.fetchGrowthMeasurements()
+    },
+
+    async deleteGrowthMeasurement(id: number) {
+      await apiClient.delete(`/babies/${this.current!.id}/growth-measurements/${id}`)
+      await this.fetchGrowthMeasurements()
+    },
+
+    async fetchMilestones() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/milestones`)
+      this.milestones = data.data
+    },
+
+    async createMilestone(payload: CreateMilestonePayload) {
+      const form = new FormData()
+      form.append('achieved_at', payload.achieved_at)
+      form.append('title', payload.title)
+      if (payload.description) {
+        form.append('description', payload.description)
+      }
+      if (payload.photo) {
+        form.append('photo', payload.photo)
+      }
+
+      await apiClient.post(`/babies/${this.current!.id}/milestones`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      await this.fetchMilestones()
+    },
+
+    async deleteMilestone(id: number) {
+      await apiClient.delete(`/babies/${this.current!.id}/milestones/${id}`)
+      await this.fetchMilestones()
+    },
+
+    async fetchSleepPrediction() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/sleep-prediction`)
+      this.sleepPrediction = data.data
     },
   },
 })

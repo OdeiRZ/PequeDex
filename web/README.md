@@ -40,14 +40,20 @@ npm run test:unit      # Vitest
   de crear/borrar vuelve a pedir la línea temporal entera en vez de tocar
   el array local a mano — el otro cuidador puede haber añadido algo entre
   medias, y el sondeo (ver más abajo) va a traer esa misma lista de
-  todos modos.
+  todos modos. Mismo patrón para crecimiento e hitos (listas propias,
+  no mezcladas en la línea temporal): crear/borrar vuelve a pedir la
+  lista entera. `createMilestone()` construye un `FormData` a mano en
+  vez de mandar JSON porque la foto es un archivo real, no una URL.
 - `src/views/DashboardView.vue` — onboarding (crear un bebé o unirse con
   código) cuando el usuario no tiene ninguno todavía, y si ya lo tiene:
-  botones de registro rápido (toma/sueño/pañal, con la hora actual
-  precargada) más la línea temporal. Sondea `/timeline` cada 5 segundos
+  botones de registro rápido (toma/sueño/pañal/medida/hito, con la hora
+  actual precargada) más la línea temporal, la predicción de sueño, y
+  las listas de crecimiento e hitos. Sondea `/timeline` cada 5 segundos
   mientras la vista está montada — mismo patrón que el import de BGG en
   LudoDex, sin websockets ni infraestructura nueva — para que lo que
-  registre un cuidador aparezca en la pantalla del otro sin recargar.
+  registre un cuidador aparezca en la pantalla del otro sin recargar
+  (crecimiento/hitos/predicción no están en ese sondeo todavía: cambian
+  con mucha menos frecuencia que tomas/sueño/pañales).
 
 ## Sin idiomas ni diseño todavía
 

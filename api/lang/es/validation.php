@@ -162,6 +162,10 @@ return [
         'password' => 'contraseña',
         'password_confirmation' => 'confirmación de la contraseña',
         'current_password' => 'contraseña actual',
+        'started_at' => 'fecha',
+        'changed_at' => 'fecha',
+        'measured_at' => 'fecha',
+        'achieved_at' => 'fecha',
     ],
 
 ];

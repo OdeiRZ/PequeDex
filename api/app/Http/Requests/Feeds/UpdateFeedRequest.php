@@ -4,6 +4,7 @@ namespace App\Http\Requests\Feeds;
 
 use App\Enums\FeedSide;
 use App\Enums\FeedType;
+use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,8 @@ use Illuminate\Validation\Rule;
  */
 class UpdateFeedRequest extends FormRequest
 {
+    use ValidatesNotBeforeBirth;
+
     public function authorize(): bool
     {
         return true;
@@ -29,7 +32,7 @@ class UpdateFeedRequest extends FormRequest
             'type' => ['required', Rule::enum(FeedType::class)],
             'side' => ['required_if:type,'.FeedType::Pecho->value, 'prohibited_unless:type,'.FeedType::Pecho->value, Rule::enum(FeedSide::class)],
             'amount_ml' => ['required_if:type,'.FeedType::Biberon->value, 'prohibited_unless:type,'.FeedType::Biberon->value, 'integer', 'min:1'],
-            'started_at' => ['required', 'date'],
+            'started_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'ended_at' => ['nullable', 'date', 'after:started_at'],
             'notes' => ['nullable', 'string'],
         ];

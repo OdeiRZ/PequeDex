@@ -30,6 +30,28 @@ it('creates a milestone without a photo', function () {
         ->assertJsonPath('data.photo_url', null);
 });
 
+it('rejects an achieved_at before the baby was born', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-29',
+        'title' => 'Imposible',
+    ])->assertUnprocessable()->assertJsonValidationErrors('achieved_at');
+});
+
+it('accepts an achieved_at right on the birth date, e.g. a "born" milestone', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-30',
+        'title' => 'Nacimiento',
+    ])->assertCreated();
+});
+
 it('creates a milestone with a photo, stored on the public disk', function () {
     $user = actingAsUser();
     $baby = babyForMilestoneTest($user);

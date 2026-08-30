@@ -32,6 +32,17 @@ it('rejects an invalid diaper type', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('type');
 });
 
+it('rejects a changed_at before the baby was born', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-29 23:00:00',
+        'type' => 'sucio',
+    ])->assertUnprocessable()->assertJsonValidationErrors('changed_at');
+});
+
 it('lets a caregiver see and edit a diaper change logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyForDiaperTest($owner);

@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Sleeps;
 
+use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSleepRequest extends FormRequest
 {
+    use ValidatesNotBeforeBirth;
+
     public function authorize(): bool
     {
         return true;
@@ -17,7 +20,7 @@ class StoreSleepRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'started_at' => ['required', 'date'],
+            'started_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'ended_at' => ['nullable', 'date', 'after:started_at'],
             'notes' => ['nullable', 'string'],
         ];

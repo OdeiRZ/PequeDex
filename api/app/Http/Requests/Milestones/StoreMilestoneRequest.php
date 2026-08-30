@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Milestones;
 
+use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMilestoneRequest extends FormRequest
 {
+    use ValidatesNotBeforeBirth;
+
     public function authorize(): bool
     {
         return true;
@@ -17,7 +20,7 @@ class StoreMilestoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'achieved_at' => ['required', 'date'],
+            'achieved_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             // No external source for a baby's own photo (unlike e.g.

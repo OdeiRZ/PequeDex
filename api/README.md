@@ -95,6 +95,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   media), no un modelo entrenado ni una tabla de edades. Por debajo de 3
   siestas completas en el historial, devuelve `has_enough_data: false`
   en vez de una predicción inventada con tan pocos datos.
+- `app/Http/Requests/Concerns/ValidatesNotBeforeBirth.php` — trait
+  compartido por los `Store`/`UpdateRequest` de tomas, sueño, pañales,
+  medidas e hitos: nada de eso tiene sentido antes de que el bebé haya
+  nacido. Añade `after_or_equal:<birth_date>` a la fecha del recurso
+  cuando el `Baby` de la ruta ya tiene `birth_date` puesto, y no añade
+  nada si todavía no lo tiene (sex/birth_date son opcionales, así que
+  puede no haber nada contra lo que comparar). `after_or_equal`, no
+  `after`: el día exacto del nacimiento es válido (un hito de
+  "Nacimiento" ese mismo día).
 
 ## Notas de arquitectura
 

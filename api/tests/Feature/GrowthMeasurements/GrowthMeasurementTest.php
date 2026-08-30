@@ -65,6 +65,16 @@ it('leaves percentiles null when the baby has no sex or birth date set', functio
     $response->assertCreated()->assertJsonPath('data.weight_percentile', null);
 });
 
+it('rejects a measured_at before the baby was born', function () {
+    $user = actingAsUser();
+    $baby = babyForGrowthTest($user, ['birth_date' => '2026-08-30']);
+
+    $this->postJson("/api/babies/{$baby->id}/growth-measurements", [
+        'measured_at' => '2026-08-29',
+        'weight_grams' => 3500,
+    ])->assertUnprocessable()->assertJsonValidationErrors('measured_at');
+});
+
 it('lets a caregiver see and edit a measurement logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyForGrowthTest($owner);

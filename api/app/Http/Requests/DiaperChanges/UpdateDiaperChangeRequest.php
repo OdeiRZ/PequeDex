@@ -3,11 +3,14 @@
 namespace App\Http\Requests\DiaperChanges;
 
 use App\Enums\DiaperType;
+use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDiaperChangeRequest extends FormRequest
 {
+    use ValidatesNotBeforeBirth;
+
     public function authorize(): bool
     {
         return true;
@@ -19,7 +22,7 @@ class UpdateDiaperChangeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'changed_at' => ['required', 'date'],
+            'changed_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'type' => ['required', Rule::enum(DiaperType::class)],
             'notes' => ['nullable', 'string'],
         ];

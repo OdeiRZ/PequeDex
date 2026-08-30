@@ -52,7 +52,14 @@ npm run test:unit      # Vitest
   LudoDex, sin websockets ni infraestructura nueva — para que lo que
   registre un cuidador aparezca en la pantalla del otro sin recargar
   (crecimiento/hitos/predicción no están en ese sondeo todavía: cambian
-  con mucha menos frecuencia que tomas/sueño/pañales).
+  con mucha menos frecuencia que tomas/sueño/pañales). Los cinco campos
+  de fecha (toma/sueño/pañal/medida/hito) llevan `:min` calculado a
+  partir de `babies.current?.birth_date` (`minDate`/`minDateTime`,
+  `undefined` si el bebé todavía no tiene fecha de nacimiento): nada de
+  eso tiene sentido antes de que el bebé haya nacido, y el propio
+  navegador bloquea el envío con su aviso nativo si se intenta. La API
+  aplica la misma regla por su cuenta (ver `api/README.md`), no solo el
+  frontend.
 
 ## Idioma
 

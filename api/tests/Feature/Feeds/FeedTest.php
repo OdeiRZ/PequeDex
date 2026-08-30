@@ -73,6 +73,30 @@ it('rejects a breastfeed with no side, and a bottle feed with no amount', functi
     ])->assertUnprocessable()->assertJsonValidationErrors('amount_ml');
 });
 
+it('rejects a started_at before the baby was born', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'started_at' => '2026-08-29 23:00:00',
+    ])->assertUnprocessable()->assertJsonValidationErrors('started_at');
+});
+
+it('accepts a started_at right on the birth date itself', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'started_at' => '2026-08-30 00:00:01',
+    ])->assertCreated();
+});
+
 it('lets a caregiver see and edit a feed logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyFor($owner);

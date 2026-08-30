@@ -32,6 +32,15 @@ it('rejects an ended_at before started_at', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
 });
 
+it('rejects a started_at before the baby was born', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => '2026-08-30']);
+    $baby->users()->attach($user);
+
+    $this->postJson("/api/babies/{$baby->id}/sleeps", ['started_at' => '2026-08-29 23:00:00'])
+        ->assertUnprocessable()->assertJsonValidationErrors('started_at');
+});
+
 it('lets a caregiver end a nap the other caregiver started', function () {
     $owner = actingAsUser();
     $baby = babyForSleepTest($owner);

@@ -205,3 +205,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   "Sueño eliminado.", "Pañal eliminado.", "Medida eliminada.", "Hito
   eliminado.", con su error a juego), en vez de una única clave
   genérica.
+
+- Nada de lo que se registra (toma, sueño, pañal, medida o hito) puede
+  llevar ahora una fecha anterior al nacimiento del bebé. En el
+  frontend, cada campo de fecha lleva un `min` calculado a partir de
+  `birth_date` (el propio navegador bloquea el envío e incluso muestra
+  su aviso nativo), y en la API, `StoreXRequest`/`UpdateXRequest`
+  añaden una regla `after_or_equal` contra esa misma fecha a través de
+  un trait compartido (`ValidatesNotBeforeBirth`) — defensa en
+  profundidad, no solo cosmética del formulario. Sin `birth_date`
+  todavía (ninguno de los dos, opcionales) no hay restricción: no hay
+  nada contra lo que comparar. El día exacto del nacimiento sí es
+  válido (`after_or_equal`, no `after`) — un hito de "Nacimiento" ese
+  mismo día tiene que poder registrarse.

@@ -21,6 +21,12 @@ const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
 
+// Nothing logged for a baby can predate its own birth - used as `min` on
+// every quick-log date field below. `undefined` (not set) when the baby
+// has no birth_date yet, since there's nothing to compare against.
+const minDate = computed(() => babies.current?.birth_date ?? undefined)
+const minDateTime = computed(() => (minDate.value ? `${minDate.value}T00:00` : undefined))
+
 const loading = ref(true)
 
 onMounted(async () => {
@@ -737,6 +743,7 @@ const sleepPredictionLabel = computed(() => {
               id="feed-started-at"
               v-model="feedStartedAt"
               type="datetime-local"
+              :min="minDateTime"
               required
               class="field-input"
             />
@@ -771,6 +778,7 @@ const sleepPredictionLabel = computed(() => {
               id="sleep-started-at"
               v-model="sleepStartedAt"
               type="datetime-local"
+              :min="minDateTime"
               required
               class="field-input"
             />
@@ -783,6 +791,7 @@ const sleepPredictionLabel = computed(() => {
               id="sleep-ended-at"
               v-model="sleepEndedAt"
               type="datetime-local"
+              :min="sleepStartedAt || minDateTime"
               class="field-input"
             />
           </div>
@@ -817,6 +826,7 @@ const sleepPredictionLabel = computed(() => {
               id="diaper-changed-at"
               v-model="diaperChangedAt"
               type="datetime-local"
+              :min="minDateTime"
               required
               class="field-input"
             />
@@ -851,6 +861,7 @@ const sleepPredictionLabel = computed(() => {
               id="growth-measured-at"
               v-model="growthMeasuredAt"
               type="date"
+              :min="minDate"
               required
               class="field-input"
             />
@@ -927,6 +938,7 @@ const sleepPredictionLabel = computed(() => {
               id="milestone-achieved-at"
               v-model="milestoneAchievedAt"
               type="date"
+              :min="minDate"
               required
               class="field-input"
             />

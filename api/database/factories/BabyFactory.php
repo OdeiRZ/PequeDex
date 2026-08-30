@@ -20,7 +20,11 @@ class BabyFactory extends Factory
         return [
             'name' => fake()->firstName(),
             'due_date' => null,
-            'birth_date' => fake()->date(),
+            // Fixed, not fake()->date(): a random birth_date up to "now"
+            // could land after the fixed 2026-08-30-ish dates other tests
+            // hardcode for feeds/sleeps/etc., which the store/update
+            // requests now reject as "before the baby was born".
+            'birth_date' => '2020-01-01',
             'invite_code' => Baby::generateInviteCode(),
         ];
     }

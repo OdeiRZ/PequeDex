@@ -33,7 +33,9 @@ class Milestone extends Model
     protected function photoUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->photo_path ? Storage::disk('public')->url($this->photo_path) : null,
+            get: fn () => $this->photo_path
+                ? Storage::disk(config('filesystems.milestones_disk'))->url($this->photo_path)
+                : null,
         );
     }
 

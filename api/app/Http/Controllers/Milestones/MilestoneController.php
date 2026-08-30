@@ -29,7 +29,7 @@ class MilestoneController extends Controller
             'description' => $request->validated('description'),
             'user_id' => $request->user()->id,
             'photo_path' => $request->hasFile('photo')
-                ? $request->file('photo')->store("milestones/{$baby->id}", 'public')
+                ? $request->file('photo')->store("milestones/{$baby->id}", config('filesystems.milestones_disk'))
                 : null,
         ]);
 
@@ -50,7 +50,7 @@ class MilestoneController extends Controller
 
         if ($request->hasFile('photo')) {
             $this->deleteExistingPhoto($milestoneModel);
-            $attributes['photo_path'] = $request->file('photo')->store("milestones/{$baby->id}", 'public');
+            $attributes['photo_path'] = $request->file('photo')->store("milestones/{$baby->id}", config('filesystems.milestones_disk'));
         } elseif ($request->boolean('remove_photo')) {
             $this->deleteExistingPhoto($milestoneModel);
             $attributes['photo_path'] = null;
@@ -75,7 +75,7 @@ class MilestoneController extends Controller
     private function deleteExistingPhoto(Milestone $milestone): void
     {
         if ($milestone->photo_path) {
-            Storage::disk('public')->delete($milestone->photo_path);
+            Storage::disk(config('filesystems.milestones_disk'))->delete($milestone->photo_path);
         }
     }
 }

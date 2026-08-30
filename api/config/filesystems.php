@@ -17,6 +17,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Milestone Photos Disk
+    |--------------------------------------------------------------------------
+    |
+    | Separate from the generic default disk above: locally this stays
+    | "public" (served via `storage:link`), but production points it at the
+    | "s3" disk (configured for Cloudflare R2 below) because Render's
+    | filesystem is ephemeral - a redeploy would silently wipe every
+    | uploaded photo otherwise.
+    |
+    */
+
+    'milestones_disk' => env('MILESTONES_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

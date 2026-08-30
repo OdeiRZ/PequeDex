@@ -78,10 +78,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   falta `sex` o `birth_date` — queda `null` en la respuesta en vez de
   fallar, porque no siempre se conocen o se quieren dar esos datos.
 - `app/Models/Milestone.php` — la foto de un hito se sube como archivo
-  real al disco `public` (`Storage::disk('public')`), no como una URL
-  pegada: a diferencia del `image_url` de LudoDex (la carátula de un
-  juego tiene una fuente externa real, BGG), no existe ningún sitio del
-  que sacar por URL la foto de un bebé. El endpoint de edición es
+  real, no como una URL pegada: a diferencia del `image_url` de LudoDex
+  (la carátula de un juego tiene una fuente externa real, BGG), no
+  existe ningún sitio del que sacar por URL la foto de un bebé. El
+  disco se lee de `config('filesystems.milestones_disk')`
+  (`MILESTONES_DISK` en `.env`), no está fijado a `'public'`: en local
+  es `public` (servido vía `storage:link`), en producción es `s3`
+  apuntando a Cloudflare R2 — el sistema de archivos de Render es
+  efímero, así que un disco local ahí perdería las fotos en cada
+  redeploy (ver "Despliegue" más abajo). El endpoint de edición es
   `POST`, no `PUT`, porque PHP nunca rellena `$_FILES` a partir del
   cuerpo `multipart/form-data` de una petición `PUT`.
 - `app/Services/Sleep/SleepPatternPredictor.php` — predicción de patrones
@@ -96,3 +101,35 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
 Sin worker en segundo plano ni cola persistente por ahora — no hay ninguna
 tarea (import externo, envío de email) que lo necesite todavía. Se
 revisará en cuanto aparezca una.
+
+## Despliegue
+
+Mismo patrón que LudoDex/MIRA MarketLens: Render construye `Dockerfile`
+(root directory `api`, Docker build context el repo raíz) y lo despliega
+en el plan Free. El propio contenedor ejecuta `php artisan migrate --force`
+al arrancar (`docker/entrypoint.sh`), así que un deploy nuevo aplica
+migraciones pendientes solo.
+
+Variables de entorno necesarias en Render:
+
+- `APP_KEY`, `APP_URL` (la URL pública del servicio en Render).
+- `DB_CONNECTION=pgsql` y `DB_HOST`/`DB_PORT`/`DB_DATABASE`/`DB_USERNAME`/
+  `DB_PASSWORD`/`DB_SSLMODE=require` con los datos de Neon. **Usar el host
+  directo de Neon, no el "pooled"** (sin el sufijo `-pooler`): con el
+  pooler (PgBouncer en modo transacción) las migraciones pueden fallar de
+  forma intermitente en vez de mostrar el error real — mismo problema ya
+  documentado en LudoDex.
+- `MILESTONES_DISK=s3` más `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/
+  `AWS_BUCKET`/`AWS_ENDPOINT`/`AWS_URL` de un bucket de Cloudflare R2
+  (compatible con la API S3; `AWS_DEFAULT_REGION=auto` y
+  `AWS_USE_PATH_STYLE_ENDPOINT=true`). Sin esto, las fotos de los hitos
+  desaparecerían en cada redeploy — el disco local de Render no es
+  persistente.
+- `SESSION_DRIVER`/`CACHE_STORE`/`QUEUE_CONNECTION` a `database` (no hay
+  Redis ni *worker* en el plan Free).
+
+El *deploy hook* de Render se dispara desde GitHub Actions
+(`.github/workflows/ci.yml`, secret `RENDER_DEPLOY_HOOK_URL`) tras pasar
+tests/lint/build de ambas apps, no desde el webhook nativo de Render —
+mismo arreglo ya aplicado en LudoDex tras encontrar ahí que el webhook
+nativo se perdía deploys de forma intermitente.

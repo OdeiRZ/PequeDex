@@ -1,5 +1,7 @@
 # PequeDex
 
+[![CI](https://github.com/OdeiRZ/PequeDex/actions/workflows/ci.yml/badge.svg)](https://github.com/OdeiRZ/PequeDex/actions/workflows/ci.yml)
+
 Diario y seguimiento de bebé: tomas, sueño, pañales, hitos y crecimiento,
 compartido en tiempo real entre cuidadores. Nace de una necesidad real (mi
 hija nace en unas semanas) y, como [LudoDex](https://github.com/OdeiRZ/LudoDex),

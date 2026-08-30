@@ -249,3 +249,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   nombre del bebé, con una flecha que indica que se puede abrir. El
   botón de sexo/fecha de nacimiento, al lado, sigue siendo su propio
   control independiente — tocarlo no colapsa ni expande nada.
+
+- CI en rojo por formato (`npx prettier --check src/`, paso "Format
+  check (Prettier)" del job de frontend): dos archivos no cumplían el
+  estilo. La verificación local de cada bloque de trabajo solo pasaba
+  `vue-tsc`, ESLint, Vitest y el build — nunca Prettier en modo
+  comprobación, así que se coló hasta que el CI lo pilló. Arreglado
+  con `npx prettier --write` (cambio puramente cosmético, sin tocar
+  lógica) y confirmado en verde en GitHub Actions.

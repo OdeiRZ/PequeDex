@@ -18,9 +18,17 @@ npm run dev
 npm run dev          # servidor de desarrollo
 npm run build         # type-check (vue-tsc) + build de producción
 npm run lint          # ESLint (con --fix)
-npm run format         # Prettier
+npm run format         # Prettier (con --write)
 npm run test:unit      # Vitest
 ```
+
+El CI corre estos cuatro por separado en el job de frontend, y el de
+formato en modo comprobación (`npx prettier --check src/`, sin
+`--write`) — a diferencia de `npm run format`, ese falla si algo no
+está ya formateado en vez de arreglarlo. Antes de hacer push conviene
+correr `npm run format` (o el `--check` directamente) además de
+`build`/`lint`/`test:unit`: el CI ya falló una vez por esto exactamente
+porque la verificación local solo cubría los otros tres.
 
 ## Estructura relevante
 

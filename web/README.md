@@ -142,6 +142,21 @@ broma, para gemelos de ambos sexos). Sin bebé todavía (login/registro/
 onboarding) no se pone ningún atributo y se ve la paleta neutra
 original (rosa empolvado + verde azulado).
 
+## Notificaciones
+
+`src/stores/toast.ts` + `src/components/ToastNotification.vue`, mismo
+patrón que LudoDex y MIRA MarketLens: un único mensaje sin cola (mostrar
+uno nuevo reemplaza al que hubiera y reinicia el temporizador de 3s),
+montado una vez en `App.vue` para que cualquier vista pueda llamar a
+`toast.show(...)`. Color fijo (no reactivo al tema claro/oscuro): flota
+sobre lo que sea que muestre el dashboard en ese momento, y un tinte
+traslúcido o dependiente del tema no se leería igual de bien sobre
+cualquier fondo. Se usa para confirmar acciones que antes eran
+silenciosas — borrar una entrada, guardar sexo/fecha de nacimiento,
+regenerar el código de invitación, crear o unirse a un bebé — no en los
+registros rápidos, donde la propia hoja cerrándose y la entrada
+apareciendo en su lista ya es confirmación suficiente.
+
 ## Despliegue
 
 En producción ([pequedex.pages.dev](https://pequedex.pages.dev)): Cloudflare

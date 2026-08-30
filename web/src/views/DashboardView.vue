@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore, type BabySex, type DiaperType, type FeedType } from '@/stores/babies'
+import { useToastStore } from '@/stores/toast'
 import ActionBar from '@/components/ActionBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
@@ -15,6 +16,7 @@ import { categoryBg, categoryText, type Category } from '@/lib/category'
 const router = useRouter()
 const auth = useAuthStore()
 const babies = useBabiesStore()
+const toast = useToastStore()
 const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -54,6 +56,7 @@ async function onCreateBaby() {
 
   try {
     await babies.create({ name: babyName.value || undefined, due_date: dueDate.value || undefined })
+    toast.show(t('dashboard.onboarding.toastCreated'))
   } catch {
     createError.value = t('dashboard.onboarding.createError')
   } finally {
@@ -71,6 +74,7 @@ async function onJoinBaby() {
 
   try {
     await babies.join(inviteCodeInput.value)
+    toast.show(t('dashboard.onboarding.toastJoined'))
   } catch {
     joinError.value = t('dashboard.onboarding.joinError')
   } finally {
@@ -276,12 +280,35 @@ function entryTitle(entry: (typeof babies.timeline)[number]): string {
 }
 
 async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
-  if (entry.type === 'feed') {
-    await babies.deleteFeed(entry.data.id)
-  } else if (entry.type === 'sleep') {
-    await babies.deleteSleep(entry.data.id)
-  } else {
-    await babies.deleteDiaperChange(entry.data.id)
+  try {
+    if (entry.type === 'feed') {
+      await babies.deleteFeed(entry.data.id)
+    } else if (entry.type === 'sleep') {
+      await babies.deleteSleep(entry.data.id)
+    } else {
+      await babies.deleteDiaperChange(entry.data.id)
+    }
+    toast.show(t('dashboard.toastRemoved'))
+  } catch {
+    toast.show(t('dashboard.removeError'))
+  }
+}
+
+async function onDeleteGrowthMeasurement(id: number) {
+  try {
+    await babies.deleteGrowthMeasurement(id)
+    toast.show(t('dashboard.toastRemoved'))
+  } catch {
+    toast.show(t('dashboard.removeError'))
+  }
+}
+
+async function onDeleteMilestone(id: number) {
+  try {
+    await babies.deleteMilestone(id)
+    toast.show(t('dashboard.toastRemoved'))
+  } catch {
+    toast.show(t('dashboard.removeError'))
   }
 }
 
@@ -357,8 +384,18 @@ async function onSaveBabySettings() {
       birth_date: babyBirthDate.value || null,
     })
     closeSheet()
+    toast.show(t('dashboard.babySettings.toastSaved'))
   } finally {
     savingBabySettings.value = false
+  }
+}
+
+async function onRegenerateInviteCode() {
+  try {
+    await babies.regenerateInviteCode()
+    toast.show(t('dashboard.toastInviteRegenerated'))
+  } catch {
+    toast.show(t('dashboard.inviteCodeError'))
   }
 }
 
@@ -562,7 +599,7 @@ const sleepPredictionLabel = computed(() => {
               <button
                 type="button"
                 class="text-xs font-semibold underline underline-offset-2"
-                @click="babies.regenerateInviteCode"
+                @click="onRegenerateInviteCode"
               >
                 {{ t('dashboard.regenerateInviteCode') }}
               </button>
@@ -619,7 +656,7 @@ const sleepPredictionLabel = computed(() => {
               :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
             >
               <template #actions>
-                <DeleteButton @click="babies.deleteGrowthMeasurement(measurement.id)" />
+                <DeleteButton @click="onDeleteGrowthMeasurement(measurement.id)" />
               </template>
             </EntryCard>
           </ul>
@@ -645,7 +682,7 @@ const sleepPredictionLabel = computed(() => {
               :photo-alt="milestone.title"
             >
               <template #actions>
-                <DeleteButton @click="babies.deleteMilestone(milestone.id)" />
+                <DeleteButton @click="onDeleteMilestone(milestone.id)" />
               </template>
             </EntryCard>
           </ul>

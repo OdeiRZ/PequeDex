@@ -189,3 +189,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   una mezcla de ambos temas: acento morado/malva en general y un
   degradado azul→rosa explícito en la tarjeta del bebé. Se aplica vía
   `data-sex` en `<html>`, controlado desde `DashboardView.vue`.
+
+- Sistema de notificaciones toast, mismo patrón que LudoDex y MIRA
+  MarketLens (`stores/toast.ts` + `ToastNotification.vue`, un único
+  mensaje sin cola, montado una vez en `App.vue`): confirma acciones
+  que hasta ahora eran silenciosas y sin ningún indicio de si habían
+  funcionado — borrar una toma/sueño/pañal/medida/hito, guardar sexo/
+  fecha de nacimiento, regenerar el código de invitación, y crear o
+  unirse a un bebé. Los registros rápidos (toma/sueño/pañal/medida/
+  hito) no llevan toast: la hoja se cierra y la entrada aparece al
+  momento en su lista, que ya es suficiente confirmación ahí.

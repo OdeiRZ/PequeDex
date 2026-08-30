@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 const auth = useAuthStore()
 
@@ -22,5 +23,6 @@ onMounted(() => {
   <div class="mx-auto flex min-h-screen max-w-md flex-col bg-bg text-text">
     <AppHeader />
     <RouterView />
+    <ToastNotification />
   </div>
 </template>

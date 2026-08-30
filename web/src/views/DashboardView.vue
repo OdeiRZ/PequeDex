@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore, type BabySex, type DiaperType, type FeedType } from '@/stores/babies'
 
 const router = useRouter()
 const auth = useAuthStore()
 const babies = useBabiesStore()
+const { t, locale } = useI18n()
+
+const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
 
 const loading = ref(true)
 
@@ -44,7 +48,7 @@ async function onCreateBaby() {
   try {
     await babies.create({ name: babyName.value || undefined, due_date: dueDate.value || undefined })
   } catch {
-    createError.value = 'No se ha podido crear el bebé.'
+    createError.value = t('dashboard.onboarding.createError')
   } finally {
     creatingBaby.value = false
   }
@@ -61,7 +65,7 @@ async function onJoinBaby() {
   try {
     await babies.join(inviteCodeInput.value)
   } catch {
-    joinError.value = 'Código no válido.'
+    joinError.value = t('dashboard.onboarding.joinError')
   } finally {
     joiningBaby.value = false
   }
@@ -165,26 +169,49 @@ async function onSubmitDiaper() {
   }
 }
 
-const timelineLabels: Record<string, string> = {
-  feed: 'Toma',
-  sleep: 'Sueño',
-  diaper_change: 'Pañal',
-}
+// Backend values (izquierdo/derecho/ambos, mojado/sucio/ambos) stay in
+// Spanish regardless of UI language - they're internal enum values, not
+// display text - so the timeline translates them for display here.
+const sideLabels = computed<Record<string, string>>(() => ({
+  izquierdo: t('dashboard.feedForm.left'),
+  derecho: t('dashboard.feedForm.right'),
+  ambos: t('dashboard.feedForm.both'),
+}))
+
+const diaperTypeLabels = computed<Record<string, string>>(() => ({
+  mojado: t('dashboard.diaperForm.wet'),
+  sucio: t('dashboard.diaperForm.dirty'),
+  ambos: t('dashboard.diaperForm.both'),
+}))
+
+const timelineLabels = computed<Record<string, string>>(() => ({
+  feed: t('dashboard.timeline.feed'),
+  sleep: t('dashboard.timeline.sleep'),
+  diaper_change: t('dashboard.timeline.diaperChange'),
+}))
 
 function entrySummary(entry: (typeof babies.timeline)[number]): string {
   if (entry.type === 'feed') {
-    return entry.data.type === 'biberon'
-      ? `Biberón (${entry.data.amount_ml} ml)`
-      : entry.data.type === 'pecho'
-        ? `Pecho (${entry.data.side})`
-        : 'Sólido'
+    if (entry.data.type === 'biberon') {
+      return t('dashboard.timeline.bottleSummary', { amount: entry.data.amount_ml })
+    }
+    if (entry.data.type === 'pecho') {
+      return t('dashboard.timeline.breastSummary', {
+        side: sideLabels.value[entry.data.side ?? ''] ?? entry.data.side,
+      })
+    }
+    return t('dashboard.timeline.solidSummary')
   }
 
   if (entry.type === 'sleep') {
-    return entry.data.ended_at ? 'Sueño (terminado)' : 'Sueño (en curso)'
+    return entry.data.ended_at
+      ? t('dashboard.timeline.sleepDone')
+      : t('dashboard.timeline.sleepOngoing')
   }
 
-  return `Pañal (${entry.data.type})`
+  return t('dashboard.timeline.diaperSummary', {
+    type: diaperTypeLabels.value[entry.data.type] ?? entry.data.type,
+  })
 }
 
 async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
@@ -264,14 +291,16 @@ async function onSubmitGrowth() {
     })
     showGrowthForm.value = false
   } catch {
-    growthError.value = 'Indica al menos peso, talla o perímetro craneal.'
+    growthError.value = t('dashboard.growthForm.error')
   } finally {
     savingGrowth.value = false
   }
 }
 
 function formatPercentile(value: number | null): string {
-  return value === null ? 'sin percentil' : `percentil ${value}`
+  return value === null
+    ? t('dashboard.growth.noPercentile')
+    : t('dashboard.growth.percentile', { value })
 }
 
 // --- Hitos con foto ---
@@ -318,166 +347,179 @@ const sleepPredictionLabel = computed(() => {
   const prediction = babies.sleepPrediction
 
   if (!prediction || !prediction.has_enough_data) {
-    const sample = prediction?.sample_size ?? 0
-    const minimum = prediction?.minimum_sample_size ?? 3
-    return `Todavía no hay suficientes siestas registradas (${sample}/${minimum}) para estimar un patrón.`
+    return t('dashboard.sleepPrediction.insufficientData', {
+      sample: prediction?.sample_size ?? 0,
+      minimum: prediction?.minimum_sample_size ?? 3,
+    })
   }
 
   if (!prediction.prediction) {
-    return 'No hay suficiente regularidad en los horarios para estimar la siguiente siesta.'
+    return t('dashboard.sleepPrediction.noPattern')
   }
 
-  const at = new Date(prediction.prediction.at).toLocaleString('es-ES')
+  const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
 
   return prediction.prediction.type === 'wake_up'
-    ? `Estimación de despertar: ${at}`
-    : `Estimación de la siguiente siesta: ${at}`
+    ? t('dashboard.sleepPrediction.wakeUp', { at })
+    : t('dashboard.sleepPrediction.nextSleep', { at })
 })
 </script>
 
 <template>
-  <div v-if="loading">Cargando...</div>
+  <div v-if="loading">{{ t('common.loading') }}</div>
 
   <div v-else>
     <header>
-      <h1>PequeDex</h1>
+      <h1>{{ t('app.name') }}</h1>
       <span v-if="auth.user">{{ auth.user.name }}</span>
-      <button type="button" @click="onLogout">Cerrar sesión</button>
+      <button type="button" @click="onLogout">{{ t('common.logout') }}</button>
     </header>
 
     <section v-if="!babies.current">
-      <h2>Crear un bebé</h2>
+      <h2>{{ t('dashboard.onboarding.createTitle') }}</h2>
       <form @submit.prevent="onCreateBaby">
         <div>
-          <label for="baby-name">Nombre (opcional)</label>
+          <label for="baby-name">{{ t('dashboard.onboarding.name') }}</label>
           <input id="baby-name" v-model="babyName" type="text" />
         </div>
         <div>
-          <label for="due-date">Fecha prevista de parto (opcional)</label>
+          <label for="due-date">{{ t('dashboard.onboarding.dueDate') }}</label>
           <input id="due-date" v-model="dueDate" type="date" />
         </div>
         <p v-if="createError" role="alert">{{ createError }}</p>
-        <button type="submit" :disabled="creatingBaby">Crear</button>
+        <button type="submit" :disabled="creatingBaby">
+          {{ t('dashboard.onboarding.create') }}
+        </button>
       </form>
 
-      <h2>O unirme a un bebé existente</h2>
+      <h2>{{ t('dashboard.onboarding.joinTitle') }}</h2>
       <form @submit.prevent="onJoinBaby">
         <div>
-          <label for="invite-code">Código de invitación</label>
+          <label for="invite-code">{{ t('dashboard.onboarding.inviteCode') }}</label>
           <input id="invite-code" v-model="inviteCodeInput" type="text" required />
         </div>
         <p v-if="joinError" role="alert">{{ joinError }}</p>
-        <button type="submit" :disabled="joiningBaby">Unirme</button>
+        <button type="submit" :disabled="joiningBaby">{{ t('dashboard.onboarding.join') }}</button>
       </form>
     </section>
 
     <section v-else>
-      <h2>{{ babies.current.name ?? 'Tu bebé' }}</h2>
+      <h2>{{ babies.current.name ?? t('dashboard.defaultBabyName') }}</h2>
       <p>
-        Código de invitación para el otro cuidador: <strong>{{ inviteCode }}</strong>
+        {{ t('dashboard.inviteCodeLabel') }} <strong>{{ inviteCode }}</strong>
       </p>
-      <button type="button" @click="babies.regenerateInviteCode">Generar nuevo código</button>
-      <button type="button" @click="openBabySettings">Sexo / fecha de nacimiento</button>
+      <button type="button" @click="babies.regenerateInviteCode">
+        {{ t('dashboard.regenerateInviteCode') }}
+      </button>
+      <button type="button" @click="openBabySettings">
+        {{ t('dashboard.babySettingsButton') }}
+      </button>
 
       <form v-if="showBabySettings" @submit.prevent="onSaveBabySettings">
         <div>
-          <label for="baby-sex">Sexo (opcional, solo para el percentil de crecimiento)</label>
+          <label for="baby-sex">{{ t('dashboard.babySettings.sexLabel') }}</label>
           <select id="baby-sex" v-model="babySex">
-            <option value="">Prefiero no decirlo</option>
-            <option value="nino">Niño</option>
-            <option value="nina">Niña</option>
+            <option value="">{{ t('dashboard.babySettings.sexUnknown') }}</option>
+            <option value="nino">{{ t('dashboard.babySettings.sexBoy') }}</option>
+            <option value="nina">{{ t('dashboard.babySettings.sexGirl') }}</option>
           </select>
         </div>
         <div>
-          <label for="baby-birth-date">Fecha de nacimiento (opcional)</label>
+          <label for="baby-birth-date">{{ t('dashboard.babySettings.birthDate') }}</label>
           <input id="baby-birth-date" v-model="babyBirthDate" type="date" />
         </div>
-        <button type="submit" :disabled="savingBabySettings">Guardar</button>
-        <button type="button" @click="showBabySettings = false">Cancelar</button>
+        <button type="submit" :disabled="savingBabySettings">{{ t('common.save') }}</button>
+        <button type="button" @click="showBabySettings = false">{{ t('common.cancel') }}</button>
       </form>
 
       <div>
-        <button type="button" @click="openForm('feed')">+ Toma</button>
-        <button type="button" @click="openForm('sleep')">+ Sueño</button>
-        <button type="button" @click="openForm('diaper')">+ Pañal</button>
-        <button type="button" @click="openGrowthForm">+ Medida</button>
-        <button type="button" @click="openMilestoneForm">+ Hito</button>
+        <button type="button" @click="openForm('feed')">{{ t('dashboard.quickLog.feed') }}</button>
+        <button type="button" @click="openForm('sleep')">
+          {{ t('dashboard.quickLog.sleep') }}
+        </button>
+        <button type="button" @click="openForm('diaper')">
+          {{ t('dashboard.quickLog.diaper') }}
+        </button>
+        <button type="button" @click="openGrowthForm">{{ t('dashboard.quickLog.growth') }}</button>
+        <button type="button" @click="openMilestoneForm">
+          {{ t('dashboard.quickLog.milestone') }}
+        </button>
       </div>
 
       <form v-if="activeForm === 'feed'" @submit.prevent="onSubmitFeed">
         <div>
-          <label for="feed-type">Tipo</label>
+          <label for="feed-type">{{ t('dashboard.feedForm.type') }}</label>
           <select id="feed-type" v-model="feedType">
-            <option value="biberon">Biberón</option>
-            <option value="pecho">Pecho</option>
-            <option value="solido">Sólido</option>
+            <option value="biberon">{{ t('dashboard.feedForm.bottle') }}</option>
+            <option value="pecho">{{ t('dashboard.feedForm.breast') }}</option>
+            <option value="solido">{{ t('dashboard.feedForm.solid') }}</option>
           </select>
         </div>
         <div v-if="feedType === 'pecho'">
-          <label for="feed-side">Lado</label>
+          <label for="feed-side">{{ t('dashboard.feedForm.side') }}</label>
           <select id="feed-side" v-model="feedSide">
-            <option value="izquierdo">Izquierdo</option>
-            <option value="derecho">Derecho</option>
-            <option value="ambos">Ambos</option>
+            <option value="izquierdo">{{ t('dashboard.feedForm.left') }}</option>
+            <option value="derecho">{{ t('dashboard.feedForm.right') }}</option>
+            <option value="ambos">{{ t('dashboard.feedForm.both') }}</option>
           </select>
         </div>
         <div v-if="feedType === 'biberon'">
-          <label for="feed-amount">Cantidad (ml)</label>
+          <label for="feed-amount">{{ t('dashboard.feedForm.amount') }}</label>
           <input id="feed-amount" v-model="feedAmountMl" type="number" min="1" required />
         </div>
         <div>
-          <label for="feed-started-at">Cuándo</label>
+          <label for="feed-started-at">{{ t('dashboard.feedForm.when') }}</label>
           <input id="feed-started-at" v-model="feedStartedAt" type="datetime-local" required />
         </div>
-        <button type="submit" :disabled="savingFeed">Guardar</button>
-        <button type="button" @click="activeForm = null">Cancelar</button>
+        <button type="submit" :disabled="savingFeed">{{ t('common.save') }}</button>
+        <button type="button" @click="activeForm = null">{{ t('common.cancel') }}</button>
       </form>
 
       <form v-if="activeForm === 'sleep'" @submit.prevent="onSubmitSleep">
         <div>
-          <label for="sleep-started-at">Empieza</label>
+          <label for="sleep-started-at">{{ t('dashboard.sleepForm.start') }}</label>
           <input id="sleep-started-at" v-model="sleepStartedAt" type="datetime-local" required />
         </div>
         <div>
-          <label for="sleep-ended-at">Termina (déjalo vacío si sigue durmiendo)</label>
+          <label for="sleep-ended-at">{{ t('dashboard.sleepForm.end') }}</label>
           <input id="sleep-ended-at" v-model="sleepEndedAt" type="datetime-local" />
         </div>
-        <button type="submit" :disabled="savingSleep">Guardar</button>
-        <button type="button" @click="activeForm = null">Cancelar</button>
+        <button type="submit" :disabled="savingSleep">{{ t('common.save') }}</button>
+        <button type="button" @click="activeForm = null">{{ t('common.cancel') }}</button>
       </form>
 
       <form v-if="activeForm === 'diaper'" @submit.prevent="onSubmitDiaper">
         <div>
-          <label for="diaper-type">Tipo</label>
+          <label for="diaper-type">{{ t('dashboard.diaperForm.type') }}</label>
           <select id="diaper-type" v-model="diaperType">
-            <option value="mojado">Mojado</option>
-            <option value="sucio">Sucio</option>
-            <option value="ambos">Ambos</option>
+            <option value="mojado">{{ t('dashboard.diaperForm.wet') }}</option>
+            <option value="sucio">{{ t('dashboard.diaperForm.dirty') }}</option>
+            <option value="ambos">{{ t('dashboard.diaperForm.both') }}</option>
           </select>
         </div>
         <div>
-          <label for="diaper-changed-at">Cuándo</label>
+          <label for="diaper-changed-at">{{ t('dashboard.diaperForm.when') }}</label>
           <input id="diaper-changed-at" v-model="diaperChangedAt" type="datetime-local" required />
         </div>
-        <button type="submit" :disabled="savingDiaper">Guardar</button>
-        <button type="button" @click="activeForm = null">Cancelar</button>
+        <button type="submit" :disabled="savingDiaper">{{ t('common.save') }}</button>
+        <button type="button" @click="activeForm = null">{{ t('common.cancel') }}</button>
       </form>
 
       <form v-if="showGrowthForm" @submit.prevent="onSubmitGrowth">
         <div>
-          <label for="growth-measured-at">Fecha</label>
+          <label for="growth-measured-at">{{ t('dashboard.growthForm.date') }}</label>
           <input id="growth-measured-at" v-model="growthMeasuredAt" type="date" required />
         </div>
         <div>
-          <label for="growth-weight">Peso (gramos)</label>
+          <label for="growth-weight">{{ t('dashboard.growthForm.weight') }}</label>
           <input id="growth-weight" v-model="growthWeightGrams" type="number" min="1" />
         </div>
         <div>
-          <label for="growth-height">Talla (cm)</label>
+          <label for="growth-height">{{ t('dashboard.growthForm.height') }}</label>
           <input id="growth-height" v-model="growthHeightCm" type="number" min="1" step="0.1" />
         </div>
         <div>
-          <label for="growth-head">Perímetro craneal (cm)</label>
+          <label for="growth-head">{{ t('dashboard.growthForm.headCircumference') }}</label>
           <input
             id="growth-head"
             v-model="growthHeadCircumferenceCm"
@@ -487,25 +529,25 @@ const sleepPredictionLabel = computed(() => {
           />
         </div>
         <p v-if="growthError" role="alert">{{ growthError }}</p>
-        <button type="submit" :disabled="savingGrowth">Guardar</button>
-        <button type="button" @click="showGrowthForm = false">Cancelar</button>
+        <button type="submit" :disabled="savingGrowth">{{ t('common.save') }}</button>
+        <button type="button" @click="showGrowthForm = false">{{ t('common.cancel') }}</button>
       </form>
 
       <form v-if="showMilestoneForm" @submit.prevent="onSubmitMilestone">
         <div>
-          <label for="milestone-achieved-at">Fecha</label>
+          <label for="milestone-achieved-at">{{ t('dashboard.milestoneForm.date') }}</label>
           <input id="milestone-achieved-at" v-model="milestoneAchievedAt" type="date" required />
         </div>
         <div>
-          <label for="milestone-title">Título</label>
+          <label for="milestone-title">{{ t('dashboard.milestoneForm.title') }}</label>
           <input id="milestone-title" v-model="milestoneTitle" type="text" required />
         </div>
         <div>
-          <label for="milestone-description">Descripción (opcional)</label>
+          <label for="milestone-description">{{ t('dashboard.milestoneForm.description') }}</label>
           <textarea id="milestone-description" v-model="milestoneDescription"></textarea>
         </div>
         <div>
-          <label for="milestone-photo">Foto (opcional)</label>
+          <label for="milestone-photo">{{ t('dashboard.milestoneForm.photo') }}</label>
           <input
             id="milestone-photo"
             type="file"
@@ -513,27 +555,27 @@ const sleepPredictionLabel = computed(() => {
             @change="onMilestonePhotoChange"
           />
         </div>
-        <button type="submit" :disabled="savingMilestone">Guardar</button>
-        <button type="button" @click="showMilestoneForm = false">Cancelar</button>
+        <button type="submit" :disabled="savingMilestone">{{ t('common.save') }}</button>
+        <button type="button" @click="showMilestoneForm = false">{{ t('common.cancel') }}</button>
       </form>
 
-      <h3>Línea temporal</h3>
+      <h3>{{ t('dashboard.timeline.title') }}</h3>
       <ul>
         <li v-for="entry in babies.timeline" :key="`${entry.type}-${entry.data.id}`">
           <strong>{{ timelineLabels[entry.type] }}</strong> — {{ entrySummary(entry) }} —
-          {{ new Date(entry.at).toLocaleString('es-ES') }}
-          <button type="button" @click="onDeleteEntry(entry)">Borrar</button>
+          {{ new Date(entry.at).toLocaleString(dateLocale) }}
+          <button type="button" @click="onDeleteEntry(entry)">{{ t('common.delete') }}</button>
         </li>
       </ul>
-      <p v-if="babies.timeline.length === 0">Todavía no hay nada registrado.</p>
+      <p v-if="babies.timeline.length === 0">{{ t('dashboard.timeline.empty') }}</p>
 
-      <h3>Sueño: predicción</h3>
+      <h3>{{ t('dashboard.sleepPrediction.title') }}</h3>
       <p>{{ sleepPredictionLabel }}</p>
 
-      <h3>Crecimiento</h3>
+      <h3>{{ t('dashboard.growth.title') }}</h3>
       <ul>
         <li v-for="measurement in babies.growthMeasurements" :key="measurement.id">
-          {{ new Date(measurement.measured_at).toLocaleDateString('es-ES') }} —
+          {{ new Date(measurement.measured_at).toLocaleDateString(dateLocale) }} —
           <span v-if="measurement.weight_grams">
             {{ measurement.weight_grams }} g ({{ formatPercentile(measurement.weight_percentile) }})
           </span>
@@ -541,22 +583,23 @@ const sleepPredictionLabel = computed(() => {
             {{ measurement.height_cm }} cm ({{ formatPercentile(measurement.height_percentile) }})
           </span>
           <span v-if="measurement.head_circumference_cm">
-            perímetro {{ measurement.head_circumference_cm }} cm ({{
+            {{ t('dashboard.growth.headCircumferenceShort') }}
+            {{ measurement.head_circumference_cm }} cm ({{
               formatPercentile(measurement.head_circumference_percentile)
             }})
           </span>
           <button type="button" @click="babies.deleteGrowthMeasurement(measurement.id)">
-            Borrar
+            {{ t('common.delete') }}
           </button>
         </li>
       </ul>
-      <p v-if="babies.growthMeasurements.length === 0">Todavía no hay medidas registradas.</p>
+      <p v-if="babies.growthMeasurements.length === 0">{{ t('dashboard.growth.empty') }}</p>
 
-      <h3>Hitos</h3>
+      <h3>{{ t('dashboard.milestones.title') }}</h3>
       <ul>
         <li v-for="milestone in babies.milestones" :key="milestone.id">
           <strong>{{ milestone.title }}</strong> —
-          {{ new Date(milestone.achieved_at).toLocaleDateString('es-ES') }}
+          {{ new Date(milestone.achieved_at).toLocaleDateString(dateLocale) }}
           <p v-if="milestone.description">{{ milestone.description }}</p>
           <img
             v-if="milestone.photo_url"
@@ -564,10 +607,12 @@ const sleepPredictionLabel = computed(() => {
             :alt="milestone.title"
             width="120"
           />
-          <button type="button" @click="babies.deleteMilestone(milestone.id)">Borrar</button>
+          <button type="button" @click="babies.deleteMilestone(milestone.id)">
+            {{ t('common.delete') }}
+          </button>
         </li>
       </ul>
-      <p v-if="babies.milestones.length === 0">Todavía no hay hitos registrados.</p>
+      <p v-if="babies.milestones.length === 0">{{ t('dashboard.milestones.empty') }}</p>
     </section>
   </div>
 </template>

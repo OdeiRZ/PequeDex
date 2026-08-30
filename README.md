@@ -33,11 +33,11 @@ Repo único con dos aplicaciones independientes, cada una con su propio
   cambio de guardarse en `localStorage` en vez de en una cookie `httpOnly`.
   Aceptado conscientemente: la app no maneja datos financieros ni médicos
   regulados, solo el día a día de una familia.
-- **Español como idioma único, de momento**: a diferencia de LudoDex/MIRA
-  (5 idiomas cada una), esta app la usan solo dos personas que hablan
-  español — añadir `vue-i18n` desde el principio sería trabajo sin usuario
-  real detrás. Si el proyecto se abre a más gente más adelante, se
-  revisará.
+- **Español (por defecto) e inglés**, no los 5 idiomas de LudoDex/MIRA:
+  las dos personas que de verdad usan la app a diario hablan español,
+  así que ese sigue siendo el idioma real de la aplicación — el inglés
+  está para quien la mire desde el portfolio, no porque haya usuarios
+  angloparlantes reales todavía. Si eso cambia, se añaden más idiomas.
 - **Pensada para dos cuidadores sobre los mismos datos**, no un usuario
   aislado: el reto de arquitectura real de esta app está en que dos
   personas (los dos padres) vean y registren lo mismo sin duplicar ni
@@ -60,6 +60,7 @@ Repo único con dos aplicaciones independientes, cada una con su propio
    vez de inventar.
 6. ✅ Pantallas de crecimiento, hitos y predicción de sueño, verificadas
    de punta a punta contra la API real (incluida la subida de una foto).
+7. ✅ Español (por defecto) e inglés, con selector de idioma persistente.
 
 ## Licencia
 

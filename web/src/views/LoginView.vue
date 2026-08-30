@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const email = ref('')
 const password = ref('')
@@ -19,7 +21,7 @@ async function onSubmit() {
     await auth.login({ email: email.value, password: password.value })
     router.push({ name: 'dashboard' })
   } catch {
-    error.value = 'Email o contraseña incorrectos.'
+    error.value = t('auth.login.error')
   } finally {
     submitting.value = false
   }
@@ -28,16 +30,16 @@ async function onSubmit() {
 
 <template>
   <div class="auth-form">
-    <h1>Iniciar sesión</h1>
+    <h1>{{ t('auth.login.title') }}</h1>
 
     <form @submit.prevent="onSubmit">
       <div>
-        <label for="email">Email</label>
+        <label for="email">{{ t('auth.login.email') }}</label>
         <input id="email" v-model="email" type="email" required autocomplete="email" />
       </div>
 
       <div>
-        <label for="password">Contraseña</label>
+        <label for="password">{{ t('auth.login.password') }}</label>
         <input
           id="password"
           v-model="password"
@@ -50,13 +52,13 @@ async function onSubmit() {
       <p v-if="error" role="alert">{{ error }}</p>
 
       <button type="submit" :disabled="submitting">
-        {{ submitting ? 'Entrando...' : 'Entrar' }}
+        {{ submitting ? t('auth.login.submitting') : t('auth.login.submit') }}
       </button>
     </form>
 
     <p>
-      ¿No tienes cuenta?
-      <RouterLink :to="{ name: 'register' }">Regístrate</RouterLink>
+      {{ t('auth.login.noAccount') }}
+      <RouterLink :to="{ name: 'register' }">{{ t('auth.login.registerLink') }}</RouterLink>
     </p>
   </div>
 </template>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const name = ref('')
 const email = ref('')
@@ -26,7 +28,7 @@ async function onSubmit() {
     })
     router.push({ name: 'dashboard' })
   } catch {
-    error.value = 'No se ha podido crear la cuenta.'
+    error.value = t('auth.register.error')
   } finally {
     submitting.value = false
   }
@@ -35,21 +37,21 @@ async function onSubmit() {
 
 <template>
   <div class="auth-form">
-    <h1>Crear cuenta</h1>
+    <h1>{{ t('auth.register.title') }}</h1>
 
     <form @submit.prevent="onSubmit">
       <div>
-        <label for="name">Nombre</label>
+        <label for="name">{{ t('auth.register.name') }}</label>
         <input id="name" v-model="name" type="text" required autocomplete="name" />
       </div>
 
       <div>
-        <label for="email">Email</label>
+        <label for="email">{{ t('auth.register.email') }}</label>
         <input id="email" v-model="email" type="email" required autocomplete="email" />
       </div>
 
       <div>
-        <label for="password">Contraseña</label>
+        <label for="password">{{ t('auth.register.password') }}</label>
         <input
           id="password"
           v-model="password"
@@ -60,7 +62,7 @@ async function onSubmit() {
       </div>
 
       <div>
-        <label for="password_confirmation">Repite la contraseña</label>
+        <label for="password_confirmation">{{ t('auth.register.passwordConfirmation') }}</label>
         <input
           id="password_confirmation"
           v-model="passwordConfirmation"
@@ -73,13 +75,13 @@ async function onSubmit() {
       <p v-if="error" role="alert">{{ error }}</p>
 
       <button type="submit" :disabled="submitting">
-        {{ submitting ? 'Creando cuenta...' : 'Crear cuenta' }}
+        {{ submitting ? t('auth.register.submitting') : t('auth.register.submit') }}
       </button>
     </form>
 
     <p>
-      ¿Ya tienes cuenta?
-      <RouterLink :to="{ name: 'login' }">Inicia sesión</RouterLink>
+      {{ t('auth.register.hasAccount') }}
+      <RouterLink :to="{ name: 'login' }">{{ t('auth.register.loginLink') }}</RouterLink>
     </p>
   </div>
 </template>

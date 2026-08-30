@@ -104,3 +104,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   servida de la foto (`photo_url`) en cualquier instalación por
   defecto. Corregidos ambos en `api/.env.example` y documentados en
   `api/README.md`.
+
+- Español (por defecto) e inglés con `vue-i18n`, en vez de los 5 idiomas
+  de LudoDex/MIRA: las dos personas que usan la app a diario hablan
+  español (sigue siendo el idioma real), el inglés es para quien la
+  mire desde el portfolio. Selector de idioma (`LanguageSwitcher.vue`)
+  visible en cualquier pantalla, con la elección persistida en
+  `localStorage`. Los valores de los enums del backend (lado de la
+  toma, tipo de pañal) se traducen en el punto de uso porque son datos
+  internos en español, no texto de interfaz.

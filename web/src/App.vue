@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const auth = useAuthStore()
 
@@ -18,5 +19,16 @@ onMounted(() => {
 </script>
 
 <template>
+  <div class="language-switcher-slot">
+    <LanguageSwitcher />
+  </div>
   <RouterView />
 </template>
+
+<style scoped>
+.language-switcher-slot {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+</style>

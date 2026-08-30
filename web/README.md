@@ -55,10 +55,20 @@ npm run test:unit      # Vitest
   (crecimiento/hitos/predicción no están en ese sondeo todavía: cambian
   con mucha menos frecuencia que tomas/sueño/pañales).
 
-## Sin idiomas ni diseño todavía
+## Idioma
 
-A diferencia de LudoDex/MIRA, esta SPA no usa `vue-i18n` (ver la nota de
-arquitectura en el README raíz) ni tiene paleta/tipografía propia
-definida — ambas cosas se añadirán cuando haga falta, con las pantallas
-principales ya cerradas y probadas, no como infraestructura previa sin
-pantallas reales detrás.
+`src/i18n.ts` configura `vue-i18n` con español (por defecto) e inglés —
+ver la nota de arquitectura en el README raíz sobre por qué solo estos
+dos, a diferencia de los 5 idiomas de LudoDex/MIRA. `LanguageSwitcher.vue`
+vive en `App.vue` (visible en cualquier pantalla, incluidas login/
+register) y persiste la elección en `localStorage` bajo la clave
+`pequedex_locale`. Los mensajes viven en `src/locales/{es,en}.ts`; los
+valores de los enums del backend (`izquierdo`/`derecho`/`ambos`,
+`mojado`/`sucio`/`ambos`) se traducen en el punto de uso — son valores
+internos en español, no texto de interfaz.
+
+## Sin diseño todavía
+
+Esta SPA no tiene paleta/tipografía propia definida — se añadirá cuando
+haga falta, con las pantallas principales ya cerradas y probadas, no
+como infraestructura previa sin pantallas reales detrás.

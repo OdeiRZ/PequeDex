@@ -95,7 +95,7 @@ export default {
     },
     growthForm: {
       date: 'Fecha',
-      weight: 'Peso (gramos)',
+      weight: 'Peso (kg)',
       height: 'Talla (cm)',
       headCircumference: 'Perímetro craneal (cm)',
       error: 'Indica al menos peso, talla o perímetro craneal.',

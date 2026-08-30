@@ -157,3 +157,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   unirme a un bebé existente" pasa a "O unirme con un código de
   invitación" (mismo cambio en inglés). Encontrado probando la app ya
   desplegada, no en desarrollo.
+
+- El formulario de "+ Medida" pedía el peso en gramos como número
+  entero (`min="1"`, sin `step`), lo que en la práctica obligaba a
+  reescribir la cifra entera cada vez en vez de ajustarla poco a poco.
+  Ahora pide el peso en kg con `step="0.1"` (mismo patrón que talla y
+  perímetro craneal), y la línea temporal de crecimiento también
+  muestra el peso en kg en vez de gramos. El contrato con la API no
+  cambia: sigue enviando/guardando `weight_grams` como entero, la
+  conversión kg↔gramos se hace solo en el frontend.

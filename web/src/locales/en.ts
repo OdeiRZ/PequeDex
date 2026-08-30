@@ -95,7 +95,7 @@ export default {
     },
     growthForm: {
       date: 'Date',
-      weight: 'Weight (grams)',
+      weight: 'Weight (kg)',
       height: 'Height (cm)',
       headCircumference: 'Head circumference (cm)',
       error: 'Enter at least weight, height or head circumference.',

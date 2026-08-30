@@ -121,7 +121,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     diaperChangedAt.value = nowForInput()
   } else if (sheet === 'growth') {
     growthMeasuredAt.value = new Date().toISOString().slice(0, 10)
-    growthWeightGrams.value = ''
+    growthWeightKg.value = ''
     growthHeightCm.value = ''
     growthHeadCircumferenceCm.value = ''
     growthError.value = null
@@ -320,7 +320,7 @@ async function onSaveBabySettings() {
 // nacimiento. ---
 
 const growthMeasuredAt = ref('')
-const growthWeightGrams = ref('')
+const growthWeightKg = ref('')
 const growthHeightCm = ref('')
 const growthHeadCircumferenceCm = ref('')
 const savingGrowth = ref(false)
@@ -333,7 +333,9 @@ async function onSubmitGrowth() {
   try {
     await babies.createGrowthMeasurement({
       measured_at: growthMeasuredAt.value,
-      weight_grams: growthWeightGrams.value ? Number(growthWeightGrams.value) : undefined,
+      weight_grams: growthWeightKg.value
+        ? Math.round(Number(growthWeightKg.value) * 1000)
+        : undefined,
       height_cm: growthHeightCm.value ? Number(growthHeightCm.value) : undefined,
       head_circumference_cm: growthHeadCircumferenceCm.value
         ? Number(growthHeadCircumferenceCm.value)
@@ -357,7 +359,8 @@ function growthTitle(measurement: (typeof babies.growthMeasurements)[number]): s
   const parts: string[] = []
 
   if (measurement.weight_grams) {
-    parts.push(`${measurement.weight_grams} g (${formatPercentile(measurement.weight_percentile)})`)
+    const weightKg = parseFloat((measurement.weight_grams / 1000).toFixed(2))
+    parts.push(`${weightKg} kg (${formatPercentile(measurement.weight_percentile)})`)
   }
   if (measurement.height_cm) {
     parts.push(`${measurement.height_cm} cm (${formatPercentile(measurement.height_percentile)})`)
@@ -772,9 +775,10 @@ const sleepPredictionLabel = computed(() => {
             }}</label>
             <input
               id="growth-weight"
-              v-model="growthWeightGrams"
+              v-model="growthWeightKg"
               type="number"
-              min="1"
+              min="0.1"
+              step="0.1"
               class="field-input"
             />
           </div>

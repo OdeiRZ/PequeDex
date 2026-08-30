@@ -104,11 +104,15 @@ revisará en cuanto aparezca una.
 
 ## Despliegue
 
-Mismo patrón que LudoDex/MIRA MarketLens: Render construye `Dockerfile`
-(root directory `api`, Docker build context el repo raíz) y lo despliega
-en el plan Free. El propio contenedor ejecuta `php artisan migrate --force`
-al arrancar (`docker/entrypoint.sh`), así que un deploy nuevo aplica
-migraciones pendientes solo.
+En producción ([pequedex-0phw.onrender.com](https://pequedex-0phw.onrender.com)):
+mismo patrón que LudoDex/MIRA MarketLens. Render construye `Dockerfile`
+con **Root Directory = `api`** (así el contexto de build es este directorio,
+donde vive el propio `Dockerfile` y `composer.json`) y lo despliega en el
+plan Free. El propio contenedor ejecuta `php artisan migrate --force` al
+arrancar (`docker/entrypoint.sh`), así que un deploy nuevo aplica
+migraciones pendientes solo. Auto-Deploy nativo de Render desactivado
+(`Off`): el único disparador es el *deploy hook* desde GitHub Actions (ver
+más abajo).
 
 Variables de entorno necesarias en Render:
 

@@ -107,3 +107,18 @@ verse bien en una captura:
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal
   cual en el código fuente.
+
+## Despliegue
+
+En producción ([pequedex.pages.dev](https://pequedex.pages.dev)): Cloudflare
+Pages con framework preset "Vue" (`npm run build`, output `dist`), **Root
+directory = `web`** (repo raíz es un monorepo con `api/` al lado). Variable
+de entorno de build `VITE_API_URL` apuntando a la API real en Render.
+Vue Router va en modo `history` (URLs sin `#`) pero **no hace falta un
+`_redirects` con `/* /index.html 200`**: Cloudflare Pages sirve `index.html`
+como *fallback* de SPA automáticamente para cualquier ruta sin archivo
+estático que coincida — un `_redirects` explícito con ese patrón, de
+hecho, dispara un aviso de "bucle infinito" en el build (fue probado y
+retirado). Auto-deploy nativo de Cloudflare Pages sí queda activo (a
+diferencia de la API en Render): aquí no hay el problema de webhook
+perdido que forzó el *deploy hook* vía GitHub Actions en el lado de la API.

@@ -127,3 +127,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   Diseñado primero como propuesta visual (paleta, tipografía, layout) y
   aprobado antes de tocar el código real. Verificado de punta a punta en
   el navegador en ambos temas e idiomas.
+
+- Despliegue real: API en [Render](https://render.com) (Docker, Frankfurt)
+  + Postgres en [Neon](https://neon.tech) (Londres) + fotos de hitos en
+  [Cloudflare R2](https://developers.cloudflare.com/r2/) + frontend en
+  [Cloudflare Pages](https://pages.cloudflare.com), mismo patrón que
+  LudoDex/MIRA MarketLens. El *deploy hook* de Render se dispara desde
+  GitHub Actions tras pasar tests/lint/build (`RENDER_DEPLOY_HOOK_URL`),
+  no desde su webhook nativo — mismo arreglo que ya hizo falta en LudoDex.
+  Verificado de punta a punta contra los servicios reales: registro,
+  crear un bebé, y subida de una foto de hito que efectivamente aparece
+  servida desde el dominio público de R2.
+
+- Un `_redirects` con `/* /index.html 200` para el *fallback* de SPA en
+  Cloudflare Pages resultó innecesario y, de hecho, activo un aviso de
+  "bucle infinito" durante el build (Cloudflare ya sirve `index.html`
+  para cualquier ruta sin archivo estático automáticamente) — probado
+  contra el despliegue real y retirado del repo.

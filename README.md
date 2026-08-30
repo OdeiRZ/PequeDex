@@ -8,6 +8,12 @@ hija nace en unas semanas) y, como [LudoDex](https://github.com/OdeiRZ/LudoDex),
 está pensada primero para uso personal y abierta a que cualquiera lleve el
 suyo.
 
+**En vivo**: [pequedex.pages.dev](https://pequedex.pages.dev) (frontend,
+Cloudflare Pages) — [pequedex-0phw.onrender.com](https://pequedex-0phw.onrender.com)
+(API, Render). Ambos en capa gratuita: la API "duerme" tras un rato de
+inactividad y el primer request tras el sueño puede tardar ~50s en
+responder mientras arranca de nuevo.
+
 **Proyecto recién empezado** — este README se irá ampliando a medida que
 avancen los hitos. Ver [CHANGELOG.md](CHANGELOG.md) para el detalle de cada
 uno.
@@ -66,6 +72,12 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 8. ✅ Identidad visual propia (Tailwind CSS, mobile-first con barra de
    acciones y hojas inferiores), pensada para registrar con una mano de
    madrugada, no para una captura de pantalla.
+9. ✅ Despliegue real: API en [Render](https://render.com) (Docker,
+   Frankfurt) + Postgres en [Neon](https://neon.tech) (Londres) + fotos de
+   hitos en [Cloudflare R2](https://developers.cloudflare.com/r2/) +
+   frontend en [Cloudflare Pages](https://pages.cloudflare.com). Verificado
+   de punta a punta contra los servicios reales (registro, crear un bebé,
+   subir la foto de un hito) tras el despliegue.
 
 ## Licencia
 

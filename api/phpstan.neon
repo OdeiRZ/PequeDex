@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - bootstrap
+        - config
+        - database
+        - routes
+
+    level: 5
+
+    # Needed so Larastan reads casts() method return arrays (Laravel 11+
+    # convention) instead of inferring `array` and treating cast attributes
+    # as plain strings.
+    parseModelCastsMethod: true
+
+    excludePaths:
+        - bootstrap/cache

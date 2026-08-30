@@ -301,6 +301,20 @@ const babySexOptions = computed(() => [
   { value: 'nina' as const, label: t('dashboard.babySettings.sexGirl') },
 ])
 
+const babySettingsButtonLabel = computed(() => {
+  if (!babies.current) return t('dashboard.babySettingsButton')
+
+  const parts: string[] = []
+
+  if (babies.current.sex === 'nino') parts.push(t('dashboard.babySettings.sexBoy'))
+  if (babies.current.sex === 'nina') parts.push(t('dashboard.babySettings.sexGirl'))
+  if (babies.current.birth_date) {
+    parts.push(new Date(babies.current.birth_date).toLocaleDateString(dateLocale.value))
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : t('dashboard.babySettingsButton')
+})
+
 async function onSaveBabySettings() {
   savingBabySettings.value = true
 
@@ -503,7 +517,7 @@ const sleepPredictionLabel = computed(() => {
               class="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold"
               @click="openSheet('settings')"
             >
-              {{ t('dashboard.babySettingsButton') }}
+              {{ babySettingsButtonLabel }}
             </button>
           </div>
           <div

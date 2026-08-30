@@ -166,3 +166,9 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   muestra el peso en kg en vez de gramos. El contrato con la API no
   cambia: sigue enviando/guardando `weight_grams` como entero, la
   conversión kg↔gramos se hace solo en el frontend.
+
+- El botón "Sexo / fecha de nacimiento" de la tarjeta del bebé se
+  quedaba igual una vez guardados esos datos, sin ningún indicio visual
+  de qué había configurado. Ahora el propio botón muestra el valor
+  guardado (p. ej. "Niña · 7/9/2026") en vez del texto genérico, y
+  sigue abriendo el mismo ajuste al pulsarlo.

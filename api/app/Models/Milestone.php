@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\MilestoneCategory;
 use Database\Factories\MilestoneFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
 class Milestone extends Model
@@ -14,7 +16,7 @@ class Milestone extends Model
     /** @use HasFactory<MilestoneFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'achieved_at', 'title', 'description', 'photo_path'];
+    protected $fillable = ['baby_id', 'user_id', 'achieved_at', 'title', 'category', 'description', 'photo_path'];
 
     /**
      * @return array<string, string>
@@ -23,6 +25,7 @@ class Milestone extends Model
     {
         return [
             'achieved_at' => 'date:Y-m-d',
+            'category' => MilestoneCategory::class,
         ];
     }
 
@@ -53,5 +56,20 @@ class Milestone extends Model
     public function loggedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Caregivers who reacted to this milestone - a single toggleable
+     * like per person, not a set of emoji to pick from (see
+     * milestone_likes' own migration). Whether *the current* user is
+     * among them is left for the frontend to check against auth.user.id
+     * rather than a model-level accessor, since a model has no notion of
+     * "who's asking".
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function likedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'milestone_likes')->withTimestamps();
     }
 }

@@ -60,15 +60,25 @@ export interface GrowthMeasurement {
   head_circumference_percentile: number | null
 }
 
+export type MilestoneCategory = 'sonrisa' | 'diente' | 'pasos' | 'palabra' | 'otro'
+
+export interface MilestoneLike {
+  id: number
+  name: string
+  avatar: string | null
+}
+
 export interface Milestone {
   id: number
   baby_id: number
   user_id: number
   achieved_at: string
   title: string
+  category: MilestoneCategory | null
   description: string | null
   photo_path: string | null
   photo_url: string | null
+  liked_by: MilestoneLike[]
 }
 
 export interface SleepPrediction {
@@ -117,6 +127,7 @@ interface CreateGrowthMeasurementPayload {
 interface CreateMilestonePayload {
   achieved_at: string
   title: string
+  category?: MilestoneCategory | null
   description?: string | null
   photo?: File | null
 }
@@ -124,6 +135,7 @@ interface CreateMilestonePayload {
 interface UpdateMilestonePayload {
   achieved_at: string
   title: string
+  category?: MilestoneCategory | null
   description?: string | null
   photo?: File | null
   removePhoto?: boolean
@@ -255,6 +267,9 @@ export const useBabiesStore = defineStore('babies', {
       const form = new FormData()
       form.append('achieved_at', payload.achieved_at)
       form.append('title', payload.title)
+      if (payload.category) {
+        form.append('category', payload.category)
+      }
       if (payload.description) {
         form.append('description', payload.description)
       }
@@ -276,6 +291,9 @@ export const useBabiesStore = defineStore('babies', {
       const form = new FormData()
       form.append('achieved_at', payload.achieved_at)
       form.append('title', payload.title)
+      if (payload.category) {
+        form.append('category', payload.category)
+      }
       if (payload.description) {
         form.append('description', payload.description)
       }
@@ -288,6 +306,13 @@ export const useBabiesStore = defineStore('babies', {
       await apiClient.post(`/babies/${this.current!.id}/milestones/${id}`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+      await this.fetchMilestones()
+    },
+
+    // A single toggle endpoint, not separate like/unlike actions - the
+    // backend flips whatever the current user's state already is.
+    async toggleMilestoneLike(id: number) {
+      await apiClient.post(`/babies/${this.current!.id}/milestones/${id}/like`)
       await this.fetchMilestones()
     },
 

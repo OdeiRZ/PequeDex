@@ -125,11 +125,32 @@ export default {
     milestoneForm: {
       editTitle: 'Edit milestone',
       date: 'Date',
+      category: 'Milestone type',
       title: 'Title',
       description: 'Description (optional)',
       photo: 'Photo (optional)',
       removePhoto: 'Remove photo',
       toastUpdated: 'Milestone updated.',
+      categories: {
+        sonrisa: 'First smile',
+        diente: 'First tooth',
+        pasos: 'First steps',
+        palabra: 'First word',
+        otro: 'Other',
+      },
+      categoryTitles: {
+        sonrisa: 'First smile',
+        diente: 'First tooth',
+        pasos: 'First steps',
+        palabra: 'First word',
+      },
+      categoryPrompts: {
+        sonrisa: 'When and where was it? How did it feel?',
+        diente: 'Which tooth was it? How did they handle it?',
+        pasos: 'How many steps? Where did it happen?',
+        palabra: 'What was the word? Who did they say it to?',
+        otro: 'Tell us what happened (optional)',
+      },
     },
     timeline: {
       title: 'Timeline',
@@ -161,6 +182,13 @@ export default {
     milestones: {
       title: 'Milestones',
       empty: 'No milestones logged yet.',
+      like: 'Love this',
+      liked: 'You love this',
+      likeError: 'Could not save the reaction.',
+      previous: 'Previous milestone',
+      next: 'Next milestone',
+      close: 'Close',
+      counter: '{current} of {total}',
     },
   },
   language: {

@@ -8,6 +8,7 @@ use App\Http\Requests\Milestones\UpdateMilestoneRequest;
 use App\Models\Baby;
 use App\Models\Milestone;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class MilestoneController extends Controller
@@ -16,7 +17,9 @@ class MilestoneController extends Controller
     {
         $this->authorize('view', $baby);
 
-        return response()->json(['data' => $baby->milestones()->orderByDesc('achieved_at')->get()]);
+        return response()->json([
+            'data' => $baby->milestones()->with('likedBy')->orderByDesc('achieved_at')->get(),
+        ]);
     }
 
     public function store(StoreMilestoneRequest $request, Baby $baby): JsonResponse
@@ -26,6 +29,7 @@ class MilestoneController extends Controller
         $milestone = $baby->milestones()->create([
             'achieved_at' => $request->validated('achieved_at'),
             'title' => $request->validated('title'),
+            'category' => $request->validated('category'),
             'description' => $request->validated('description'),
             'user_id' => $request->user()->id,
             'photo_path' => $request->hasFile('photo')
@@ -33,7 +37,7 @@ class MilestoneController extends Controller
                 : null,
         ]);
 
-        return response()->json(['data' => $milestone], 201);
+        return response()->json(['data' => $milestone->load('likedBy')], 201);
     }
 
     public function update(UpdateMilestoneRequest $request, Baby $baby, int $milestone): JsonResponse
@@ -45,6 +49,7 @@ class MilestoneController extends Controller
         $attributes = [
             'achieved_at' => $request->validated('achieved_at'),
             'title' => $request->validated('title'),
+            'category' => $request->validated('category'),
             'description' => $request->validated('description'),
         ];
 
@@ -58,7 +63,7 @@ class MilestoneController extends Controller
 
         $milestoneModel->update($attributes);
 
-        return response()->json(['data' => $milestoneModel]);
+        return response()->json(['data' => $milestoneModel->load('likedBy')]);
     }
 
     public function destroy(Baby $baby, int $milestone): JsonResponse
@@ -70,6 +75,24 @@ class MilestoneController extends Controller
         $milestoneModel->delete();
 
         return response()->json(status: 204);
+    }
+
+    // A single toggle, not separate like/unlike routes - the caller
+    // doesn't need to know its own current state first, it just flips it.
+    public function toggleLike(Request $request, Baby $baby, int $milestone): JsonResponse
+    {
+        $this->authorize('view', $baby);
+
+        $milestoneModel = $baby->milestones()->findOrFail($milestone);
+        $user = $request->user();
+
+        if ($milestoneModel->likedBy()->where('user_id', $user->id)->exists()) {
+            $milestoneModel->likedBy()->detach($user->id);
+        } else {
+            $milestoneModel->likedBy()->attach($user->id);
+        }
+
+        return response()->json(['data' => $milestoneModel->load('likedBy')]);
     }
 
     private function deleteExistingPhoto(Milestone $milestone): void

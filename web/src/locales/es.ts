@@ -125,11 +125,32 @@ export default {
     milestoneForm: {
       editTitle: 'Editar hito',
       date: 'Fecha',
+      category: 'Tipo de hito',
       title: 'Título',
       description: 'Descripción (opcional)',
       photo: 'Foto (opcional)',
       removePhoto: 'Quitar foto',
       toastUpdated: 'Hito actualizado.',
+      categories: {
+        sonrisa: 'Primera sonrisa',
+        diente: 'Primer diente',
+        pasos: 'Primeros pasos',
+        palabra: 'Primera palabra',
+        otro: 'Otro',
+      },
+      categoryTitles: {
+        sonrisa: 'Primera sonrisa',
+        diente: 'Primer diente',
+        pasos: 'Primeros pasos',
+        palabra: 'Primera palabra',
+      },
+      categoryPrompts: {
+        sonrisa: '¿Cuándo y dónde fue? ¿Cómo os sentisteis?',
+        diente: '¿Qué diente fue? ¿Cómo lo llevó?',
+        pasos: '¿Cuántos pasos dio? ¿Dónde fue?',
+        palabra: '¿Cuál fue la palabra? ¿A quién se la dijo?',
+        otro: 'Cuéntanos qué pasó (opcional)',
+      },
     },
     timeline: {
       title: 'Línea temporal',
@@ -162,6 +183,13 @@ export default {
     milestones: {
       title: 'Hitos',
       empty: 'Todavía no hay hitos registrados.',
+      like: 'Me encanta',
+      liked: 'Te encanta',
+      likeError: 'No se ha podido guardar la reacción.',
+      previous: 'Hito anterior',
+      next: 'Hito siguiente',
+      close: 'Cerrar',
+      counter: '{current} de {total}',
     },
   },
   language: {

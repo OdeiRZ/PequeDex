@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Milestones;
 
+use App\Enums\MilestoneCategory;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreMilestoneRequest extends FormRequest
 {
@@ -22,6 +24,7 @@ class StoreMilestoneRequest extends FormRequest
         return [
             'achieved_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', Rule::enum(MilestoneCategory::class)],
             'description' => ['nullable', 'string'],
             // No external source for a baby's own photo (unlike e.g.
             // LudoDex's BGG-sourced game covers) - a real upload, not a

@@ -2,10 +2,13 @@
 import CategoryIcon from './CategoryIcon.vue'
 import DeleteButton from './DeleteButton.vue'
 import { categoryText, categoryBg } from '@/lib/category'
+import { milestoneCategoryEmoji } from '@/lib/milestoneCategory'
+import type { MilestoneCategory } from '@/stores/babies'
 
-defineProps<{
+const props = defineProps<{
   title: string
   meta: string
+  category?: MilestoneCategory | null
   description?: string | null
   photoSrc?: string | null
   photoAlt?: string
@@ -15,7 +18,13 @@ defineEmits<{ open: []; delete: [] }>()
 </script>
 
 <template>
-  <li class="overflow-hidden rounded-2xl bg-surface shadow-sm">
+  <li class="relative overflow-hidden rounded-2xl bg-surface shadow-sm">
+    <span
+      v-if="category"
+      class="absolute top-2 left-2 z-10 grid h-7 w-7 place-items-center rounded-full bg-surface/90 text-base shadow-sm"
+    >
+      {{ milestoneCategoryEmoji[category] }}
+    </span>
     <button type="button" class="block w-full" @click="$emit('open')">
       <img
         v-if="photoSrc"
@@ -25,10 +34,16 @@ defineEmits<{ open: []; delete: [] }>()
       />
       <div
         v-else
-        class="flex aspect-[4/3] w-full items-center justify-center"
+        class="flex aspect-[4/3] w-full items-center justify-center text-4xl"
         :class="categoryBg.milestone"
       >
-        <CategoryIcon category="milestone" class="h-10 w-10" :class="categoryText.milestone" />
+        <span v-if="props.category">{{ milestoneCategoryEmoji[props.category] }}</span>
+        <CategoryIcon
+          v-else
+          category="milestone"
+          class="h-10 w-10"
+          :class="categoryText.milestone"
+        />
       </div>
     </button>
 

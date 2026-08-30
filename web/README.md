@@ -153,22 +153,44 @@ verse bien en una captura:
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal
   cual en el código fuente.
-- **`MilestoneCard.vue`** — los hitos no usan `EntryCard`: una miniatura
-  de 40×40px no dejaba ver la foto ni había forma de abrirla más
-  grande. En su lugar, una cuadrícula de dos columnas con la foto a
-  tamaño de tarjeta (formato 4:3; sin foto, un icono de estrella ocupa
-  su sitio) que al tocarla abre una hoja de detalle (`viewingMilestone`
-  en `DashboardView.vue`, no la misma hoja que el formulario de "+
-  Hito") con la foto a tamaño completo, título, fecha y la descripción
-  entera. `BottomSheet.vue` lleva `max-h-[85vh]` con scroll propio por
-  esto mismo — una foto grande puede superar la altura de la pantalla.
-  Su botón "Editar" reutiliza el mismo formulario de "+ Hito"
-  (`openMilestoneEdit()` precarga fecha/título/descripción/foto y pone
-  `activeSheet = 'milestone'` directamente, sin pasar por el reseteo a
-  vacío de `openSheet('milestone')`) en vez de un formulario de edición
-  aparte — es el único de los cinco registros que se puede editar
-  desde la UI: el backend ya tenía los cinco endpoints `update`
-  construidos y probados, pero el frontend nunca llamaba a ninguno.
+- **Hitos como diario interactivo** — los hitos no usan `EntryCard`, y su
+  detalle ya no es una `BottomSheet` más: es el único de los cinco
+  registros con categoría, reacciones y un visor propio a pantalla
+  completa, porque es el único pensado para volver a mirarlo, no solo
+  para consultarlo.
+  - **`MilestoneCard.vue`** — cuadrícula de dos columnas con la foto a
+    tamaño de tarjeta (formato 4:3). El emoji de la categoría
+    (`src/lib/milestoneCategory.ts`, tabla de búsqueda literal —
+    mismo motivo que `category.ts` para las clases de Tailwind) se ve
+    como insignia sobre la miniatura, y ocupa el sitio de la foto
+    cuando no hay ninguna, en vez del icono de estrella genérico de
+    antes.
+  - **Formulario guiado, no en blanco** — "+ Hito" pide primero la
+    categoría como chips (no `SegmentedControl.vue`: sus columnas
+    iguales no dejan sitio a 5 etiquetas en español en un móvil de
+    360px). Elegir una sugiere un título (`selectMilestoneCategory()`
+    en `DashboardView.vue`, que solo sobrescribe el título si sigue
+    vacío o es su propia sugerencia anterior — nunca pisa lo que el
+    usuario ya escribió) y cambia el *placeholder* de la descripción a
+    una pregunta concreta por categoría
+    (`dashboard.milestoneForm.categoryPrompts.*` en los locales).
+  - **`MilestoneStoryViewer.vue`** — pantalla completa, no una hoja:
+    foto sin recortar (`object-contain`) o un degradado del color de
+    "hito" con el emoji de la categoría en grande si no hay foto.
+    Navegación entre hitos por gesto (`touchstart`/`touchend`, sin
+    librería), flechas y teclado (←/→/Escape). `DashboardView.vue`
+    guarda el id del hito que se ve (`viewingMilestoneId`), no el
+    objeto — un `computed` lo busca en `babies.milestones` en cada
+    render, así que sobrevive a un refetch (tras dar un "me encanta") y
+    se cierra solo si el id deja de existir en la lista (borrado desde
+    el otro cuidador). Reutiliza `bodyScrollLock.ts`. Su botón "Editar"
+    reutiliza el mismo formulario de "+ Hito" (`openMilestoneEdit()`),
+    precargado con los datos actuales incluida la categoría.
+  - **Reacciones** — un corazón en el visor llama a
+    `babies.toggleMilestoneLike()`, que sigue el mismo patrón de
+    "refetch tras mutar" que el resto del store. Quién ha reaccionado
+    se ve como una pila de `UserAvatar.vue` con sus nombres debajo del
+    corazón.
 
 ## Marca de la pestaña
 

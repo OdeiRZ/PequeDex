@@ -68,6 +68,38 @@ it('creates a milestone with a photo, stored on the public disk', function () {
     expect($response->json('data.photo_url'))->toContain($path);
 });
 
+it('creates a milestone with a category', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-30',
+        'title' => 'Primeros pasos',
+        'category' => 'pasos',
+    ])->assertCreated()->assertJsonPath('data.category', 'pasos');
+});
+
+it('rejects an invalid category', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-30',
+        'title' => 'Primeros pasos',
+        'category' => 'no-existe',
+    ])->assertUnprocessable()->assertJsonValidationErrors('category');
+});
+
+it('allows a milestone with no category at all', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-30',
+        'title' => 'Algo especial',
+    ])->assertCreated()->assertJsonPath('data.category', null);
+});
+
 it('rejects a non-image file as the photo', function () {
     $user = actingAsUser();
     $baby = babyForMilestoneTest($user);
@@ -144,4 +176,43 @@ it('rejects any access to milestones for a baby the user is not linked to', func
     $baby = babyForMilestoneTest($other);
 
     $this->getJson("/api/babies/{$baby->id}/milestones")->assertForbidden();
+});
+
+it('toggles a like on and off for the current user', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+    $milestone = Milestone::factory()->for($baby)->for($user, 'loggedBy')->create();
+
+    $liked = $this->postJson("/api/babies/{$baby->id}/milestones/{$milestone->id}/like");
+    $liked->assertOk()->assertJsonPath('data.liked_by.0.id', $user->id);
+    expect($milestone->likedBy()->count())->toBe(1);
+
+    $unliked = $this->postJson("/api/babies/{$baby->id}/milestones/{$milestone->id}/like");
+    $unliked->assertOk()->assertJsonCount(0, 'data.liked_by');
+    expect($milestone->likedBy()->count())->toBe(0);
+});
+
+it('lets a caregiver see the other caregiver\'s like', function () {
+    $owner = actingAsUser();
+    $baby = babyForMilestoneTest($owner);
+    $milestone = Milestone::factory()->for($baby)->for($owner, 'loggedBy')->create();
+
+    $partner = User::factory()->create(['name' => 'Partner']);
+    $baby->users()->attach($partner);
+    $this->actingAs($partner, 'sanctum');
+    $this->postJson("/api/babies/{$baby->id}/milestones/{$milestone->id}/like")->assertOk();
+
+    $this->actingAs($owner, 'sanctum');
+    $this->getJson("/api/babies/{$baby->id}/milestones")
+        ->assertOk()
+        ->assertJsonPath('data.0.liked_by.0.name', 'Partner');
+});
+
+it('rejects liking a milestone for a baby the user is not linked to', function () {
+    actingAsUser();
+    $other = User::factory()->create();
+    $baby = babyForMilestoneTest($other);
+    $milestone = Milestone::factory()->for($baby)->for($other, 'loggedBy')->create();
+
+    $this->postJson("/api/babies/{$baby->id}/milestones/{$milestone->id}/like")->assertForbidden();
 });

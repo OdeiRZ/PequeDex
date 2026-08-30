@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Milestones;
 
+use App\Enums\MilestoneCategory;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateMilestoneRequest extends FormRequest
 {
@@ -22,6 +24,7 @@ class UpdateMilestoneRequest extends FormRequest
         return [
             'achieved_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', Rule::enum(MilestoneCategory::class)],
             'description' => ['nullable', 'string'],
             'photo' => ['nullable', 'image', 'max:8192'],
             // Explicit removal, distinct from "no new file chosen" (which

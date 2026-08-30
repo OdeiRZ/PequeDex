@@ -335,3 +335,44 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   un enlace de "Quitar foto" antes del selector de archivo. El resto
   de registros (toma/sueño/pañal/medida) se queda sin editar por
   ahora — solo se pidió esto para hitos.
+
+- Hitos reimaginados como un diario interactivo, no un formulario y una
+  cuadrícula genéricos: el detalle de un hito era el mismo `BottomSheet`
+  que cualquier otro registro, y así se sentía como una fila de lista
+  más en vez de un recuerdo. Cuatro cambios juntos, pensados como una
+  sola revisión de la funcionalidad:
+  - **Categoría**: `Milestone` gana un campo `category` opcional (enum
+    `App\Enums\MilestoneCategory`: sonrisa/diente/pasos/palabra/otro,
+    nullable — "otro" es una elección real, no el valor por defecto de
+    "nadie eligió nada"). El formulario de "+ Hito" la pide primero,
+    como chips con su propio emoji (no `SegmentedControl.vue`: sus
+    columnas iguales no dejan sitio a 5 etiquetas en español en un móvil
+    de 360px), y elegir una sugiere un título y cambia el *placeholder*
+    de la descripción a una pregunta concreta ("¿Cuándo y dónde fue?
+    ¿Cómo os sentisteis?" para sonrisa, etc.) — sin bloquear el título
+    si se prefiere escribir otra cosa. `MilestoneCard.vue` muestra el
+    emoji como insignia sobre la miniatura, y lo reutiliza como icono de
+    "sin foto" en vez de la estrella genérica de antes.
+  - **Reacciones**: cualquier cuidador vinculado puede dar o quitar un
+    "me encanta" a un hito (`POST /babies/{baby}/milestones/{milestone}/like`,
+    un único toggle, no rutas separadas de like/unlike) — tabla pivote
+    pura `milestone_likes`, mismo patrón sin `id` que `baby_user`. Se
+    autoriza con `authorize('view', $baby)`, no `'update'`: reaccionar
+    es una interacción ligera que cualquiera con acceso al bebé debería
+    poder hacer, no una edición del hito.
+  - **Visor a pantalla completa estilo "stories"**: sustituye la hoja de
+    detalle. Foto a tamaño completo sin recortar (`object-contain`, no
+    `object-cover` — aquí sí importa no perder parte de la foto), o un
+    degradado del color de "hito" con el emoji de su categoría en
+    grande cuando no hay foto. Navegación entre hitos por gesto de
+    deslizar (`touchstart`/`touchend`, sin librería), flechas visibles,
+    y teclado (flechas y Escape) — se guarda el id del hito que se está
+    viendo, no el objeto, para que sobreviva a un refetch de la lista
+    (tras dar un "me encanta", por ejemplo) y se cierre solo si el hito
+    deja de existir (borrado desde el otro cuidador). Reutiliza el
+    bloqueo de scroll de `bodyScrollLock.ts`.
+  - Verificado de punta a punta con dos cuentas de prueba reales sobre
+    la API real (no solo en tests): crear un hito con categoría desde
+    el formulario guiado, verlo en el visor, navegar entre varios,
+    reaccionar desde una cuenta y verlo reflejado en la otra, editar y
+    borrar desde dentro del propio visor.

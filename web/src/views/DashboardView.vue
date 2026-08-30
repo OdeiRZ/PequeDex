@@ -3,7 +3,13 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { useBabiesStore, type BabySex, type DiaperType, type FeedType } from '@/stores/babies'
+import {
+  useBabiesStore,
+  type BabySex,
+  type DiaperType,
+  type FeedType,
+  type MilestoneCategory,
+} from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import ActionBar from '@/components/ActionBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -11,10 +17,12 @@ import CategoryIcon from '@/components/CategoryIcon.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
 import MilestoneCard from '@/components/MilestoneCard.vue'
+import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
+import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -244,12 +252,14 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     growthError.value = null
   } else if (sheet === 'milestone') {
     milestoneAchievedAt.value = new Date().toISOString().slice(0, 10)
+    milestoneCategory.value = null
     milestoneTitle.value = ''
     milestoneDescription.value = ''
     milestonePhoto.value = null
     editingMilestoneId.value = null
     milestoneExistingPhotoUrl.value = null
     milestoneRemovePhoto.value = false
+    lastSuggestedTitle.value = ''
   } else if (sheet === 'settings') {
     babySex.value = babies.current?.sex ?? ''
     babyBirthDate.value = babies.current?.birth_date ?? ''
@@ -442,14 +452,42 @@ async function onDeleteMilestone(id: number) {
   }
 }
 
-// --- Detalle de un hito: la miniatura de la lista no dejaba ver la foto
-// entera ni la descripción completa - abre en una hoja de detalle propia,
-// no en la de "+ Hito" (esa es solo el formulario de creación). ---
+// --- Detalle de un hito: visor a pantalla completa estilo "stories", no
+// la hoja de "+ Hito" (esa es solo el formulario). Se guarda el id, no el
+// objeto, para que sobreviva a un refetch de la lista (tras dar/quitar un
+// "me encanta", por ejemplo) - si el id ya no existe (se borró desde el
+// otro cuidador), el computed da undefined y el visor se cierra solo. ---
 
-const viewingMilestone = ref<(typeof babies.milestones)[number] | null>(null)
+const viewingMilestoneId = ref<number | null>(null)
+
+const viewingMilestoneIndex = computed(() =>
+  viewingMilestoneId.value === null
+    ? -1
+    : babies.milestones.findIndex((m) => m.id === viewingMilestoneId.value),
+)
+
+const viewingMilestone = computed(() =>
+  viewingMilestoneIndex.value === -1 ? null : babies.milestones[viewingMilestoneIndex.value],
+)
+
+const isLikedByMe = computed(
+  () => viewingMilestone.value?.liked_by.some((u) => u.id === auth.user?.id) ?? false,
+)
 
 function closeMilestoneDetail() {
-  viewingMilestone.value = null
+  viewingMilestoneId.value = null
+}
+
+function goToPrevMilestone() {
+  const index = viewingMilestoneIndex.value
+  const prev = index > 0 ? babies.milestones[index - 1] : undefined
+  if (prev) viewingMilestoneId.value = prev.id
+}
+
+function goToNextMilestone() {
+  const index = viewingMilestoneIndex.value
+  const next = index !== -1 ? babies.milestones[index + 1] : undefined
+  if (next) viewingMilestoneId.value = next.id
 }
 
 async function onDeleteViewingMilestone() {
@@ -458,6 +496,16 @@ async function onDeleteViewingMilestone() {
   const id = viewingMilestone.value.id
   closeMilestoneDetail()
   await onDeleteMilestone(id)
+}
+
+async function onToggleMilestoneLike() {
+  if (!viewingMilestone.value) return
+
+  try {
+    await babies.toggleMilestoneLike(viewingMilestone.value.id)
+  } catch {
+    toast.show(t('dashboard.milestones.likeError'))
+  }
 }
 
 const inviteCode = computed(() => babies.current?.invite_code ?? '')
@@ -614,6 +662,7 @@ function growthTitle(measurement: (typeof babies.growthMeasurements)[number]): s
 // --- Hitos con foto ---
 
 const milestoneAchievedAt = ref('')
+const milestoneCategory = ref<MilestoneCategory | null>(null)
 const milestoneTitle = ref('')
 const milestoneDescription = ref('')
 const milestonePhoto = ref<File | null>(null)
@@ -627,6 +676,31 @@ const editingMilestoneId = ref<number | null>(null)
 const milestoneExistingPhotoUrl = ref<string | null>(null)
 const milestoneRemovePhoto = ref(false)
 
+// Tracks the last title we auto-filled from a category pick, so picking a
+// category suggests a title without ever overwriting one the user already
+// typed themselves - only replace the field while it still holds our own
+// last suggestion (or is empty).
+const lastSuggestedTitle = ref('')
+
+const milestoneDescriptionPrompt = computed(() =>
+  t(`dashboard.milestoneForm.categoryPrompts.${milestoneCategory.value ?? 'otro'}`),
+)
+
+function selectMilestoneCategory(category: MilestoneCategory) {
+  milestoneCategory.value = milestoneCategory.value === category ? null : category
+
+  if (milestoneTitle.value !== '' && milestoneTitle.value !== lastSuggestedTitle.value) {
+    return
+  }
+
+  const suggestion =
+    milestoneCategory.value && milestoneCategory.value !== 'otro'
+      ? t(`dashboard.milestoneForm.categoryTitles.${milestoneCategory.value}`)
+      : ''
+  milestoneTitle.value = suggestion
+  lastSuggestedTitle.value = suggestion
+}
+
 function onMilestonePhotoChange(event: Event) {
   const input = event.target as HTMLInputElement
   milestonePhoto.value = input.files?.[0] ?? null
@@ -638,12 +712,14 @@ function onMilestonePhotoChange(event: Event) {
 function openMilestoneEdit(milestone: (typeof babies.milestones)[number]) {
   editingMilestoneId.value = milestone.id
   milestoneAchievedAt.value = milestone.achieved_at
+  milestoneCategory.value = milestone.category
   milestoneTitle.value = milestone.title
+  lastSuggestedTitle.value = ''
   milestoneDescription.value = milestone.description ?? ''
   milestonePhoto.value = null
   milestoneExistingPhotoUrl.value = milestone.photo_url
   milestoneRemovePhoto.value = false
-  closeMilestoneDetail()
+  viewingMilestoneId.value = null
   activeSheet.value = 'milestone'
 }
 
@@ -654,6 +730,7 @@ async function onSubmitMilestone() {
     if (editingMilestoneId.value) {
       await babies.updateMilestone(editingMilestoneId.value, {
         achieved_at: milestoneAchievedAt.value,
+        category: milestoneCategory.value,
         title: milestoneTitle.value,
         description: milestoneDescription.value || undefined,
         photo: milestonePhoto.value,
@@ -663,6 +740,7 @@ async function onSubmitMilestone() {
     } else {
       await babies.createMilestone({
         achieved_at: milestoneAchievedAt.value,
+        category: milestoneCategory.value,
         title: milestoneTitle.value,
         description: milestoneDescription.value || undefined,
         photo: milestonePhoto.value,
@@ -893,10 +971,11 @@ const sleepPredictionLabel = computed(() => {
               :key="milestone.id"
               :title="milestone.title"
               :meta="new Date(milestone.achieved_at).toLocaleDateString(dateLocale)"
+              :category="milestone.category"
               :description="milestone.description"
               :photo-src="milestone.photo_url"
               :photo-alt="milestone.title"
-              @open="viewingMilestone = milestone"
+              @open="viewingMilestoneId = milestone.id"
               @delete="onDeleteMilestone(milestone.id)"
             />
           </ul>
@@ -1154,6 +1233,26 @@ const sleepPredictionLabel = computed(() => {
             />
           </div>
           <div>
+            <span class="field-label">{{ t('dashboard.milestoneForm.category') }}</span>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="category in milestoneCategories"
+                :key="category"
+                type="button"
+                class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors"
+                :class="
+                  milestoneCategory === category
+                    ? 'border-milestone bg-milestone/15 text-milestone'
+                    : 'border-border text-text-muted'
+                "
+                @click="selectMilestoneCategory(category)"
+              >
+                <span>{{ milestoneCategoryEmoji[category] }}</span>
+                <span>{{ t(`dashboard.milestoneForm.categories.${category}`) }}</span>
+              </button>
+            </div>
+          </div>
+          <div>
             <label for="milestone-title" class="field-label">{{
               t('dashboard.milestoneForm.title')
             }}</label>
@@ -1173,6 +1272,7 @@ const sleepPredictionLabel = computed(() => {
               id="milestone-description"
               v-model="milestoneDescription"
               rows="2"
+              :placeholder="milestoneDescriptionPrompt"
               class="field-input"
             ></textarea>
           </div>
@@ -1216,36 +1316,22 @@ const sleepPredictionLabel = computed(() => {
         </form>
       </BottomSheet>
 
-      <BottomSheet :open="viewingMilestone !== null" @update:open="closeMilestoneDetail">
-        <template v-if="viewingMilestone">
-          <img
-            v-if="viewingMilestone.photo_url"
-            :src="viewingMilestone.photo_url"
-            :alt="viewingMilestone.title"
-            class="mb-4 max-h-[45vh] w-full rounded-xl object-cover"
-          />
-          <h3 class="font-display text-lg font-bold text-balance">{{ viewingMilestone.title }}</h3>
-          <p class="text-sm tabular-nums text-text-muted">
-            {{ new Date(viewingMilestone.achieved_at).toLocaleDateString(dateLocale) }}
-          </p>
-          <p v-if="viewingMilestone.description" class="mt-3 text-sm whitespace-pre-line">
-            {{ viewingMilestone.description }}
-          </p>
-          <div class="mt-5 flex flex-col gap-3">
-            <button type="button" class="btn-primary" @click="openMilestoneEdit(viewingMilestone)">
-              {{ t('common.edit') }}
-            </button>
-            <div class="flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="onDeleteViewingMilestone">
-                {{ t('common.delete') }}
-              </button>
-              <button type="button" class="btn-ghost flex-1" @click="closeMilestoneDetail">
-                {{ t('common.close') }}
-              </button>
-            </div>
-          </div>
-        </template>
-      </BottomSheet>
+      <MilestoneStoryViewer
+        v-if="viewingMilestone"
+        :milestone="viewingMilestone"
+        :index="viewingMilestoneIndex"
+        :total="babies.milestones.length"
+        :is-first="viewingMilestoneIndex === 0"
+        :is-last="viewingMilestoneIndex === babies.milestones.length - 1"
+        :is-liked="isLikedByMe"
+        :date-locale="dateLocale"
+        @close="closeMilestoneDetail"
+        @prev="goToPrevMilestone"
+        @next="goToNextMilestone"
+        @edit="openMilestoneEdit(viewingMilestone)"
+        @delete="onDeleteViewingMilestone"
+        @toggle-like="onToggleMilestoneLike"
+      />
 
       <BottomSheet :open="activeSheet === 'settings'" @update:open="closeSheet">
         <h3 class="mb-4 font-display text-base font-bold">

@@ -66,4 +66,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // spoof it.
     Route::post('/babies/{baby}/milestones/{milestone}', [MilestoneController::class, 'update']);
     Route::delete('/babies/{baby}/milestones/{milestone}', [MilestoneController::class, 'destroy']);
+    Route::post('/babies/{baby}/milestones/{milestone}/like', [MilestoneController::class, 'toggleLike']);
 });

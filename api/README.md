@@ -99,6 +99,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   redeploy (ver "Despliegue" más abajo). El endpoint de edición es
   `POST`, no `PUT`, porque PHP nunca rellena `$_FILES` a partir del
   cuerpo `multipart/form-data` de una petición `PUT`.
+- `app/Enums/MilestoneCategory.php` / tabla `milestone_likes` — un hito
+  puede llevar una categoría opcional (sonrisa/diente/pasos/palabra/
+  otro; `nullable`, sin valor por defecto — "otro" es una elección real,
+  no lo que le toca a quien no elige nada) y recibir un "me encanta" de
+  cualquier cuidador vinculado al bebé
+  (`POST /babies/{baby}/milestones/{milestone}/like`, un único *toggle*,
+  no rutas separadas de like/unlike). `milestone_likes` es una tabla
+  pivote pura sin `id`, mismo patrón que `baby_user`. El *toggle* se
+  autoriza con `authorize('view', $baby)`, no `'update'` como el resto
+  de acciones sobre un hito: reaccionar es una interacción ligera que
+  cualquiera con acceso de lectura al bebé debería poder hacer, no una
+  edición del contenido.
 - `docker/uploads.ini` — subir un hito con foto desde el móvil se
   quedaba colgado en producción sin ningún error: la imagen Docker no
   llevaba ningún `php.ini` propio, así que PHP usaba sus valores por

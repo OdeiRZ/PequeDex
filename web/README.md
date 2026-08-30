@@ -35,10 +35,24 @@ npm run test:unit      # Vitest
 - `src/views/{Login,Register}View.vue` — formularios mínimos sin diseño
   todavía; funcionales y probados de punta a punta contra la API real,
   pendientes de la identidad visual del proyecto.
+- `src/stores/babies.ts` — el bebé del usuario (crear/unirse por código),
+  su línea temporal combinada, y CRUD de tomas/sueño/pañales. Cada acción
+  de crear/borrar vuelve a pedir la línea temporal entera en vez de tocar
+  el array local a mano — el otro cuidador puede haber añadido algo entre
+  medias, y el sondeo (ver más abajo) va a traer esa misma lista de
+  todos modos.
+- `src/views/DashboardView.vue` — onboarding (crear un bebé o unirse con
+  código) cuando el usuario no tiene ninguno todavía, y si ya lo tiene:
+  botones de registro rápido (toma/sueño/pañal, con la hora actual
+  precargada) más la línea temporal. Sondea `/timeline` cada 5 segundos
+  mientras la vista está montada — mismo patrón que el import de BGG en
+  LudoDex, sin websockets ni infraestructura nueva — para que lo que
+  registre un cuidador aparezca en la pantalla del otro sin recargar.
 
 ## Sin idiomas ni diseño todavía
 
 A diferencia de LudoDex/MIRA, esta SPA no usa `vue-i18n` (ver la nota de
 arquitectura en el README raíz) ni tiene paleta/tipografía propia
-definida — ambas cosas se añadirán cuando haga falta, no como
-infraestructura previa sin pantallas reales detrás.
+definida — ambas cosas se añadirán cuando haga falta, con las pantallas
+principales ya cerradas y probadas, no como infraestructura previa sin
+pantallas reales detrás.

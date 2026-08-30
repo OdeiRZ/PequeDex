@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiClient, clearStoredToken, getStoredToken, storeToken } from '@/lib/api'
+import { useBabiesStore } from './babies'
 
 export interface User {
   id: number
@@ -73,10 +74,15 @@ export const useAuthStore = defineStore('auth', {
       storeToken(token)
     },
 
+    /** Only ever clears *this* store's own state - without also resetting
+     * the babies store here, whoever's timeline was already loaded in
+     * memory would briefly leak into a next account logging in on the
+     * same tab (see LudoDex's own auth store for the same pattern). */
     clearSession() {
       this.user = null
       this.token = null
       clearStoredToken()
+      useBabiesStore().$reset()
     },
   },
 })

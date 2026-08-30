@@ -32,3 +32,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   (sin pantallas todavía): un cuidador crea el bebé y registra una toma,
   un segundo cuidador se une con el código y ve/edita esa misma toma, un
   tercero sin el código recibe 403.
+
+- Primeras pantallas: crear un bebé o unirse con un código de invitación,
+  y un dashboard con registro rápido de toma/sueño/pañal (formularios
+  precargados con la hora actual) y una línea temporal combinada.
+  Sincronización entre cuidadores por sondeo cada 5 segundos, mismo
+  patrón que el import de BGG en LudoDex — sin websockets ni
+  infraestructura nueva. Sin diseño todavía (ver la nota de arquitectura
+  en `web/README.md`). Verificado de punta a punta en el navegador
+  contra la API real: registro → crear bebé → registrar toma/sueño/pañal
+  → aparecen en la línea temporal → borrar una entrada → recargar la
+  página mantiene la sesión y el resto de entradas.

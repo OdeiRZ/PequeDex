@@ -50,7 +50,13 @@ async function onSubmit() {
 
       <div>
         <label for="password">Contraseña</label>
-        <input id="password" v-model="password" type="password" required autocomplete="new-password" />
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          required
+          autocomplete="new-password"
+        />
       </div>
 
       <div>

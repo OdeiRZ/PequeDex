@@ -32,19 +32,36 @@ const minDateTime = computed(() => (minDate.value ? `${minDate.value}T00:00` : u
 
 const loading = ref(true)
 
-onMounted(async () => {
-  await babies.fetchCurrent()
+// Shared by the initial mount and by create/join below - without this,
+// joining a baby that already has real history (the whole point of
+// joining one instead of starting fresh) left the timeline/growth/
+// milestones/prediction empty until a manual reload, since onMounted
+// only ever runs once and babies.current turning non-null afterwards
+// doesn't re-trigger it. Found live: looked like nothing had synced,
+// when the join itself had actually worked.
+async function loadBabyData() {
+  loading.value = true
 
-  if (babies.current) {
+  try {
     await Promise.all([
       babies.fetchTimeline(),
       babies.fetchGrowthMeasurements(),
       babies.fetchMilestones(),
       babies.fetchSleepPrediction(),
     ])
+  } finally {
+    loading.value = false
   }
+}
 
-  loading.value = false
+onMounted(async () => {
+  await babies.fetchCurrent()
+
+  if (babies.current) {
+    await loadBabyData()
+  } else {
+    loading.value = false
+  }
 })
 
 async function onLogout() {
@@ -151,6 +168,7 @@ async function onCreateBaby() {
   try {
     await babies.create({ name: babyName.value || undefined, due_date: dueDate.value || undefined })
     toast.show(t('dashboard.onboarding.toastCreated'))
+    await loadBabyData()
   } catch {
     createError.value = t('dashboard.onboarding.createError')
   } finally {
@@ -169,6 +187,7 @@ async function onJoinBaby() {
   try {
     await babies.join(inviteCodeInput.value)
     toast.show(t('dashboard.onboarding.toastJoined'))
+    await loadBabyData()
   } catch {
     joinError.value = t('dashboard.onboarding.joinError')
   } finally {

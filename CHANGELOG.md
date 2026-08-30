@@ -309,3 +309,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   se pisaría entre sí si dos llegaran a coincidir, así que el bloqueo
   vive en un módulo aparte (`src/lib/bodyScrollLock.ts`) con contador
   de referencias, no en el propio componente.
+
+- Unirse a un bebé con código de invitación no cargaba su historial
+  (tomas/sueño/pañales/crecimiento/hitos) hasta recargar la página a
+  mano — parecía que el otro cuidador no tenía nada registrado.
+  `onMounted` solo pide ese historial una vez, al montar el
+  componente; que `babies.current` pasara de vacío a tener datos
+  *después* (justo lo que hace unirse a un bebé que, a diferencia de
+  crear uno nuevo, ya tiene historial real) no volvía a dispararlo.
+  Extraída esa carga a `loadBabyData()`, reutilizada tanto en el
+  montaje inicial como justo después de crear o unirse. De paso,
+  ahora se ve el "Cargando…" que ya existía para el montaje inicial
+  también en este momento, en vez de que la pantalla se quede en
+  blanco mientras se pide todo — verificado con dos cuentas de prueba
+  reales (una crea el bebé y registra una toma y un hito, la otra se
+  une con el código y los ve aparecer sin recargar).

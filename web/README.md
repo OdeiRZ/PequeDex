@@ -65,7 +65,13 @@ porque la verificación local solo cubría los otros tres.
   código) cuando el usuario no tiene ninguno todavía, y si ya lo tiene:
   botones de registro rápido (toma/sueño/pañal/medida/hito, con la hora
   actual precargada) más la línea temporal, la predicción de sueño, y
-  las listas de crecimiento e hitos. Sondea `/timeline` cada 5 segundos
+  las listas de crecimiento e hitos. `loadBabyData()` (línea temporal +
+  crecimiento + hitos + predicción) se llama tanto en `onMounted` como
+  justo después de crear/unirse a un bebé, mostrando `loading` en los
+  dos casos — antes solo se llamaba al montar el componente, así que
+  unirse a un bebé con historial real (justo el caso de uso de unirse,
+  a diferencia de crear uno) se quedaba sin cargarlo hasta recargar la
+  página a mano. Sondea `/timeline` cada 5 segundos
   mientras la vista está montada — mismo patrón que el import de BGG en
   LudoDex, sin websockets ni infraestructura nueva — para que lo que
   registre un cuidador aparezca en la pantalla del otro sin recargar

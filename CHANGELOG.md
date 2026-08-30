@@ -324,3 +324,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   blanco mientras se pide todo — verificado con dos cuentas de prueba
   reales (una crea el bebé y registra una toma y un hito, la otra se
   une con el código y los ve aparecer sin recargar).
+
+- Ahora se puede editar un hito ya creado (fecha, título, descripción
+  y foto — sustituirla o quitarla), no solo verlo y borrarlo. El
+  backend ya tenía `MilestoneController::update` construido y probado
+  desde el principio; lo único que faltaba era que el frontend lo
+  llamara. El botón "Editar" en la hoja de detalle reutiliza el mismo
+  formulario de "+ Hito", precargado con los datos actuales
+  (`openMilestoneEdit()`); con foto ya puesta, se ve su miniatura con
+  un enlace de "Quitar foto" antes del selector de archivo. El resto
+  de registros (toma/sueño/pañal/medida) se queda sin editar por
+  ahora — solo se pidió esto para hitos.

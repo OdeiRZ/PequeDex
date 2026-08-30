@@ -162,6 +162,13 @@ verse bien en una captura:
   Hito") con la foto a tamaño completo, título, fecha y la descripción
   entera. `BottomSheet.vue` lleva `max-h-[85vh]` con scroll propio por
   esto mismo — una foto grande puede superar la altura de la pantalla.
+  Su botón "Editar" reutiliza el mismo formulario de "+ Hito"
+  (`openMilestoneEdit()` precarga fecha/título/descripción/foto y pone
+  `activeSheet = 'milestone'` directamente, sin pasar por el reseteo a
+  vacío de `openSheet('milestone')`) en vez de un formulario de edición
+  aparte — es el único de los cinco registros que se puede editar
+  desde la UI: el backend ya tenía los cinco endpoints `update`
+  construidos y probados, pero el frontend nunca llamaba a ninguno.
 
 ## Marca de la pestaña
 

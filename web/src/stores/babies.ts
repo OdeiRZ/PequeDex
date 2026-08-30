@@ -121,6 +121,14 @@ interface CreateMilestonePayload {
   photo?: File | null
 }
 
+interface UpdateMilestonePayload {
+  achieved_at: string
+  title: string
+  description?: string | null
+  photo?: File | null
+  removePhoto?: boolean
+}
+
 interface UpdateBabyPayload {
   name?: string | null
   due_date?: string | null
@@ -255,6 +263,29 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       await apiClient.post(`/babies/${this.current!.id}/milestones`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      await this.fetchMilestones()
+    },
+
+    // POST, not PUT - a multipart request carrying a replacement photo
+    // needs Laravel's method-spoofing to reach a PUT route at all, since
+    // PHP never parses a PUT request's multipart body into $_FILES. See
+    // the matching note on this same route in api/routes/api.php.
+    async updateMilestone(id: number, payload: UpdateMilestonePayload) {
+      const form = new FormData()
+      form.append('achieved_at', payload.achieved_at)
+      form.append('title', payload.title)
+      if (payload.description) {
+        form.append('description', payload.description)
+      }
+      if (payload.photo) {
+        form.append('photo', payload.photo)
+      } else if (payload.removePhoto) {
+        form.append('remove_photo', '1')
+      }
+
+      await apiClient.post(`/babies/${this.current!.id}/milestones/${id}`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       await this.fetchMilestones()

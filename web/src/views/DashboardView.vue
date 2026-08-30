@@ -247,6 +247,9 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     milestoneTitle.value = ''
     milestoneDescription.value = ''
     milestonePhoto.value = null
+    editingMilestoneId.value = null
+    milestoneExistingPhotoUrl.value = null
+    milestoneRemovePhoto.value = false
   } else if (sheet === 'settings') {
     babySex.value = babies.current?.sex ?? ''
     babyBirthDate.value = babies.current?.birth_date ?? ''
@@ -616,21 +619,55 @@ const milestoneDescription = ref('')
 const milestonePhoto = ref<File | null>(null)
 const savingMilestone = ref(false)
 
+// null while creating a new milestone; the id of the one being edited
+// otherwise. openSheet('milestone') always resets this to null, so
+// opening "+ Hito" fresh from the action bar never stays stuck in edit
+// mode from a previous edit.
+const editingMilestoneId = ref<number | null>(null)
+const milestoneExistingPhotoUrl = ref<string | null>(null)
+const milestoneRemovePhoto = ref(false)
+
 function onMilestonePhotoChange(event: Event) {
   const input = event.target as HTMLInputElement
   milestonePhoto.value = input.files?.[0] ?? null
+  if (milestonePhoto.value) {
+    milestoneRemovePhoto.value = false
+  }
+}
+
+function openMilestoneEdit(milestone: (typeof babies.milestones)[number]) {
+  editingMilestoneId.value = milestone.id
+  milestoneAchievedAt.value = milestone.achieved_at
+  milestoneTitle.value = milestone.title
+  milestoneDescription.value = milestone.description ?? ''
+  milestonePhoto.value = null
+  milestoneExistingPhotoUrl.value = milestone.photo_url
+  milestoneRemovePhoto.value = false
+  closeMilestoneDetail()
+  activeSheet.value = 'milestone'
 }
 
 async function onSubmitMilestone() {
   savingMilestone.value = true
 
   try {
-    await babies.createMilestone({
-      achieved_at: milestoneAchievedAt.value,
-      title: milestoneTitle.value,
-      description: milestoneDescription.value || undefined,
-      photo: milestonePhoto.value,
-    })
+    if (editingMilestoneId.value) {
+      await babies.updateMilestone(editingMilestoneId.value, {
+        achieved_at: milestoneAchievedAt.value,
+        title: milestoneTitle.value,
+        description: milestoneDescription.value || undefined,
+        photo: milestonePhoto.value,
+        removePhoto: milestoneRemovePhoto.value,
+      })
+      toast.show(t('dashboard.milestoneForm.toastUpdated'))
+    } else {
+      await babies.createMilestone({
+        achieved_at: milestoneAchievedAt.value,
+        title: milestoneTitle.value,
+        description: milestoneDescription.value || undefined,
+        photo: milestonePhoto.value,
+      })
+    }
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'))
@@ -1096,7 +1133,11 @@ const sleepPredictionLabel = computed(() => {
           >
             <CategoryIcon category="milestone" class="h-4 w-4" />
           </span>
-          {{ t('dashboard.quickLog.milestone') }}
+          {{
+            editingMilestoneId
+              ? t('dashboard.milestoneForm.editTitle')
+              : t('dashboard.quickLog.milestone')
+          }}
         </h3>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmitMilestone">
           <div>
@@ -1139,6 +1180,23 @@ const sleepPredictionLabel = computed(() => {
             <label for="milestone-photo" class="field-label">{{
               t('dashboard.milestoneForm.photo')
             }}</label>
+            <div
+              v-if="milestoneExistingPhotoUrl && !milestoneRemovePhoto"
+              class="mb-2 flex items-center gap-3"
+            >
+              <img
+                :src="milestoneExistingPhotoUrl"
+                alt=""
+                class="h-14 w-14 rounded-lg object-cover"
+              />
+              <button
+                type="button"
+                class="text-sm font-semibold text-danger"
+                @click="milestoneRemovePhoto = true"
+              >
+                {{ t('dashboard.milestoneForm.removePhoto') }}
+              </button>
+            </div>
             <input
               id="milestone-photo"
               type="file"
@@ -1173,13 +1231,18 @@ const sleepPredictionLabel = computed(() => {
           <p v-if="viewingMilestone.description" class="mt-3 text-sm whitespace-pre-line">
             {{ viewingMilestone.description }}
           </p>
-          <div class="mt-5 flex gap-3">
-            <button type="button" class="btn-ghost flex-1" @click="onDeleteViewingMilestone">
-              {{ t('common.delete') }}
+          <div class="mt-5 flex flex-col gap-3">
+            <button type="button" class="btn-primary" @click="openMilestoneEdit(viewingMilestone)">
+              {{ t('common.edit') }}
             </button>
-            <button type="button" class="btn-primary flex-1" @click="closeMilestoneDetail">
-              {{ t('common.close') }}
-            </button>
+            <div class="flex gap-3">
+              <button type="button" class="btn-ghost flex-1" @click="onDeleteViewingMilestone">
+                {{ t('common.delete') }}
+              </button>
+              <button type="button" class="btn-ghost flex-1" @click="closeMilestoneDetail">
+                {{ t('common.close') }}
+              </button>
+            </div>
           </div>
         </template>
       </BottomSheet>

@@ -9,6 +9,7 @@ export default {
     cancel: 'Cancelar',
     close: 'Cerrar',
     delete: 'Borrar',
+    edit: 'Editar',
     toggleTheme: 'Cambiar tema',
     showPassword: 'Mostrar contraseña',
     hidePassword: 'Ocultar contraseña',
@@ -122,10 +123,13 @@ export default {
       error: 'Indica al menos peso, talla o perímetro craneal.',
     },
     milestoneForm: {
+      editTitle: 'Editar hito',
       date: 'Fecha',
       title: 'Título',
       description: 'Descripción (opcional)',
       photo: 'Foto (opcional)',
+      removePhoto: 'Quitar foto',
+      toastUpdated: 'Hito actualizado.',
     },
     timeline: {
       title: 'Línea temporal',

@@ -9,6 +9,7 @@ export default {
     cancel: 'Cancel',
     close: 'Close',
     delete: 'Delete',
+    edit: 'Edit',
     toggleTheme: 'Toggle theme',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
@@ -122,10 +123,13 @@ export default {
       error: 'Enter at least weight, height or head circumference.',
     },
     milestoneForm: {
+      editTitle: 'Edit milestone',
       date: 'Date',
       title: 'Title',
       description: 'Description (optional)',
       photo: 'Photo (optional)',
+      removePhoto: 'Remove photo',
+      toastUpdated: 'Milestone updated.',
     },
     timeline: {
       title: 'Timeline',

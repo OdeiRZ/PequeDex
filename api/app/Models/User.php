@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -46,5 +47,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Babies this user is a caregiver on - no admin/owner distinction,
+     * every linked caregiver has the same full access (see BabyPolicy).
+     *
+     * @return BelongsToMany<Baby, $this>
+     */
+    public function babies(): BelongsToMany
+    {
+        return $this->belongsToMany(Baby::class)->withTimestamps();
     }
 }

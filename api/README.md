@@ -40,6 +40,23 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `withExceptions()`.
 - `lang/es` / `lang/en` — mensajes de validación y autenticación en
   español (idioma por defecto, `APP_LOCALE=es`) con inglés como fallback.
+- `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
+  compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
+  admin/no-admin: cualquier cuidador vinculado tiene acceso total de
+  lectura/escritura). `FeedController`/`SleepController`/
+  `DiaperChangeController` autorizan siempre contra el `Baby` padre
+  (`$this->authorize('update', $baby)`), nunca contra el `user_id` de la
+  fila que se está editando — el campo `user_id` en `feeds`/`sleeps`/
+  `diaper_changes` es solo trazabilidad de quién lo registró, nunca se
+  usa para decidir quién puede verlo o editarlo.
+- `Baby::generateInviteCode()` — código de 8 caracteres sin `0`/`O`/`1`/`I`
+  (se escriben/leen a mano, esos pares se confunden fácilmente), con
+  comprobación de colisión real en vez de asumir que el espacio de
+  claves (32⁸) es suficientemente grande.
+- `TimelineController` — mezcla tomas/sueño/pañales en una sola lista
+  ordenada en PHP, no con un `UNION` SQL entre tres tablas de forma
+  distinta: el registro de una familia no alcanza un volumen (ni tras
+  años de uso diario) donde eso importe.
 
 ## Notas de arquitectura
 

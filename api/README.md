@@ -47,6 +47,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `withExceptions()`.
 - `lang/es` / `lang/en` — mensajes de validación y autenticación en
   español (idioma por defecto, `APP_LOCALE=es`) con inglés como fallback.
+- `app/Http/Controllers/Auth/ProfileController.php` /
+  `app/Services/Users/AvatarProcessor.php` — datos personales, cambio de
+  contraseña y foto de perfil, mismo patrón que MIRA MarketLens. La foto
+  se guarda como `data:` URI en `users.avatar` (columna `text`), no como
+  archivo en disco — a diferencia de la foto de un hito (ver más abajo),
+  aquí no hace falta R2: es una imagen pequeña (`AvatarProcessor`,
+  GD puro, la redimensiona a 320×320 como máximo) y una columna evita
+  depender de nada externo solo para esto. Sin errores por campo en la
+  respuesta como en LudoDex/MIRA - el frontend de esta app no los pinta,
+  así que no hace falta desglosarlos aquí tampoco.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

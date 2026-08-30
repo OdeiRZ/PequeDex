@@ -27,7 +27,17 @@ npm run test:unit      # Vitest
 - `src/lib/api.ts` — instancia de axios con interceptor que añade el token
   Bearer a cada petición, y cierra sesión automáticamente ante un 401.
 - `src/stores/auth.ts` — sesión (usuario + token), registro/login/logout, y
-  restauración de sesión al recargar la página.
+  restauración de sesión al recargar la página. También datos
+  personales, cambio de contraseña y foto de perfil (`updateProfile`/
+  `updatePassword`/`uploadAvatar`/`removeAvatar`) — mismo patrón que
+  MIRA MarketLens, pero la foto se guarda como `data:` URI en una
+  columna de `users`, no en disco (ver `api/README.md`).
+- **`UserAvatar.vue`** — foto de perfil circular (`object-fit: cover`,
+  a diferencia del `UserLogo.vue` de MIRA MarketLens, que no recorta
+  porque un logo de empresa no es necesariamente cuadrado); sin foto,
+  un círculo con la inicial del nombre sobre `--brand` — que ya
+  reacciona solo al tema según el sexo del bebé (ver más abajo), así
+  que el avatar "combina" gratis con el resto de la app.
 - `src/App.vue` — al montar la app, si hay un token guardado pero no un
   `user` en memoria (recarga de página), pide `/api/user` una sola vez
   desde la raíz — vive ahí para que funcione sin importar en qué pantalla
@@ -59,7 +69,10 @@ npm run test:unit      # Vitest
   eso tiene sentido antes de que el bebé haya nacido, y el propio
   navegador bloquea el envío con su aviso nativo si se intenta. La API
   aplica la misma regla por su cuenta (ver `api/README.md`), no solo el
-  frontend.
+  frontend. El nombre en la cabecera abre una hoja de "Tu cuenta"
+  (datos personales, contraseña, foto) — sheet propia, no una ruta
+  nueva, mismo motivo que el resto de esta app: todo lo que no es
+  login/registro vive en una sola vista.
 
 ## Idioma
 

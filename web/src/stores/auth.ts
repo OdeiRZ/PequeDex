@@ -6,6 +6,7 @@ export interface User {
   id: number
   name: string
   email: string
+  avatar: string | null
 }
 
 interface RegisterPayload {
@@ -18,6 +19,17 @@ interface RegisterPayload {
 interface LoginPayload {
   email: string
   password: string
+}
+
+interface UpdateProfilePayload {
+  name: string
+  email: string
+}
+
+interface UpdatePasswordPayload {
+  current_password: string
+  password: string
+  password_confirmation: string
 }
 
 interface AuthState {
@@ -51,6 +63,32 @@ export const useAuthStore = defineStore('auth', {
         await apiClient.post('/logout')
       } finally {
         this.clearSession()
+      }
+    },
+
+    async updateProfile(payload: UpdateProfilePayload) {
+      const { data } = await apiClient.put('/user', payload)
+      this.user = data
+    },
+
+    async updatePassword(payload: UpdatePasswordPayload) {
+      await apiClient.put('/user/password', payload)
+    },
+
+    async uploadAvatar(file: File) {
+      const form = new FormData()
+      form.append('avatar', file)
+
+      const { data } = await apiClient.post('/user/avatar', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      this.user = data
+    },
+
+    async removeAvatar() {
+      await apiClient.delete('/user/avatar')
+      if (this.user) {
+        this.user.avatar = null
       }
     },
 

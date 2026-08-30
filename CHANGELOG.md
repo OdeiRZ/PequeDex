@@ -229,3 +229,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   en la lista). `BottomSheet.vue` gana `max-h-[85vh]` y scroll propio,
   necesario ahora que una foto grande puede superar la altura de la
   pantalla.
+
+- Menú de usuario básico, mismo patrón que LudoDex y MIRA MarketLens:
+  el nombre en la cabecera del dashboard ahora abre una hoja de "Tu
+  cuenta" con nombre/email, cambio de contraseña, y foto de perfil.
+  La foto sigue el enfoque de MIRA MarketLens, no el de los hitos
+  (Cloudflare R2): se guarda como un `data:` URI en una columna
+  `avatar` de `users`, no como archivo en disco — de sobra para una
+  foto pequeña, y evita depender de nada externo solo para esto.
+  `AvatarProcessor` (GD, igual que el favicon del propio proyecto) la
+  redimensiona a 320×320 como máximo antes de guardarla. Sin errores
+  por campo como en LudoDex/MIRA — un toast genérico por acción, igual
+  que el resto de esta app.

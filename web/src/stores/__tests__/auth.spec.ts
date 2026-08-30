@@ -11,7 +11,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
   }
 })
 
-const user = { id: 1, name: 'Odei', email: 'odei@example.com' }
+const user = { id: 1, name: 'Odei', email: 'odei@example.com', avatar: null }
 
 describe('useAuthStore', () => {
   beforeEach(() => {
@@ -89,5 +89,61 @@ describe('useAuthStore', () => {
 
     expect(store.user).toBeNull()
     expect(store.token).toBeNull()
+  })
+
+  it('updates the profile, replacing the stored user', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    const updated = { ...user, name: 'Odei Riveiro' }
+    vi.mocked(apiClient.put).mockResolvedValue({ data: updated })
+
+    await store.updateProfile({ name: 'Odei Riveiro', email: user.email })
+
+    expect(store.user).toEqual(updated)
+    expect(apiClient.put).toHaveBeenCalledWith('/user', { name: 'Odei Riveiro', email: user.email })
+  })
+
+  it('updates the password without touching the stored user', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    vi.mocked(apiClient.put).mockResolvedValue({ data: undefined })
+
+    await store.updatePassword({
+      current_password: 'old',
+      password: 'new-password',
+      password_confirmation: 'new-password',
+    })
+
+    expect(store.user).toEqual(user)
+  })
+
+  it('uploads an avatar, replacing the stored user', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    const withAvatar = { ...user, avatar: 'data:image/png;base64,xyz' }
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: withAvatar })
+
+    await store.uploadAvatar(new File(['x'], 'yo.jpg', { type: 'image/jpeg' }))
+
+    expect(store.user).toEqual(withAvatar)
+  })
+
+  it('removes the avatar locally after the request succeeds', async () => {
+    const withAvatar = { ...user, avatar: 'data:image/png;base64,xyz' }
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user: withAvatar, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    vi.mocked(apiClient.delete).mockResolvedValue({ data: undefined })
+
+    await store.removeAvatar()
+
+    expect(store.user?.avatar).toBeNull()
   })
 })

@@ -11,7 +11,9 @@ import CategoryIcon from '@/components/CategoryIcon.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
 import MilestoneCard from '@/components/MilestoneCard.vue'
+import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
 
 const router = useRouter()
@@ -48,6 +50,91 @@ onMounted(async () => {
 async function onLogout() {
   await auth.logout()
   router.push({ name: 'login' })
+}
+
+// --- Menú de usuario: datos personales, contraseña y foto de perfil.
+// Sin errores por campo (a diferencia de LudoDex/MIRA MarketLens) - igual
+// que el resto de formularios de esta app, un mensaje genérico por toast
+// basta para lo que de verdad puede fallar aquí (email duplicado,
+// contraseña actual incorrecta). ---
+
+const profileName = ref('')
+const profileEmail = ref('')
+const savingProfile = ref(false)
+
+const currentPassword = ref('')
+const newPassword = ref('')
+const newPasswordConfirmation = ref('')
+const savingPassword = ref(false)
+
+const avatarInput = ref<HTMLInputElement | null>(null)
+const uploadingAvatar = ref(false)
+
+async function onSubmitProfile() {
+  savingProfile.value = true
+
+  try {
+    await auth.updateProfile({ name: profileName.value, email: profileEmail.value })
+    toast.show(t('profile.toastSaved'))
+  } catch {
+    toast.show(t('profile.saveError'))
+  } finally {
+    savingProfile.value = false
+  }
+}
+
+async function onSubmitPassword() {
+  savingPassword.value = true
+
+  try {
+    await auth.updatePassword({
+      current_password: currentPassword.value,
+      password: newPassword.value,
+      password_confirmation: newPasswordConfirmation.value,
+    })
+    currentPassword.value = ''
+    newPassword.value = ''
+    newPasswordConfirmation.value = ''
+    toast.show(t('profile.toastPasswordSaved'))
+  } catch {
+    toast.show(t('profile.passwordError'))
+  } finally {
+    savingPassword.value = false
+  }
+}
+
+function onPickAvatar() {
+  avatarInput.value?.click()
+}
+
+async function onAvatarSelected(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  uploadingAvatar.value = true
+
+  try {
+    await auth.uploadAvatar(file)
+    toast.show(t('profile.toastAvatarSaved'))
+  } catch {
+    toast.show(t('profile.avatarError'))
+  } finally {
+    uploadingAvatar.value = false
+    ;(event.target as HTMLInputElement).value = ''
+  }
+}
+
+async function onRemoveAvatar() {
+  uploadingAvatar.value = true
+
+  try {
+    await auth.removeAvatar()
+    toast.show(t('profile.toastAvatarRemoved'))
+  } catch {
+    toast.show(t('profile.avatarError'))
+  } finally {
+    uploadingAvatar.value = false
+  }
 }
 
 // --- Onboarding: crear o unirse a un bebé ---
@@ -109,7 +196,7 @@ onUnmounted(() => {
 // --- Hojas inferiores: una por cada botón de la barra de acciones, más
 // el ajuste de sexo/fecha de nacimiento del bebé. ---
 
-type Sheet = Category | 'settings' | null
+type Sheet = Category | 'settings' | 'profile' | null
 const activeSheet = ref<Sheet>(null)
 
 function nowForInput(): string {
@@ -144,6 +231,12 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   } else if (sheet === 'settings') {
     babySex.value = babies.current?.sex ?? ''
     babyBirthDate.value = babies.current?.birth_date ?? ''
+  } else if (sheet === 'profile') {
+    profileName.value = auth.user?.name ?? ''
+    profileEmail.value = auth.user?.email ?? ''
+    currentPassword.value = ''
+    newPassword.value = ''
+    newPasswordConfirmation.value = ''
   }
 
   activeSheet.value = sheet
@@ -595,7 +688,15 @@ const sleepPredictionLabel = computed(() => {
     <template v-else>
       <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-8">
         <div class="flex items-center justify-between text-sm text-text-muted">
-          <span v-if="auth.user">{{ auth.user.name }}</span>
+          <button
+            v-if="auth.user"
+            type="button"
+            class="flex items-center gap-2 font-semibold text-text"
+            @click="openSheet('profile')"
+          >
+            <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
+            {{ auth.user.name }}
+          </button>
           <button type="button" class="font-semibold text-brand" @click="onLogout">
             {{ t('common.logout') }}
           </button>
@@ -1054,6 +1155,104 @@ const sleepPredictionLabel = computed(() => {
               {{ t('common.save') }}
             </button>
           </div>
+        </form>
+      </BottomSheet>
+
+      <BottomSheet :open="activeSheet === 'profile'" @update:open="closeSheet">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
+          <button type="button" class="text-sm font-semibold text-brand" @click="closeSheet">
+            {{ t('common.close') }}
+          </button>
+        </div>
+
+        <div class="mb-5 flex items-center gap-4">
+          <UserAvatar :name="auth.user?.name ?? ''" :avatar="auth.user?.avatar" :size="64" />
+          <div class="flex flex-1 flex-col items-start gap-2">
+            <input
+              ref="avatarInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              class="hidden"
+              @change="onAvatarSelected"
+            />
+            <button
+              type="button"
+              :disabled="uploadingAvatar"
+              class="btn-ghost px-3 py-1.5 text-sm"
+              @click="onPickAvatar"
+            >
+              {{ t('profile.uploadAvatar') }}
+            </button>
+            <button
+              v-if="auth.user?.avatar"
+              type="button"
+              :disabled="uploadingAvatar"
+              class="text-sm font-semibold text-danger"
+              @click="onRemoveAvatar"
+            >
+              {{ t('profile.removeAvatar') }}
+            </button>
+          </div>
+        </div>
+
+        <form class="mb-6 flex flex-col gap-4" @submit.prevent="onSubmitProfile">
+          <div>
+            <label for="profile-name" class="field-label">{{ t('profile.name') }}</label>
+            <input
+              id="profile-name"
+              v-model="profileName"
+              type="text"
+              required
+              autocomplete="name"
+              class="field-input"
+            />
+          </div>
+          <div>
+            <label for="profile-email" class="field-label">{{ t('profile.email') }}</label>
+            <input
+              id="profile-email"
+              v-model="profileEmail"
+              type="email"
+              required
+              autocomplete="email"
+              class="field-input"
+            />
+          </div>
+          <button type="submit" :disabled="savingProfile" class="btn-primary">
+            {{ t('common.save') }}
+          </button>
+        </form>
+
+        <form class="flex flex-col gap-4 border-t border-border pt-5" @submit.prevent="onSubmitPassword">
+          <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>
+          <div>
+            <label for="current-password" class="field-label">{{ t('profile.currentPassword') }}</label>
+            <PasswordField
+              id="current-password"
+              v-model="currentPassword"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <div>
+            <label for="new-password" class="field-label">{{ t('profile.newPassword') }}</label>
+            <PasswordField id="new-password" v-model="newPassword" required autocomplete="new-password" />
+          </div>
+          <div>
+            <label for="new-password-confirmation" class="field-label">{{
+              t('profile.newPasswordConfirmation')
+            }}</label>
+            <PasswordField
+              id="new-password-confirmation"
+              v-model="newPasswordConfirmation"
+              required
+              autocomplete="new-password"
+            />
+          </div>
+          <button type="submit" :disabled="savingPassword" class="btn-primary">
+            {{ t('profile.changePassword') }}
+          </button>
         </form>
       </BottomSheet>
     </template>

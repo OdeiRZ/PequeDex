@@ -72,7 +72,13 @@ npm run test:unit      # Vitest
   frontend. El nombre en la cabecera abre una hoja de "Tu cuenta"
   (datos personales, contraseña, foto) — sheet propia, no una ruta
   nueva, mismo motivo que el resto de esta app: todo lo que no es
-  login/registro vive en una sola vista.
+  login/registro vive en una sola vista. El código de invitación
+  (`inviteCodeExpanded`) empieza siempre colapsado y no se recuerda
+  entre visitas — solo hace falta una vez, al vincular al otro
+  cuidador, y esa tarjeta se ve en cada visita al dashboard. Tocar el
+  nombre del bebé lo despliega; el botón de sexo/fecha de nacimiento,
+  al lado, es un control aparte que no colapsa ni expande nada al
+  pulsarlo.
 
 ## Idioma
 

@@ -241,3 +241,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   redimensiona a 320×320 como máximo antes de guardarla. Sin errores
   por campo como en LudoDex/MIRA — un toast genérico por acción, igual
   que el resto de esta app.
+
+- El código de invitación se veía siempre en la tarjeta del bebé,
+  aunque solo hace falta una vez (al vincular al otro cuidador) y esa
+  tarjeta se ve en cada visita al dashboard. Ahora empieza colapsado
+  (sin recordar el estado entre visitas) y se despliega al tocar el
+  nombre del bebé, con una flecha que indica que se puede abrir. El
+  botón de sexo/fecha de nacimiento, al lado, sigue siendo su propio
+  control independiente — tocarlo no colapsa ni expande nada.

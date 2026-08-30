@@ -434,6 +434,11 @@ async function onDeleteViewingMilestone() {
 
 const inviteCode = computed(() => babies.current?.invite_code ?? '')
 
+// Colapsado siempre al entrar - solo hace falta una vez, al vincular al
+// otro cuidador, y ocupar espacio fijo en cada visita (que es constante,
+// para el registro rápido) no compensa. No se recuerda entre visitas.
+const inviteCodeExpanded = ref(false)
+
 // --- Datos del bebé: sexo y fecha de nacimiento, necesarios para los
 // percentiles de crecimiento OMS. Ambos opcionales - si faltan, el
 // backend simplemente no calcula percentiles. ---
@@ -707,9 +712,28 @@ const sleepPredictionLabel = computed(() => {
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
         >
           <div class="flex items-start justify-between gap-2">
-            <h1 class="font-display text-xl font-bold text-balance">
-              {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
-            </h1>
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+              :aria-expanded="inviteCodeExpanded"
+              @click="inviteCodeExpanded = !inviteCodeExpanded"
+            >
+              <h1 class="font-display text-xl font-bold text-balance">
+                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
+              </h1>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="mt-1.5 h-4 w-4 shrink-0 transition-transform"
+                :class="{ 'rotate-180': inviteCodeExpanded }"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
             <button
               type="button"
               class="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold"
@@ -719,6 +743,7 @@ const sleepPredictionLabel = computed(() => {
             </button>
           </div>
           <div
+            v-if="inviteCodeExpanded"
             class="mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm"
           >
             <span>{{ t('dashboard.inviteCodeLabel') }}</span>

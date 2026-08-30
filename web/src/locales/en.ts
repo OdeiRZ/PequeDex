@@ -59,8 +59,20 @@ export default {
     regenerateInviteCode: 'Generate new code',
     toastInviteRegenerated: 'Code regenerated.',
     inviteCodeError: 'Could not generate a new code.',
-    toastRemoved: 'Deleted.',
-    removeError: 'Could not delete.',
+    toastRemoved: {
+      feed: 'Feed deleted.',
+      sleep: 'Sleep deleted.',
+      diaper: 'Diaper change deleted.',
+      growth: 'Measurement deleted.',
+      milestone: 'Milestone deleted.',
+    },
+    removeError: {
+      feed: 'Could not delete the feed.',
+      sleep: 'Could not delete the sleep.',
+      diaper: 'Could not delete the diaper change.',
+      growth: 'Could not delete the measurement.',
+      milestone: 'Could not delete the milestone.',
+    },
     babySettingsButton: 'Sex / date of birth',
     babySettings: {
       sexLabel: 'Sex (optional, only used for the growth percentile)',

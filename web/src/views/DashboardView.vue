@@ -280,6 +280,8 @@ function entryTitle(entry: (typeof babies.timeline)[number]): string {
 }
 
 async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
+  const key = entry.type === 'diaper_change' ? 'diaper' : entry.type
+
   try {
     if (entry.type === 'feed') {
       await babies.deleteFeed(entry.data.id)
@@ -288,27 +290,27 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
     } else {
       await babies.deleteDiaperChange(entry.data.id)
     }
-    toast.show(t('dashboard.toastRemoved'))
+    toast.show(t(`dashboard.toastRemoved.${key}`))
   } catch {
-    toast.show(t('dashboard.removeError'))
+    toast.show(t(`dashboard.removeError.${key}`))
   }
 }
 
 async function onDeleteGrowthMeasurement(id: number) {
   try {
     await babies.deleteGrowthMeasurement(id)
-    toast.show(t('dashboard.toastRemoved'))
+    toast.show(t('dashboard.toastRemoved.growth'))
   } catch {
-    toast.show(t('dashboard.removeError'))
+    toast.show(t('dashboard.removeError.growth'))
   }
 }
 
 async function onDeleteMilestone(id: number) {
   try {
     await babies.deleteMilestone(id)
-    toast.show(t('dashboard.toastRemoved'))
+    toast.show(t('dashboard.toastRemoved.milestone'))
   } catch {
-    toast.show(t('dashboard.removeError'))
+    toast.show(t('dashboard.removeError.milestone'))
   }
 }
 

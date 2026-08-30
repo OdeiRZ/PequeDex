@@ -199,3 +199,9 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   unirse a un bebé. Los registros rápidos (toma/sueño/pañal/medida/
   hito) no llevan toast: la hoja se cierra y la entrada aparece al
   momento en su lista, que ya es suficiente confirmación ahí.
+
+- El toast de borrado decía simplemente "Eliminado.", sin decir qué se
+  había borrado. Ahora es específico por tipo ("Toma eliminada.",
+  "Sueño eliminado.", "Pañal eliminado.", "Medida eliminada.", "Hito
+  eliminado.", con su error a juego), en vez de una única clave
+  genérica.

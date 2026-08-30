@@ -59,8 +59,20 @@ export default {
     regenerateInviteCode: 'Generar nuevo código',
     toastInviteRegenerated: 'Código regenerado.',
     inviteCodeError: 'No se ha podido generar el código.',
-    toastRemoved: 'Eliminado.',
-    removeError: 'No se ha podido eliminar.',
+    toastRemoved: {
+      feed: 'Toma eliminada.',
+      sleep: 'Sueño eliminado.',
+      diaper: 'Pañal eliminado.',
+      growth: 'Medida eliminada.',
+      milestone: 'Hito eliminado.',
+    },
+    removeError: {
+      feed: 'No se ha podido eliminar la toma.',
+      sleep: 'No se ha podido eliminar el sueño.',
+      diaper: 'No se ha podido eliminar el pañal.',
+      growth: 'No se ha podido eliminar la medida.',
+      milestone: 'No se ha podido eliminar el hito.',
+    },
     babySettingsButton: 'Sexo / fecha de nacimiento',
     babySettings: {
       sexLabel: 'Sexo (opcional, solo para el percentil de crecimiento)',

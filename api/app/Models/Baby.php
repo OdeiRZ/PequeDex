@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BabySex;
 use Database\Factories\BabyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ class Baby extends Model
     /** @use HasFactory<BabyFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'due_date', 'birth_date', 'invite_code'];
+    protected $fillable = ['name', 'due_date', 'birth_date', 'sex', 'invite_code'];
 
     /**
      * @return array<string, string>
@@ -23,6 +24,7 @@ class Baby extends Model
         return [
             'due_date' => 'date:Y-m-d',
             'birth_date' => 'date:Y-m-d',
+            'sex' => BabySex::class,
         ];
     }
 
@@ -79,5 +81,21 @@ class Baby extends Model
     public function diaperChanges(): HasMany
     {
         return $this->hasMany(DiaperChange::class);
+    }
+
+    /**
+     * @return HasMany<GrowthMeasurement, $this>
+     */
+    public function growthMeasurements(): HasMany
+    {
+        return $this->hasMany(GrowthMeasurement::class);
+    }
+
+    /**
+     * @return HasMany<Milestone, $this>
+     */
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
     }
 }

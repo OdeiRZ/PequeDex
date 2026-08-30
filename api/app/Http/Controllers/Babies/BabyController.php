@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Babies;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Babies\JoinBabyRequest;
 use App\Http\Requests\Babies\StoreBabyRequest;
+use App\Http\Requests\Babies\UpdateBabyRequest;
 use App\Models\Baby;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,12 +23,24 @@ class BabyController extends Controller
         $baby = Baby::create([
             'name' => $request->validated('name'),
             'due_date' => $request->validated('due_date'),
+            'birth_date' => $request->validated('birth_date'),
+            'sex' => $request->validated('sex'),
             'invite_code' => Baby::generateInviteCode(),
         ]);
 
         $baby->users()->attach($request->user());
 
         return response()->json(['data' => $baby], 201);
+    }
+
+    /** Any linked caregiver can edit - e.g. filling in birth_date/sex once known. */
+    public function update(UpdateBabyRequest $request, Baby $baby): JsonResponse
+    {
+        $this->authorize('update', $baby);
+
+        $baby->update($request->validated());
+
+        return response()->json(['data' => $baby]);
     }
 
     /** Links the authenticated user to the baby the code belongs to. */

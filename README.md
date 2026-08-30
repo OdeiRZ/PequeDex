@@ -47,6 +47,14 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 
 1. ✅ Cimientos: repo, API con auth (registro/login/logout) y SPA con las
    mismas pantallas, verificado de punta a punta en local.
+2. ✅ Modelo de datos del núcleo: un bebé compartido entre cuidadores por
+   código de invitación, con tomas/sueño/pañales y una línea temporal
+   combinada.
+3. ✅ Primeras pantallas: crear/unirse a un bebé, registro rápido y línea
+   temporal, sincronizada entre cuidadores por sondeo.
+4. ✅ Crecimiento con percentiles OMS (peso/talla/perímetro craneal) e
+   hitos con foto (subida real de archivo, sin fuente externa de la que
+   sacarla por URL).
 
 ## Licencia
 

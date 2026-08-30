@@ -43,3 +43,34 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   contra la API real: registro → crear bebé → registrar toma/sueño/pañal
   → aparecen en la línea temporal → borrar una entrada → recargar la
   página mantiene la sesión y el resto de entradas.
+
+- Crecimiento con percentiles OMS: `GrowthMeasurement` (peso, talla y
+  perímetro craneal, cada uno opcional pero con al menos uno requerido)
+  decorado al vuelo con el percentil correspondiente según las tablas
+  oficiales de la OMS (Child Growth Standards, método LMS), usando los
+  datos reales de peso/talla/perímetro craneal por edad y sexo
+  publicados por la OMS (0–24 meses) — no una aproximación, los números
+  se descargaron de `cdn.who.int` y se verificaron contra puntos de
+  referencia conocidos (un valor exactamente en la mediana da percentil
+  50). El `Baby` ahora admite `sex` y `birth_date`, ambos opcionales: si
+  falta cualquiera de los dos, el percentil simplemente no se calcula
+  (queda a `null`) en vez de fallar. La edad para la tabla se calcula
+  con el mismo "mes medio" de 30.4375 días que usa la propia OMS, no el
+  mes de calendario.
+
+- Hitos con foto: `Milestone` (título, fecha y descripción opcional)
+  con subida real de archivo — a diferencia del `image_url` de LudoDex
+  (que funciona porque la carátula de un juego tiene una fuente externa,
+  BGG), la foto de un hito no tiene de dónde sacarse por URL, así que se
+  sube el archivo directamente al disco `public` de Laravel. Reemplazar
+  la foto borra la anterior; también se puede quitar sin subir una
+  nueva. Verificado de punta a punta contra la API real: subida de una
+  imagen real, comprobación de que el archivo queda en
+  `storage/app/public/milestones/{baby}/` y que la URL servida
+  (`photo_url`) apunta a él.
+
+- Ambas funcionalidades comparten el mismo modelo de autorización que
+  tomas/sueño/pañales (cualquier cuidador vinculado al bebé puede ver y
+  editar, sin importar quién lo registró) y quedan cubiertas por tests
+  Pest (15 tests nuevos, incluyendo el cálculo de percentiles y el
+  ciclo de vida completo de la foto de un hito).

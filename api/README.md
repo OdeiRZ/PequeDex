@@ -57,6 +57,26 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   ordenada en PHP, no con un `UNION` SQL entre tres tablas de forma
   distinta: el registro de una familia no alcanza un volumen (ni tras
   años de uso diario) donde eso importe.
+- `app/Services/Growth/WhoGrowthStandards.php` — tablas L/M/S reales de la
+  OMS (Child Growth Standards, 0–24 meses, peso/talla/perímetro craneal
+  por sexo) embebidas como constantes PHP, descargadas de `cdn.who.int` y
+  no aproximadas, dado el contexto de salud. `percentile()` aplica la
+  fórmula LMS y convierte el z-score a percentil con una aproximación
+  propia de la CDF normal estándar (Abramowitz & Stegun 7.1.26 — PHP no
+  trae una función `erf`/CDF nativa). La edad se calcula con el mismo
+  "mes medio" de 30.4375 días que usa la propia OMS
+  (`Carbon::diffInDays() / 30.4375`), no `diffInMonths()` de Carbon, para
+  no desviarse del criterio con el que se generaron las tablas.
+  `GrowthMeasurementController` no calcula el percentil si al `Baby` le
+  falta `sex` o `birth_date` — queda `null` en la respuesta en vez de
+  fallar, porque no siempre se conocen o se quieren dar esos datos.
+- `app/Models/Milestone.php` — la foto de un hito se sube como archivo
+  real al disco `public` (`Storage::disk('public')`), no como una URL
+  pegada: a diferencia del `image_url` de LudoDex (la carátula de un
+  juego tiene una fuente externa real, BGG), no existe ningún sitio del
+  que sacar por URL la foto de un bebé. El endpoint de edición es
+  `POST`, no `PUT`, porque PHP nunca rellena `$_FILES` a partir del
+  cuerpo `multipart/form-data` de una petición `PUT`.
 
 ## Notas de arquitectura
 

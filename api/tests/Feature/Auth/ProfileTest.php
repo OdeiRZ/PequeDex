@@ -70,6 +70,20 @@ it('uploads an avatar and stores it as a data URI', function () {
     expect($user->refresh()->avatar)->toStartWith('data:image/png;base64,');
 });
 
+it('rejects an image whose dimensions are too large to safely decode', function () {
+    actingAsUser();
+
+    // A 1px-tall strip is cheap to generate/decode in the test itself
+    // (unlike a real decompression bomb), but its width alone already
+    // exceeds AvatarProcessor::MAX_SOURCE_DIMENSION - enough to exercise
+    // the guard without needing gigabytes of memory in the test run.
+    $response = $this->postJson('/api/user/avatar', [
+        'avatar' => UploadedFile::fake()->image('enorme.jpg', 8500, 1),
+    ]);
+
+    $response->assertServerError();
+});
+
 it('rejects a non-image file as the avatar', function () {
     actingAsUser();
 

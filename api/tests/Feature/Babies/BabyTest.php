@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BabySex;
 use App\Models\Baby;
 use App\Models\User;
 
@@ -92,6 +93,40 @@ it('rejects viewing a baby the user is not linked to', function () {
     $baby = Baby::factory()->create();
 
     $this->getJson("/api/babies/{$baby->id}")->assertForbidden();
+});
+
+it('lets a linked caregiver update sex and birth date', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['sex' => null, 'birth_date' => null]);
+    $baby->users()->attach($user);
+
+    $response = $this->putJson("/api/babies/{$baby->id}", [
+        'sex' => 'nina',
+        'birth_date' => '2026-09-07',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.sex', 'nina')
+        ->assertJsonPath('data.birth_date', '2026-09-07');
+
+    expect($baby->refresh()->sex)->toBe(BabySex::Nina);
+});
+
+it('rejects updating a baby the user is not linked to', function () {
+    actingAsUser();
+    $baby = Baby::factory()->create();
+
+    $this->putJson("/api/babies/{$baby->id}", ['sex' => 'nino'])->assertForbidden();
+});
+
+it('rejects an invalid sex value when updating a baby', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+
+    $this->putJson("/api/babies/{$baby->id}", ['sex' => 'no-existe'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('sex');
 });
 
 it('lets a linked caregiver regenerate the invite code', function () {

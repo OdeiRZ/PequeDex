@@ -99,6 +99,35 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   redeploy (ver "Despliegue" más abajo). El endpoint de edición es
   `POST`, no `PUT`, porque PHP nunca rellena `$_FILES` a partir del
   cuerpo `multipart/form-data` de una petición `PUT`.
+- `docker/uploads.ini` — subir un hito con foto desde el móvil se
+  quedaba colgado en producción sin ningún error: la imagen Docker no
+  llevaba ningún `php.ini` propio, así que PHP usaba sus valores por
+  defecto (`upload_max_filesize=2M`, `post_max_size=8M`), por debajo
+  de lo que la propia app ya valida (`UpdateMilestoneRequest` acepta
+  hasta 8MB). Una foto real de móvil supera 2MB sin esfuerzo, y PHP
+  descarta la petición entera en silencio antes de que Laravel llegue
+  a verla. Nunca se detectó en local porque el `php.ini` de XAMPP ya
+  permite 40MB. Este archivo se copia a `/usr/local/etc/php/conf.d/`
+  en el Dockerfile (`upload_max_filesize=10M`, `post_max_size=12M`).
+- `app/Http/Controllers/Auth/ProfileController.php` /
+  `app/Services/Users/AvatarProcessor.php::process()` — antes de
+  decodificar la imagen con `imagecreatefromstring()` (que la carga
+  entera en memoria), primero lee sus dimensiones con `getimagesize()`
+  (que solo lee la cabecera) y rechaza cualquier cosa por encima de
+  `MAX_SOURCE_DIMENSION`. Sin esto, un archivo pequeño en bytes pero
+  con dimensiones absurdas (un color sólido comprime muy bien) podría
+  agotar la memoria de ese worker antes de que hubiera ocasión de
+  redimensionarlo.
+- `app/Policies/BabyPolicy.php` — `view`/`update` comprueban
+  pertenencia con `$baby->users()->whereKey($user->id)->exists()`, una
+  consulta, no `$baby->users->contains($user)`, que cargaría toda la
+  relación en memoria solo para mirar si un id está en la lista.
+- `app/Http/Controllers/Babies/TimelineController.php` — cada una de
+  las tres subconsultas (tomas/sueño/pañales) se limita a `$limit`
+  filas por su cuenta antes de fusionar, no solo el resultado final.
+  El dashboard sondea este endpoint cada 5 segundos mientras está
+  abierto, así que sin este límite por subconsulta el coste crecía con
+  el histórico completo del bebé en vez de con lo que se muestra.
 - `app/Services/Sleep/SleepPatternPredictor.php` — predicción de patrones
   de sueño deliberadamente honesta: una media móvil sobre el propio
   historial de siestas del bebé (ventana de vigilia media, duración

@@ -196,9 +196,16 @@ sobre lo que sea que muestre el dashboard en ese momento, y un tinte
 traslúcido o dependiente del tema no se leería igual de bien sobre
 cualquier fondo. Se usa para confirmar acciones que antes eran
 silenciosas — borrar una entrada, guardar sexo/fecha de nacimiento,
-regenerar el código de invitación, crear o unirse a un bebé — no en los
-registros rápidos, donde la propia hoja cerrándose y la entrada
-apareciendo en su lista ya es confirmación suficiente.
+regenerar el código de invitación, crear o unirse a un bebé — no para
+el *éxito* de los registros rápidos (toma/sueño/pañal/hito), donde la
+propia hoja cerrándose y la entrada apareciendo en su lista ya es
+confirmación suficiente. Sí para su *fallo*: esos `onSubmit*` no
+llevaban ningún `catch` — si `babies.createX(...)` fallaba (red,
+validación...), no pasaba nada visible, la hoja se quedaba abierta sin
+ninguna pista de qué había ido mal (encontrado en real: subir un hito
+con foto se quedaba así de "colgado" en el móvil - ver `api/README.md`
+sobre `docker/uploads.ini`). Ahora cada uno muestra
+`t('dashboard.saveError')` por toast si falla.
 
 ## Despliegue
 

@@ -257,3 +257,41 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   comprobación, así que se coló hasta que el CI lo pilló. Arreglado
   con `npx prettier --write` (cambio puramente cosmético, sin tocar
   lógica) y confirmado en verde en GitHub Actions.
+
+- Corregido en producción: subir un hito con foto desde el móvil se
+  quedaba "pensando" sin ningún error, mientras que sin foto sí
+  funcionaba. Causa real: la imagen de Docker no llevaba ningún
+  `php.ini` propio, así que PHP caía en sus valores por defecto
+  (`upload_max_filesize=2M`, `post_max_size=8M`) — por debajo de lo
+  que la propia app ya valida (`UpdateMilestoneRequest` acepta fotos
+  de hasta 8MB). Una foto real de móvil supera esos 2MB sin esfuerzo,
+  así que PHP descartaba la petición entera en silencio antes de que
+  Laravel llegara a verla. Nunca se detectó en local porque el
+  `php.ini` de XAMPP ya permite 40MB. Arreglado con `docker/uploads.ini`
+  (`upload_max_filesize=10M`, `post_max_size=12M`), copiado a
+  `/usr/local/etc/php/conf.d/` en el Dockerfile. De paso, los cinco
+  formularios de registro rápido (toma/sueño/pañal/hito) no tenían
+  ningún manejo de errores — un fallo (de red, de validación, de lo
+  que sea) no mostraba nada al usuario. Ahora avisan con un toast
+  genérico, igual que el resto de la app.
+
+- Pequeña auditoría de seguridad y rendimiento tras lo anterior:
+  `POST /api/babies/join` no tenía `throttle`, a diferencia de
+  login/password/avatar — añadido (`throttle:10,1`), aunque el espacio
+  de códigos (32⁸) ya hacía el brute-force poco práctico.
+  `AvatarProcessor` decodificaba la imagen entera en memoria
+  (`imagecreatefromstring`) antes de comprobar sus dimensiones — una
+  imagen pequeña en bytes pero con dimensiones absurdas podía agotar
+  la memoria de ese worker; ahora se leen las dimensiones con
+  `getimagesize()` (solo la cabecera) y se rechaza antes de decodificar
+  nada. `BabyPolicy` cargaba la relación `users` entera en memoria solo
+  para comprobar pertenencia (`$baby->users->contains($user)`) — ahora
+  es una consulta (`whereKey($user->id)->exists()`). `TimelineController`
+  traía el historial completo de tomas/sueño/pañales en cada llamada
+  antes de aplicar el `limit` — como el dashboard sondea este endpoint
+  cada 5 segundos mientras está abierto, el coste crecía con el
+  histórico completo del bebé en vez de con lo que se muestra; ahora
+  cada subconsulta se limita por su cuenta antes de fusionar. Y
+  `BabyController::update` (el endpoint tras "Sexo / fecha de
+  nacimiento") no tenía ningún test — añadidos tres, igual que ya
+  tenía el resto de endpoints de `Baby`.

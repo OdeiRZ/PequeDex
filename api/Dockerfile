@@ -26,6 +26,11 @@ WORKDIR /var/www/html
 RUN apk add --no-cache postgresql-dev \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath
 
+# PHP's compiled-in defaults (upload_max_filesize=2M, post_max_size=8M)
+# are smaller than what this app already validates against (milestone
+# photos up to 8MB) - see docker/uploads.ini for why this file exists.
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 

@@ -19,11 +19,11 @@ class BabyPolicy
 {
     public function view(User $user, Baby $baby): bool
     {
-        return $baby->users->contains($user);
+        return $baby->users()->whereKey($user->id)->exists();
     }
 
     public function update(User $user, Baby $baby): bool
     {
-        return $baby->users->contains($user);
+        return $baby->users()->whereKey($user->id)->exists();
     }
 }

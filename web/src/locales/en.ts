@@ -60,6 +60,7 @@ export default {
     regenerateInviteCode: 'Generate new code',
     toastInviteRegenerated: 'Code regenerated.',
     inviteCodeError: 'Could not generate a new code.',
+    saveError: 'Could not save. Check your connection and try again.',
     toastRemoved: {
       feed: 'Feed deleted.',
       sleep: 'Sleep deleted.',

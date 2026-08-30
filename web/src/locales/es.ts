@@ -60,6 +60,7 @@ export default {
     regenerateInviteCode: 'Generar nuevo código',
     toastInviteRegenerated: 'Código regenerado.',
     inviteCodeError: 'No se ha podido generar el código.',
+    saveError: 'No se ha podido guardar. Comprueba tu conexión e inténtalo de nuevo.',
     toastRemoved: {
       feed: 'Toma eliminada.',
       sleep: 'Sueño eliminado.',

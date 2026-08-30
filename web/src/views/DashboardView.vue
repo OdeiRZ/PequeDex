@@ -285,6 +285,8 @@ async function onSubmitFeed() {
       started_at: feedStartedAt.value,
     })
     closeSheet()
+  } catch {
+    toast.show(t('dashboard.saveError'))
   } finally {
     savingFeed.value = false
   }
@@ -305,6 +307,8 @@ async function onSubmitSleep() {
       ended_at: sleepEndedAt.value || null,
     })
     closeSheet()
+  } catch {
+    toast.show(t('dashboard.saveError'))
   } finally {
     savingSleep.value = false
   }
@@ -331,6 +335,8 @@ async function onSubmitDiaper() {
       type: diaperType.value,
     })
     closeSheet()
+  } catch {
+    toast.show(t('dashboard.saveError'))
   } finally {
     savingDiaper.value = false
   }
@@ -607,6 +613,8 @@ async function onSubmitMilestone() {
       photo: milestonePhoto.value,
     })
     closeSheet()
+  } catch {
+    toast.show(t('dashboard.saveError'))
   } finally {
     savingMilestone.value = false
   }

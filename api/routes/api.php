@@ -26,7 +26,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/babies', [BabyController::class, 'index']);
     Route::post('/babies', [BabyController::class, 'store']);
-    Route::post('/babies/join', [BabyController::class, 'join']);
+    // Throttled like the other secret-guessing surfaces (login, password) -
+    // the invite code's keyspace (32^8) makes brute-forcing impractical on
+    // its own, but this was the one such endpoint with no rate limit at all.
+    Route::post('/babies/join', [BabyController::class, 'join'])->middleware('throttle:10,1');
     Route::get('/babies/{baby}', [BabyController::class, 'show']);
     Route::put('/babies/{baby}', [BabyController::class, 'update']);
     Route::post('/babies/{baby}/invite-code', [BabyController::class, 'regenerateInviteCode']);

@@ -15,6 +15,16 @@ class AvatarProcessor
 {
     private const MAX_DIMENSION = 320;
 
+    // Guards against a decompression bomb - a file that's small in bytes
+    // (validated by UpdateAvatarRequest) but claims huge pixel dimensions
+    // (a single-color image compresses extremely well) would otherwise be
+    // decoded to its full, uncompressed size in memory by
+    // imagecreatefromstring() before this class ever gets a chance to
+    // shrink it. getimagesize() only reads the file's header, not the
+    // pixel data, so it's safe to check before deciding whether to decode
+    // at all.
+    private const MAX_SOURCE_DIMENSION = 8000;
+
     /**
      * Resizes to fit within MAX_DIMENSION x MAX_DIMENSION (keeping the
      * original aspect ratio - cropping to a circle/square happens in CSS
@@ -24,14 +34,24 @@ class AvatarProcessor
      */
     public function process(UploadedFile $file): string
     {
+        $dimensions = getimagesize($file->getRealPath());
+
+        if ($dimensions === false) {
+            throw new RuntimeException('No se ha podido leer la imagen.');
+        }
+
+        [$sourceWidth, $sourceHeight] = $dimensions;
+
+        if ($sourceWidth > self::MAX_SOURCE_DIMENSION || $sourceHeight > self::MAX_SOURCE_DIMENSION) {
+            throw new RuntimeException('La imagen es demasiado grande.');
+        }
+
         $source = imagecreatefromstring($file->get());
 
         if ($source === false) {
             throw new RuntimeException('No se ha podido leer la imagen.');
         }
 
-        $sourceWidth = imagesx($source);
-        $sourceHeight = imagesy($source);
         $scale = min(1, self::MAX_DIMENSION / max($sourceWidth, $sourceHeight));
         $targetWidth = max(1, (int) round($sourceWidth * $scale));
         $targetHeight = max(1, (int) round($sourceHeight * $scale));

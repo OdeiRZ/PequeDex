@@ -450,3 +450,45 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   endpoint `update` construido y probado; solo faltaba conectarlo.
   Verificado en el navegador con una cuenta de prueba real, incluido
   que el percentil se recalcula tras el cambio.
+
+- Rediseño del dashboard ("Ritmo Diario"), a partir de una maqueta
+  propuesta y aprobada antes de tocar código real (mismo proceso que la
+  identidad visual original): la app se sentía como una hoja de
+  registros, no como un diario. Tres piezas nuevas:
+  - **Portada "Hoy con {nombre}"**: la tarjeta del bebé ya no muestra
+    solo su nombre — ahora es un titular con la edad en días (menos de
+    dos semanas) o semanas, la fecha de nacimiento, y un chip con el
+    sexo. Si el bebé aún no ha nacido pero hay `due_date`, muestra la
+    cuenta atrás en su lugar; sin ninguna fecha, se queda en un saludo
+    genérico. El cálculo vive en `src/lib/babyAge.ts` (con tests
+    propios): las fechas son de solo-día ("YYYY-MM-DD"), así que se
+    parsean como fecha de calendario local en vez de con `new
+    Date(iso)`, que las trata como medianoche UTC y puede desplazar el
+    día según la zona horaria del navegador. El resto de la
+    funcionalidad de la tarjeta (desplegar el código de invitación,
+    abrir el ajuste de sexo/fecha) sigue igual, solo cambia lo que se
+    ve antes de tocarla.
+  - **Hitos como historias**: `MilestoneStories.vue` sustituye la
+    cuadrícula de hitos por una fila de círculos con anillo degradado
+    (foto o emoji de categoría dentro), estilo Instagram Stories, con
+    un círculo "+" al final para crear uno nuevo — el visor a pantalla
+    completa que ya existía sube arriba del todo en vez de vivir
+    enterrado tras la línea temporal y el crecimiento.
+    `MilestoneCard.vue` (la cuadrícula que sustituye) se elimina por
+    completo, no queda código muerto.
+  - **Ritmo de hoy**: `DailyRhythm.vue`, una franja de 00 a 24h con los
+    tramos de sueño y las marcas de toma/pañal de *hoy* (no las últimas
+    24h en bruto, el día de calendario), calculada a partir de la
+    misma `babies.timeline` que ya se pedía — sin llamadas nuevas a la
+    API. Una siesta en curso se recorta a "ahora", no se extiende hacia
+    el resto del día que todavía no ha pasado.
+  - Además: `EntryCard.vue` cambia el borde de color fino por un
+    lavado de fondo del color de la categoría (con el icono sobre un
+    chip translúcido para que no se pierda contraste), y
+    `ActionBar.vue` pasa de barra plana pegada al borde a una pastilla
+    flotante con sombra y margen — ambos cambios pedidos junto con el
+    resto de la maqueta. Verificado en el navegador con una cuenta de
+    prueba real en claro y oscuro: portada con edad calculada, tira de
+    hitos abriendo el visor y el formulario de creación, ritmo del día
+    con datos reales, y edición de una toma sigue funcionando desde la
+    fila rediseñada.

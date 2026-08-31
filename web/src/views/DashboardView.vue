@@ -18,15 +18,17 @@ import { useUiStore } from '@/stores/ui'
 import ActionBar from '@/components/ActionBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
+import DailyRhythm from '@/components/DailyRhythm.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
-import MilestoneCard from '@/components/MilestoneCard.vue'
+import MilestoneStories from '@/components/MilestoneStories.vue'
 import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
+import { getBabyAge } from '@/lib/babyAge'
 import { storeLocale } from '@/i18n'
 
 const auth = useAuthStore()
@@ -647,6 +649,71 @@ const babySexOptions = computed(() => [
   { value: 'nina' as const, label: t('dashboard.babySettings.sexGirl') },
 ])
 
+// --- Cabecera "Hoy con {nombre}": edad en días/semanas si ya ha nacido,
+// cuenta atrás a la fecha prevista si no, o solo el nombre si no hay
+// ninguna de las dos fechas todavía (ambas son opcionales al crear el
+// bebé). Días para un recién nacido (lo que de verdad importa las dos
+// primeras semanas), semanas después - mismo umbral que usan las apps
+// de seguimiento reales. ---
+
+const babyAgeInfo = computed(() =>
+  getBabyAge(babies.current?.birth_date ?? null, babies.current?.due_date ?? null),
+)
+
+const heroEyebrow = computed(() =>
+  babies.current?.name
+    ? t('dashboard.hero.eyebrow', { name: babies.current.name })
+    : t('dashboard.hero.eyebrowGeneric'),
+)
+
+interface HeroHeadline {
+  value: number | null
+  unit: string | null
+  special: string | null
+}
+
+const heroHeadline = computed<HeroHeadline>(() => {
+  const info = babyAgeInfo.value
+
+  if (info.type === 'born') {
+    return info.days < 14
+      ? { value: info.days, unit: t('dashboard.hero.ageDaysUnit', info.days), special: null }
+      : { value: info.weeks, unit: t('dashboard.hero.ageWeeksUnit', info.weeks), special: null }
+  }
+
+  if (info.type === 'expecting') {
+    return info.daysUntilDue === 0
+      ? { value: null, unit: null, special: t('dashboard.hero.countdownToday') }
+      : {
+          value: info.daysUntilDue,
+          unit: t('dashboard.hero.ageDaysUnit', info.daysUntilDue),
+          special: null,
+        }
+  }
+
+  return { value: null, unit: null, special: null }
+})
+
+const heroDateLabel = computed(() => {
+  if (babyAgeInfo.value.type === 'born' && babies.current?.birth_date) {
+    const date = new Date(babies.current.birth_date).toLocaleDateString(dateLocale.value)
+    return t('dashboard.hero.bornOn', { date })
+  }
+
+  if (babyAgeInfo.value.type === 'expecting' && babies.current?.due_date) {
+    const date = new Date(babies.current.due_date).toLocaleDateString(dateLocale.value)
+    return t('dashboard.hero.dueOn', { date })
+  }
+
+  return null
+})
+
+const heroSexLabel = computed(() => {
+  if (babies.current?.sex === 'nino') return t('dashboard.hero.sexBoy')
+  if (babies.current?.sex === 'nina') return t('dashboard.hero.sexGirl')
+  return null
+})
+
 const babySettingsButtonLabel = computed(() => {
   if (!babies.current) return t('dashboard.babySettingsButton')
 
@@ -973,31 +1040,68 @@ const sleepPredictionLabel = computed(() => {
     <template v-else>
       <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-8">
         <div
-          class="rounded-2xl p-5 text-brand-ink shadow-md"
+          class="relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
         >
-          <div class="flex items-start justify-between gap-2">
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute -top-14 -right-8 h-36 w-36 rounded-full bg-white/15"
+          ></span>
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute -bottom-9 left-1/4 h-20 w-20 rounded-full bg-white/10"
+          ></span>
+
+          <div class="relative flex items-start justify-between gap-2">
             <button
               type="button"
-              class="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+              class="flex min-w-0 flex-1 flex-col items-start gap-1 text-left"
               :aria-expanded="inviteCodeExpanded"
               @click="inviteCodeExpanded = !inviteCodeExpanded"
             >
-              <h1 class="font-display text-xl font-bold text-balance">
-                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
-              </h1>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="mt-1.5 h-4 w-4 shrink-0 transition-transform"
-                :class="{ 'rotate-180': inviteCodeExpanded }"
+              <span
+                class="flex items-center gap-1 text-xs font-semibold tracking-wide text-brand-ink/80 uppercase"
               >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
+                {{ heroEyebrow }}
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="h-3.5 w-3.5 shrink-0 transition-transform"
+                  :class="{ 'rotate-180': inviteCodeExpanded }"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+
+              <span
+                v-if="heroHeadline.special"
+                class="font-display text-2xl font-extrabold text-balance"
+              >
+                {{ heroHeadline.special }}
+              </span>
+              <span v-else-if="heroHeadline.value !== null" class="flex items-baseline gap-1.5">
+                <span class="font-display text-4xl leading-none font-extrabold">{{
+                  heroHeadline.value
+                }}</span>
+                <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
+              </span>
+              <span v-else class="font-display text-xl font-bold text-balance">
+                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
+              </span>
+
+              <span v-if="heroDateLabel" class="text-xs text-brand-ink/85">{{
+                heroDateLabel
+              }}</span>
+              <span
+                v-if="heroSexLabel"
+                class="mt-1 inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
+              >
+                {{ heroSexLabel }}
+              </span>
             </button>
             <button
               type="button"
@@ -1009,7 +1113,7 @@ const sleepPredictionLabel = computed(() => {
           </div>
           <div
             v-if="inviteCodeExpanded"
-            class="mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm"
+            class="relative mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm"
           >
             <span>{{ t('dashboard.inviteCodeLabel') }}</span>
             <div class="flex items-center gap-2">
@@ -1024,6 +1128,17 @@ const sleepPredictionLabel = computed(() => {
             </div>
           </div>
         </div>
+
+        <section class="flex flex-col gap-2">
+          <h2 class="font-display text-base font-bold">{{ t('dashboard.milestones.title') }}</h2>
+          <MilestoneStories
+            :milestones="babies.milestones"
+            @open="viewingMilestoneId = $event"
+            @create="openSheet('milestone')"
+          />
+        </section>
+
+        <DailyRhythm :timeline="babies.timeline" />
 
         <section class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.timeline.title') }}</h2>
@@ -1085,30 +1200,6 @@ const sleepPredictionLabel = computed(() => {
             class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
           >
             {{ t('dashboard.growth.empty') }}
-          </p>
-        </section>
-
-        <section class="flex flex-col gap-2">
-          <h2 class="font-display text-base font-bold">{{ t('dashboard.milestones.title') }}</h2>
-          <ul class="grid grid-cols-2 gap-2">
-            <MilestoneCard
-              v-for="milestone in babies.milestones"
-              :key="milestone.id"
-              :title="milestone.title"
-              :meta="new Date(milestone.achieved_at).toLocaleDateString(dateLocale)"
-              :category="milestone.category"
-              :description="milestone.description"
-              :photo-src="milestone.photo_url"
-              :photo-alt="milestone.title"
-              @open="viewingMilestoneId = milestone.id"
-              @delete="onDeleteMilestone(milestone.id)"
-            />
-          </ul>
-          <p
-            v-if="babies.milestones.length === 0"
-            class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
-          >
-            {{ t('dashboard.milestones.empty') }}
           </p>
         </section>
       </main>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import CategoryIcon from './CategoryIcon.vue'
-import { categoryText, categoryBg, categoryBorder, type Category } from '@/lib/category'
+import { categoryText, categoryBg, type Category } from '@/lib/category'
 
 defineProps<{
   category: Category
@@ -16,10 +16,7 @@ defineEmits<{ open: [] }>()
 </script>
 
 <template>
-  <li
-    class="flex items-center gap-3 rounded-2xl border-l-4 bg-surface p-3 shadow-sm"
-    :class="categoryBorder[category]"
-  >
+  <li class="flex items-center gap-3 rounded-2xl p-3 shadow-sm" :class="categoryBg[category]">
     <button
       type="button"
       class="flex min-w-0 flex-1 items-center gap-3 text-left"
@@ -33,8 +30,8 @@ defineEmits<{ open: [] }>()
       />
       <span
         v-else
-        class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
-        :class="[categoryText[category], categoryBg[category]]"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70"
+        :class="categoryText[category]"
       >
         <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />
       </span>
@@ -47,8 +44,8 @@ defineEmits<{ open: [] }>()
 
       <span
         v-if="badge"
-        class="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold"
-        :class="[categoryText[category], categoryBg[category]]"
+        class="whitespace-nowrap rounded-full bg-surface/70 px-2 py-0.5 text-xs font-bold"
+        :class="categoryText[category]"
       >
         {{ badge }}
       </span>

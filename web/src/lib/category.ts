@@ -18,11 +18,3 @@ export const categoryBg: Record<Category, string> = {
   growth: 'bg-growth/15',
   milestone: 'bg-milestone/15',
 }
-
-export const categoryBorder: Record<Category, string> = {
-  feed: 'border-feed',
-  sleep: 'border-sleep',
-  diaper: 'border-diaper',
-  growth: 'border-growth',
-  milestone: 'border-milestone',
-}

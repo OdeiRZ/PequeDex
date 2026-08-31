@@ -193,13 +193,15 @@ verse bien en una captura:
   registros con categoría, reacciones y un visor propio a pantalla
   completa, porque es el único pensado para volver a mirarlo, no solo
   para consultarlo.
-  - **`MilestoneCard.vue`** — cuadrícula de dos columnas con la foto a
-    tamaño de tarjeta (formato 4:3). El emoji de la categoría
-    (`src/lib/milestoneCategory.ts`, tabla de búsqueda literal —
-    mismo motivo que `category.ts` para las clases de Tailwind) se ve
-    como insignia sobre la miniatura, y ocupa el sitio de la foto
-    cuando no hay ninguna, en vez del icono de estrella genérico de
-    antes.
+  - **`MilestoneStories.vue`** — fila de círculos con anillo degradado
+    (foto o emoji de categoría dentro,
+    `src/lib/milestoneCategory.ts` como tabla de búsqueda literal,
+    mismo motivo que `category.ts` para las clases de Tailwind) más un
+    círculo "+" para crear uno nuevo, estilo Instagram Stories — sube
+    los hitos arriba del todo del dashboard en vez de dejarlos
+    enterrados tras la línea temporal y el crecimiento. Sustituye a la
+    cuadrícula original (`MilestoneCard.vue`, eliminada por completo,
+    no queda como código muerto sin usar).
   - **Formulario guiado, no en blanco** — "+ Hito" pide primero la
     categoría como chips (no `SegmentedControl.vue`: sus columnas
     iguales no dejan sitio a 5 etiquetas en español en un móvil de
@@ -226,6 +228,32 @@ verse bien en una captura:
     "refetch tras mutar" que el resto del store. Quién ha reaccionado
     se ve como una pila de `UserAvatar.vue` con sus nombres debajo del
     corazón.
+- **Portada "Hoy con {nombre}"** — la tarjeta del bebé (arriba del
+  dashboard) muestra un titular con su edad en vez de solo su nombre:
+  `src/lib/babyAge.ts` calcula días (menos de dos semanas) o semanas
+  desde `birth_date`, o la cuenta atrás hasta `due_date` si aún no ha
+  nacido — parseando ambas como fecha de calendario local, no con `new
+  Date(iso)` directamente, que trata una fecha sin hora como medianoche
+  UTC y puede desplazar el día según la zona horaria de quien mire la
+  app. El nombre del bebé pasa a la etiqueta pequeña ("Hoy con
+  Violeta"); tocarla sigue desplegando el código de invitación igual
+  que antes.
+- **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
+  las marcas de toma/pañal de *hoy* (el día de calendario, no las
+  últimas 24h en bruto), calculada en el propio componente a partir de
+  la `babies.timeline` que el dashboard ya pedía — ninguna llamada
+  nueva a la API. Una siesta sin `ended_at` (en curso) se recorta a
+  "ahora" en vez de extenderse hacia el resto del día, que todavía no
+  ha pasado.
+- **`EntryCard.vue`** cambia el borde de color fino por un lavado de
+  fondo del color de categoría (`categoryBg`, ya existente) en toda la
+  fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para
+  no perderse contra ese mismo fondo. `categoryBorder` se retira de
+  `category.ts` al quedarse sin ningún uso.
+- **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
+  una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
+  — se siente a controles de una app nativa, no a la barra de acciones
+  de un formulario web.
 
 ## Marca de la pestaña
 

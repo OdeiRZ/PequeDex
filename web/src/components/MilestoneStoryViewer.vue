@@ -27,9 +27,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// Full-bleed photo without cropping - unlike the small grid thumbnail
-// (MilestoneCard, which can afford to crop), this is the one place someone
-// actually looks closely at the photo itself.
+// Full-bleed photo without cropping - unlike the small story-ring
+// thumbnail (MilestoneStories.vue, which can afford to crop), this is
+// the one place someone actually looks closely at the photo itself.
 const formattedDate = () =>
   new Date(props.milestone.achieved_at).toLocaleDateString(props.dateLocale)
 

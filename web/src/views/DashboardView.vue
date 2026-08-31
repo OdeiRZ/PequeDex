@@ -714,16 +714,6 @@ const heroSexLabel = computed(() => {
   return null
 })
 
-// One combined line instead of two - the settings button used to repeat
-// this same sex/date pair as its own label, which read as the same
-// information twice on a card that otherwise had room to spare.
-const heroDetailsLine = computed(() => {
-  const parts = [heroDateLabel.value, heroSexLabel.value].filter(
-    (part): part is string => part !== null,
-  )
-  return parts.length > 0 ? parts.join(' · ') : null
-})
-
 const babySettingsButtonLabel = computed(() => {
   if (!babies.current) return t('dashboard.babySettingsButton')
 
@@ -1061,12 +1051,6 @@ const sleepPredictionLabel = computed(() => {
             aria-hidden="true"
             class="pointer-events-none absolute -bottom-9 left-1/4 h-20 w-20 rounded-full bg-white/10"
           ></span>
-          <span
-            aria-hidden="true"
-            class="pointer-events-none absolute -right-2 -bottom-5 text-7xl opacity-20"
-          >
-            👶
-          </span>
 
           <div class="relative flex items-start justify-between gap-2">
             <button
@@ -1093,48 +1077,55 @@ const sleepPredictionLabel = computed(() => {
                 </svg>
               </span>
 
-              <span
-                v-if="heroHeadline.special"
-                class="font-display text-2xl font-extrabold text-balance"
-              >
-                {{ heroHeadline.special }}
-              </span>
-              <span v-else-if="heroHeadline.value !== null" class="flex items-baseline gap-1.5">
-                <span class="font-display text-4xl leading-none font-extrabold">{{
-                  heroHeadline.value
-                }}</span>
-                <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
-              </span>
-              <span v-else class="font-display text-xl font-bold text-balance">
-                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
-              </span>
+              <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span
+                  v-if="heroHeadline.special"
+                  class="font-display text-2xl font-extrabold text-balance"
+                >
+                  {{ heroHeadline.special }}
+                </span>
+                <span v-else-if="heroHeadline.value !== null" class="flex items-baseline gap-1.5">
+                  <span class="font-display text-4xl leading-none font-extrabold">{{
+                    heroHeadline.value
+                  }}</span>
+                  <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
+                </span>
+                <span v-else class="font-display text-xl font-bold text-balance">
+                  {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
+                </span>
 
-              <span
-                v-if="heroDetailsLine"
-                class="mt-1 inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
-              >
-                {{ heroDetailsLine }}
+                <span v-if="heroDateLabel" class="text-xs text-brand-ink/85">{{
+                  heroDateLabel
+                }}</span>
               </span>
             </button>
-            <button
-              type="button"
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
-              :aria-label="babySettingsButtonLabel"
-              @click="openSheet('settings')"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-4 w-4"
+            <div class="flex shrink-0 flex-col items-end gap-1.5">
+              <span
+                v-if="heroSexLabel"
+                class="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
               >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-            </button>
+                {{ heroSexLabel }}
+              </span>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
+                :aria-label="babySettingsButtonLabel"
+                @click="openSheet('settings')"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="h-4 w-4"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div
             v-if="inviteCodeExpanded"

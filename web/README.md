@@ -237,14 +237,14 @@ verse bien en una captura:
   UTC y puede desplazar el día según la zona horaria de quien mire la
   app. El nombre del bebé pasa a la etiqueta pequeña ("Hoy con
   Violeta"); tocarla sigue desplegando el código de invitación igual
-  que antes. Fecha de nacimiento y sexo se combinan en un único chip
-  (`heroDetailsLine`) en vez de dos elementos separados, porque el
-  botón de ajustes, al lado, ya mostraba esa misma pareja de datos
-  como su propia etiqueta — repetirla dos veces en la misma tarjeta no
-  aportaba nada. Ese botón pasa a ser solo un icono de lápiz (sigue
-  abriendo el mismo ajuste de sexo/fecha), y una marca de agua 👶
-  traslúcida ocupa el hueco que dejaba libre en la esquina inferior
-  derecha.
+  que antes. El botón de ajustes (antes con el sexo y la fecha como
+  su propia etiqueta, repitiendo lo que la tarjeta ya mostraba) pasa a
+  ser solo un icono de lápiz, con el chip de sexo (`heroSexLabel`,
+  emoji incluido: "🌸 Niña"/"💙 Niño") justo encima — ambos en la
+  esquina superior derecha. La fecha de nacimiento (`heroDateLabel`)
+  se coloca a la misma altura que la edad, no debajo, con
+  `items-baseline` para que ambas líneas de texto compartan línea
+  base en vez de que una quede más alta que la otra.
 - **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
   las marcas de toma/pañal de *hoy* (el día de calendario, no las
   últimas 24h en bruto), calculada en el propio componente a partir de

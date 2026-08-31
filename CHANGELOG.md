@@ -505,3 +505,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   derecho que quedaba vacío. Verificado en el navegador en claro y
   oscuro con una cuenta de prueba real: el icono sigue abriendo el
   mismo ajuste de sexo/fecha de siempre.
+
+- Reordenada la portada "Hoy con {nombre}" una vez más: el chip de
+  sexo (con su emoji, "🌸 Niña"/"💙 Niño") sube a la esquina superior
+  derecha junto al icono de ajustes, y "Nació el {fecha}" pasa a la
+  misma altura que la edad en vez de ir debajo — ambos con la misma
+  línea base (`items-baseline`), como pediría alguien leyendo la
+  tarjeta de un vistazo. Se retira la marca de agua 👶 genérica: con
+  el chip de sexo ya arriba, un segundo emoji de bebé abajo competía
+  por la misma esquina sin aportar nada que el chip no dijera ya.

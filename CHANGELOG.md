@@ -402,15 +402,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   para la propia cuenta: la fila de avatar + nombre + "Cerrar sesión"
   que vivía debajo de la cabecera (solo visible una vez creado o unido
   a un bebé) sube a `AppHeader.vue`, con "Cerrar sesión" como icono en
-  vez de texto. El wordmark "👶 PequeDex" se queda solo para login/
-  registro/onboarding (donde no hay cuenta ni bebé que mostrar); en
-  cuanto ambos existen, el propio logo se reduce al emoji y cede el
-  sitio al avatar y nombre del cuidador — a diario importa más de quién
-  es la sesión que el nombre de la app. Como `AppHeader.vue` es global
-  (vive en `App.vue`, no dentro de `DashboardView.vue`) y no puede
-  llamar directamente a la función que abre la hoja de "Tu cuenta",
-  ese único flag cruza el límite entre componentes vía un store nuevo y
-  mínimo (`stores/ui.ts`, un booleano y dos acciones) en vez de
-  duplicar la hoja o inventar una ruta aparte. Verificado en el
+  vez de texto. El wordmark "👶 PequeDex" se queda siempre a la
+  izquierda (login/registro/onboarding incluidos); a la derecha, en
+  cuanto hay cuenta y bebé, el orden es tema → avatar (sin el nombre al
+  lado, solo la foto — abre "Tu cuenta" igual que antes) → cerrar
+  sesión. Como `AppHeader.vue` es global (vive en `App.vue`, no dentro
+  de `DashboardView.vue`) y no puede llamar directamente a la función
+  que abre la hoja de "Tu cuenta", ese único flag cruza el límite entre
+  componentes vía un store nuevo y mínimo (`stores/ui.ts`, un booleano
+  y dos acciones) en vez de duplicar la hoja o inventar una ruta
+  aparte. Verificado en el
   navegador con una cuenta de prueba real: abrir "Tu cuenta" desde la
   cabecera, guardar, cerrar, y cerrar sesión con el icono nuevo.

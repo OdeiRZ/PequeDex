@@ -29,6 +29,7 @@ async function onLogout() {
     </span>
 
     <div class="flex shrink-0 items-center gap-2">
+      <ThemeToggle />
       <button
         v-if="auth.user && babies.current"
         type="button"
@@ -37,7 +38,6 @@ async function onLogout() {
       >
         <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
       </button>
-      <ThemeToggle />
       <button
         v-if="auth.user && babies.current"
         type="button"

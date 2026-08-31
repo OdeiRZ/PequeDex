@@ -1001,7 +1001,10 @@ const sleepPredictionLabel = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="flex flex-1 flex-col items-center justify-center gap-4 text-text-muted">
+  <div
+    v-if="loading"
+    class="flex flex-1 flex-col items-center justify-center gap-4 text-text-muted"
+  >
     <AppMark full animated :size="72" />
     {{ t('common.loading') }}
   </div>

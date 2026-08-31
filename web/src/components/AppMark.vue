@@ -29,16 +29,44 @@ const gradientId = `pequedex-mark-${useId()}`
     :class="{ 'motion-safe:animate-footprint-bob': animated }"
   >
     <defs>
-      <linearGradient :id="gradientId" x1="0" y1="0" x2="84" y2="100" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        :id="gradientId"
+        x1="0"
+        y1="0"
+        x2="84"
+        y2="100"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop offset="0%" stop-color="var(--brand)" />
         <stop offset="100%" stop-color="var(--brand-teal)" />
       </linearGradient>
     </defs>
     <ellipse cx="42" cy="62" rx="26" ry="34" :fill="`url(#${gradientId})`" />
-    <ellipse cx="16" cy="24" rx="7" ry="9" :fill="`url(#${gradientId})`" transform="rotate(-10 16 24)" />
-    <ellipse cx="32" cy="14" rx="7.5" ry="10" :fill="`url(#${gradientId})`" transform="rotate(-4 32 14)" />
+    <ellipse
+      cx="16"
+      cy="24"
+      rx="7"
+      ry="9"
+      :fill="`url(#${gradientId})`"
+      transform="rotate(-10 16 24)"
+    />
+    <ellipse
+      cx="32"
+      cy="14"
+      rx="7.5"
+      ry="10"
+      :fill="`url(#${gradientId})`"
+      transform="rotate(-4 32 14)"
+    />
     <ellipse cx="50" cy="12" rx="7.5" ry="10" :fill="`url(#${gradientId})`" />
-    <ellipse cx="66" cy="16" rx="7" ry="9.5" :fill="`url(#${gradientId})`" transform="rotate(8 66 16)" />
+    <ellipse
+      cx="66"
+      cy="16"
+      rx="7"
+      ry="9.5"
+      :fill="`url(#${gradientId})`"
+      transform="rotate(8 66 16)"
+    />
     <path
       d="M42 54 c-4 -6 -13 -4 -13 3 c0 6 8 11 13 15 c5 -4 13 -9 13 -15 c0 -7 -9 -9 -13 -3 Z"
       fill="var(--brand-ink)"

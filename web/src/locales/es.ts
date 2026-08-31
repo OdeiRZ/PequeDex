@@ -122,11 +122,13 @@ export default {
       toastUpdated: 'Pañal actualizado.',
     },
     growthForm: {
+      editTitle: 'Editar medida',
       date: 'Fecha',
       weight: 'Peso (kg)',
       height: 'Talla (cm)',
       headCircumference: 'Perímetro craneal (cm)',
       error: 'Indica al menos peso, talla o perímetro craneal.',
+      toastUpdated: 'Medida actualizada.',
     },
     milestoneForm: {
       editTitle: 'Editar hito',

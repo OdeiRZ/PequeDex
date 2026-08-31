@@ -87,9 +87,10 @@ porque la verificación local solo cubría los otros tres.
   eso tiene sentido antes de que el bebé haya nacido, y el propio
   navegador bloquea el envío con su aviso nativo si se intenta. La API
   aplica la misma regla por su cuenta (ver `api/README.md`), no solo el
-  frontend. Tocar una fila de la línea temporal abre el mismo formulario
-  de registro rápido precargado (`openFeedEdit()`/`openSleepEdit()`/
-  `openDiaperEdit()`, un `editing*Id` por tipo — mismo patrón que ya
+  frontend. Tocar una fila de la línea temporal (o de la lista de
+  crecimiento) abre el mismo formulario de registro rápido precargado
+  (`openFeedEdit()`/`openSleepEdit()`/`openDiaperEdit()`/
+  `openGrowthEdit()`, un `editing*Id` por tipo — mismo patrón que ya
   tenía el hito), no solo verla/borrarla; `EntryCard.vue` envuelve su
   contenido en un botón propio para que el icono de borrar (fuera de
   ese botón, no dentro) siga siendo un control independiente. Los tres

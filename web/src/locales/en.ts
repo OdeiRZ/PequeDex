@@ -122,11 +122,13 @@ export default {
       toastUpdated: 'Diaper updated.',
     },
     growthForm: {
+      editTitle: 'Edit measurement',
       date: 'Date',
       weight: 'Weight (kg)',
       height: 'Height (cm)',
       headCircumference: 'Head circumference (cm)',
       error: 'Enter at least weight, height or head circumference.',
+      toastUpdated: 'Measurement updated.',
     },
     milestoneForm: {
       editTitle: 'Edit milestone',

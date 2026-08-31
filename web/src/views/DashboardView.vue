@@ -9,6 +9,7 @@ import {
   type DiaperType,
   type Feed,
   type FeedType,
+  type GrowthMeasurement,
   type MilestoneCategory,
   type Sleep,
 } from '@/stores/babies'
@@ -295,6 +296,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     growthHeightCm.value = ''
     growthHeadCircumferenceCm.value = ''
     growthError.value = null
+    editingGrowthId.value = null
   } else if (sheet === 'milestone') {
     milestoneAchievedAt.value = new Date().toISOString().slice(0, 10)
     milestoneCategory.value = null
@@ -726,13 +728,26 @@ const growthHeightCm = ref('')
 const growthHeadCircumferenceCm = ref('')
 const savingGrowth = ref(false)
 const growthError = ref<string | null>(null)
+const editingGrowthId = ref<number | null>(null)
+
+function openGrowthEdit(measurement: GrowthMeasurement) {
+  editingGrowthId.value = measurement.id
+  growthMeasuredAt.value = measurement.measured_at.slice(0, 10)
+  growthWeightKg.value = measurement.weight_grams
+    ? (measurement.weight_grams / 1000).toString()
+    : ''
+  growthHeightCm.value = measurement.height_cm?.toString() ?? ''
+  growthHeadCircumferenceCm.value = measurement.head_circumference_cm?.toString() ?? ''
+  growthError.value = null
+  activeSheet.value = 'growth'
+}
 
 async function onSubmitGrowth() {
   savingGrowth.value = true
   growthError.value = null
 
   try {
-    await babies.createGrowthMeasurement({
+    const payload = {
       measured_at: growthMeasuredAt.value,
       weight_grams: growthWeightKg.value
         ? Math.round(Number(growthWeightKg.value) * 1000)
@@ -741,7 +756,14 @@ async function onSubmitGrowth() {
       head_circumference_cm: growthHeadCircumferenceCm.value
         ? Number(growthHeadCircumferenceCm.value)
         : undefined,
-    })
+    }
+
+    if (editingGrowthId.value) {
+      await babies.updateGrowthMeasurement(editingGrowthId.value, payload)
+      toast.show(t('dashboard.growthForm.toastUpdated'))
+    } else {
+      await babies.createGrowthMeasurement(payload)
+    }
     closeSheet()
   } catch {
     growthError.value = t('dashboard.growthForm.error')
@@ -1051,6 +1073,7 @@ const sleepPredictionLabel = computed(() => {
               category="growth"
               :title="growthTitle(measurement)"
               :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
+              @open="openGrowthEdit(measurement)"
             >
               <template #actions>
                 <DeleteButton @click="onDeleteGrowthMeasurement(measurement.id)" />
@@ -1239,7 +1262,9 @@ const sleepPredictionLabel = computed(() => {
           >
             <CategoryIcon category="growth" class="h-4 w-4" />
           </span>
-          {{ t('dashboard.quickLog.growth') }}
+          {{
+            editingGrowthId ? t('dashboard.growthForm.editTitle') : t('dashboard.quickLog.growth')
+          }}
         </h3>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmitGrowth">
           <div>

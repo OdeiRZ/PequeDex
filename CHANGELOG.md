@@ -442,3 +442,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   tener componente de hora que malinterpretar. Verificado en el
   navegador comparando el valor guardado en la API antes y después del
   arreglo con la misma edición.
+
+- Las medidas de crecimiento también se pueden editar ahora tocando su
+  fila, mismo patrón que el resto de registros: `openGrowthEdit()`
+  precarga el formulario de "+ Medida" y `updateGrowthMeasurement()`
+  reutiliza el mismo payload que crearla. El backend ya tenía el
+  endpoint `update` construido y probado; solo faltaba conectarlo.
+  Verificado en el navegador con una cuenta de prueba real, incluido
+  que el percentil se recalcula tras el cambio.

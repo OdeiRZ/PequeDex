@@ -264,6 +264,11 @@ export const useBabiesStore = defineStore('babies', {
       await this.fetchGrowthMeasurements()
     },
 
+    async updateGrowthMeasurement(id: number, payload: CreateGrowthMeasurementPayload) {
+      await apiClient.put(`/babies/${this.current!.id}/growth-measurements/${id}`, payload)
+      await this.fetchGrowthMeasurements()
+    },
+
     async deleteGrowthMeasurement(id: number) {
       await apiClient.delete(`/babies/${this.current!.id}/growth-measurements/${id}`)
       await this.fetchGrowthMeasurements()

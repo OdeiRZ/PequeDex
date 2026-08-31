@@ -1077,7 +1077,7 @@ const sleepPredictionLabel = computed(() => {
                 </svg>
               </span>
 
-              <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="flex w-full items-baseline justify-between gap-2">
                 <span
                   v-if="heroHeadline.special"
                   class="font-display text-2xl font-extrabold text-balance"
@@ -1094,18 +1094,12 @@ const sleepPredictionLabel = computed(() => {
                   {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
                 </span>
 
-                <span v-if="heroDateLabel" class="text-xs text-brand-ink/85">{{
+                <span v-if="heroDateLabel" class="text-xs whitespace-nowrap text-brand-ink/85">{{
                   heroDateLabel
                 }}</span>
               </span>
             </button>
-            <div class="flex shrink-0 flex-col items-end gap-1.5">
-              <span
-                v-if="heroSexLabel"
-                class="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
-              >
-                {{ heroSexLabel }}
-              </span>
+            <div class="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
@@ -1125,6 +1119,12 @@ const sleepPredictionLabel = computed(() => {
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
               </button>
+              <span
+                v-if="heroSexLabel"
+                class="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
+              >
+                {{ heroSexLabel }}
+              </span>
             </div>
           </div>
           <div

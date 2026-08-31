@@ -239,12 +239,13 @@ verse bien en una captura:
   Violeta"); tocarla sigue desplegando el código de invitación igual
   que antes. El botón de ajustes (antes con el sexo y la fecha como
   su propia etiqueta, repitiendo lo que la tarjeta ya mostraba) pasa a
-  ser solo un icono de lápiz, con el chip de sexo (`heroSexLabel`,
-  emoji incluido: "🌸 Niña"/"💙 Niño") justo encima — ambos en la
+  ser solo un icono de lápiz, a la izquierda del chip de sexo
+  (`heroSexLabel`, emoji incluido: "🌸 Niña"/"💙 Niño") — ambos en la
   esquina superior derecha. La fecha de nacimiento (`heroDateLabel`)
-  se coloca a la misma altura que la edad, no debajo, con
-  `items-baseline` para que ambas líneas de texto compartan línea
-  base en vez de que una quede más alta que la otra.
+  se coloca a la misma altura que la edad, no debajo (`items-baseline`
+  para que ambas líneas de texto compartan línea base), y se empuja al
+  extremo derecho de esa línea con `justify-between` en vez de ir
+  pegada al número, quedando alineada bajo el chip de sexo.
 - **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
   las marcas de toma/pañal de *hoy* (el día de calendario, no las
   últimas 24h en bruto), calculada en el propio componente a partir de

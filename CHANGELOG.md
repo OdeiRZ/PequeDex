@@ -514,3 +514,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   tarjeta de un vistazo. Se retira la marca de agua 👶 genérica: con
   el chip de sexo ya arriba, un segundo emoji de bebé abajo competía
   por la misma esquina sin aportar nada que el chip no dijera ya.
+
+- Dos últimos ajustes de posición en la misma tarjeta: el icono de
+  ajustes pasa a la izquierda del chip de sexo (antes iba a la
+  derecha), y "Nació el {fecha}" se empuja al extremo derecho de su
+  línea (`justify-between` en vez de ir pegado al número de la edad),
+  quedando alineado bajo el chip de sexo en vez de justo al lado de
+  "8 semanas".

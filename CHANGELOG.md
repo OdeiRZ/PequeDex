@@ -544,3 +544,30 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   conectores, también correcto). Mismo formato para "Fecha prevista:
   {fecha}" en el caso de cuenta atrás. Verificado en el navegador con
   la cuenta real.
+
+- Un usuario recién registrado que todavía no ha creado ni se ha unido
+  a un bebé no tenía ninguna forma de cerrar sesión ni de entrar en
+  "Tu cuenta" — ambos botones de `AppHeader.vue` exigían
+  `auth.user && babies.current`, y la propia hoja de "Tu cuenta" vivía
+  dentro de la rama de `DashboardView.vue` que solo se monta cuando ya
+  existe un bebé. Efecto colateral encontrado durante el rediseño de
+  la cabecera, dejado fuera de alcance a propósito en su momento.
+  Arreglado: la hoja sube a un nivel donde está disponible
+  independientemente del estado del onboarding, y ambos botones pasan
+  a depender solo de `auth.user`.
+
+- Nueva tarjeta "Sueño esta semana" bajo el "Ritmo de hoy": una barra
+  por cada uno de los últimos 7 días de calendario con las horas de
+  sueño totales de ese día, para ver el patrón de la semana de un
+  vistazo en vez de solo el día suelto. `src/lib/sleepHistory.ts`
+  (con tests propios) reparte cada sueño entre los días que
+  realmente ocupa — uno que cruza la medianoche se cuenta en ambos
+  días proporcionalmente, no entero en el día en que empezó — y
+  recorta un sueño en curso a "ahora" en vez de extenderlo hacia el
+  resto del día. `SleepController::index` admite ahora un parámetro
+  `since` (con tests propios) para pedir solo una ventana reciente en
+  vez de todo el historial del bebé en cada carga del dashboard — el
+  propio endpoint nunca tenía límite alguno hasta ahora, a diferencia
+  de `TimelineController`. Verificado en el navegador con la cuenta
+  real (bebé recién nacido: la barra de hoy con horas reales, el
+  resto de la semana en cero, tal y como corresponde).

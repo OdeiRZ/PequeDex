@@ -270,6 +270,29 @@ verse bien en una captura:
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones
   de un formulario web.
+- **`WeeklySleep.vue`** — una barra por cada uno de los últimos 7 días
+  de calendario con las horas de sueño totales de ese día, justo bajo
+  el "Ritmo de hoy": ver el patrón de la semana de un vistazo, no solo
+  el día suelto. `src/lib/sleepHistory.ts` (con tests propios) hace el
+  reparto: un sueño que cruza la medianoche se cuenta en ambos días
+  proporcionalmente a lo que ocupó en cada uno, no entero en el día en
+  que empezó, y uno en curso se recorta a "ahora" en vez de extenderse
+  al resto del día. La altura de las barras se escala contra el propio
+  máximo de la semana (con un suelo de 8h) para que una semana
+  tranquila no salga toda "llena" contra un techo arbitrario.
+  `babies.fetchRecentSleeps()` pide solo una ventana de 9 días (no todo
+  el historial) vía el nuevo `?since=` de `SleepController::index` (ver
+  `api/README.md`) — 2 días de margen sobre los 7 que se muestran, para
+  que un sueño que cruza al primer día del gráfico no se quede cortado
+  en el propio límite de la petición.
+- **Onboarding sin cuenta accesible** — un usuario recién registrado
+  sin bebé todavía no tenía forma de cerrar sesión ni de abrir "Tu
+  cuenta": ambos botones de `AppHeader.vue` exigían
+  `auth.user && babies.current`, y la propia hoja de "Tu cuenta" vivía
+  dentro de la rama de `DashboardView.vue` que solo se monta con un
+  bebé ya creado. La hoja sube a un nivel disponible en cualquier
+  estado del onboarding, y ambos botones pasan a depender solo de
+  `auth.user`.
 
 ## Marca de la pestaña
 

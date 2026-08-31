@@ -218,6 +218,10 @@ export default {
       sleep: 'Sueño',
       diaper: 'Pañal',
     },
+    sleepHistory: {
+      title: 'Sueño esta semana',
+      empty: 'Todavía no hay sueño registrado esta semana.',
+    },
   },
   language: {
     label: 'Idioma',

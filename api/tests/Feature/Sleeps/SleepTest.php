@@ -73,3 +73,51 @@ it('rejects any access to sleeps for a baby the user is not linked to', function
     $this->getJson("/api/babies/{$baby->id}/sleeps")->assertForbidden();
     $this->postJson("/api/babies/{$baby->id}/sleeps", ['started_at' => '2026-08-30 20:00:00'])->assertForbidden();
 });
+
+it('filters by since, excluding sleeps that finished before it', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepTest($user);
+    $old = Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-20 10:00:00',
+        'ended_at' => '2026-08-20 11:00:00',
+    ]);
+    $recent = Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-30 10:00:00',
+        'ended_at' => '2026-08-30 11:00:00',
+    ]);
+
+    $this->getJson("/api/babies/{$baby->id}/sleeps?since=2026-08-25")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $recent->id);
+
+    expect(Sleep::find($old->id))->not->toBeNull();
+});
+
+it('includes an ongoing sleep in the since filter regardless of when it started', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepTest($user);
+    $ongoing = Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-01 22:00:00',
+        'ended_at' => null,
+    ]);
+
+    $this->getJson("/api/babies/{$baby->id}/sleeps?since=2026-08-25")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $ongoing->id);
+});
+
+it('includes a sleep that started before since but ended after it', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepTest($user);
+    $overnight = Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-24 23:00:00',
+        'ended_at' => '2026-08-25 06:00:00',
+    ]);
+
+    $this->getJson("/api/babies/{$baby->id}/sleeps?since=2026-08-25")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $overnight->id);
+});

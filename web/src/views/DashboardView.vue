@@ -26,6 +26,7 @@ import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import WeeklySleep from '@/components/WeeklySleep.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { getBabyAge } from '@/lib/babyAge'
@@ -63,6 +64,7 @@ async function loadBabyData() {
       babies.fetchGrowthMeasurements(),
       babies.fetchMilestones(),
       babies.fetchSleepPrediction(),
+      babies.fetchRecentSleeps(),
     ])
   } finally {
     loading.value = false
@@ -1003,6 +1005,131 @@ const sleepPredictionLabel = computed(() => {
   </div>
 
   <template v-else>
+    <!-- Reachable regardless of onboarding state - a registered user with
+    no baby yet still needs a way to log out or edit their own account,
+    and this is the only place either lives (AppHeader.vue is global but
+    has no baby-independent view of its own to render this into). -->
+    <BottomSheet :open="ui.accountSheetOpen" @update:open="ui.closeAccountSheet">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
+        <button
+          type="button"
+          class="text-sm font-semibold text-brand"
+          @click="ui.closeAccountSheet()"
+        >
+          {{ t('common.close') }}
+        </button>
+      </div>
+
+      <div class="mb-5 flex items-center gap-4">
+        <UserAvatar :name="auth.user?.name ?? ''" :avatar="auth.user?.avatar" :size="64" />
+        <div class="flex flex-1 flex-col items-start gap-2">
+          <input
+            ref="avatarInput"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            class="hidden"
+            @change="onAvatarSelected"
+          />
+          <button
+            type="button"
+            :disabled="uploadingAvatar"
+            class="btn-ghost px-3 py-1.5 text-sm"
+            @click="onPickAvatar"
+          >
+            {{ t('profile.uploadAvatar') }}
+          </button>
+          <button
+            v-if="auth.user?.avatar"
+            type="button"
+            :disabled="uploadingAvatar"
+            class="text-sm font-semibold text-danger"
+            @click="onRemoveAvatar"
+          >
+            {{ t('profile.removeAvatar') }}
+          </button>
+        </div>
+      </div>
+
+      <form class="mb-6 flex flex-col gap-4" @submit.prevent="onSubmitProfile">
+        <div>
+          <label for="profile-name" class="field-label">{{ t('profile.name') }}</label>
+          <input
+            id="profile-name"
+            v-model="profileName"
+            type="text"
+            required
+            autocomplete="name"
+            class="field-input"
+          />
+        </div>
+        <div>
+          <label for="profile-email" class="field-label">{{ t('profile.email') }}</label>
+          <input
+            id="profile-email"
+            v-model="profileEmail"
+            type="email"
+            required
+            autocomplete="email"
+            class="field-input"
+          />
+        </div>
+        <button type="submit" :disabled="savingProfile" class="btn-primary">
+          {{ t('common.save') }}
+        </button>
+      </form>
+
+      <div class="border-t border-border pt-5">
+        <span class="field-label">{{ t('language.label') }}</span>
+        <SegmentedControl
+          :model-value="locale"
+          :options="localeOptions"
+          @update:model-value="onSelectLocale"
+        />
+      </div>
+
+      <form
+        class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
+        @submit.prevent="onSubmitPassword"
+      >
+        <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>
+        <div>
+          <label for="current-password" class="field-label">{{
+            t('profile.currentPassword')
+          }}</label>
+          <PasswordField
+            id="current-password"
+            v-model="currentPassword"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+        <div>
+          <label for="new-password" class="field-label">{{ t('profile.newPassword') }}</label>
+          <PasswordField
+            id="new-password"
+            v-model="newPassword"
+            required
+            autocomplete="new-password"
+          />
+        </div>
+        <div>
+          <label for="new-password-confirmation" class="field-label">{{
+            t('profile.newPasswordConfirmation')
+          }}</label>
+          <PasswordField
+            id="new-password-confirmation"
+            v-model="newPasswordConfirmation"
+            required
+            autocomplete="new-password"
+          />
+        </div>
+        <button type="submit" :disabled="savingPassword" class="btn-primary">
+          {{ t('profile.changePassword') }}
+        </button>
+      </form>
+    </BottomSheet>
+
     <main v-if="!babies.current" class="flex flex-1 flex-col gap-6 px-4 py-6">
       <section class="card flex flex-col gap-4 p-5">
         <h2 class="font-display text-lg font-bold">{{ t('dashboard.onboarding.createTitle') }}</h2>
@@ -1168,6 +1295,7 @@ const sleepPredictionLabel = computed(() => {
         </section>
 
         <DailyRhythm :timeline="babies.timeline" />
+        <WeeklySleep :sleeps="babies.recentSleeps" :date-locale="dateLocale" />
 
         <section class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.timeline.title') }}</h2>
@@ -1605,127 +1733,6 @@ const sleepPredictionLabel = computed(() => {
               {{ t('common.save') }}
             </button>
           </div>
-        </form>
-      </BottomSheet>
-
-      <BottomSheet :open="ui.accountSheetOpen" @update:open="ui.closeAccountSheet">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
-          <button
-            type="button"
-            class="text-sm font-semibold text-brand"
-            @click="ui.closeAccountSheet()"
-          >
-            {{ t('common.close') }}
-          </button>
-        </div>
-
-        <div class="mb-5 flex items-center gap-4">
-          <UserAvatar :name="auth.user?.name ?? ''" :avatar="auth.user?.avatar" :size="64" />
-          <div class="flex flex-1 flex-col items-start gap-2">
-            <input
-              ref="avatarInput"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              class="hidden"
-              @change="onAvatarSelected"
-            />
-            <button
-              type="button"
-              :disabled="uploadingAvatar"
-              class="btn-ghost px-3 py-1.5 text-sm"
-              @click="onPickAvatar"
-            >
-              {{ t('profile.uploadAvatar') }}
-            </button>
-            <button
-              v-if="auth.user?.avatar"
-              type="button"
-              :disabled="uploadingAvatar"
-              class="text-sm font-semibold text-danger"
-              @click="onRemoveAvatar"
-            >
-              {{ t('profile.removeAvatar') }}
-            </button>
-          </div>
-        </div>
-
-        <form class="mb-6 flex flex-col gap-4" @submit.prevent="onSubmitProfile">
-          <div>
-            <label for="profile-name" class="field-label">{{ t('profile.name') }}</label>
-            <input
-              id="profile-name"
-              v-model="profileName"
-              type="text"
-              required
-              autocomplete="name"
-              class="field-input"
-            />
-          </div>
-          <div>
-            <label for="profile-email" class="field-label">{{ t('profile.email') }}</label>
-            <input
-              id="profile-email"
-              v-model="profileEmail"
-              type="email"
-              required
-              autocomplete="email"
-              class="field-input"
-            />
-          </div>
-          <button type="submit" :disabled="savingProfile" class="btn-primary">
-            {{ t('common.save') }}
-          </button>
-        </form>
-
-        <div class="border-t border-border pt-5">
-          <span class="field-label">{{ t('language.label') }}</span>
-          <SegmentedControl
-            :model-value="locale"
-            :options="localeOptions"
-            @update:model-value="onSelectLocale"
-          />
-        </div>
-
-        <form
-          class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
-          @submit.prevent="onSubmitPassword"
-        >
-          <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>
-          <div>
-            <label for="current-password" class="field-label">{{
-              t('profile.currentPassword')
-            }}</label>
-            <PasswordField
-              id="current-password"
-              v-model="currentPassword"
-              required
-              autocomplete="current-password"
-            />
-          </div>
-          <div>
-            <label for="new-password" class="field-label">{{ t('profile.newPassword') }}</label>
-            <PasswordField
-              id="new-password"
-              v-model="newPassword"
-              required
-              autocomplete="new-password"
-            />
-          </div>
-          <div>
-            <label for="new-password-confirmation" class="field-label">{{
-              t('profile.newPasswordConfirmation')
-            }}</label>
-            <PasswordField
-              id="new-password-confirmation"
-              v-model="newPasswordConfirmation"
-              required
-              autocomplete="new-password"
-            />
-          </div>
-          <button type="submit" :disabled="savingPassword" class="btn-primary">
-            {{ t('profile.changePassword') }}
-          </button>
         </form>
       </BottomSheet>
     </template>

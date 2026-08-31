@@ -217,6 +217,10 @@ export default {
       sleep: 'Sleep',
       diaper: 'Diaper',
     },
+    sleepHistory: {
+      title: 'Sleep this week',
+      empty: 'No sleep logged yet this week.',
+    },
   },
   language: {
     label: 'Language',

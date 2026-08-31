@@ -73,6 +73,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   una edición manda la fila completa de vuelta en vez de un parche —
   reutilizado por el frontend, cuyo formulario de edición es el mismo
   de "+ Toma"/"+ Sueño"/"+ Pañal" precargado (ver `web/README.md`).
+- `SleepController::index` admite un parámetro opcional `?since=` para
+  acotar a una ventana reciente en vez de traer el historial completo
+  del bebé — lo usa el gráfico semanal de sueño del frontend (ver
+  `web/README.md`), que no necesita más que los últimos días. Antes no
+  tenía ningún límite (a diferencia de `TimelineController`, que ya
+  acotaba sus tres subconsultas desde el principio). El filtro
+  comprueba `started_at`, `ended_at` o `ended_at IS NULL` — no solo
+  `started_at` — para no perder un sueño que empezó antes de la
+  ventana pero sigue en curso o terminó dentro de ella.
 - `Baby::generateInviteCode()` — código de 8 caracteres sin `0`/`O`/`1`/`I`
   (se escriben/leen a mano, esos pares se confunden fácilmente), con
   comprobación de colisión real en vez de asumir que el espacio de

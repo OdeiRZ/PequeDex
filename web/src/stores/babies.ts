@@ -154,6 +154,7 @@ interface BabiesState {
   growthMeasurements: GrowthMeasurement[]
   milestones: Milestone[]
   sleepPrediction: SleepPrediction | null
+  recentSleeps: Sleep[]
 }
 
 export const useBabiesStore = defineStore('babies', {
@@ -163,6 +164,7 @@ export const useBabiesStore = defineStore('babies', {
     growthMeasurements: [],
     milestones: [],
     sleepPrediction: null,
+    recentSleeps: [],
   }),
 
   actions: {
@@ -348,6 +350,26 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/sleep-prediction`)
       this.sleepPrediction = data.data
+    },
+
+    // `days` is a lookback window, not the number of days the chart ends
+    // up showing (see summarizeSleepByDay) - a couple of days' buffer so
+    // an overnight sleep that started just before the chart's own first
+    // day still gets counted, instead of being cut off at the fetch
+    // boundary.
+    async fetchRecentSleeps(days = 9) {
+      if (!this.current) {
+        return
+      }
+
+      const since = new Date()
+      since.setDate(since.getDate() - days)
+      const sinceParam = since.toISOString().slice(0, 10)
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/sleeps`, {
+        params: { since: sinceParam },
+      })
+      this.recentSleeps = data.data
     },
   },
 })

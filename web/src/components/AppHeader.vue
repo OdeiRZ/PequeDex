@@ -2,14 +2,12 @@
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { useBabiesStore } from '@/stores/babies'
 import { useUiStore } from '@/stores/ui'
 import ThemeToggle from './ThemeToggle.vue'
 import UserAvatar from './UserAvatar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
-const babies = useBabiesStore()
 const ui = useUiStore()
 const { t } = useI18n()
 
@@ -31,7 +29,7 @@ async function onLogout() {
     <div class="flex shrink-0 items-center gap-2">
       <ThemeToggle />
       <button
-        v-if="auth.user && babies.current"
+        v-if="auth.user"
         type="button"
         :aria-label="t('profile.title')"
         @click="ui.openAccountSheet()"
@@ -39,7 +37,7 @@ async function onLogout() {
         <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
       </button>
       <button
-        v-if="auth.user && babies.current"
+        v-if="auth.user"
         type="button"
         class="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-muted"
         :aria-label="t('common.logout')"

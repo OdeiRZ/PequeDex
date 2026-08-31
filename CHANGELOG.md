@@ -521,3 +521,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   línea (`justify-between` en vez de ir pegado al número de la edad),
   quedando alineado bajo el chip de sexo en vez de justo al lado de
   "8 semanas".
+
+- Ese `justify-between` no llegaba en realidad al borde derecho de la
+  tarjeta: la fecha vivía dentro del mismo botón (ancho `flex-1`) que
+  compartía fila con el icono de ajustes y el chip de sexo, así que
+  solo podía estirarse hasta donde empezaba esa columna, no hasta el
+  borde real de la tarjeta. El icono de ajustes y el chip de sexo
+  pasan a un bloque posicionado en la esquina (`absolute top-5
+  right-5`), fuera del flujo del botón; éste pasa a ocupar el ancho
+  completo de la tarjeta, y "Nació el {fecha}" llega ahora sí hasta el
+  borde derecho real, alineado con el chip de sexo de encima.
+  Verificado en el navegador (cuenta real, con permiso explícito para
+  usarla en pruebas locales): el desplegable del código de invitación
+  y el icono de ajustes siguen funcionando igual.

@@ -1052,81 +1052,80 @@ const sleepPredictionLabel = computed(() => {
             class="pointer-events-none absolute -bottom-9 left-1/4 h-20 w-20 rounded-full bg-white/10"
           ></span>
 
-          <div class="relative flex items-start justify-between gap-2">
+          <div class="absolute top-5 right-5 z-10 flex items-center gap-1.5">
             <button
               type="button"
-              class="flex min-w-0 flex-1 flex-col items-start gap-1 text-left"
-              :aria-expanded="inviteCodeExpanded"
-              @click="inviteCodeExpanded = !inviteCodeExpanded"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
+              :aria-label="babySettingsButtonLabel"
+              @click="openSheet('settings')"
             >
-              <span
-                class="flex items-center gap-1 text-xs font-semibold tracking-wide text-brand-ink/80 uppercase"
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-4 w-4"
               >
-                {{ heroEyebrow }}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="h-3.5 w-3.5 shrink-0 transition-transform"
-                  :class="{ 'rotate-180': inviteCodeExpanded }"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </span>
-
-              <span class="flex w-full items-baseline justify-between gap-2">
-                <span
-                  v-if="heroHeadline.special"
-                  class="font-display text-2xl font-extrabold text-balance"
-                >
-                  {{ heroHeadline.special }}
-                </span>
-                <span v-else-if="heroHeadline.value !== null" class="flex items-baseline gap-1.5">
-                  <span class="font-display text-4xl leading-none font-extrabold">{{
-                    heroHeadline.value
-                  }}</span>
-                  <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
-                </span>
-                <span v-else class="font-display text-xl font-bold text-balance">
-                  {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
-                </span>
-
-                <span v-if="heroDateLabel" class="text-xs whitespace-nowrap text-brand-ink/85">{{
-                  heroDateLabel
-                }}</span>
-              </span>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
             </button>
-            <div class="flex shrink-0 items-center gap-1.5">
-              <button
-                type="button"
-                class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
-                :aria-label="babySettingsButtonLabel"
-                @click="openSheet('settings')"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="h-4 w-4"
-                >
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
-              </button>
-              <span
-                v-if="heroSexLabel"
-                class="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
-              >
-                {{ heroSexLabel }}
-              </span>
-            </div>
+            <span
+              v-if="heroSexLabel"
+              class="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
+            >
+              {{ heroSexLabel }}
+            </span>
           </div>
+
+          <button
+            type="button"
+            class="relative flex w-full flex-col items-start gap-1 text-left"
+            :aria-expanded="inviteCodeExpanded"
+            @click="inviteCodeExpanded = !inviteCodeExpanded"
+          >
+            <span
+              class="flex items-center gap-1 pr-24 text-xs font-semibold tracking-wide text-brand-ink/80 uppercase"
+            >
+              {{ heroEyebrow }}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-3.5 w-3.5 shrink-0 transition-transform"
+                :class="{ 'rotate-180': inviteCodeExpanded }"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+
+            <span class="flex w-full items-baseline justify-between gap-2">
+              <span
+                v-if="heroHeadline.special"
+                class="font-display text-2xl font-extrabold text-balance"
+              >
+                {{ heroHeadline.special }}
+              </span>
+              <span v-else-if="heroHeadline.value !== null" class="flex items-baseline gap-1.5">
+                <span class="font-display text-4xl leading-none font-extrabold">{{
+                  heroHeadline.value
+                }}</span>
+                <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
+              </span>
+              <span v-else class="font-display text-xl font-bold text-balance">
+                {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
+              </span>
+
+              <span v-if="heroDateLabel" class="text-xs whitespace-nowrap text-brand-ink/85">{{
+                heroDateLabel
+              }}</span>
+            </span>
+          </button>
           <div
             v-if="inviteCodeExpanded"
             class="relative mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm"

@@ -240,12 +240,16 @@ verse bien en una captura:
   que antes. El botón de ajustes (antes con el sexo y la fecha como
   su propia etiqueta, repitiendo lo que la tarjeta ya mostraba) pasa a
   ser solo un icono de lápiz, a la izquierda del chip de sexo
-  (`heroSexLabel`, emoji incluido: "🌸 Niña"/"💙 Niño") — ambos en la
-  esquina superior derecha. La fecha de nacimiento (`heroDateLabel`)
+  (`heroSexLabel`, emoji incluido: "🌸 Niña"/"💙 Niño") — ambos viven
+  en un bloque posicionado en la esquina (`absolute top-5 right-5`),
+  no dentro del botón principal, para que este último pueda ocupar el
+  ancho completo de la tarjeta. La fecha de nacimiento (`heroDateLabel`)
   se coloca a la misma altura que la edad, no debajo (`items-baseline`
-  para que ambas líneas de texto compartan línea base), y se empuja al
-  extremo derecho de esa línea con `justify-between` en vez de ir
-  pegada al número, quedando alineada bajo el chip de sexo.
+  para que ambas líneas de texto compartan línea base), y llega hasta
+  el borde derecho real de la tarjeta con `justify-between` — antes
+  vivía dentro de un botón de ancho `flex-1` compartiendo fila con el
+  icono/chip, así que solo llegaba hasta donde empezaba esa columna,
+  no hasta el borde real.
 - **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
   las marcas de toma/pañal de *hoy* (el día de calendario, no las
   últimas 24h en bruto), calculada en el propio componente a partir de

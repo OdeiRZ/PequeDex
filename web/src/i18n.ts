@@ -7,12 +7,17 @@ export type Locale = 'es' | 'en'
 
 const STORAGE_KEY = 'pequedex_locale'
 
-// Spanish is the app's real default - the two people who actually use it
-// day to day speak Spanish - English is there for the portfolio/recruiter
-// audience, not because the app has English-speaking users yet.
+// An explicit choice (made from "Tu cuenta", the only place to change it
+// now that there's no header toggle) always wins. Without one yet -
+// notably on login/register, where nobody's account exists to hold a
+// preference - fall back to the browser's own language instead of
+// hardcoding Spanish, so a recruiter browsing the portfolio in English
+// sees these screens in English too.
 export function getStoredLocale(): Locale {
   const stored = localStorage.getItem(STORAGE_KEY)
-  return stored === 'en' ? 'en' : 'es'
+  if (stored === 'en' || stored === 'es') return stored
+
+  return navigator.language.toLowerCase().startsWith('en') ? 'en' : 'es'
 }
 
 export function storeLocale(locale: Locale): void {

@@ -376,3 +376,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     el formulario guiado, verlo en el visor, navegar entre varios,
     reaccionar desde una cuenta y verlo reflejado en la otra, editar y
     borrar desde dentro del propio visor.
+
+- `ThemeToggle.vue` mostraba el icono del estado actual (luna en modo
+  oscuro, sol en modo claro) en vez del estado al que se cambia al
+  pulsar, al revés que el resto de esta suite de apps. Invertida la
+  condición para que coincida con LudoDex/MIRA MarketLens: en oscuro se
+  ve el sol, en claro la luna.
+
+- Selector de idioma fuera de la cabecera: no hace falta un acceso
+  rápido para algo que un cuidador configura una vez y no vuelve a
+  tocar mientras usa la app, y quitarlo deja sitio en el nav para su
+  rediseño. `LanguageSwitcher.vue` (el toggle ES/EN de `AppHeader.vue`,
+  visible en todas las pantallas) desaparece; cambiar de idioma pasa a
+  ser un control segmentado más dentro de "Tu cuenta", junto a nombre/
+  email. Sin selector en login/registro (ahí no hay cuenta todavía
+  donde guardar la preferencia): `getStoredLocale()` deja de forzar
+  español por defecto y cae al idioma del navegador
+  (`navigator.language`) cuando no hay nada guardado — mismo patrón que
+  MIRA MarketLens —, y solo respeta lo guardado si el usuario ya lo
+  cambió alguna vez desde "Tu cuenta". Verificado en el navegador con
+  una cuenta de prueba real: login/registro sin selector, cambio de
+  idioma desde "Tu cuenta" reflejado al instante en toda la interfaz.

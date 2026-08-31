@@ -23,6 +23,7 @@ import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { categoryBg, categoryText, type Category } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
+import { storeLocale } from '@/i18n'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -86,6 +87,27 @@ async function onLogout() {
 const profileName = ref('')
 const profileEmail = ref('')
 const savingProfile = ref(false)
+
+// No quick toggle in the header anymore (freed up nav space) - a caregiver
+// sets this once, from "Tu cuenta", the same place as everything else
+// about their own account. Login/register have no account to hold a
+// preference yet, so they fall back to the browser's language (see
+// i18n.ts) instead of offering a switcher of their own.
+const localeOptions = computed(() => [
+  { value: 'es' as const, label: t('language.es') },
+  { value: 'en' as const, label: t('language.en') },
+])
+
+// SegmentedControl's generic type param resolves to `string`, not
+// `Locale`, because `locale` from useI18n() is itself typed as plain
+// `string` (no module augmentation ties it to our own Locale union) -
+// narrow it back down before storing.
+function onSelectLocale(value: string) {
+  if (value !== 'es' && value !== 'en') return
+
+  locale.value = value
+  storeLocale(value)
+}
 
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -1425,8 +1447,17 @@ const sleepPredictionLabel = computed(() => {
           </button>
         </form>
 
+        <div class="border-t border-border pt-5">
+          <span class="field-label">{{ t('language.label') }}</span>
+          <SegmentedControl
+            :model-value="locale"
+            :options="localeOptions"
+            @update:model-value="onSelectLocale"
+          />
+        </div>
+
         <form
-          class="flex flex-col gap-4 border-t border-border pt-5"
+          class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
           @submit.prevent="onSubmitPassword"
         >
           <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>

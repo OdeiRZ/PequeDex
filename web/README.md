@@ -96,15 +96,22 @@ porque la verificación local solo cubría los otros tres.
 
 ## Idioma
 
-`src/i18n.ts` configura `vue-i18n` con español (por defecto) e inglés —
-ver la nota de arquitectura en el README raíz sobre por qué solo estos
-dos, a diferencia de los 5 idiomas de LudoDex/MIRA. `LanguageSwitcher.vue`
-vive en `App.vue` (visible en cualquier pantalla, incluidas login/
-register) y persiste la elección en `localStorage` bajo la clave
-`pequedex_locale`. Los mensajes viven en `src/locales/{es,en}.ts`; los
-valores de los enums del backend (`izquierdo`/`derecho`/`ambos`,
-`mojado`/`sucio`/`ambos`) se traducen en el punto de uso — son valores
-internos en español, no texto de interfaz.
+`src/i18n.ts` configura `vue-i18n` con español e inglés — ver la nota de
+arquitectura en el README raíz sobre por qué solo estos dos, a
+diferencia de los 5 idiomas de LudoDex/MIRA. Sin selector rápido en la
+cabecera (se quitó para ganar espacio en el nav, y porque quien usa la
+app a diario no va a cambiar de idioma mientras la usa): cambiarlo es
+ahora un control segmentado más dentro de "Tu cuenta"
+(`DashboardView.vue`, junto a nombre/email), que llama a `storeLocale()`
+y persiste la elección en `localStorage` bajo la clave `pequedex_locale`.
+Login/registro no tienen cuenta todavía donde guardar esa preferencia,
+así que `getStoredLocale()` cae al idioma del navegador
+(`navigator.language`) en vez de forzar español — mismo patrón que
+MIRA MarketLens — y solo usa lo guardado si el usuario ya lo cambió
+alguna vez desde "Tu cuenta". Los mensajes viven en
+`src/locales/{es,en}.ts`; los valores de los enums del backend
+(`izquierdo`/`derecho`/`ambos`, `mojado`/`sucio`/`ambos`) se traducen en
+el punto de uso — son valores internos en español, no texto de interfaz.
 
 ## Diseño
 

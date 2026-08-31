@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LanguageSwitcher from './LanguageSwitcher.vue'
 import ThemeToggle from './ThemeToggle.vue'
 </script>
 
@@ -11,9 +10,6 @@ import ThemeToggle from './ThemeToggle.vue'
       <span aria-hidden="true">👶</span>
       PequeDex
     </span>
-    <div class="flex items-center gap-2">
-      <LanguageSwitcher />
-      <ThemeToggle />
-    </div>
+    <ThemeToggle />
   </header>
 </template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -11,6 +10,7 @@ import {
   type MilestoneCategory,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
+import { useUiStore } from '@/stores/ui'
 import ActionBar from '@/components/ActionBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
@@ -25,10 +25,10 @@ import { categoryBg, categoryText, type Category } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { storeLocale } from '@/i18n'
 
-const router = useRouter()
 const auth = useAuthStore()
 const babies = useBabiesStore()
 const toast = useToastStore()
+const ui = useUiStore()
 const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -72,11 +72,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
-async function onLogout() {
-  await auth.logout()
-  router.push({ name: 'login' })
-}
 
 // --- Menú de usuario: datos personales, contraseña y foto de perfil.
 // Sin errores por campo (a diferencia de LudoDex/MIRA MarketLens) - igual
@@ -245,7 +240,7 @@ onUnmounted(() => {
 // --- Hojas inferiores: una por cada botón de la barra de acciones, más
 // el ajuste de sexo/fecha de nacimiento del bebé. ---
 
-type Sheet = Category | 'settings' | 'profile' | null
+type Sheet = Category | 'settings' | null
 const activeSheet = ref<Sheet>(null)
 
 function nowForInput(): string {
@@ -285,16 +280,27 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   } else if (sheet === 'settings') {
     babySex.value = babies.current?.sex ?? ''
     babyBirthDate.value = babies.current?.birth_date ?? ''
-  } else if (sheet === 'profile') {
+  }
+
+  activeSheet.value = sheet
+}
+
+// The account sheet is opened from AppHeader now (a sibling component,
+// not a descendant, so it can't call openSheet() directly) via a shared
+// store flag - reset the form fields here, in response to that flag,
+// instead of at the call site the way every other sheet does it.
+watch(
+  () => ui.accountSheetOpen,
+  (open) => {
+    if (!open) return
+
     profileName.value = auth.user?.name ?? ''
     profileEmail.value = auth.user?.email ?? ''
     currentPassword.value = ''
     newPassword.value = ''
     newPasswordConfirmation.value = ''
-  }
-
-  activeSheet.value = sheet
-}
+  },
+)
 
 function closeSheet() {
   activeSheet.value = null
@@ -856,21 +862,6 @@ const sleepPredictionLabel = computed(() => {
 
     <template v-else>
       <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-8">
-        <div class="flex items-center justify-between text-sm text-text-muted">
-          <button
-            v-if="auth.user"
-            type="button"
-            class="flex items-center gap-2 font-semibold text-text"
-            @click="openSheet('profile')"
-          >
-            <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
-            {{ auth.user.name }}
-          </button>
-          <button type="button" class="font-semibold text-brand" @click="onLogout">
-            {{ t('common.logout') }}
-          </button>
-        </div>
-
         <div
           class="rounded-2xl p-5 text-brand-ink shadow-md"
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
@@ -1381,10 +1372,14 @@ const sleepPredictionLabel = computed(() => {
         </form>
       </BottomSheet>
 
-      <BottomSheet :open="activeSheet === 'profile'" @update:open="closeSheet">
+      <BottomSheet :open="ui.accountSheetOpen" @update:open="ui.closeAccountSheet">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
-          <button type="button" class="text-sm font-semibold text-brand" @click="closeSheet">
+          <button
+            type="button"
+            class="text-sm font-semibold text-brand"
+            @click="ui.closeAccountSheet()"
+          >
             {{ t('common.close') }}
           </button>
         </div>

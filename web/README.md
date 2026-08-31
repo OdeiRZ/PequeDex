@@ -83,10 +83,21 @@ porque la verificación local solo cubría los otros tres.
   eso tiene sentido antes de que el bebé haya nacido, y el propio
   navegador bloquea el envío con su aviso nativo si se intenta. La API
   aplica la misma regla por su cuenta (ver `api/README.md`), no solo el
-  frontend. El nombre en la cabecera abre una hoja de "Tu cuenta"
-  (datos personales, contraseña, foto) — sheet propia, no una ruta
-  nueva, mismo motivo que el resto de esta app: todo lo que no es
-  login/registro vive en una sola vista. El código de invitación
+  frontend. El avatar y nombre en `AppHeader.vue` abren una hoja de "Tu
+  cuenta" (datos personales, idioma, contraseña, foto) - sheet propia,
+  no una ruta nueva, mismo motivo que el resto de esta app: todo lo que
+  no es login/registro vive en una sola vista. Como `AppHeader.vue` es
+  global (vive en `App.vue`, no dentro de `DashboardView.vue`, donde
+  está el contenido real de esa hoja) y no puede llamar a una función
+  local de `DashboardView.vue`, ese flag de abrir/cerrar cruza el
+  límite entre ambos vía `stores/ui.ts` - un store deliberadamente
+  mínimo (un booleano y dos acciones), no una solución genérica para
+  "cualquier sheet desde cualquier sitio" que nada más necesita
+  todavía. El wordmark "PequeDex" solo se ve en login/registro/
+  onboarding; en cuanto hay cuenta y bebé, se reduce al emoji y cede el
+  sitio al avatar/nombre del cuidador, con "Cerrar sesión" como icono
+  en vez de texto - a diario importa más de quién es la sesión que el
+  nombre de la app. El código de invitación
   (`inviteCodeExpanded`) empieza siempre colapsado y no se recuerda
   entre visitas — solo hace falta una vez, al vincular al otro
   cuidador, y esa tarjeta se ve en cada visita al dashboard. Tocar el

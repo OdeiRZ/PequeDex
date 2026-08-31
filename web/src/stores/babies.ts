@@ -210,13 +210,28 @@ export const useBabiesStore = defineStore('babies', {
       await this.fetchTimeline()
     },
 
+    async updateFeed(id: number, payload: CreateFeedPayload) {
+      await apiClient.put(`/babies/${this.current!.id}/feeds/${id}`, payload)
+      await this.fetchTimeline()
+    },
+
     async createSleep(payload: CreateSleepPayload) {
       await apiClient.post(`/babies/${this.current!.id}/sleeps`, payload)
       await this.fetchTimeline()
     },
 
+    async updateSleep(id: number, payload: CreateSleepPayload) {
+      await apiClient.put(`/babies/${this.current!.id}/sleeps/${id}`, payload)
+      await this.fetchTimeline()
+    },
+
     async createDiaperChange(payload: CreateDiaperChangePayload) {
       await apiClient.post(`/babies/${this.current!.id}/diaper-changes`, payload)
+      await this.fetchTimeline()
+    },
+
+    async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
+      await apiClient.put(`/babies/${this.current!.id}/diaper-changes/${id}`, payload)
       await this.fetchTimeline()
     },
 

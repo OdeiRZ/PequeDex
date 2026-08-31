@@ -93,6 +93,7 @@ export default {
       milestone: '+ Hito',
     },
     feedForm: {
+      editTitle: 'Editar toma',
       type: 'Tipo',
       bottle: 'Biberón',
       breast: 'Pecho',
@@ -103,17 +104,22 @@ export default {
       both: 'Ambos',
       amount: 'Cantidad (ml)',
       when: 'Cuándo',
+      toastUpdated: 'Toma actualizada.',
     },
     sleepForm: {
+      editTitle: 'Editar sueño',
       start: 'Empieza',
       end: 'Termina (déjalo vacío si sigue durmiendo)',
+      toastUpdated: 'Sueño actualizado.',
     },
     diaperForm: {
+      editTitle: 'Editar pañal',
       type: 'Tipo',
       wet: 'Mojado',
       dirty: 'Sucio',
       both: 'Ambos',
       when: 'Cuándo',
+      toastUpdated: 'Pañal actualizado.',
     },
     growthForm: {
       date: 'Fecha',

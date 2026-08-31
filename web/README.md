@@ -53,14 +53,18 @@ porque la verificación local solo cubría los otros tres.
 - `src/views/{Login,Register}View.vue` — formularios con la identidad
   visual del proyecto, probados de punta a punta contra la API real.
 - `src/stores/babies.ts` — el bebé del usuario (crear/unirse por código),
-  su línea temporal combinada, y CRUD de tomas/sueño/pañales. Cada acción
-  de crear/borrar vuelve a pedir la línea temporal entera en vez de tocar
-  el array local a mano — el otro cuidador puede haber añadido algo entre
-  medias, y el sondeo (ver más abajo) va a traer esa misma lista de
-  todos modos. Mismo patrón para crecimiento e hitos (listas propias,
-  no mezcladas en la línea temporal): crear/borrar vuelve a pedir la
-  lista entera. `createMilestone()` construye un `FormData` a mano en
-  vez de mandar JSON porque la foto es un archivo real, no una URL.
+  su línea temporal combinada, y CRUD completo de tomas/sueño/pañales
+  (`updateFeed`/`updateSleep`/`updateDiaperChange` reutilizan el mismo
+  tipo de payload que su `create*`, igual que ya hace el backend - ver
+  la nota de `UpdateFeedRequest` en `api/README.md`). Cada acción de
+  crear/editar/borrar vuelve a pedir la línea temporal entera en vez de
+  tocar el array local a mano — el otro cuidador puede haber añadido
+  algo entre medias, y el sondeo (ver más abajo) va a traer esa misma
+  lista de todos modos. Mismo patrón para crecimiento e hitos (listas
+  propias, no mezcladas en la línea temporal): crear/borrar vuelve a
+  pedir la lista entera. `createMilestone()` construye un `FormData` a
+  mano en vez de mandar JSON porque la foto es un archivo real, no una
+  URL.
 - `src/views/DashboardView.vue` — onboarding (crear un bebé o unirse con
   código) cuando el usuario no tiene ninguno todavía, y si ya lo tiene:
   botones de registro rápido (toma/sueño/pañal/medida/hito, con la hora
@@ -83,7 +87,20 @@ porque la verificación local solo cubría los otros tres.
   eso tiene sentido antes de que el bebé haya nacido, y el propio
   navegador bloquea el envío con su aviso nativo si se intenta. La API
   aplica la misma regla por su cuenta (ver `api/README.md`), no solo el
-  frontend. El avatar en `AppHeader.vue` abre una hoja de "Tu cuenta"
+  frontend. Tocar una fila de la línea temporal abre el mismo formulario
+  de registro rápido precargado (`openFeedEdit()`/`openSleepEdit()`/
+  `openDiaperEdit()`, un `editing*Id` por tipo — mismo patrón que ya
+  tenía el hito), no solo verla/borrarla; `EntryCard.vue` envuelve su
+  contenido en un botón propio para que el icono de borrar (fuera de
+  ese botón, no dentro) siga siendo un control independiente. Los tres
+  campos `datetime-local` (toma/sueño/pañal, no medida/hito, que solo
+  llevan fecha) pasan por `toLocalInputValue()`/`toUtcIso()` en ambas
+  direcciones: el backend corre en `app.timezone=UTC`, pero un
+  `datetime-local` no lleva zona horaria propia, así que mandar su
+  valor tal cual hacía que el servidor lo tomara como si ya fuera UTC
+  en vez de hora local - se descubrió al editar sin tocar la hora y ver
+  que igualmente se desplazaba en cada guardado. El avatar en
+  `AppHeader.vue` abre una hoja de "Tu cuenta"
   (datos personales, idioma, contraseña, foto) - sheet propia, no una
   ruta nueva, mismo motivo que el resto de esta app: todo lo que no es
   login/registro vive en una sola vista. Como `AppHeader.vue` es global

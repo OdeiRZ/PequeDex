@@ -5,9 +5,12 @@ import { useAuthStore } from '@/stores/auth'
 import {
   useBabiesStore,
   type BabySex,
+  type DiaperChange,
   type DiaperType,
+  type Feed,
   type FeedType,
   type MilestoneCategory,
+  type Sleep,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
@@ -243,10 +246,32 @@ onUnmounted(() => {
 type Sheet = Category | 'settings' | null
 const activeSheet = ref<Sheet>(null)
 
+// The API returns datetimes as UTC ISO strings (app.timezone is UTC) -
+// this converts one into the local "YYYY-MM-DDTHH:mm" value a
+// <input type="datetime-local"> expects, so editing an existing entry
+// shows its real local time instead of its raw UTC one.
+function toLocalInputValue(iso: string): string {
+  const date = new Date(iso)
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 16)
+}
+
 function nowForInput(): string {
-  const now = new Date()
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-  return now.toISOString().slice(0, 16)
+  return toLocalInputValue(new Date().toISOString())
+}
+
+// The inverse of toLocalInputValue, for the way back to the API: a
+// <input type="datetime-local"> value has no timezone of its own - `new
+// Date(...)` on a string like that is parsed as the *browser's* local
+// time, exactly what was intended, so its own toISOString() is the
+// correct UTC instant to send. Sending the naive value directly would
+// have the backend (app.timezone=UTC) read "20:30" local as "20:30 UTC"
+// instead, silently shifting every save by the browser's own offset -
+// found while wiring up editing: saving a feed without touching its
+// time still moved it by +2h in local dev (UTC+2), because create and
+// edit both went straight through this same untranslated path.
+function toUtcIso(localValue: string): string {
+  return new Date(localValue).toISOString()
 }
 
 function openSheet(sheet: Exclude<Sheet, null>) {
@@ -255,12 +280,15 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     feedSide.value = 'izquierdo'
     feedAmountMl.value = ''
     feedStartedAt.value = nowForInput()
+    editingFeedId.value = null
   } else if (sheet === 'sleep') {
     sleepStartedAt.value = nowForInput()
     sleepEndedAt.value = ''
+    editingSleepId.value = null
   } else if (sheet === 'diaper') {
     diaperType.value = 'mojado'
     diaperChangedAt.value = nowForInput()
+    editingDiaperId.value = null
   } else if (sheet === 'growth') {
     growthMeasuredAt.value = new Date().toISOString().slice(0, 10)
     growthWeightKg.value = ''
@@ -322,6 +350,10 @@ const feedAmountMl = ref('')
 const feedStartedAt = ref('')
 const savingFeed = ref(false)
 
+// null while creating a new feed; the id of the one being edited
+// otherwise - same convention as editingMilestoneId.
+const editingFeedId = ref<number | null>(null)
+
 const feedTypeOptions = computed(() => [
   { value: 'biberon' as const, label: t('dashboard.feedForm.bottle') },
   { value: 'pecho' as const, label: t('dashboard.feedForm.breast') },
@@ -334,16 +366,32 @@ const feedSideOptions = computed(() => [
   { value: 'ambos' as const, label: t('dashboard.feedForm.both') },
 ])
 
+function openFeedEdit(feed: Feed) {
+  editingFeedId.value = feed.id
+  feedType.value = feed.type
+  feedSide.value = feed.side ?? 'izquierdo'
+  feedAmountMl.value = feed.amount_ml?.toString() ?? ''
+  feedStartedAt.value = toLocalInputValue(feed.started_at)
+  activeSheet.value = 'feed'
+}
+
 async function onSubmitFeed() {
   savingFeed.value = true
 
   try {
-    await babies.createFeed({
+    const payload = {
       type: feedType.value,
       side: feedType.value === 'pecho' ? feedSide.value : undefined,
       amount_ml: feedType.value === 'biberon' ? Number(feedAmountMl.value) : undefined,
-      started_at: feedStartedAt.value,
-    })
+      started_at: toUtcIso(feedStartedAt.value),
+    }
+
+    if (editingFeedId.value) {
+      await babies.updateFeed(editingFeedId.value, payload)
+      toast.show(t('dashboard.feedForm.toastUpdated'))
+    } else {
+      await babies.createFeed(payload)
+    }
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'))
@@ -357,15 +405,30 @@ async function onSubmitFeed() {
 const sleepStartedAt = ref('')
 const sleepEndedAt = ref('')
 const savingSleep = ref(false)
+const editingSleepId = ref<number | null>(null)
+
+function openSleepEdit(sleep: Sleep) {
+  editingSleepId.value = sleep.id
+  sleepStartedAt.value = toLocalInputValue(sleep.started_at)
+  sleepEndedAt.value = sleep.ended_at ? toLocalInputValue(sleep.ended_at) : ''
+  activeSheet.value = 'sleep'
+}
 
 async function onSubmitSleep() {
   savingSleep.value = true
 
   try {
-    await babies.createSleep({
-      started_at: sleepStartedAt.value,
-      ended_at: sleepEndedAt.value || null,
-    })
+    const payload = {
+      started_at: toUtcIso(sleepStartedAt.value),
+      ended_at: sleepEndedAt.value ? toUtcIso(sleepEndedAt.value) : null,
+    }
+
+    if (editingSleepId.value) {
+      await babies.updateSleep(editingSleepId.value, payload)
+      toast.show(t('dashboard.sleepForm.toastUpdated'))
+    } else {
+      await babies.createSleep(payload)
+    }
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'))
@@ -379,6 +442,7 @@ async function onSubmitSleep() {
 const diaperType = ref<DiaperType>('mojado')
 const diaperChangedAt = ref('')
 const savingDiaper = ref(false)
+const editingDiaperId = ref<number | null>(null)
 
 const diaperTypeOptions = computed(() => [
   { value: 'mojado' as const, label: t('dashboard.diaperForm.wet') },
@@ -386,14 +450,28 @@ const diaperTypeOptions = computed(() => [
   { value: 'ambos' as const, label: t('dashboard.diaperForm.both') },
 ])
 
+function openDiaperEdit(diaperChange: DiaperChange) {
+  editingDiaperId.value = diaperChange.id
+  diaperType.value = diaperChange.type
+  diaperChangedAt.value = toLocalInputValue(diaperChange.changed_at)
+  activeSheet.value = 'diaper'
+}
+
 async function onSubmitDiaper() {
   savingDiaper.value = true
 
   try {
-    await babies.createDiaperChange({
-      changed_at: diaperChangedAt.value,
+    const payload = {
+      changed_at: toUtcIso(diaperChangedAt.value),
       type: diaperType.value,
-    })
+    }
+
+    if (editingDiaperId.value) {
+      await babies.updateDiaperChange(editingDiaperId.value, payload)
+      toast.show(t('dashboard.diaperForm.toastUpdated'))
+    } else {
+      await babies.createDiaperChange(payload)
+    }
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'))
@@ -459,6 +537,16 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
     toast.show(t(`dashboard.toastRemoved.${key}`))
   } catch {
     toast.show(t(`dashboard.removeError.${key}`))
+  }
+}
+
+function onOpenEntry(entry: (typeof babies.timeline)[number]) {
+  if (entry.type === 'feed') {
+    openFeedEdit(entry.data)
+  } else if (entry.type === 'sleep') {
+    openSleepEdit(entry.data)
+  } else {
+    openDiaperEdit(entry.data)
   }
 }
 
@@ -924,6 +1012,7 @@ const sleepPredictionLabel = computed(() => {
               :category="entryCategory(entry)"
               :title="entryTitle(entry)"
               :meta="new Date(entry.at).toLocaleString(dateLocale)"
+              @open="onOpenEntry(entry)"
             >
               <template #actions>
                 <DeleteButton @click="onDeleteEntry(entry)" />
@@ -1011,7 +1100,7 @@ const sleepPredictionLabel = computed(() => {
           >
             <CategoryIcon category="feed" class="h-4 w-4" />
           </span>
-          {{ t('dashboard.quickLog.feed') }}
+          {{ editingFeedId ? t('dashboard.feedForm.editTitle') : t('dashboard.quickLog.feed') }}
         </h3>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmitFeed">
           <SegmentedControl v-model="feedType" :options="feedTypeOptions" />
@@ -1065,7 +1154,7 @@ const sleepPredictionLabel = computed(() => {
           >
             <CategoryIcon category="sleep" class="h-4 w-4" />
           </span>
-          {{ t('dashboard.quickLog.sleep') }}
+          {{ editingSleepId ? t('dashboard.sleepForm.editTitle') : t('dashboard.quickLog.sleep') }}
         </h3>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmitSleep">
           <div>
@@ -1112,7 +1201,9 @@ const sleepPredictionLabel = computed(() => {
           >
             <CategoryIcon category="diaper" class="h-4 w-4" />
           </span>
-          {{ t('dashboard.quickLog.diaper') }}
+          {{
+            editingDiaperId ? t('dashboard.diaperForm.editTitle') : t('dashboard.quickLog.diaper')
+          }}
         </h3>
         <form class="flex flex-col gap-4" @submit.prevent="onSubmitDiaper">
           <SegmentedControl v-model="diaperType" :options="diaperTypeOptions" />

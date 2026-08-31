@@ -93,6 +93,7 @@ export default {
       milestone: '+ Milestone',
     },
     feedForm: {
+      editTitle: 'Edit feed',
       type: 'Type',
       bottle: 'Bottle',
       breast: 'Breast',
@@ -103,17 +104,22 @@ export default {
       both: 'Both',
       amount: 'Amount (ml)',
       when: 'When',
+      toastUpdated: 'Feed updated.',
     },
     sleepForm: {
+      editTitle: 'Edit sleep',
       start: 'Starts',
       end: 'Ends (leave empty if still sleeping)',
+      toastUpdated: 'Sleep updated.',
     },
     diaperForm: {
+      editTitle: 'Edit diaper',
       type: 'Type',
       wet: 'Wet',
       dirty: 'Dirty',
       both: 'Both',
       when: 'When',
+      toastUpdated: 'Diaper updated.',
     },
     growthForm: {
       date: 'Date',

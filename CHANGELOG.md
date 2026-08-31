@@ -414,3 +414,31 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   aparte. Verificado en el
   navegador con una cuenta de prueba real: abrir "Tu cuenta" desde la
   cabecera, guardar, cerrar, y cerrar sesión con el icono nuevo.
+
+- Ahora se puede editar una toma, un sueño o un pañal ya registrado
+  tocando su fila en la línea temporal, no solo verlo y borrarlo —
+  mismo patrón que ya tenía el hito. `EntryCard.vue` envuelve su
+  contenido principal en un botón propio (`@open`) en vez de que toda
+  la fila sea clicable, para que el icono de borrar siga siendo un
+  control independiente sin necesitar `stopPropagation`. El backend ya
+  tenía los tres endpoints `update` construidos y probados desde el
+  principio (igual que pasó con los hitos); solo faltaba que el
+  frontend los llamara.
+
+- De paso, un fallo real de zonas horarias al implementar lo anterior:
+  guardar una edición sin tocar la hora la desplazaba igualmente, en
+  este entorno +2h — reproducido en el navegador (una toma a las
+  20:30 pasaba a las 22:30 con solo cambiar la cantidad). Causa: el
+  backend tiene `app.timezone = UTC`, pero el valor de un
+  `<input type="datetime-local">` no lleva zona horaria propia — se
+  mandaba tal cual, y el servidor lo interpretaba como si ya fuera UTC
+  en vez de hora local. Al crear un registro nuevo pasaba lo mismo (la
+  hora guardada no era la real), solo que nadie lo notaba porque no
+  había nada con lo que compararla todavía; edición además desplazaba
+  la hora en cada guardado sucesivo. Arreglado convirtiendo con
+  `new Date(valorLocal).toISOString()` antes de enviar cualquier
+  `started_at`/`ended_at`/`changed_at` de toma, sueño o pañal — los
+  campos de solo fecha (medida, hito) no llevan este problema, al no
+  tener componente de hora que malinterpretar. Verificado en el
+  navegador comparando el valor guardado en la API antes y después del
+  arreglo con la misma edición.

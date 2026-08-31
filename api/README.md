@@ -66,6 +66,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   fila que se está editando — el campo `user_id` en `feeds`/`sleeps`/
   `diaper_changes` es solo trazabilidad de quién lo registró, nunca se
   usa para decidir quién puede verlo o editarlo.
+- `UpdateFeedRequest`/`UpdateSleepRequest`/`UpdateDiaperChangeRequest` —
+  mismas reglas que su `Store*Request`, no un `sometimes` parcial: en
+  `Feed`, por ejemplo, `side`/`amount_ml` dependen de `type` (uno de los
+  dos es obligatorio y el otro está prohibido según cuál sea), así que
+  una edición manda la fila completa de vuelta en vez de un parche —
+  reutilizado por el frontend, cuyo formulario de edición es el mismo
+  de "+ Toma"/"+ Sueño"/"+ Pañal" precargado (ver `web/README.md`).
 - `Baby::generateInviteCode()` — código de 8 caracteres sin `0`/`O`/`1`/`I`
   (se escriben/leen a mano, esos pares se confunden fácilmente), con
   comprobación de colisión real en vez de asumir que el espacio de

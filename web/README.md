@@ -249,7 +249,11 @@ verse bien en una captura:
   el borde derecho real de la tarjeta con `justify-between` — antes
   vivía dentro de un botón de ancho `flex-1` compartiendo fila con el
   icono/chip, así que solo llegaba hasta donde empezaba esa columna,
-  no hasta el borde real.
+  no hasta el borde real. El propio texto de la fecha usa formato
+  largo (`{ day: 'numeric', month: 'long', year: 'numeric' }` en
+  `toLocaleDateString()`, no la llamada sin opciones): "Nació el 31 de
+  agosto de 2026", no "31/8/2026" — `Intl` añade los conectores
+  "de...de" en español solo, sin tener que escribirlos a mano.
 - **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
   las marcas de toma/pañal de *hoy* (el día de calendario, no las
   últimas 24h en bruto), calculada en el propio componente a partir de

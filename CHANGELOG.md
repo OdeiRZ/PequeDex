@@ -534,3 +534,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   Verificado en el navegador (cuenta real, con permiso explícito para
   usarla en pruebas locales): el desplegable del código de invitación
   y el icono de ajustes siguen funcionando igual.
+
+- "Nació el {fecha}" pasa de formato numérico ("31/8/2026") a formato
+  largo ("Nació el 31 de agosto de 2026"), vía las opciones
+  `{ day: 'numeric', month: 'long', year: 'numeric' }` de
+  `toLocaleDateString()` en vez de la llamada sin opciones — `Intl`
+  añade los conectores "de...de" en español automáticamente, sin
+  tener que escribirlos a mano (y en inglés da "31 August 2026", sin
+  conectores, también correcto). Mismo formato para "Fecha prevista:
+  {fecha}" en el caso de cuenta atrás. Verificado en el navegador con
+  la cuenta real.

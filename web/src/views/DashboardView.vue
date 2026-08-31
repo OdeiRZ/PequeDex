@@ -694,14 +694,28 @@ const heroHeadline = computed<HeroHeadline>(() => {
   return { value: null, unit: null, special: null }
 })
 
+// "7 de septiembre de 2026" instead of "7/9/2026" - the one date on the
+// card meant to be read as a headline, not scanned as a data table.
+const heroDateFormat: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}
+
 const heroDateLabel = computed(() => {
   if (babyAgeInfo.value.type === 'born' && babies.current?.birth_date) {
-    const date = new Date(babies.current.birth_date).toLocaleDateString(dateLocale.value)
+    const date = new Date(babies.current.birth_date).toLocaleDateString(
+      dateLocale.value,
+      heroDateFormat,
+    )
     return t('dashboard.hero.bornOn', { date })
   }
 
   if (babyAgeInfo.value.type === 'expecting' && babies.current?.due_date) {
-    const date = new Date(babies.current.due_date).toLocaleDateString(dateLocale.value)
+    const date = new Date(babies.current.due_date).toLocaleDateString(
+      dateLocale.value,
+      heroDateFormat,
+    )
     return t('dashboard.hero.dueOn', { date })
   }
 

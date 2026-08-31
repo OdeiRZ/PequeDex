@@ -23,27 +23,21 @@ async function onLogout() {
   <header
     class="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
   >
-    <!-- Full wordmark pre-login/onboarding, where there's no account or
-    baby yet to show instead. Once both exist, the app's own name matters
-    less day to day, so the logo shrinks to just the emoji and the account
-    button moves into the right-hand group instead. -->
-    <span v-if="auth.user && babies.current" aria-hidden="true" class="shrink-0 text-xl">👶</span>
-    <span v-else class="flex items-center gap-1.5 font-display text-xl font-bold">
+    <span class="flex items-center gap-1.5 font-display text-xl font-bold">
       <span aria-hidden="true">👶</span>
       PequeDex
     </span>
 
-    <div class="flex min-w-0 items-center gap-2">
+    <div class="flex shrink-0 items-center gap-2">
       <button
         v-if="auth.user && babies.current"
         type="button"
-        class="flex min-w-0 items-center gap-2 font-semibold"
+        :aria-label="t('profile.title')"
         @click="ui.openAccountSheet()"
       >
         <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
-        <span class="truncate">{{ auth.user.name }}</span>
       </button>
-      <div class="shrink-0"><ThemeToggle /></div>
+      <ThemeToggle />
       <button
         v-if="auth.user && babies.current"
         type="button"

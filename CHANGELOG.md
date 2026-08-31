@@ -571,3 +571,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   de `TimelineController`. Verificado en el navegador con la cuenta
   real (bebé recién nacido: la barra de hoy con horas reales, el
   resto de la semana en cero, tal y como corresponde).
+
+- El emoji 👶 de la cabecera y el favicon (puesto como solución rápida
+  tras descartar el primer icono propio por ambiguo, ver más arriba)
+  deja paso a una marca propia definitiva: una huella de bebé con un
+  corazón marcado en la planta, en el degradado de marca ya existente
+  (`--brand` → `--brand-teal`), así que se retiñe sola con el sexo del
+  bebé y el tema claro/oscuro sin ningún color nuevo que mantener.
+  `AppMark.vue` expone dos pesos de la misma forma: completa (con los
+  cinco dedos) para la cabecera y la pantalla de carga, y una reducida
+  (sin dedos) pensada para el favicon a 16-32px — comprobado a ese
+  tamaño real que los dedos se emborronan en una mancha, así que el
+  favicon se queda en la versión reducida aunque la cabecera, a 24px,
+  sí los admite con nitidez suficiente. La pantalla de "Cargando…" del
+  dashboard anima el mark (el corazón late con su propio ritmo, la
+  huella hace un ligero rebote de paso) en vez de mostrar solo texto,
+  con `prefers-reduced-motion` respetado. Propuesto primero como
+  maqueta visual con tres direcciones distintas y aprobado antes de
+  tocar código real, mismo proceso que la identidad visual original y
+  el rediseño del dashboard. Verificado en el navegador en claro y
+  oscuro, y en el momento real de carga del dashboard con una cuenta de
+  prueba real.

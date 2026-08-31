@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import AppMark from './AppMark.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import UserAvatar from './UserAvatar.vue'
 
@@ -22,7 +23,7 @@ async function onLogout() {
     class="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
   >
     <span class="flex items-center gap-1.5 font-display text-xl font-bold">
-      <span aria-hidden="true">👶</span>
+      <AppMark full :size="24" />
       PequeDex
     </span>
 

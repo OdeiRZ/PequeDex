@@ -158,6 +158,40 @@
 
   --font-display: 'Quicksand', 'Segoe UI', system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --animate-footprint-bob: footprint-bob 2.8s ease-in-out infinite;
+  --animate-heartbeat: heartbeat 1.15s ease-in-out infinite;
+}
+
+/* AppMark's loading animation: a step-like bob on the footprint, with the
+   heart on its own faster heartbeat rhythm layered on top. */
+@keyframes footprint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.2);
+  }
+  30% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.14);
+  }
+  60% {
+    transform: scale(1);
+  }
 }
 
 *,

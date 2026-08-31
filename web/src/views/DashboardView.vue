@@ -16,6 +16,7 @@ import {
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
 import ActionBar from '@/components/ActionBar.vue'
+import AppMark from '@/components/AppMark.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
 import DailyRhythm from '@/components/DailyRhythm.vue'
@@ -1000,7 +1001,8 @@ const sleepPredictionLabel = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="flex flex-1 items-center justify-center text-text-muted">
+  <div v-if="loading" class="flex flex-1 flex-col items-center justify-center gap-4 text-text-muted">
+    <AppMark full animated :size="72" />
     {{ t('common.loading') }}
   </div>
 

@@ -714,6 +714,16 @@ const heroSexLabel = computed(() => {
   return null
 })
 
+// One combined line instead of two - the settings button used to repeat
+// this same sex/date pair as its own label, which read as the same
+// information twice on a card that otherwise had room to spare.
+const heroDetailsLine = computed(() => {
+  const parts = [heroDateLabel.value, heroSexLabel.value].filter(
+    (part): part is string => part !== null,
+  )
+  return parts.length > 0 ? parts.join(' · ') : null
+})
+
 const babySettingsButtonLabel = computed(() => {
   if (!babies.current) return t('dashboard.babySettingsButton')
 
@@ -1051,6 +1061,12 @@ const sleepPredictionLabel = computed(() => {
             aria-hidden="true"
             class="pointer-events-none absolute -bottom-9 left-1/4 h-20 w-20 rounded-full bg-white/10"
           ></span>
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute -right-2 -bottom-5 text-7xl opacity-20"
+          >
+            👶
+          </span>
 
           <div class="relative flex items-start justify-between gap-2">
             <button
@@ -1093,22 +1109,31 @@ const sleepPredictionLabel = computed(() => {
                 {{ babies.current.name ?? t('dashboard.defaultBabyName') }}
               </span>
 
-              <span v-if="heroDateLabel" class="text-xs text-brand-ink/85">{{
-                heroDateLabel
-              }}</span>
               <span
-                v-if="heroSexLabel"
+                v-if="heroDetailsLine"
                 class="mt-1 inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold"
               >
-                {{ heroSexLabel }}
+                {{ heroDetailsLine }}
               </span>
             </button>
             <button
               type="button"
-              class="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"
+              :aria-label="babySettingsButtonLabel"
               @click="openSheet('settings')"
             >
-              {{ babySettingsButtonLabel }}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-4 w-4"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
             </button>
           </div>
           <div

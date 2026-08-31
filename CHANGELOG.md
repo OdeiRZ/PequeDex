@@ -492,3 +492,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     hitos abriendo el visor y el formulario de creación, ritmo del día
     con datos reales, y edición de una toma sigue funcionando desde la
     fila rediseñada.
+
+- La portada "Hoy con {nombre}" repetía el sexo y la fecha de
+  nacimiento dos veces: una vez en el propio cuerpo de la tarjeta
+  (chip + fecha) y otra vez, idéntica, como etiqueta del botón de
+  ajustes ("Niña · 1/7/2026" en ambos sitios) — y ese botón, con solo
+  texto, dejaba la esquina superior derecha de la tarjeta casi vacía.
+  Ahora fecha y sexo se combinan en un único chip
+  ("Nació el 1/7/2026 · 🌸 Niña"), y el botón de ajustes pasa a ser
+  solo un icono de lápiz (la información que repetía ya no hace falta
+  restatarla). Una marca de agua 👶 traslúcida ocupa el hueco inferior
+  derecho que quedaba vacío. Verificado en el navegador en claro y
+  oscuro con una cuenta de prueba real: el icono sigue abriendo el
+  mismo ajuste de sexo/fecha de siempre.

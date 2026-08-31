@@ -43,6 +43,7 @@ async function onLogout() {
     </span>
 
     <div class="flex shrink-0 items-center gap-2">
+      <ThemeToggle />
       <button
         v-if="auth.user && babies.current"
         type="button"
@@ -63,7 +64,6 @@ async function onLogout() {
           <path d="M16 17l5-5-5-5M21 12H9" />
         </svg>
       </button>
-      <ThemeToggle />
     </div>
   </header>
 </template>

@@ -309,6 +309,21 @@ tamaños minúsculos, cosa que un icono de trazo propio no garantiza.
 (accesibilidad/SEO), no solo el `lang="es"` estático de `index.html`
 que sirve de valor por defecto antes de que cargue el JS.
 
+Ese emoji 👶 tampoco era definitivo: `AppMark.vue` lo sustituye por una
+marca propia (huella de bebé con un corazón marcado en la planta) en el
+mismo degradado `--brand` → `--brand-teal` que ya usa el resto de la
+app, así que se retiñe sola con el sexo del bebé y el tema sin ningún
+color nuevo que mantener. Expone dos pesos de la misma forma en vez de
+forzar una sola a todos los tamaños: completa (con los cinco dedos)
+para la cabecera y la pantalla de carga, y una reducida (sin dedos)
+para `favicon.svg`, comprobada a 16-32px reales — ahí los dedos se
+emborronaban en una mancha en vez de leerse como tales. La pantalla de
+"Cargando…" del dashboard anima el mark (el corazón late con su propio
+ritmo, la huella hace un ligero rebote de paso) en lugar de mostrar
+solo texto, respetando `prefers-reduced-motion`. Como con la identidad
+visual original, se propuso primero como maqueta con varias direcciones
+y se aprobó antes de tocar código real.
+
 ## Tema según el sexo del bebé
 
 `DashboardView.vue` calcula `themeSex` y pone `data-sex="nino"/"nina"/

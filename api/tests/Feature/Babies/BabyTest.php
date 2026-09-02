@@ -147,3 +147,19 @@ it('rejects regenerating the invite code for a baby the user is not linked to', 
 
     $this->postJson("/api/babies/{$baby->id}/invite-code")->assertForbidden();
 });
+
+it('invalidates the old invite code immediately once regenerated', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+    $originalCode = $baby->invite_code;
+
+    $this->postJson("/api/babies/{$baby->id}/invite-code")->assertOk();
+
+    $joiner = User::factory()->create();
+    $this->actingAs($joiner, 'sanctum');
+
+    $this->postJson('/api/babies/join', ['invite_code' => $originalCode])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('invite_code');
+});

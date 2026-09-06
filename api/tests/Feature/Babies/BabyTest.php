@@ -38,6 +38,37 @@ it('rate-limits repeated baby creation, a security audit finding', function () {
     $this->postJson('/api/babies', ['name' => 'Peque 11'])->assertTooManyRequests();
 });
 
+it('lets a caregiver leave a baby that has another caregiver', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach([$user->id, User::factory()->create()->id]);
+
+    $this->deleteJson("/api/babies/{$baby->id}/leave")->assertNoContent();
+
+    expect($baby->users()->count())->toBe(1);
+    expect($baby->users->pluck('id'))->not->toContain($user->id);
+});
+
+it('rejects leaving a baby the user is not linked to', function () {
+    actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach(User::factory()->create());
+
+    $this->deleteJson("/api/babies/{$baby->id}/leave")->assertForbidden();
+});
+
+it('blocks leaving a baby as its only remaining caregiver', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+
+    $this->deleteJson("/api/babies/{$baby->id}/leave")
+        ->assertUnprocessable()
+        ->assertJsonPath('message', 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.');
+
+    expect($baby->users()->count())->toBe(1);
+});
+
 it('lists only the authenticated user\'s own babies', function () {
     $user = actingAsUser();
     $mine = Baby::factory()->create();

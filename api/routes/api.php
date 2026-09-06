@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/join', [BabyController::class, 'join'])->middleware('throttle:10,1');
     Route::get('/babies/{baby}', [BabyController::class, 'show']);
     Route::put('/babies/{baby}', [BabyController::class, 'update']);
+    Route::delete('/babies/{baby}/leave', [BabyController::class, 'leave']);
     Route::post('/babies/{baby}/invite-code', [BabyController::class, 'regenerateInviteCode']);
     Route::get('/babies/{baby}/timeline', [TimelineController::class, 'index']);
 

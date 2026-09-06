@@ -116,6 +116,13 @@ export default {
       sexGirl: 'Girl',
       birthDate: 'Date of birth (optional)',
       toastSaved: 'Saved.',
+      leaveBaby: 'Leave this baby',
+      leaveConfirm:
+        "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",
+      leaveConfirmYes: 'Yes, leave',
+      leaving: 'Leaving...',
+      leaveError: "You're the only caregiver for this baby. Invite someone else before leaving.",
+      toastLeft: "You're no longer a caregiver for this baby.",
     },
     quickLog: {
       feed: '+ Feed',

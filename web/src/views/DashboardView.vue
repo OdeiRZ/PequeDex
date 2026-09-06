@@ -315,6 +315,8 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   } else if (sheet === 'settings') {
     babySex.value = babies.current?.sex ?? ''
     babyBirthDate.value = babies.current?.birth_date ?? ''
+    confirmingLeave.value = false
+    leaveError.value = null
   }
 
   activeSheet.value = sheet
@@ -645,6 +647,9 @@ const inviteCodeExpanded = ref(false)
 const babySex = ref<BabySex | ''>('')
 const babyBirthDate = ref('')
 const savingBabySettings = ref(false)
+const confirmingLeave = ref(false)
+const leaving = ref(false)
+const leaveError = ref<string | null>(null)
 
 const babySexOptions = computed(() => [
   { value: '' as const, label: t('dashboard.babySettings.sexUnknown') },
@@ -791,6 +796,30 @@ async function onSaveBabySettings() {
   } finally {
     savingBabySettings.value = false
   }
+}
+
+async function onLeaveBaby() {
+  leaving.value = true
+  leaveError.value = null
+
+  try {
+    await babies.leave()
+    closeSheet()
+    confirmingLeave.value = false
+    toast.show(t('dashboard.babySettings.toastLeft'))
+  } catch {
+    // The only real-world reason this fails is being the sole remaining
+    // caregiver (422) - one fixed message covers it, same "no per-field
+    // backend errors" convention as the rest of this app.
+    leaveError.value = t('dashboard.babySettings.leaveError')
+  } finally {
+    leaving.value = false
+  }
+}
+
+function cancelLeaveBaby() {
+  confirmingLeave.value = false
+  leaveError.value = null
 }
 
 async function onRegenerateInviteCode() {
@@ -1739,6 +1768,40 @@ const sleepPredictionLabel = computed(() => {
             </button>
           </div>
         </form>
+
+        <div class="mt-6 flex flex-col gap-3 border-t border-border pt-5">
+          <button
+            v-if="!confirmingLeave"
+            type="button"
+            class="text-center text-sm font-semibold text-danger"
+            @click="confirmingLeave = true"
+          >
+            {{ t('dashboard.babySettings.leaveBaby') }}
+          </button>
+          <template v-else>
+            <p class="text-sm text-text-muted">{{ t('dashboard.babySettings.leaveConfirm') }}</p>
+            <p v-if="leaveError" role="alert" class="text-sm font-medium text-danger">
+              {{ leaveError }}
+            </p>
+            <div class="flex gap-3">
+              <button type="button" class="btn-ghost flex-1" @click="cancelLeaveBaby">
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                type="button"
+                :disabled="leaving"
+                class="btn-primary flex-1 !bg-danger !text-white"
+                @click="onLeaveBaby"
+              >
+                {{
+                  leaving
+                    ? t('dashboard.babySettings.leaving')
+                    : t('dashboard.babySettings.leaveConfirmYes')
+                }}
+              </button>
+            </div>
+          </template>
+        </div>
       </BottomSheet>
     </template>
   </template>

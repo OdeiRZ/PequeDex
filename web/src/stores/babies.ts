@@ -189,6 +189,14 @@ export const useBabiesStore = defineStore('babies', {
       this.current = data.data
     },
 
+    /** Unlinks the current user from the baby - the reverse of join(). The
+     * backend rejects this as the last remaining caregiver (422), leaving
+     * `current` untouched in that case. */
+    async leave() {
+      await apiClient.delete(`/babies/${this.current!.id}/leave`)
+      this.current = null
+    },
+
     async regenerateInviteCode() {
       if (!this.current) {
         return

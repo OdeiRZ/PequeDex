@@ -637,6 +637,21 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   login/registro, y un enlace "¿Has olvidado tu contraseña?" en el login.
   9 tests Pest nuevos.
 
+- Abandonar un bebé (`DELETE /babies/{baby}/leave`): hasta ahora, una vez
+  vinculado con un código de invitación, no había forma de deshacerlo salvo
+  tocando la base de datos a mano — hallazgo de la propia auditoría de código
+  que encontró el resto de fallos de esta tanda. Bloqueado como único
+  cuidador restante (dejaría el bebé sin nadie que pueda acceder a él, para
+  siempre, mismo motivo por el que `store()` ahora va en transacción); con
+  otro cuidador vinculado, funciona sin restricciones. Confirmación en dos
+  pasos en el propio ajuste de "Sexo / fecha de nacimiento" (reutilizado en
+  vez de crear un sitio nuevo), con el mismo criterio de "un mensaje fijo
+  basta" que el resto de esta app — la única razón real de fallo (ser el
+  único cuidador) ya la cubre ese mensaje. Verificado de punta a punta en el
+  navegador con dos cuentas de prueba reales: bloqueado en solitario,
+  permitido con un segundo cuidador vinculado, vuelta automática a la
+  pantalla de onboarding tras abandonar.
+
 ### Corregido
 
 - `api/.env.example` traía `APP_NAME=Laravel` sin tocar, pese a que

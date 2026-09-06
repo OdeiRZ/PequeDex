@@ -126,6 +126,18 @@ describe('useBabiesStore', () => {
     expect(store.current?.invite_code).toBe('NEWCODE1')
   })
 
+  it('leaves the current baby, clearing it locally', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({})
+    const store = useBabiesStore()
+    await store.create({})
+
+    await store.leave()
+
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/leave')
+    expect(store.current).toBeNull()
+  })
+
   it('updates the baby (sex/birth_date)', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const updated = { ...baby, sex: 'nino', birth_date: '2026-09-01' }

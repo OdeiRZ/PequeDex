@@ -82,6 +82,29 @@ class BabyController extends Controller
         return response()->json(['data' => $baby]);
     }
 
+    /**
+     * Unlinks the authenticated user from the baby - the reverse of join().
+     * Blocked as the last remaining caregiver: leaving would strand the
+     * baby with zero caregivers, making it permanently inaccessible (same
+     * failure mode store()'s own transaction guards against on the way
+     * in) - there's no baby-deletion feature to fall back to, so leaving
+     * needs someone else linked first.
+     */
+    public function leave(Request $request, Baby $baby): JsonResponse
+    {
+        $this->authorize('view', $baby);
+
+        if ($baby->users()->count() <= 1) {
+            return response()->json([
+                'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.',
+            ], 422);
+        }
+
+        $baby->users()->detach($request->user());
+
+        return response()->json(status: 204);
+    }
+
     /** Any linked caregiver can rotate the code - e.g. if it leaked. */
     public function regenerateInviteCode(Request $request, Baby $baby): JsonResponse
     {

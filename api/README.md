@@ -214,12 +214,18 @@ Variables de entorno necesarias en Render:
   patrón ya en marcha en MIRA_MarketLens y LudoDex. `traces_sample_rate`
   se deja sin definir a propósito (`config/sentry.php` cae a `null`, sin
   tracing de rendimiento) — solo interesan los errores.
-- `RESEND_API_KEY` no hace falta todavía: `resend/resend-php` está
-  instalado por adelantado (mismo SDK que MIRA_MarketLens/LudoDex usan
-  para enviar correo transaccional vía su API HTTPS — Render bloquea el
-  SMTP saliente por completo), pero esta app no tiene ninguna función de
-  email real aún (la vinculación de cuidadores usa un código de
-  invitación, no un enlace por correo).
+- `FRONTEND_URL` (la URL pública de la SPA en Cloudflare Pages): a dónde
+  apunta el enlace del correo de restablecer contraseña — esta API no
+  tiene ninguna ruta web renderizada donde llevarlo.
+- `MAIL_MAILER=resend`, `RESEND_API_KEY` y `MAIL_FROM_ADDRESS` (remitente
+  sandbox `onboarding@resend.dev` por ahora, sin dominio propio
+  verificado todavía): `resend/resend-php` envía correo transaccional vía
+  la API HTTPS de [Resend](https://resend.com), no SMTP — Render bloquea
+  las conexiones SMTP salientes por completo, mismo patrón que
+  MIRA_MarketLens/LudoDex. Hasta ahora esta app no tenía ninguna función
+  de email real (la vinculación de cuidadores usa un código de
+  invitación, no un enlace por correo); el restablecimiento de contraseña
+  es la primera.
 
 El *deploy hook* de Render se dispara desde GitHub Actions
 (`.github/workflows/ci.yml`, secret `RENDER_DEPLOY_HOOK_URL`) tras pasar

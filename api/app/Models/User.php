@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -59,5 +60,14 @@ class User extends Authenticatable
     public function babies(): BelongsToMany
     {
         return $this->belongsToMany(Baby::class)->withTimestamps();
+    }
+
+    /**
+     * Send our own branded, translated reset email instead of Laravel's
+     * generic default (see App\Notifications\ResetPasswordNotification).
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

@@ -51,6 +51,12 @@ async function onSubmit() {
         <PasswordField id="password" v-model="password" required autocomplete="current-password" />
       </div>
 
+      <p class="text-right text-sm">
+        <RouterLink :to="{ name: 'forgot-password' }" class="text-text-muted">{{
+          t('auth.login.forgotPasswordLink')
+        }}</RouterLink>
+      </p>
+
       <p v-if="error" role="alert" class="text-sm font-medium text-danger">{{ error }}</p>
 
       <button type="submit" :disabled="submitting" class="btn-primary">

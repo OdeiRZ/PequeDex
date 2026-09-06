@@ -32,6 +32,13 @@ interface UpdatePasswordPayload {
   password_confirmation: string
 }
 
+interface ResetPasswordPayload {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
 interface AuthState {
   user: User | null
   token: string | null
@@ -56,6 +63,14 @@ export const useAuthStore = defineStore('auth', {
     async login(payload: LoginPayload) {
       const { data } = await apiClient.post('/login', payload)
       this.setSession(data.user, data.token)
+    },
+
+    async forgotPassword(email: string) {
+      await apiClient.post('/forgot-password', { email })
+    },
+
+    async resetPassword(payload: ResetPasswordPayload) {
+      await apiClient.post('/reset-password', payload)
     },
 
     async logout() {

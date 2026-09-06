@@ -612,6 +612,31 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   oscuro, y en el momento real de carga del dashboard con una cuenta de
   prueba real.
 
+- Restablecimiento de contraseña, hasta ahora inexistente (un usuario que
+  la olvidaba no tenía ninguna forma de recuperar la cuenta). Mismo
+  patrón ya en marcha en LudoDex y MIRA_MarketLens: `POST /forgot-password`
+  responde siempre con el mismo mensaje exista o no ese email — hallazgo
+  de una auditoría de seguridad en MIRA_MarketLens, replicado aquí desde
+  el principio en vez de repetir el fallo — y `POST /reset-password`
+  reutiliza el broker de contraseñas de Laravel. `ResetPasswordNotification`
+  (con `lang/{es,en}/mail.php`) reemplaza el correo genérico "Laravel" por
+  uno traducido y de marca "PequeDex" — mismo enfoque con clase propia que
+  LudoDex, no el `toMailUsing()` sin traducir de MIRA_MarketLens — aunque
+  PequeDex, a diferencia de esos dos, no tiene todavía ningún middleware
+  que cambie el idioma según cabecera, así que hoy corre siempre en
+  `APP_LOCALE` (español); la traducción queda lista para cuando exista.
+  El enlace del correo apunta a la SPA (`FRONTEND_URL`, nueva
+  `config('app.frontend_url')`), no a una ruta web inexistente en esta
+  API. Remitente Resend `onboarding@resend.dev` (sandbox, sin dominio
+  propio verificado todavía — decisión explícita para salir cuanto antes,
+  no un descuido). Sin logo en el correo por ahora (a diferencia de
+  LudoDex): no había forma de convertir el `favicon.svg` del proyecto a
+  PNG en este entorno; puede añadirse después como mejora aparte, igual
+  que en LudoDex. Pantallas nuevas (`ForgotPasswordView.vue`,
+  `ResetPasswordView.vue`) con el mismo estilo Tailwind ya establecido en
+  login/registro, y un enlace "¿Has olvidado tu contraseña?" en el login.
+  9 tests Pest nuevos.
+
 ### Corregido
 
 - `api/.env.example` traía `APP_NAME=Laravel` sin tocar, pese a que

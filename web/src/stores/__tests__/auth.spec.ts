@@ -56,6 +56,30 @@ describe('useAuthStore', () => {
     expect(store.isAuthenticated).toBe(true)
   })
 
+  it('requests a password reset link', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { message: 'sent' } })
+    const store = useAuthStore()
+
+    await store.forgotPassword('odei@example.com')
+
+    expect(apiClient.post).toHaveBeenCalledWith('/forgot-password', { email: 'odei@example.com' })
+  })
+
+  it('resets the password with a token', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { message: 'reset' } })
+    const store = useAuthStore()
+
+    const payload = {
+      token: 'abc123',
+      email: 'odei@example.com',
+      password: 'new-password',
+      password_confirmation: 'new-password',
+    }
+    await store.resetPassword(payload)
+
+    expect(apiClient.post).toHaveBeenCalledWith('/reset-password', payload)
+  })
+
   it('clears the session on logout, even if the request fails', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
     const store = useAuthStore()

@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | This is the SPA's own URL (Cloudflare Pages in production), not this
+    | API's. Used to build links that must point at the frontend - e.g. the
+    | password reset email, since there's no server-rendered "reset password"
+    | page here for Laravel's default notification to link to.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -28,6 +28,16 @@ it('allows creating a baby with no name or due date yet', function () {
         ->assertJsonPath('data.due_date', null);
 });
 
+it('rate-limits repeated baby creation, a security audit finding', function () {
+    actingAsUser();
+
+    foreach (range(1, 10) as $i) {
+        $this->postJson('/api/babies', ['name' => "Peque {$i}"])->assertCreated();
+    }
+
+    $this->postJson('/api/babies', ['name' => 'Peque 11'])->assertTooManyRequests();
+});
+
 it('lists only the authenticated user\'s own babies', function () {
     $user = actingAsUser();
     $mine = Baby::factory()->create();

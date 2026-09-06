@@ -9,6 +9,7 @@ use App\Http\Requests\Babies\UpdateBabyRequest;
 use App\Models\Baby;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BabyController extends Controller
 {
@@ -18,17 +19,27 @@ class BabyController extends Controller
         return response()->json(['data' => $request->user()->babies]);
     }
 
+    /**
+     * Wrapped in a transaction (hallazgo de una auditoría de código): sin
+     * ella, un fallo entre el create() y el attach() dejaba un Baby huérfano
+     * sin ningún cuidador vinculado - inaccesible para siempre, sin nada que
+     * lo limpiara.
+     */
     public function store(StoreBabyRequest $request): JsonResponse
     {
-        $baby = Baby::create([
-            'name' => $request->validated('name'),
-            'due_date' => $request->validated('due_date'),
-            'birth_date' => $request->validated('birth_date'),
-            'sex' => $request->validated('sex'),
-            'invite_code' => Baby::generateInviteCode(),
-        ]);
+        $baby = DB::transaction(function () use ($request) {
+            $baby = Baby::create([
+                'name' => $request->validated('name'),
+                'due_date' => $request->validated('due_date'),
+                'birth_date' => $request->validated('birth_date'),
+                'sex' => $request->validated('sex'),
+                'invite_code' => Baby::generateInviteCode(),
+            ]);
 
-        $baby->users()->attach($request->user());
+            $baby->users()->attach($request->user());
+
+            return $baby;
+        });
 
         return response()->json(['data' => $baby], 201);
     }

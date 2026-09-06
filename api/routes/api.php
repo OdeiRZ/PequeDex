@@ -28,7 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user/avatar', [ProfileController::class, 'deleteAvatar']);
 
     Route::get('/babies', [BabyController::class, 'index']);
-    Route::post('/babies', [BabyController::class, 'store']);
+    // Throttled like the other write endpoints (hallazgo de una auditoría de
+    // seguridad: era el único endpoint de escritura sin ningún límite).
+    Route::post('/babies', [BabyController::class, 'store'])->middleware('throttle:10,1');
     // Throttled like the other secret-guessing surfaces (login, password) -
     // the invite code's keyspace (32^8) makes brute-forcing impractical on
     // its own, but this was the one such endpoint with no rate limit at all.

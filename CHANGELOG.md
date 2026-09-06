@@ -658,3 +658,8 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   que sigue siendo público no protege nada (el objeto es alcanzable igual sin la
   firma) — hace falta además poner el bucket en privado en el propio Cloudflare, fuera
   de alcance de este commit (solo el código).
+- Hallazgos de una auditoría de código: `POST /babies` era el único endpoint de
+  escritura sin ningún límite de peticiones (ahora `throttle:10,1`, igual que el resto),
+  y `BabyController::store()` creaba el `Baby` y vinculaba al cuidador en dos pasos sin
+  transacción — un fallo entre medias dejaba un `Baby` huérfano sin ningún cuidador,
+  inaccesible para siempre. Ambos pasos van ahora dentro de `DB::transaction()`.

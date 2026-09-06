@@ -204,7 +204,12 @@ Variables de entorno necesarias en Render:
   (compatible con la API S3; `AWS_DEFAULT_REGION=auto` y
   `AWS_USE_PATH_STYLE_ENDPOINT=true`). Sin esto, las fotos de los hitos
   desaparecerían en cada redeploy — el disco local de Render no es
-  persistente.
+  persistente. **El bucket debería estar en privado, no público**:
+  `Milestone::photoUrl()` ya pide una URL firmada de corta duración cuando
+  el disco lo soporta, pero eso solo protege algo si el propio bucket
+  deja de ser accesible sin firma — R2 no tiene ACL por objeto como S3,
+  así que hoy (bucket público) cualquiera que conozca la ruta del
+  archivo puede saltarse la firma por completo.
 - `SESSION_DRIVER`/`CACHE_STORE`/`QUEUE_CONNECTION` a `database` (no hay
   Redis ni *worker* en el plan Free).
 - `SENTRY_LARAVEL_DSN` (opcional, vacía por defecto — sin ella el SDK no

@@ -646,3 +646,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   mismo workspace de Render con el mismo criterio usado en
   MIRA_MarketLens (donde sí era un fallo real de producción: el email de
   restablecer contraseña firmaba como "Laravel").
+- Hallazgo de una auditoría de seguridad: las fotos de hitos se servían con la URL
+  pública permanente del disco (`Milestone::photoUrl()`), y en producción ese disco es
+  un bucket de Cloudflare R2 configurado como público — R2 no tiene ACL por objeto
+  como S3, así que un bucket público sirve *todos* sus objetos, sin más control que lo
+  impredecible del nombre de archivo. Son fotos de bebés. `photoUrl()` ahora pide una
+  URL firmada con 30 minutos de validez cuando el disco lo soporta
+  (`Storage::disk(...)->providesTemporaryUrls()`), en vez de la URL pública fija; en
+  local (disco `public`) sigue devolviendo la URL normal, ya que ese disco no soporta
+  firmarlas. **Esto no cierra el hueco por sí solo**: una URL firmada sobre un bucket
+  que sigue siendo público no protege nada (el objeto es alcanzable igual sin la
+  firma) — hace falta además poner el bucket en privado en el propio Cloudflare, fuera
+  de alcance de este commit (solo el código).

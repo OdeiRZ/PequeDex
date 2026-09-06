@@ -9,6 +9,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Monitorización de errores en producción vía Sentry (plan gratuito,
+  `sentry/sentry-laravel`), cableada en `bootstrap/app.php`
+  (`Sentry\Laravel\Integration::handles()`) — mismo patrón ya en marcha
+  en MIRA_MarketLens y LudoDex, replicado aquí tras revisar los tres
+  proyectos del mismo workspace de Render en busca de huecos parecidos.
+  Sin `SENTRY_LARAVEL_DSN` puesta (vacía por defecto) el SDK no hace
+  nada, en ningún entorno. `traces_sample_rate` se deja sin definir a
+  propósito — solo errores, sin gastar cuota del plan gratuito en
+  tracing de rendimiento.
+
+- `resend/resend-php` instalado por adelantado (mismo SDK que ya usan
+  MIRA_MarketLens y LudoDex para enviar correo transaccional vía su API
+  HTTPS, no SMTP — Render bloquea las conexiones SMTP salientes por
+  completo, confirmado en vivo en esos dos proyectos), aunque esta app
+  todavía no tiene ninguna función de email real (la vinculación de
+  cuidadores usa un código de invitación, no un enlace por correo) que
+  lo necesite. Sin `RESEND_API_KEY` puesta, esto no cambia nada del
+  comportamiento actual.
+
 - Cimientos: repo, API en Laravel 12 + Sanctum (registro/login/logout por
   token Bearer) y SPA en Vue 3 + TypeScript con las mismas pantallas,
   verificado de punta a punta en local (registro real → sesión persiste
@@ -592,3 +611,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   el rediseño del dashboard. Verificado en el navegador en claro y
   oscuro, y en el momento real de carga del dashboard con una cuenta de
   prueba real.
+
+### Corregido
+
+- `api/.env.example` traía `APP_NAME=Laravel` sin tocar, pese a que
+  producción (Render) sí tiene puesto `APP_NAME=PequeDex` correctamente
+  — solo afectaba a quien clonara el repo de cero contra el ejemplo, no
+  a nada real ya desplegado. Encontrado revisando los tres proyectos del
+  mismo workspace de Render con el mismo criterio usado en
+  MIRA_MarketLens (donde sí era un fallo real de producción: el email de
+  restablecer contraseña firmaba como "Laravel").

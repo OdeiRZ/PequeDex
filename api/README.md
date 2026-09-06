@@ -207,6 +207,19 @@ Variables de entorno necesarias en Render:
   persistente.
 - `SESSION_DRIVER`/`CACHE_STORE`/`QUEUE_CONNECTION` a `database` (no hay
   Redis ni *worker* en el plan Free).
+- `SENTRY_LARAVEL_DSN` (opcional, vacía por defecto — sin ella el SDK no
+  hace nada): monitorización de errores en producción vía
+  [Sentry](https://sentry.io) (plan gratuito), cableada en
+  `bootstrap/app.php` (`Sentry\Laravel\Integration::handles()`) — mismo
+  patrón ya en marcha en MIRA_MarketLens y LudoDex. `traces_sample_rate`
+  se deja sin definir a propósito (`config/sentry.php` cae a `null`, sin
+  tracing de rendimiento) — solo interesan los errores.
+- `RESEND_API_KEY` no hace falta todavía: `resend/resend-php` está
+  instalado por adelantado (mismo SDK que MIRA_MarketLens/LudoDex usan
+  para enviar correo transaccional vía su API HTTPS — Render bloquea el
+  SMTP saliente por completo), pero esta app no tiene ninguna función de
+  email real aún (la vinculación de cuidadores usa un código de
+  invitación, no un enlace por correo).
 
 El *deploy hook* de Render se dispara desde GitHub Actions
 (`.github/workflows/ci.yml`, secret `RENDER_DEPLOY_HOOK_URL`) tras pasar

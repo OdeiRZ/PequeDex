@@ -4,6 +4,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Sentry\Laravel\Integration as SentryIntegration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,4 +34,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e) {
             return response()->json(['message' => $e->getMessage()], 401);
         });
+
+        // No-op without SENTRY_LARAVEL_DSN set (local dev, tests) - reports
+        // every uncaught exception to Sentry in any environment that does
+        // set it. Same setup already live on MIRA_MarketLens and LudoDex,
+        // added there after diagnosing a production mailer failure by hand
+        // through Render's own log viewer over several back-and-forths.
+        SentryIntegration::handles($exceptions);
     })->create();

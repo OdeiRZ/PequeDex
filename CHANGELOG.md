@@ -672,7 +672,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   firmarlas. **Esto no cierra el hueco por sí solo**: una URL firmada sobre un bucket
   que sigue siendo público no protege nada (el objeto es alcanzable igual sin la
   firma) — hace falta además poner el bucket en privado en el propio Cloudflare, fuera
-  de alcance de este commit (solo el código).
+  de alcance de este commit (solo el código). **Hecho** (fuera de este repo, sin commit
+  propio): el bucket `pequedex-milestones` no tiene "Public Development URL" habilitada
+  ni ningún Custom Domain asignado — confirmado en el panel de R2, solo accesible ya vía
+  la API S3 firmada.
 - Hallazgos de una auditoría de código: `POST /babies` era el único endpoint de
   escritura sin ningún límite de peticiones (ahora `throttle:10,1`, igual que el resto),
   y `BabyController::store()` creaba el `Baby` y vinculaba al cuidador en dos pasos sin

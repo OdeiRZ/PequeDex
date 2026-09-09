@@ -27,6 +27,7 @@ function toggle() {
     type="button"
     class="grid h-8 w-8 place-items-center rounded-full border border-border bg-surface text-text-muted"
     :aria-label="t('common.toggleTheme')"
+    :aria-pressed="isDark"
     @click="toggle"
   >
     <svg

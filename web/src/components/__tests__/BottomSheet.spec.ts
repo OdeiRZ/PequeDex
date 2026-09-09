@@ -78,4 +78,87 @@ describe('BottomSheet', () => {
 
     expect(wrapper.emitted('update:open')).toEqual([[false]])
   })
+
+  describe('focus management', () => {
+    // attachTo: document.body (not the default detached container) -
+    // needed for document.activeElement to actually reflect these
+    // focus() calls in jsdom, same as LudoDex's GameDetailModal tests.
+    it('moves focus to the panel when it opens', async () => {
+      const wrapper = mount(BottomSheet, { props: { open: false }, attachTo: document.body })
+      wrappers.push(wrapper)
+
+      await wrapper.setProps({ open: true })
+
+      expect(document.activeElement).toBe(document.body.querySelector('[role="dialog"]'))
+    })
+
+    it('returns focus to whatever triggered the sheet once it closes', async () => {
+      const trigger = document.createElement('button')
+      document.body.appendChild(trigger)
+      trigger.focus()
+
+      const wrapper = mount(BottomSheet, { props: { open: false }, attachTo: document.body })
+      wrappers.push(wrapper)
+
+      await wrapper.setProps({ open: true })
+      expect(document.activeElement).not.toBe(trigger)
+
+      await wrapper.setProps({ open: false })
+      expect(document.activeElement).toBe(trigger)
+
+      trigger.remove()
+    })
+
+    it('closes on Escape', async () => {
+      const wrapper = mount(BottomSheet, { props: { open: true }, attachTo: document.body })
+      wrappers.push(wrapper)
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('update:open')).toEqual([[false]])
+    })
+
+    it('wraps Tab from the last focusable element back to the first', async () => {
+      const wrapper = mount(BottomSheet, {
+        props: { open: true },
+        attachTo: document.body,
+        slots: {
+          default: '<button id="a">A</button><button id="b">B</button>',
+        },
+      })
+      wrappers.push(wrapper)
+      await wrapper.vm.$nextTick()
+
+      const first = document.body.querySelector<HTMLElement>('#a')!
+      const last = document.body.querySelector<HTMLElement>('#b')!
+      last.focus()
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+
+      expect(document.activeElement).toBe(first)
+    })
+
+    it('wraps Shift+Tab from the first focusable element back to the last', async () => {
+      const wrapper = mount(BottomSheet, {
+        props: { open: true },
+        attachTo: document.body,
+        slots: {
+          default: '<button id="a">A</button><button id="b">B</button>',
+        },
+      })
+      wrappers.push(wrapper)
+      await wrapper.vm.$nextTick()
+
+      const first = document.body.querySelector<HTMLElement>('#a')!
+      const last = document.body.querySelector<HTMLElement>('#b')!
+      first.focus()
+
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+      )
+
+      expect(document.activeElement).toBe(last)
+    })
+  })
 })

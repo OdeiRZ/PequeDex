@@ -96,7 +96,9 @@ describe('MilestoneStoryViewer', () => {
       deleteButton.focus()
       expect(document.activeElement).toBe(deleteButton)
 
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+      )
 
       expect(document.activeElement).toBe(closeButton)
     })
@@ -110,7 +112,12 @@ describe('MilestoneStoryViewer', () => {
       expect(document.activeElement).toBe(closeButton)
 
       window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
       )
 
       expect(document.activeElement).toBe(deleteButton)

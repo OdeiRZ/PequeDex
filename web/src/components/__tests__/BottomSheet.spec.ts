@@ -134,7 +134,9 @@ describe('BottomSheet', () => {
       const last = document.body.querySelector<HTMLElement>('#b')!
       last.focus()
 
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+      )
 
       expect(document.activeElement).toBe(first)
     })
@@ -155,7 +157,12 @@ describe('BottomSheet', () => {
       first.focus()
 
       window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
       )
 
       expect(document.activeElement).toBe(last)

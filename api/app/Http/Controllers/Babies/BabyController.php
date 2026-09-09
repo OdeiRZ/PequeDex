@@ -63,14 +63,15 @@ class BabyController extends Controller
         // rather than a 500 on the pivot's own unique constraint.
         if (! $baby->users->contains($request->user())) {
             $baby->users()->attach($request->user());
-            // $baby->users was already lazy-loaded (and cached) by the
-            // ->contains() check above, from *before* the attach() just
-            // above - without this refresh, the response below would
-            // serialize that stale pre-attach list, silently missing the
-            // caregiver who just joined (found live: the DB write was
-            // correct, only this response's own JSON was stale).
-            $baby->load('users');
         }
+
+        // ->users was lazy-loaded (and cached) by the ->contains() check
+        // above - left as-is it would serialize below, leaking every
+        // caregiver's full profile (email, avatar) in the response for no
+        // reason (hallazgo de una auditoría de código): no other Baby
+        // endpoint includes it, and the frontend's Baby type doesn't
+        // declare the field either.
+        $baby->unsetRelation('users');
 
         return response()->json(['data' => $baby]);
     }

@@ -92,12 +92,13 @@ it('joins a baby using its invite code', function () {
         ->assertOk()
         ->assertJsonPath('data.id', $baby->id);
 
-    // Not just the DB write - the response body itself must include the
-    // caregiver who just joined, not a stale pre-join list (found live:
-    // $baby->users was already lazy-loaded by an earlier check in the
-    // controller, before attach() ran).
-    expect(collect($response->json('data.users'))->pluck('id')->sort()->values())
-        ->toEqual(collect([$owner->id, $joiner->id])->sort()->values());
+    // The response itself doesn't include caregiver profiles (no other
+    // Baby endpoint does either, and the frontend doesn't read them) -
+    // the actual join is verified against the DB below. This also
+    // guards against a stale pre-join `users` leaking back in: it was
+    // already lazy-loaded by an earlier check in the controller, before
+    // attach() ran, so it must be explicitly kept out of the response.
+    $response->assertJsonMissingPath('data.users');
 
     expect($baby->refresh()->users->pluck('id')->sort()->values())
         ->toEqual(collect([$owner->id, $joiner->id])->sort()->values());

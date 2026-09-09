@@ -36,10 +36,12 @@ class SleepController extends Controller
         return response()->json(['data' => $query->get()]);
     }
 
+    // StoreSleepRequest/UpdateSleepRequest authorize themselves (via
+    // AuthorizesBabyAccess) - before rules() runs, not after, unlike an
+    // explicit $this->authorize() here would be (see that trait's own
+    // docblock for why the difference matters for this baby's data).
     public function store(StoreSleepRequest $request, Baby $baby): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $sleep = $baby->sleeps()->create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
@@ -50,8 +52,6 @@ class SleepController extends Controller
 
     public function update(UpdateSleepRequest $request, Baby $baby, int $sleep): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $sleepModel = $baby->sleeps()->findOrFail($sleep);
         $sleepModel->update($request->validated());
 

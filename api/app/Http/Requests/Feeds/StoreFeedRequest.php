@@ -4,18 +4,15 @@ namespace App\Http\Requests\Feeds;
 
 use App\Enums\FeedSide;
 use App\Enums\FeedType;
+use App\Http\Requests\Concerns\AuthorizesBabyAccess;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreFeedRequest extends FormRequest
 {
+    use AuthorizesBabyAccess;
     use ValidatesNotBeforeBirth;
-
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * @return array<string, mixed>

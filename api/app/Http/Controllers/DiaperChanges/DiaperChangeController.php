@@ -17,10 +17,13 @@ class DiaperChangeController extends Controller
         return response()->json(['data' => $baby->diaperChanges()->orderByDesc('changed_at')->get()]);
     }
 
+    // StoreDiaperChangeRequest/UpdateDiaperChangeRequest authorize
+    // themselves (via AuthorizesBabyAccess) - before rules() runs, not
+    // after, unlike an explicit $this->authorize() here would be (see
+    // that trait's own docblock for why the difference matters for this
+    // baby's data).
     public function store(StoreDiaperChangeRequest $request, Baby $baby): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $diaperChange = $baby->diaperChanges()->create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
@@ -31,8 +34,6 @@ class DiaperChangeController extends Controller
 
     public function update(UpdateDiaperChangeRequest $request, Baby $baby, int $diaperChange): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $diaperChangeModel = $baby->diaperChanges()->findOrFail($diaperChange);
         $diaperChangeModel->update($request->validated());
 

@@ -2,17 +2,14 @@
 
 namespace App\Http\Requests\Sleeps;
 
+use App\Http\Requests\Concerns\AuthorizesBabyAccess;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSleepRequest extends FormRequest
 {
+    use AuthorizesBabyAccess;
     use ValidatesNotBeforeBirth;
-
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * @return array<string, mixed>

@@ -22,10 +22,13 @@ class GrowthMeasurementController extends Controller
         return response()->json(['data' => $measurements->map(fn ($m) => $this->withPercentiles($m, $baby))]);
     }
 
+    // StoreGrowthMeasurementRequest/UpdateGrowthMeasurementRequest
+    // authorize themselves (via AuthorizesBabyAccess) - before rules()
+    // runs, not after, unlike an explicit $this->authorize() here would
+    // be (see that trait's own docblock for why the difference matters
+    // for this baby's data).
     public function store(StoreGrowthMeasurementRequest $request, Baby $baby): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $measurement = $baby->growthMeasurements()->create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
@@ -36,8 +39,6 @@ class GrowthMeasurementController extends Controller
 
     public function update(UpdateGrowthMeasurementRequest $request, Baby $baby, int $growthMeasurement): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $measurement = $baby->growthMeasurements()->findOrFail($growthMeasurement);
         $measurement->update($request->validated());
 

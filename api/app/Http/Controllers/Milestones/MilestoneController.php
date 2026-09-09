@@ -22,10 +22,13 @@ class MilestoneController extends Controller
         ]);
     }
 
+    // StoreMilestoneRequest/UpdateMilestoneRequest authorize themselves
+    // (via AuthorizesBabyAccess) - before rules() runs, not after,
+    // unlike an explicit $this->authorize() here would be (see that
+    // trait's own docblock for why the difference matters for this
+    // baby's data).
     public function store(StoreMilestoneRequest $request, Baby $baby): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $milestone = $baby->milestones()->create([
             'achieved_at' => $request->validated('achieved_at'),
             'title' => $request->validated('title'),
@@ -42,8 +45,6 @@ class MilestoneController extends Controller
 
     public function update(UpdateMilestoneRequest $request, Baby $baby, int $milestone): JsonResponse
     {
-        $this->authorize('update', $baby);
-
         $milestoneModel = $baby->milestones()->findOrFail($milestone);
 
         $attributes = [

@@ -3,18 +3,15 @@
 namespace App\Http\Requests\Milestones;
 
 use App\Enums\MilestoneCategory;
+use App\Http\Requests\Concerns\AuthorizesBabyAccess;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateMilestoneRequest extends FormRequest
 {
+    use AuthorizesBabyAccess;
     use ValidatesNotBeforeBirth;
-
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * @return array<string, mixed>

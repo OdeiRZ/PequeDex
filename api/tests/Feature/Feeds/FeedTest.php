@@ -163,6 +163,25 @@ it('rejects any access to feeds for a baby the user is not linked to', function 
     $this->deleteJson("/api/babies/{$baby->id}/feeds/{$feed->id}")->assertForbidden();
 });
 
+it('rejects an unauthorized user before validating, without leaking the birth_date in the error', function () {
+    actingAsUser();
+    $other = User::factory()->create();
+    $baby = Baby::factory()->create(['birth_date' => '2026-01-01']);
+    $baby->users()->attach($other);
+
+    // A date before birth_date would normally 422 with the real
+    // birth_date quoted in the message (ValidatesNotBeforeBirth) - here
+    // it must never get that far: authorization has to fail first.
+    $response = $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'started_at' => '2025-01-01 00:00:00',
+    ]);
+
+    $response->assertForbidden();
+    expect($response->getContent())->not->toContain('2026-01-01');
+});
+
 it('404s when the feed id does not belong to the given baby', function () {
     $user = actingAsUser();
     $baby = babyFor($user);

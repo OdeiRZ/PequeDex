@@ -4,6 +4,8 @@ export default {
   },
   common: {
     loading: 'Loading...',
+    loadError: 'Could not load. The API may be waking up after a while idle.',
+    retry: 'Retry',
     logout: 'Log out',
     save: 'Save',
     cancel: 'Cancel',

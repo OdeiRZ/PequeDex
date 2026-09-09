@@ -4,6 +4,8 @@ export default {
   },
   common: {
     loading: 'Cargando...',
+    loadError: 'No se ha podido cargar. Puede que la API esté despertando tras un rato inactiva.',
+    retry: 'Reintentar',
     logout: 'Cerrar sesión',
     save: 'Guardar',
     cancel: 'Cancelar',

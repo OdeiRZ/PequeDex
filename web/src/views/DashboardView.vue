@@ -48,6 +48,7 @@ const minDate = computed(() => babies.current?.birth_date ?? undefined)
 const minDateTime = computed(() => (minDate.value ? `${minDate.value}T00:00` : undefined))
 
 const loading = ref(true)
+const loadError = ref(false)
 
 // Shared by the initial mount and by create/join below - without this,
 // joining a baby that already has real history (the whole point of
@@ -72,15 +73,33 @@ async function loadBabyData() {
   }
 }
 
-onMounted(async () => {
-  await babies.fetchCurrent()
+// Also the retry action below - without a try/catch here, a failed
+// fetchCurrent() (offline, or the API "despertando" after ~50s of
+// inactivity on Render's free tier, see the README) left `loading` at
+// its initial `true` forever: neither branch below ever ran, so the
+// user was stuck on the loading screen with no error and no way out
+// but a manual page reload.
+async function initDashboard() {
+  loading.value = true
+  loadError.value = false
+
+  try {
+    await babies.fetchCurrent()
+  } catch {
+    loadError.value = true
+    loading.value = false
+
+    return
+  }
 
   if (babies.current) {
     await loadBabyData()
   } else {
     loading.value = false
   }
-})
+}
+
+onMounted(initDashboard)
 
 // --- Menú de usuario: datos personales, contraseña y foto de perfil.
 // Sin errores por campo (a diferencia de LudoDex/MIRA MarketLens) - igual
@@ -1044,6 +1063,16 @@ const sleepPredictionLabel = computed(() => {
   >
     <AppMark full animated :size="72" />
     {{ t('common.loading') }}
+  </div>
+
+  <div
+    v-else-if="loadError"
+    class="flex flex-1 flex-col items-center justify-center gap-4 text-center"
+  >
+    <p role="alert" class="text-sm font-medium text-danger">{{ t('common.loadError') }}</p>
+    <button type="button" class="btn-primary" @click="initDashboard">
+      {{ t('common.retry') }}
+    </button>
   </div>
 
   <template v-else>

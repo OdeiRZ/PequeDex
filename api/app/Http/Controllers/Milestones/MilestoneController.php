@@ -7,6 +7,7 @@ use App\Http\Requests\Milestones\StoreMilestoneRequest;
 use App\Http\Requests\Milestones\UpdateMilestoneRequest;
 use App\Models\Baby;
 use App\Models\Milestone;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -90,7 +91,21 @@ class MilestoneController extends Controller
         if ($milestoneModel->likedBy()->where('user_id', $user->id)->exists()) {
             $milestoneModel->likedBy()->detach($user->id);
         } else {
-            $milestoneModel->likedBy()->attach($user->id);
+            try {
+                $milestoneModel->likedBy()->attach($user->id);
+            } catch (QueryException $e) {
+                // A concurrent double-tap can race past the exists()
+                // check above and the pivot's own unique constraint
+                // before either request commits (hallazgo de una
+                // auditoría de código) - the end state either request
+                // actually wanted (liked) is already true either way, so
+                // only that specific violation (SQLSTATE class "23") is
+                // swallowed instead of surfacing as a 500; any other
+                // failure still bubbles up.
+                if (! str_starts_with($e->getCode(), '23')) {
+                    throw $e;
+                }
+            }
         }
 
         return response()->json(['data' => $milestoneModel->load('likedBy')]);

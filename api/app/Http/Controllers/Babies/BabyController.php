@@ -7,6 +7,7 @@ use App\Http\Requests\Babies\JoinBabyRequest;
 use App\Http\Requests\Babies\StoreBabyRequest;
 use App\Http\Requests\Babies\UpdateBabyRequest;
 use App\Models\Baby;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,19 +60,24 @@ class BabyController extends Controller
     {
         $baby = Baby::where('invite_code', $request->validated('invite_code'))->firstOrFail();
 
-        // idempotent: joining a baby you're already on just confirms it,
-        // rather than a 500 on the pivot's own unique constraint.
-        if (! $baby->users->contains($request->user())) {
+        try {
             $baby->users()->attach($request->user());
+        } catch (QueryException $e) {
+            // idempotent: joining a baby you're already on just confirms
+            // it rather than failing - also covers a concurrent
+            // double-tap racing past the pivot's own unique constraint
+            // before either request commits (hallazgo de una auditoría
+            // de código, mismo patrón ya usado en LudoDex para una
+            // carrera equivalente). Only that specific violation
+            // (SQLSTATE class "23") is swallowed, any other failure
+            // still bubbles up. Doesn't touch $baby->users at all, so
+            // (unlike the old ->contains() pre-check this replaces) the
+            // response below never risks leaking every caregiver's full
+            // profile - no other Baby endpoint includes it either.
+            if (! str_starts_with($e->getCode(), '23')) {
+                throw $e;
+            }
         }
-
-        // ->users was lazy-loaded (and cached) by the ->contains() check
-        // above - left as-is it would serialize below, leaking every
-        // caregiver's full profile (email, avatar) in the response for no
-        // reason (hallazgo de una auditoría de código): no other Baby
-        // endpoint includes it, and the frontend's Baby type doesn't
-        // declare the field either.
-        $baby->unsetRelation('users');
 
         return response()->json(['data' => $baby]);
     }

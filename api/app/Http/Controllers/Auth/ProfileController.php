@@ -11,6 +11,8 @@ use App\Services\Users\AvatarProcessor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class ProfileController extends Controller
 {
@@ -42,7 +44,20 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $user->update(['avatar' => $processor->process($request->file('avatar'))]);
+        // AvatarProcessor throws for a problem with the image itself (not
+        // readable, or absurdly large pixel dimensions) - that's the
+        // client's input, not a server failure, so it's converted to the
+        // same 422 shape as any other validation error instead of
+        // escaping as an uncaught 500 (hallazgo de una auditoría de
+        // código: el mensaje ya escrito en español nunca llegaba al
+        // cliente).
+        try {
+            $avatar = $processor->process($request->file('avatar'));
+        } catch (RuntimeException $e) {
+            throw ValidationException::withMessages(['avatar' => [$e->getMessage()]]);
+        }
+
+        $user->update(['avatar' => $avatar]);
 
         return response()->json($user);
     }

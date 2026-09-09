@@ -81,7 +81,7 @@ it('rejects an image whose dimensions are too large to safely decode', function 
         'avatar' => UploadedFile::fake()->image('enorme.jpg', 8500, 1),
     ]);
 
-    $response->assertServerError();
+    $response->assertUnprocessable()->assertJsonValidationErrors('avatar');
 });
 
 it('rejects a non-image file as the avatar', function () {

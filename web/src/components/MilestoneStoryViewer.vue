@@ -33,23 +33,67 @@ const { t } = useI18n()
 const formattedDate = () =>
   new Date(props.milestone.achieved_at).toLocaleDateString(props.dateLocale)
 
+const panelRef = ref<HTMLElement | null>(null)
+let previouslyFocusedElement: HTMLElement | null = null
+
+// Keeps Tab/Shift+Tab cycling inside the viewer instead of escaping to
+// the dashboard behind it (still technically focusable even though this
+// covers the whole viewport) - same focusable-elements query as
+// LudoDex's GameDetailModal and this app's own BottomSheet.
+function getFocusableElements(): HTMLElement[] {
+  if (!panelRef.value) return []
+
+  return Array.from(
+    panelRef.value.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  )
+}
+
+function trapTab(event: KeyboardEvent) {
+  const focusable = getFocusableElements()
+  if (focusable.length === 0) return
+
+  const first = focusable[0]!
+  const last = focusable[focusable.length - 1]!
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
 // Same lock/unlock module BottomSheet uses - this viewer mounts and
 // unmounts with the parent's v-if rather than toggling an `open` prop, so
 // a plain onMounted/onUnmounted pair is enough (no watcher needed).
+//
+// Also moves focus to the viewer itself on mount (tabindex="-1" in the
+// template, remembering whatever had it before) and back on unmount
+// (hallazgo de una auditoría de código) - without this, opening gave no
+// signal at all to a keyboard/screen-reader user that anything changed,
+// and role="dialog"/aria-modal on their own were never even announced
+// since focus never actually moved here.
 onMounted(() => {
   lockBodyScroll()
   window.addEventListener('keydown', onKeydown)
+  previouslyFocusedElement = document.activeElement as HTMLElement | null
+  panelRef.value?.focus()
 })
 
 onUnmounted(() => {
   unlockBodyScroll()
   window.removeEventListener('keydown', onKeydown)
+  previouslyFocusedElement?.focus()
 })
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') emit('prev')
   else if (event.key === 'ArrowRight') emit('next')
   else if (event.key === 'Escape') emit('close')
+  else if (event.key === 'Tab') trapTab(event)
 }
 
 // touchstart/touchend delta, no library - a tap (near-zero delta) falls
@@ -77,6 +121,11 @@ function onTouchEnd(event: TouchEvent) {
 <template>
   <Teleport to="body">
     <div
+      ref="panelRef"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      :aria-label="milestone.title"
       class="fixed inset-0 z-50 flex flex-col bg-black text-white"
       @touchstart="onTouchStart"
       @touchend="onTouchEnd"

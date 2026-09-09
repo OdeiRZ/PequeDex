@@ -95,15 +95,28 @@ class BabyController extends Controller
     {
         $this->authorize('view', $baby);
 
-        if ($baby->users()->count() <= 1) {
-            return response()->json([
-                'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.',
-            ], 422);
-        }
+        return DB::transaction(function () use ($request, $baby) {
+            // lockForUpdate() (hallazgo de una auditoría de código, mismo
+            // patrón que el de store() arriba): sin ella, el count() de
+            // abajo y el detach() son un check-then-act sin nada que los
+            // haga atómicos entre procesos - con exactamente 2 cuidadores,
+            // dos abandonos casi simultáneos podían ver ambos count()==2
+            // antes de que cualquiera hiciera detach(), dejando el bebé
+            // sin ningún cuidador. El lock serializa la segunda petición
+            // hasta que la primera termina, así que ve ya el count()==1
+            // real y se rechaza correctamente.
+            Baby::whereKey($baby->id)->lockForUpdate()->firstOrFail();
 
-        $baby->users()->detach($request->user());
+            if ($baby->users()->count() <= 1) {
+                return response()->json([
+                    'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.',
+                ], 422);
+            }
 
-        return response()->json(status: 204);
+            $baby->users()->detach($request->user());
+
+            return response()->json(status: 204);
+        });
     }
 
     /** Any linked caregiver can rotate the code - e.g. if it leaked. */

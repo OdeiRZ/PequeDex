@@ -22,7 +22,7 @@ class StoreDiaperChangeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'changed_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
+            'changed_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'type' => ['required', Rule::enum(DiaperType::class)],
             'notes' => ['nullable', 'string'],
         ];

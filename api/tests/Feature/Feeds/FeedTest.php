@@ -97,6 +97,24 @@ it('accepts a started_at right on the birth date itself', function () {
     ])->assertCreated();
 });
 
+it('rejects a started_at or ended_at in the future', function () {
+    $user = actingAsUser();
+    $baby = babyFor($user);
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'started_at' => now()->addDay()->toDateTimeString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('started_at');
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'started_at' => now()->subHour()->toDateTimeString(),
+        'ended_at' => now()->addDay()->toDateTimeString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
+});
+
 it('lets a caregiver see and edit a feed logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyFor($owner);

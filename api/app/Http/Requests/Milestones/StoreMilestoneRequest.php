@@ -22,7 +22,7 @@ class StoreMilestoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'achieved_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
+            'achieved_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['nullable', Rule::enum(MilestoneCategory::class)],
             'description' => ['nullable', 'string'],

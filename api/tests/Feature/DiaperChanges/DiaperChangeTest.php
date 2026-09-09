@@ -43,6 +43,16 @@ it('rejects a changed_at before the baby was born', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('changed_at');
 });
 
+it('rejects a changed_at in the future', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => now()->addDay()->toDateTimeString(),
+        'type' => 'sucio',
+    ])->assertUnprocessable()->assertJsonValidationErrors('changed_at');
+});
+
 it('lets a caregiver see and edit a diaper change logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyForDiaperTest($owner);

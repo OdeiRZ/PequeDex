@@ -52,6 +52,16 @@ it('accepts an achieved_at right on the birth date, e.g. a "born" milestone', fu
     ])->assertCreated();
 });
 
+it('rejects an achieved_at in the future', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => now()->addDay()->toDateString(),
+        'title' => 'Todavia no',
+    ])->assertUnprocessable()->assertJsonValidationErrors('achieved_at');
+});
+
 it('creates a milestone with a photo, stored on the public disk', function () {
     $user = actingAsUser();
     $baby = babyForMilestoneTest($user);

@@ -75,6 +75,16 @@ it('rejects a measured_at before the baby was born', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('measured_at');
 });
 
+it('rejects a measured_at in the future', function () {
+    $user = actingAsUser();
+    $baby = babyForGrowthTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/growth-measurements", [
+        'measured_at' => now()->addDay()->toDateString(),
+        'weight_grams' => 3500,
+    ])->assertUnprocessable()->assertJsonValidationErrors('measured_at');
+});
+
 it('lets a caregiver see and edit a measurement logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyForGrowthTest($owner);

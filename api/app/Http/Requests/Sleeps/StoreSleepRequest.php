@@ -20,8 +20,8 @@ class StoreSleepRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'started_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
-            'ended_at' => ['nullable', 'date', 'after:started_at'],
+            'started_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
+            'ended_at' => ['nullable', 'date', 'after:started_at', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
             'notes' => ['nullable', 'string'],
         ];
     }

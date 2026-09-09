@@ -41,6 +41,19 @@ it('rejects a started_at before the baby was born', function () {
         ->assertUnprocessable()->assertJsonValidationErrors('started_at');
 });
 
+it('rejects a started_at or ended_at in the future', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/sleeps", ['started_at' => now()->addDay()->toDateTimeString()])
+        ->assertUnprocessable()->assertJsonValidationErrors('started_at');
+
+    $this->postJson("/api/babies/{$baby->id}/sleeps", [
+        'started_at' => now()->subHour()->toDateTimeString(),
+        'ended_at' => now()->addDay()->toDateTimeString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
+});
+
 it('lets a caregiver end a nap the other caregiver started', function () {
     $owner = actingAsUser();
     $baby = babyForSleepTest($owner);

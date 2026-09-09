@@ -29,8 +29,8 @@ class StoreFeedRequest extends FormRequest
             // side, a breastfeed has no ml amount.
             'side' => ['required_if:type,'.FeedType::Pecho->value, 'prohibited_unless:type,'.FeedType::Pecho->value, Rule::enum(FeedSide::class)],
             'amount_ml' => ['required_if:type,'.FeedType::Biberon->value, 'prohibited_unless:type,'.FeedType::Biberon->value, 'integer', 'min:1'],
-            'started_at' => ['required', 'date', ...$this->notBeforeBirthRule()],
-            'ended_at' => ['nullable', 'date', 'after:started_at'],
+            'started_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
+            'ended_at' => ['nullable', 'date', 'after:started_at', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
             'notes' => ['nullable', 'string'],
         ];
     }

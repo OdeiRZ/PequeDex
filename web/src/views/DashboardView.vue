@@ -235,9 +235,17 @@ async function onJoinBaby() {
 let pollTimer: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
-  pollTimer = setInterval(() => {
-    if (babies.current) {
-      babies.fetchTimeline()
+  pollTimer = setInterval(async () => {
+    if (!babies.current) return
+
+    // Best-effort background sync - a failed poll (offline, API asleep)
+    // isn't worth interrupting the user over, the next tick 5s later
+    // just tries again. Without this catch, a rejected fetchTimeline()
+    // here was an unhandled promise rejection.
+    try {
+      await babies.fetchTimeline()
+    } catch {
+      // ignored, see comment above
     }
   }, 5000)
 })

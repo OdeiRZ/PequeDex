@@ -41,11 +41,15 @@ Repo único con dos aplicaciones independientes, cada una con su propio
   cambio de guardarse en `localStorage` en vez de en una cookie `httpOnly`.
   Aceptado conscientemente: la app no maneja datos financieros ni médicos
   regulados, solo el día a día de una familia.
-- **Español (por defecto) e inglés**, no los 5 idiomas de LudoDex/MIRA:
-  las dos personas que de verdad usan la app a diario hablan español,
-  así que ese sigue siendo el idioma real de la aplicación — el inglés
-  está para quien la mire desde el portfolio, no porque haya usuarios
-  angloparlantes reales todavía. Si eso cambia, se añaden más idiomas.
+- **Español e inglés**, no los 5 idiomas de LudoDex/MIRA: las dos
+  personas que de verdad usan la app a diario hablan español, así que
+  ese sigue siendo el idioma real de la aplicación — el inglés está
+  para quien la mire desde el portfolio, no porque haya usuarios
+  angloparlantes reales todavía. Un visitante nuevo ve la app en el
+  idioma de su navegador (cae a español si no coincide con ninguno de
+  los dos); en cuanto un cuidador elige un idioma desde "Tu cuenta",
+  esa preferencia queda guardada. Si hiciera falta un tercer idioma, se
+  añade.
 - **Pensada para dos cuidadores sobre los mismos datos**, no un usuario
   aislado: el reto de arquitectura real de esta app está en que dos
   personas (los dos padres) vean y registren lo mismo sin duplicar ni
@@ -68,7 +72,8 @@ Repo único con dos aplicaciones independientes, cada una con su propio
    vez de inventar.
 6. ✅ Pantallas de crecimiento, hitos y predicción de sueño, verificadas
    de punta a punta contra la API real (incluida la subida de una foto).
-7. ✅ Español (por defecto) e inglés, con selector de idioma persistente.
+7. ✅ Español e inglés (según el idioma del navegador, o el que elija
+   cada cuidador desde "Tu cuenta"), con esa preferencia persistente.
 8. ✅ Identidad visual propia (Tailwind CSS, mobile-first con barra de
    acciones y hojas inferiores), pensada para registrar con una mano de
    madrugada, no para una captura de pantalla.

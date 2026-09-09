@@ -93,7 +93,19 @@ async function initDashboard() {
   }
 
   if (babies.current) {
-    await loadBabyData()
+    // loadBabyData() itself only has a `finally` (its two other callers,
+    // onCreateBaby/onJoinBaby, already catch its rejection themselves to
+    // show their own createError/joinError instead) - uncaught here, a
+    // failed Promise.all (any of timeline/growth/milestones/prediction/
+    // sleeps) left `loading` false again via that `finally` but with no
+    // error shown, rendering the dashboard shell over silently empty
+    // sections instead of the same retry screen as a fetchCurrent()
+    // failure above.
+    try {
+      await loadBabyData()
+    } catch {
+      loadError.value = true
+    }
   } else {
     loading.value = false
   }

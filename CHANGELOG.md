@@ -652,6 +652,30 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   permitido con un segundo cuidador vinculado, vuelta automática a la
   pantalla de onboarding tras abandonar.
 
+### Cambiado
+
+- **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio
+  `pequedex.pages.dev` quedó asignado a un rango de IP de Cloudflare
+  (`188.114.96.0/97.0`) inalcanzable desde varias redes distintas
+  (confirmado con dos ISPs independientes, wifi y datos móviles, mientras
+  `ludodex.pages.dev`/`mira-marketlens.pages.dev` — en otro rango,
+  `172.66.x.x` — seguían funcionando bien), sin que Cloudflare lo
+  resolviera en el rato que se esperó. Nueva URL:
+  [odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/).
+  `web/vite.config.ts` fija `base: '/PequeDex/'` (GitHub Pages sirve un
+  project page bajo esa ruta, no en la raíz del dominio, a diferencia de
+  Cloudflare Pages) — el favicon en `index.html` pasa a `%BASE_URL%favicon.svg`
+  para no quedar roto. `public/404.html` + un script en `index.html`
+  restauran la ruta real tras un refresh en cualquier URL que no sea la
+  raíz (técnica `spa-github-pages` estándar): GitHub Pages no tiene
+  rewrite de servidor para el modo `history` de vue-router, así que sin
+  esto cualquier ruta que no fuera `/` devolvía un 404 real en vez de la
+  SPA. `.github/workflows/ci.yml` gana un job `deploy-pages`
+  (`actions/upload-pages-artifact` + `actions/deploy-pages`, con los
+  permisos `pages: write`/`id-token: write` que exige) junto al ya
+  existente `deploy` (que sigue disparando el deploy de la API en
+  Render) — ambos corren solo en push a `main`.
+
 ### Corregido
 
 - `api/.env.example` traía `APP_NAME=Laravel` sin tocar, pese a que

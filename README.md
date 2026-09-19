@@ -8,11 +8,24 @@ hija nace en unas semanas) y, como [LudoDex](https://github.com/OdeiRZ/LudoDex),
 está pensada primero para uso personal y abierta a que cualquiera lleve el
 suyo.
 
-**En vivo**: [pequedex.pages.dev](https://pequedex.pages.dev) (frontend,
-Cloudflare Pages) — [pequedex-0phw.onrender.com](https://pequedex-0phw.onrender.com)
-(API, Render). Ambos en capa gratuita: la API "duerme" tras un rato de
+**En vivo**: [odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/)
+(frontend, GitHub Pages) — [pequedex-0phw.onrender.com](https://pequedex-0phw.onrender.com)
+(API, Render). La API está en capa gratuita: "duerme" tras un rato de
 inactividad y el primer request tras el sueño puede tardar ~50s en
 responder mientras arranca de nuevo.
+
+Antes en Cloudflare Pages (`pequedex.pages.dev`) — migrado a GitHub Pages
+el 2026-09-19 porque el dominio quedó asignado a un rango de IP de
+Cloudflare (`188.114.96.0/97.0`) inalcanzable desde varias redes distintas
+(confirmado con dos ISPs independientes, wifi y datos móviles, mientras
+`ludodex.pages.dev`/`mira-marketlens.pages.dev` — en otro rango,
+`172.66.x.x` — seguían funcionando bien), sin que Cloudflare lo resolviera
+en el rato que se esperó. `web/vite.config.ts` fija `base: '/PequeDex/'`
+(GitHub Pages sirve un project page bajo esa ruta, no en la raíz) y
+`public/404.html` + un script en `index.html` restauran la ruta real tras
+un refresh en cualquier URL que no sea la raíz — GitHub Pages no tiene
+rewrite de servidor para el modo `history` de vue-router, a diferencia de
+Cloudflare Pages.
 
 **Proyecto recién empezado** — este README se irá ampliando a medida que
 avancen los hitos. Ver [CHANGELOG.md](CHANGELOG.md) para el detalle de cada

@@ -367,15 +367,27 @@ sobre `docker/uploads.ini`). Ahora cada uno muestra
 
 ## Despliegue
 
-En producción ([pequedex.pages.dev](https://pequedex.pages.dev)): Cloudflare
-Pages con framework preset "Vue" (`npm run build`, output `dist`), **Root
-directory = `web`** (repo raíz es un monorepo con `api/` al lado). Variable
-de entorno de build `VITE_API_URL` apuntando a la API real en Render.
-Vue Router va en modo `history` (URLs sin `#`) pero **no hace falta un
-`_redirects` con `/* /index.html 200`**: Cloudflare Pages sirve `index.html`
-como *fallback* de SPA automáticamente para cualquier ruta sin archivo
-estático que coincida — un `_redirects` explícito con ese patrón, de
-hecho, dispara un aviso de "bucle infinito" en el build (fue probado y
-retirado). Auto-deploy nativo de Cloudflare Pages sí queda activo (a
-diferencia de la API en Render): aquí no hay el problema de webhook
-perdido que forzó el *deploy hook* vía GitHub Actions en el lado de la API.
+En producción ([odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/)):
+GitHub Pages, desplegado por el job `deploy-pages` de
+`.github/workflows/ci.yml` (`actions/upload-pages-artifact` +
+`actions/deploy-pages`) en cada push a `main` — migrado desde Cloudflare
+Pages el 2026-09-19 (`pequedex.pages.dev` quedó en un rango de IP de
+Cloudflare inalcanzable desde varias redes, ver CHANGELOG). `VITE_API_URL`
+apuntando a la API real en Render se pasa como variable de entorno del
+propio step de build en el workflow (antes vivía como variable de build de
+Cloudflare Pages) — Vite la incrusta en el bundle en build time, no se lee
+en runtime.
+
+GitHub Pages sirve un *project page* bajo `/PequeDex/`, no en la raíz del
+dominio — `vite.config.ts` fija `base: '/PequeDex/'`, y el favicon en
+`index.html` usa `%BASE_URL%favicon.svg` en vez de una ruta absoluta para
+no quedar roto (Vite no reescribe automáticamente rutas `/…` sueltas en el
+HTML, solo assets que él mismo procesa). Vue Router va en modo `history`
+(URLs sin `#`), pero a diferencia de Cloudflare Pages, **GitHub Pages no
+tiene *fallback* de SPA integrado** — cualquier ruta que no sea la raíz
+devuelve un 404 real de servidor en un refresh o un enlace directo. Se
+resuelve con la técnica estándar `spa-github-pages`: `public/404.html`
+redirige codificando la ruta real en la query string, y un script en
+`index.html` la restaura con `history.replaceState()` antes de que
+vue-router arranque — el usuario nunca ve la página 404 ni un cambio
+visible de URL.

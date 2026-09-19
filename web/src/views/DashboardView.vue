@@ -321,7 +321,7 @@ function toUtcIso(localValue: string): string {
 
 function openSheet(sheet: Exclude<Sheet, null>) {
   if (sheet === 'feed') {
-    feedType.value = 'biberon'
+    feedType.value = 'pecho'
     feedSide.value = 'izquierdo'
     feedAmountMl.value = ''
     feedStartedAt.value = nowForInput()
@@ -392,7 +392,7 @@ const actionBarItems = computed(() => [
 
 // --- Registro rápido: toma ---
 
-const feedType = ref<FeedType>('biberon')
+const feedType = ref<FeedType>('pecho')
 const feedSide = ref<'izquierdo' | 'derecho' | 'ambos'>('izquierdo')
 const feedAmountMl = ref('')
 const feedStartedAt = ref('')

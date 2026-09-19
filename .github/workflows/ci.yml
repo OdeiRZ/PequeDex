@@ -6,6 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+# pages: write/id-token: write son los permisos mínimos que exige
+# actions/deploy-pages - sin esto el job deploy-pages falla al autenticarse.
+# concurrency evita que dos deploys de Pages se pisen si hay dos pushes
+# seguidos a main.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   backend:
     name: Backend (Laravel)
@@ -76,7 +89,20 @@ jobs:
         run: npx vitest run
 
       - name: Type-check and build
+        # VITE_API_URL solo hace falta al construir (Vite la incrusta en el
+        # bundle en build time, no se lee en runtime) - antes vivía como
+        # variable de build de Cloudflare Pages, ahora aquí. Sin ella el
+        # build cae al default de api.ts (localhost:8000), rompiendo la app
+        # en producción contra la API real en Render.
+        env:
+          VITE_API_URL: https://pequedex-0phw.onrender.com/api
         run: npm run build
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
 
   attribution-guard:
     name: Attribution Guard
@@ -106,3 +132,16 @@ jobs:
     steps:
       - name: Call Render deploy hook
         run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  deploy-pages:
+    name: Deploy frontend to GitHub Pages
+    needs: [backend, frontend, attribution-guard]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

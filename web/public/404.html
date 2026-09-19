@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>PequeDex</title>
+    <script>
+      // GitHub Pages no tiene rewrite de servidor para una SPA con
+      // vue-router en modo history (ver router/index.ts) - cualquier ruta
+      // que no sea la raíz cae aquí en vez de en index.html. Redirige
+      // codificando la ruta real en la query string; index.html la
+      // restaura con history.replaceState() antes de que arranque
+      // vue-router, así que el usuario nunca ve esta página ni la URL
+      // cambia de forma visible. Técnica estándar para SPAs en GitHub
+      // Pages (spa-github-pages), adaptada al base path /PequeDex/.
+      var pathSegmentsToKeep = 1
+      var l = window.location
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      )
+    </script>
+  </head>
+  <body></body>
+</html>

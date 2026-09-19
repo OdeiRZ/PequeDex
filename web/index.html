@@ -1,14 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Diario y seguimiento de bebé compartido entre cuidadores: tomas, sueño, pañales, hitos y crecimiento.">
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Diario y seguimiento de bebé compartido entre cuidadores: tomas, sueño, pañales, hitos y crecimiento."
+    />
     <title>PequeDex</title>
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      // Restaura la ruta real que 404.html codificó en la query string
+      // antes de que vue-router arranque (ver public/404.html) - sin esto,
+      // recargar o compartir un enlace a cualquier ruta que no sea la raíz
+      // se quedaría en index.html con la URL del redirect en vez de la
+      // ruta pedida.
+      ;(function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&')
+            })
+            .join('?')
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
+        }
+      })(window.location)
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

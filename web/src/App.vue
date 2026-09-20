@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import AccountSheet from '@/components/AccountSheet.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 
@@ -24,5 +25,10 @@ onMounted(() => {
     <AppHeader />
     <RouterView />
     <ToastNotification />
+    <!-- Mounted here, not inside any one view, so the "Tu cuenta" link
+         in AppHeader (also global) works from every route - it used to
+         live only in DashboardView.vue, so it silently did nothing from
+         /contracciones or any other page. -->
+    <AccountSheet v-if="auth.user" />
   </div>
 </template>

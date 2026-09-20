@@ -15,7 +15,6 @@ import {
   type Sleep,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
-import { useUiStore } from '@/stores/ui'
 import ActionBar from '@/components/ActionBar.vue'
 import AppMark from '@/components/AppMark.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -25,28 +24,17 @@ import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
 import MilestoneStories from '@/components/MilestoneStories.vue'
 import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
-import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
-import {
-  ALL_CATEGORIES,
-  categoryBg,
-  categorySolidBg,
-  categoryText,
-  MIN_ACTION_BAR_CATEGORIES,
-  type Category,
-} from '@/lib/category'
+import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
-import { storeLocale } from '@/i18n'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
 const toast = useToastStore()
-const ui = useUiStore()
 const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -123,112 +111,6 @@ async function initDashboard() {
 }
 
 onMounted(initDashboard)
-
-// --- Menú de usuario: datos personales, contraseña y foto de perfil.
-// Sin errores por campo (a diferencia de LudoDex/MIRA MarketLens) - igual
-// que el resto de formularios de esta app, un mensaje genérico por toast
-// basta para lo que de verdad puede fallar aquí (email duplicado,
-// contraseña actual incorrecta). ---
-
-const profileName = ref('')
-const profileEmail = ref('')
-const savingProfile = ref(false)
-
-// No quick toggle in the header anymore (freed up nav space) - a caregiver
-// sets this once, from "Tu cuenta", the same place as everything else
-// about their own account. Login/register have no account to hold a
-// preference yet, so they fall back to the browser's language (see
-// i18n.ts) instead of offering a switcher of their own.
-const localeOptions = computed(() => [
-  { value: 'es' as const, label: t('language.es') },
-  { value: 'en' as const, label: t('language.en') },
-])
-
-// SegmentedControl's generic type param resolves to `string`, not
-// `Locale`, because `locale` from useI18n() is itself typed as plain
-// `string` (no module augmentation ties it to our own Locale union) -
-// narrow it back down before storing.
-function onSelectLocale(value: string) {
-  if (value !== 'es' && value !== 'en') return
-
-  locale.value = value
-  storeLocale(value)
-}
-
-const currentPassword = ref('')
-const newPassword = ref('')
-const newPasswordConfirmation = ref('')
-const savingPassword = ref(false)
-
-const avatarInput = ref<HTMLInputElement | null>(null)
-const uploadingAvatar = ref(false)
-
-async function onSubmitProfile() {
-  savingProfile.value = true
-
-  try {
-    await auth.updateProfile({ name: profileName.value, email: profileEmail.value })
-    toast.show(t('profile.toastSaved'))
-  } catch {
-    toast.show(t('profile.saveError'), 'error')
-  } finally {
-    savingProfile.value = false
-  }
-}
-
-async function onSubmitPassword() {
-  savingPassword.value = true
-
-  try {
-    await auth.updatePassword({
-      current_password: currentPassword.value,
-      password: newPassword.value,
-      password_confirmation: newPasswordConfirmation.value,
-    })
-    currentPassword.value = ''
-    newPassword.value = ''
-    newPasswordConfirmation.value = ''
-    toast.show(t('profile.toastPasswordSaved'))
-  } catch {
-    toast.show(t('profile.passwordError'), 'error')
-  } finally {
-    savingPassword.value = false
-  }
-}
-
-function onPickAvatar() {
-  avatarInput.value?.click()
-}
-
-async function onAvatarSelected(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-
-  uploadingAvatar.value = true
-
-  try {
-    await auth.uploadAvatar(file)
-    toast.show(t('profile.toastAvatarSaved'))
-  } catch {
-    toast.show(t('profile.avatarError'), 'error')
-  } finally {
-    uploadingAvatar.value = false
-    ;(event.target as HTMLInputElement).value = ''
-  }
-}
-
-async function onRemoveAvatar() {
-  uploadingAvatar.value = true
-
-  try {
-    await auth.removeAvatar()
-    toast.show(t('profile.toastAvatarRemoved'))
-  } catch {
-    toast.show(t('profile.avatarError'), 'error')
-  } finally {
-    uploadingAvatar.value = false
-  }
-}
 
 // --- Onboarding: crear o unirse a un bebé ---
 
@@ -359,24 +241,6 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   activeSheet.value = sheet
 }
 
-// The account sheet is opened from AppHeader now (a sibling component,
-// not a descendant, so it can't call openSheet() directly) via a shared
-// store flag - reset the form fields here, in response to that flag,
-// instead of at the call site the way every other sheet does it.
-watch(
-  () => ui.accountSheetOpen,
-  (open) => {
-    if (!open) return
-
-    profileName.value = auth.user?.name ?? ''
-    profileEmail.value = auth.user?.email ?? ''
-    currentPassword.value = ''
-    newPassword.value = ''
-    newPasswordConfirmation.value = ''
-    actionBarSelection.value = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
-  },
-)
-
 function closeSheet() {
   activeSheet.value = null
 }
@@ -397,48 +261,6 @@ const actionBarItems = computed(() => {
   ]
   return allItems.filter((item) => enabledCategories.value.includes(item.category))
 })
-
-// --- Ajustes: barra de accesos personalizable ---
-
-const actionBarSelection = ref<Category[]>([...ALL_CATEGORIES])
-
-const actionBarToggleOptions = computed(() => [
-  { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
-  { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
-  { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
-  { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
-  { category: 'milestone' as const, label: t('dashboard.quickLog.milestone') },
-])
-
-// Guardado al vuelo (como el selector de idioma), no un formulario con
-// botón "Guardar" aparte. El toggle en sí es instantáneo (sin deshabilitar
-// nada mientras la petición está en curso - eso es lo que hacía parpadear
-// los 5 iconos en cada pulsación) y solo se deshace si el PUT falla; el
-// token descarta la respuesta de una petición ya superada por un click
-// más reciente sobre la misma categoría, para no revertir un estado que
-// el usuario ya cambió otra vez. Si al desmarcar quedarían menos de
-// MIN_ACTION_BAR_CATEGORIES, el icono se deshabilita en la plantilla en
-// vez de dejar que el usuario llegue al error 422 del backend.
-let actionBarSaveToken = 0
-
-async function toggleActionBarCategory(category: Category) {
-  const previous = actionBarSelection.value
-  const isSelected = previous.includes(category)
-  if (isSelected && previous.length <= MIN_ACTION_BAR_CATEGORIES) return
-
-  const next = isSelected ? previous.filter((c) => c !== category) : [...previous, category]
-  actionBarSelection.value = next
-
-  const token = ++actionBarSaveToken
-  try {
-    await auth.updateActionBarCategories(next)
-  } catch {
-    if (token === actionBarSaveToken) {
-      actionBarSelection.value = previous
-      toast.show(t('profile.actionBar.saveError'), 'error')
-    }
-  }
-}
 
 // --- Registro rápido: toma ---
 
@@ -1170,182 +992,6 @@ const feedPredictionLabel = computed(() => {
   </div>
 
   <template v-else>
-    <!-- Reachable regardless of onboarding state - a registered user with
-    no baby yet still needs a way to log out or edit their own account,
-    and this is the only place either lives (AppHeader.vue is global but
-    has no baby-independent view of its own to render this into). -->
-    <BottomSheet :open="ui.accountSheetOpen" @update:open="ui.closeAccountSheet">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
-        <button
-          type="button"
-          class="text-sm font-semibold text-brand"
-          @click="ui.closeAccountSheet()"
-        >
-          {{ t('common.close') }}
-        </button>
-      </div>
-
-      <div class="mb-5 flex items-center gap-4">
-        <UserAvatar :name="auth.user?.name ?? ''" :avatar="auth.user?.avatar" :size="64" />
-        <div class="flex flex-1 flex-col items-start gap-2">
-          <input
-            ref="avatarInput"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            class="hidden"
-            @change="onAvatarSelected"
-          />
-          <button
-            type="button"
-            :disabled="uploadingAvatar"
-            class="btn-ghost px-3 py-1.5 text-sm"
-            @click="onPickAvatar"
-          >
-            {{ t('profile.uploadAvatar') }}
-          </button>
-          <button
-            v-if="auth.user?.avatar"
-            type="button"
-            :disabled="uploadingAvatar"
-            class="text-sm font-semibold text-danger"
-            @click="onRemoveAvatar"
-          >
-            {{ t('profile.removeAvatar') }}
-          </button>
-        </div>
-      </div>
-
-      <form class="mb-6 flex flex-col gap-4" @submit.prevent="onSubmitProfile">
-        <div>
-          <label for="profile-name" class="field-label">{{ t('profile.name') }}</label>
-          <input
-            id="profile-name"
-            v-model="profileName"
-            type="text"
-            required
-            autocomplete="name"
-            class="field-input"
-          />
-        </div>
-        <div>
-          <label for="profile-email" class="field-label">{{ t('profile.email') }}</label>
-          <input
-            id="profile-email"
-            v-model="profileEmail"
-            type="email"
-            required
-            autocomplete="email"
-            class="field-input"
-          />
-        </div>
-        <button type="submit" :disabled="savingProfile" class="btn-primary">
-          {{ t('common.save') }}
-        </button>
-      </form>
-
-      <div class="border-t border-border pt-5">
-        <span class="field-label">{{ t('language.label') }}</span>
-        <SegmentedControl
-          :model-value="locale"
-          :options="localeOptions"
-          @update:model-value="onSelectLocale"
-        />
-      </div>
-
-      <div class="mt-6 border-t border-border pt-5">
-        <span class="field-label">{{ t('profile.actionBar.title') }}</span>
-        <p class="mb-3 text-xs text-text-muted">
-          {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
-        </p>
-        <div class="flex flex-wrap gap-3">
-          <button
-            v-for="option in actionBarToggleOptions"
-            :key="option.category"
-            type="button"
-            :aria-pressed="actionBarSelection.includes(option.category)"
-            :aria-label="option.label"
-            :disabled="
-              actionBarSelection.includes(option.category) &&
-              actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES
-            "
-            class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold disabled:cursor-not-allowed"
-            :class="actionBarSelection.includes(option.category) ? 'text-text' : 'text-text-muted'"
-            @click="toggleActionBarCategory(option.category)"
-          >
-            <span class="relative">
-              <span
-                class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90 group-disabled:shadow-none"
-                :class="
-                  actionBarSelection.includes(option.category)
-                    ? [categorySolidBg[option.category], 'border-transparent text-white']
-                    : 'border-border bg-surface text-text-muted group-hover:border-text-muted group-disabled:opacity-50'
-                "
-              >
-                <CategoryIcon :category="option.category" class="h-5 w-5" />
-              </span>
-              <span
-                v-if="actionBarSelection.includes(option.category)"
-                class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="3.5"
-                  class="h-2 w-2"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-            </span>
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
-
-      <form
-        class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
-        @submit.prevent="onSubmitPassword"
-      >
-        <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.changePassword') }}</h4>
-        <div>
-          <label for="current-password" class="field-label">{{
-            t('profile.currentPassword')
-          }}</label>
-          <PasswordField
-            id="current-password"
-            v-model="currentPassword"
-            required
-            autocomplete="current-password"
-          />
-        </div>
-        <div>
-          <label for="new-password" class="field-label">{{ t('profile.newPassword') }}</label>
-          <PasswordField
-            id="new-password"
-            v-model="newPassword"
-            required
-            autocomplete="new-password"
-          />
-        </div>
-        <div>
-          <label for="new-password-confirmation" class="field-label">{{
-            t('profile.newPasswordConfirmation')
-          }}</label>
-          <PasswordField
-            id="new-password-confirmation"
-            v-model="newPasswordConfirmation"
-            required
-            autocomplete="new-password"
-          />
-        </div>
-        <button type="submit" :disabled="savingPassword" class="btn-primary">
-          {{ t('profile.changePassword') }}
-        </button>
-      </form>
-    </BottomSheet>
-
     <main v-if="!babies.current" class="flex flex-1 flex-col gap-6 px-4 py-6">
       <section class="card flex flex-col gap-4 p-5">
         <h2 class="font-display text-lg font-bold">{{ t('dashboard.onboarding.createTitle') }}</h2>

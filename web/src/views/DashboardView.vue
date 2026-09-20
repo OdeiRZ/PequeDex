@@ -490,6 +490,11 @@ async function onSubmitFeed() {
     } else {
       await babies.createFeed(payload)
     }
+    // Fire-and-forget: the prediction is a nice-to-have next to the
+    // save that already succeeded (the timeline entry is there
+    // regardless), so a failed refresh here shouldn't surface as a
+    // save error - it'll just catch up on the next visit or poll.
+    void babies.fetchFeedPrediction().catch(() => {})
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'), 'error')
@@ -527,6 +532,10 @@ async function onSubmitSleep() {
     } else {
       await babies.createSleep(payload)
     }
+    // Fire-and-forget, same reasoning as onSubmitFeed's prediction
+    // refresh: the save already succeeded, a failed refresh here
+    // shouldn't surface as a save error.
+    void babies.fetchSleepPrediction().catch(() => {})
     closeSheet()
   } catch {
     toast.show(t('dashboard.saveError'), 'error')
@@ -627,8 +636,10 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
   try {
     if (entry.type === 'feed') {
       await babies.deleteFeed(entry.data.id)
+      void babies.fetchFeedPrediction().catch(() => {})
     } else if (entry.type === 'sleep') {
       await babies.deleteSleep(entry.data.id)
+      void babies.fetchSleepPrediction().catch(() => {})
     } else {
       await babies.deleteDiaperChange(entry.data.id)
     }

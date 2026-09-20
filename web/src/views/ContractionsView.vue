@@ -309,23 +309,27 @@ async function onExportPdf() {
     <template v-else>
       <div class="card grid grid-cols-3 divide-x divide-border p-4 text-center">
         <div>
-          <div class="font-display text-lg font-bold tabular-nums">{{ stats.perHour ?? '-' }}</div>
-          <div class="text-[0.65rem] text-text-muted">{{ t('contractions.stats.perHour') }}</div>
+          <div class="text-xs font-semibold text-text-muted">
+            {{ t('contractions.stats.perHour') }}
+          </div>
+          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+            {{ stats.perHour ?? '-' }}
+          </div>
         </div>
         <div>
-          <div class="font-display text-lg font-bold tabular-nums">
-            {{ formatStat(stats.avgDurationSec) }}
-          </div>
-          <div class="text-[0.65rem] text-text-muted">
+          <div class="text-xs font-semibold text-text-muted">
             {{ t('contractions.stats.avgDuration') }}
           </div>
+          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+            {{ formatStat(stats.avgDurationSec) }}
+          </div>
         </div>
         <div>
-          <div class="font-display text-lg font-bold tabular-nums">
-            {{ formatStat(stats.avgIntervalSec) }}
-          </div>
-          <div class="text-[0.65rem] text-text-muted">
+          <div class="text-xs font-semibold text-text-muted">
             {{ t('contractions.stats.avgInterval') }}
+          </div>
+          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+            {{ formatStat(stats.avgIntervalSec) }}
           </div>
         </div>
       </div>
@@ -348,7 +352,10 @@ async function onExportPdf() {
           >
             <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
           </svg>
-          <span v-if="babies.current?.water_broke_at" class="text-[0.6rem] leading-tight tabular-nums">
+          <span
+            v-if="babies.current?.water_broke_at"
+            class="text-[0.6rem] leading-tight tabular-nums"
+          >
             {{
               new Date(babies.current.water_broke_at).toLocaleTimeString(dateLocale, {
                 hour: '2-digit',
@@ -356,7 +363,10 @@ async function onExportPdf() {
               })
             }}
           </span>
-          <span v-if="babies.current?.water_broke_at" class="text-[0.6rem] leading-tight tabular-nums">
+          <span
+            v-if="babies.current?.water_broke_at"
+            class="text-[0.6rem] leading-tight tabular-nums"
+          >
             {{
               new Date(babies.current.water_broke_at).toLocaleDateString(dateLocale, {
                 day: '2-digit',
@@ -369,10 +379,31 @@ async function onExportPdf() {
         <button
           type="button"
           :disabled="togglingTimer"
-          class="btn-primary flex-1"
+          class="btn-primary flex flex-1 items-center justify-center gap-2 !rounded-full"
           :class="activeContraction ? '!bg-danger' : ''"
           @click="onToggleTimer"
         >
+          <svg
+            v-if="!activeContraction"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
+          </svg>
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-4 w-4"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
+          </svg>
           {{ activeContraction ? t('contractions.stop') : t('contractions.start') }}
         </button>
       </div>

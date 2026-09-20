@@ -7,13 +7,40 @@ const props = defineProps<{ items: { category: Category; label: string }[] }>()
 defineEmits<{ select: [category: Category] }>()
 
 // Tailwind can't interpolate an arbitrary count into `grid-cols-{n}` at
-// build time, and with fewer items the icons grow a bit to fill the
-// freed-up space rather than leaving it empty - a lookup keyed by the
-// (3-5, per the min-3 rule in the account sheet) item count.
-const SIZES: Record<number, { gridCols: string; wrapper: string; icon: string }> = {
-  3: { gridCols: 'grid-cols-3', wrapper: 'h-10 w-10', icon: 'h-5 w-5' },
-  4: { gridCols: 'grid-cols-4', wrapper: 'h-9 w-9', icon: 'h-[1.1rem] w-[1.1rem]' },
-  5: { gridCols: 'grid-cols-5', wrapper: 'h-8 w-8', icon: 'h-4 w-4' },
+// build time, and with fewer items the freed-up space goes into visibly
+// bigger touch targets rather than sitting empty - a lookup keyed by the
+// (3-5, per the min-3 rule in the account sheet) item count. The jump
+// from 5 to 3 is deliberately steep (icon wrapper nearly doubles) so
+// removing items reads as "fewer, bigger" rather than a barely-there
+// nudge.
+const SIZES: Record<
+  number,
+  { gridCols: string; padding: string; gap: string; wrapper: string; icon: string; text: string }
+> = {
+  3: {
+    gridCols: 'grid-cols-3',
+    padding: 'p-3',
+    gap: 'gap-1.5',
+    wrapper: 'h-14 w-14',
+    icon: 'h-7 w-7',
+    text: 'text-xs',
+  },
+  4: {
+    gridCols: 'grid-cols-4',
+    padding: 'p-2.5',
+    gap: 'gap-1',
+    wrapper: 'h-11 w-11',
+    icon: 'h-5 w-5',
+    text: 'text-[0.7rem]',
+  },
+  5: {
+    gridCols: 'grid-cols-5',
+    padding: 'p-2',
+    gap: 'gap-1',
+    wrapper: 'h-8 w-8',
+    icon: 'h-4 w-4',
+    text: 'text-[0.65rem]',
+  },
 }
 
 const sizes = computed(() => SIZES[props.items.length] ?? SIZES[5])
@@ -21,22 +48,23 @@ const sizes = computed(() => SIZES[props.items.length] ?? SIZES[5])
 
 <template>
   <nav
-    class="sticky z-10 mx-4 grid gap-1 rounded-full bg-surface p-2 shadow-[0_14px_30px_-12px_rgba(0,0,0,0.35)]"
-    :class="sizes.gridCols"
+    class="sticky z-10 mx-4 grid gap-1 rounded-full bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.35)] transition-[padding] duration-150"
+    :class="[sizes.gridCols, sizes.padding]"
     style="bottom: calc(0.75rem + env(safe-area-inset-bottom))"
   >
     <button
       v-for="item in items"
       :key="item.category"
       type="button"
-      class="flex flex-col items-center gap-1 rounded-full px-1 py-1.5 text-[0.65rem] font-semibold text-text-muted transition-colors"
+      class="flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
+      :class="[sizes.gap, sizes.text]"
       @click="$emit('select', item.category)"
     >
       <span
-        class="grid place-items-center rounded-full transition-colors"
+        class="grid place-items-center rounded-full transition-[height,width] duration-150"
         :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
       >
-        <CategoryIcon :category="item.category" :class="sizes.icon" />
+        <CategoryIcon :category="item.category" class="transition-[height,width] duration-150" :class="sizes.icon" />
       </span>
       {{ item.label }}
     </button>

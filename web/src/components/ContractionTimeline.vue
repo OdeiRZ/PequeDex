@@ -165,9 +165,9 @@ const rows = computed<Row[]>(() => {
             </span>
           </button>
 
-          <div v-if="row.intervalLabel" class="mt-1.5 flex justify-center">
+          <div v-if="row.intervalLabel" class="mt-1.5 flex justify-end">
             <span
-              class="rounded-full border border-border px-3 py-0.5 text-xs font-semibold tabular-nums text-text-muted"
+              class="rounded-full border border-border px-3.5 py-1 text-sm font-bold tabular-nums text-text-muted"
               :aria-label="row.intervalAriaLabel ?? undefined"
             >
               {{ row.intervalLabel }}

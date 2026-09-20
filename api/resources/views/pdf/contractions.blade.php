@@ -7,8 +7,13 @@
         /* dompdf only understands a subset of CSS - kept deliberately
            plain (no flex/grid) to render reliably. Colors/shapes echo the
            app's own screen: olive-green day bar, light-grey rows, brand
-           maroon for bold values and the intensity dots, bordered pill
-           for the interval - same visual language, table markup. */
+           maroon for bold values and the intensity bolts (same path as
+           the app's own icon, passed in as two data-URI <img> sources -
+           a raw inline <svg> tag doesn't render at all in this dompdf
+           setup, confirmed with an isolated test, and neither does the
+           Unicode "●" tried before that, which came out as "?" with the
+           default font), bordered pill for the interval - same visual
+           language, table markup. */
         body { font-family: sans-serif; font-size: 11px; color: #2b2420; }
         h1 { font-size: 20px; margin-bottom: 2px; color: #1a1a1a; }
         .subtitle { color: #7a6f66; margin-bottom: 20px; }
@@ -24,10 +29,8 @@
         .interval-pill b { color: #2b2420; }
         .num-cell { color: #a3968a; font-size: 10px; }
         .duration { font-weight: bold; font-size: 13px; color: #a65a6b; }
-        .dots { text-align: right; }
-        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 4px; }
-        .dot-on { background: #a65a6b; }
-        .dot-off { background: #e8ddd0; }
+        .bolts { text-align: right; }
+        .bolts img { margin-left: 3px; }
     </style>
 </head>
 <body>
@@ -57,9 +60,9 @@
                         <td>{{ $row['started_at']->translatedFormat('j \d\e F, H:i') }}</td>
                         <td>{{ $row['ended_at']?->translatedFormat('j \d\e F, H:i') ?? '—' }}</td>
                         <td class="duration">{{ $row['duration'] ?? '—' }}</td>
-                        <td class="dots">
-                            @for ($dot = 0; $dot < 3; $dot++)
-                                <span class="dot {{ $dot <= $row['intensity'] ? 'dot-on' : 'dot-off' }}"></span>
+                        <td class="bolts">
+                            @for ($bolt = 0; $bolt < 3; $bolt++)
+                                <img src="{{ $bolt <= $row['intensity'] ? $boltOn : $boltOff }}" width="11" height="11" alt="" />
                             @endfor
                         </td>
                     </tr>

@@ -55,8 +55,28 @@ class ContractionsExportController extends Controller
         // previous one (same as the reference app's own PDF).
         $groups = collect($rows)->groupBy(fn ($row) => $row['started_at']->translatedFormat('d \d\e F \d\e Y'));
 
-        $pdf = Pdf::loadView('pdf.contractions', ['groups' => $groups, 'baby' => $baby]);
+        $pdf = Pdf::loadView('pdf.contractions', [
+            'groups' => $groups,
+            'baby' => $baby,
+            'boltOn' => $this->boltDataUri('#a65a6b'),
+            'boltOff' => $this->boltDataUri('#e8ddd0'),
+        ]);
 
         return $pdf->stream('contracciones.pdf');
+    }
+
+    /**
+     * dompdf doesn't render a raw inline <svg> tag (confirmed with an
+     * isolated test - nothing shows up), but it does render one given as
+     * an <img src="data:image/svg+xml;base64,..."> - so the intensity
+     * bolt, same path as the app's own icon, is built as two data URIs
+     * (on/off) once per export rather than inline SVG per cell.
+     */
+    private function boltDataUri(string $color): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="'.$color.'">'
+            .'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }

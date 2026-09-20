@@ -777,6 +777,27 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- El enlace "Tu cuenta" del avatar (`AppHeader.vue`) no hacía nada
+  fuera del dashboard — la hoja vivía solo dentro de
+  `DashboardView.vue`, así que en `/contracciones` (o cualquier otra
+  vista) el click activaba la bandera compartida `ui.accountSheetOpen`
+  pero no había ningún `<BottomSheet>` escuchándola ahí. Se extrae
+  toda la hoja a `AccountSheet.vue`, montado una sola vez en `App.vue`
+  junto a `AppHeader`, para que funcione desde cualquier ruta.
+- Editar una contracción que empieza y acaba en el mismo minuto daba
+  un error al guardar: `UpdateContractionRequest` exigía `ended_at`
+  estrictamente posterior a `started_at`, pero el campo
+  `datetime-local` del frontend solo tiene precisión de minuto, así
+  que una contracción real de menos de un minuto quedaba con ambos
+  valores exactamente iguales. Cambiado a `after_or_equal` — la
+  duración de "00:00:00" que se ve en ese caso es correcta, no un
+  fallo aparte.
+- Las predicciones de sueño/tomas del dashboard no se actualizaban al
+  registrar o borrar una toma o un sueño, solo al recargar la página —
+  el sondeo de 5s solo vuelve a pedir la línea temporal, y
+  `onSubmitFeed`/`onSubmitSleep`/`onDeleteEntry` tampoco refrescaban la
+  predicción tras guardar o borrar. Ahora sí, como una petición aparte
+  que no bloquea el guardado ni cuenta como error si falla.
 - `api/.env.example` traía `APP_NAME=Laravel` sin tocar, pese a que
   producción (Render) sí tiene puesto `APP_NAME=PequeDex` correctamente
   — solo afectaba a quien clonara el repo de cero contra el ejemplo, no

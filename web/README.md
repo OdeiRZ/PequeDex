@@ -98,7 +98,14 @@ porque la verificación local solo cubría los otros tres.
   LudoDex, sin websockets ni infraestructura nueva — para que lo que
   registre un cuidador aparezca en la pantalla del otro sin recargar
   (crecimiento/hitos/predicción no están en ese sondeo todavía: cambian
-  con mucha menos frecuencia que tomas/sueño/pañales). Los cinco campos
+  con mucha menos frecuencia que tomas/sueño/pañales) — la predicción
+  sí se refresca aparte, como una llamada de fondo que no bloquea el
+  guardado, cada vez que se crea/edita/borra una toma o un sueño
+  (`onSubmitFeed`/`onSubmitSleep`/`onDeleteEntry`): antes solo se
+  cargaba una vez al entrar en el dashboard, así que se quedaba con
+  los datos iniciales hasta recargar la página a mano aunque el
+  registro nuevo sí apareciera al momento en la línea temporal. Los
+  cinco campos
   de fecha (toma/sueño/pañal/medida/hito) llevan `:min` calculado a
   partir de `babies.current?.birth_date` (`minDate`/`minDateTime`,
   `undefined` si el bebé todavía no tiene fecha de nacimiento): nada de
@@ -119,16 +126,17 @@ porque la verificación local solo cubría los otros tres.
   valor tal cual hacía que el servidor lo tomara como si ya fuera UTC
   en vez de hora local - se descubrió al editar sin tocar la hora y ver
   que igualmente se desplazaba en cada guardado. El avatar en
-  `AppHeader.vue` abre una hoja de "Tu cuenta"
-  (datos personales, idioma, contraseña, foto) - sheet propia, no una
-  ruta nueva, mismo motivo que el resto de esta app: todo lo que no es
-  login/registro vive en una sola vista. Como `AppHeader.vue` es global
-  (vive en `App.vue`, no dentro de `DashboardView.vue`, donde está el
-  contenido real de esa hoja) y no puede llamar a una función local de
-  `DashboardView.vue`, ese flag de abrir/cerrar cruza el límite entre
-  ambos vía `stores/ui.ts` - un store deliberadamente mínimo (un
-  booleano y dos acciones), no una solución genérica para "cualquier
-  sheet desde cualquier sitio" que nada más necesita todavía. El
+  `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
+  idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
+  montada una sola vez en `App.vue` junto al propio `AppHeader`, no
+  dentro de `DashboardView.vue` como al principio: `AppHeader` es
+  global y no puede llamar a una función local de una vista concreta,
+  así que el abrir/cerrar cruza ese límite vía `stores/ui.ts` - un
+  store deliberadamente mínimo (un booleano y dos acciones). Vivir
+  dentro de `DashboardView.vue` era justo el bug real encontrado en
+  producción: desde cualquier otra ruta (`/contracciones`, por
+  ejemplo) el click ponía la bandera a `true`, pero no había ningún
+  `<BottomSheet>` escuchándola ahí, así que no pasaba nada visible. El
   wordmark "👶 PequeDex" se queda siempre a la izquierda; a la derecha,
   en cuanto hay cuenta y bebé, el toggle de tema, el avatar (sin el
   nombre al lado) y "Cerrar sesión" como icono, en ese orden. El código

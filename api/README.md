@@ -215,7 +215,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   siquiera `null`) — el frontend detecta la contracción en marcha
   comparando `ended_at === null`, y `undefined !== null`, así que el
   botón de inicio/detener se quedaba atascado. Se corrige igual: pasar
-  `'ended_at' => null` explícitamente en el `create()`.
+  `'ended_at' => null` explícitamente en el `create()`. Otro bug real
+  encontrado en vivo, este en `UpdateContractionRequest`: la regla de
+  `ended_at` exigía `after:started_at` (estrictamente posterior), pero
+  el `datetime-local` del frontend solo tiene precisión de minuto, así
+  que editar una contracción real de menos de un minuto dejaba ambos
+  valores exactamente iguales y el guardado fallaba con un 422.
+  Cambiado a `after_or_equal:started_at`.
   `Baby::water_broke_at` (columna nueva, `datetime` normal, no
   `date:Y-m-d` como `due_date`/`birth_date` — aquí sí importa la hora)
   se actualiza reutilizando `BabyController@update`/`UpdateBabyRequest`

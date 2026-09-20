@@ -95,12 +95,14 @@ const rows = computed<Row[]>(() => {
 <template>
   <ul class="flex flex-col">
     <template v-for="(row, index) in rows" :key="row.contraction.id">
-      <li v-if="row.showDaySeparator" class="my-2 flex justify-center">
+      <li v-if="row.showDaySeparator" class="my-4 flex items-center gap-3">
+        <span class="h-px flex-1 bg-border"></span>
         <span
-          class="rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-semibold text-text-muted"
+          class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
         >
           {{ row.dayLabel }}
         </span>
+        <span class="h-px flex-1 bg-border"></span>
       </li>
 
       <li class="flex gap-2.5">

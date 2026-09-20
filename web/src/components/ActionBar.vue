@@ -13,10 +13,20 @@ defineEmits<{ select: [category: Category] }>()
 // from 5 to 3 is deliberately steep (icon wrapper nearly doubles) so
 // removing items reads as "fewer, bigger" rather than a barely-there
 // nudge.
-const SIZES: Record<
-  number,
-  { gridCols: string; padding: string; gap: string; wrapper: string; icon: string; text: string }
-> = {
+interface SizeConfig {
+  gridCols: string
+  padding: string
+  gap: string
+  wrapper: string
+  icon: string
+  text: string
+}
+
+// Literal keys (not `Record<number, ...>`) so TS knows every lookup
+// below is defined - a plain number index would type as possibly
+// `undefined` under noUncheckedIndexedAccess even for a key we just
+// clamped into range.
+const SIZES: Record<3 | 4 | 5, SizeConfig> = {
   3: {
     gridCols: 'grid-cols-3',
     padding: 'p-3',
@@ -43,7 +53,10 @@ const SIZES: Record<
   },
 }
 
-const sizes = computed(() => SIZES[props.items.length] ?? SIZES[5])
+const sizes = computed(() => {
+  const count = props.items.length
+  return SIZES[count === 3 || count === 4 ? count : 5]
+})
 </script>
 
 <template>

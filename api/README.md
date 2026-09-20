@@ -209,7 +209,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   confiar en el `->default(0)` de la migración, porque Eloquent no
   repuebla en memoria un atributo omitido a partir del valor por
   defecto de la columna — solo lo hace la fila en la base de datos, así
-  que el JSON de respuesta devolvía `null` sin este fix.
+  que el JSON de respuesta devolvía `null` sin este fix. Mismo motivo,
+  bug real encontrado más tarde probando en vivo: `ended_at` tampoco se
+  pasaba a `create()`, así que la clave faltaba del todo en el JSON (ni
+  siquiera `null`) — el frontend detecta la contracción en marcha
+  comparando `ended_at === null`, y `undefined !== null`, así que el
+  botón de inicio/detener se quedaba atascado. Se corrige igual: pasar
+  `'ended_at' => null` explícitamente en el `create()`.
   `Baby::water_broke_at` (columna nueva, `datetime` normal, no
   `date:Y-m-d` como `due_date`/`birth_date` — aquí sí importa la hora)
   se actualiza reutilizando `BabyController@update`/`UpdateBabyRequest`
@@ -225,7 +231,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   inspiró esta funcionalidad. Devuelve el PDF inline
   (`Content-Type: application/pdf`), no como adjunto forzado, porque el
   frontend lo pide como blob autenticado por Bearer token, no con un
-  enlace directo.
+  enlace directo. La plantilla usa filas tipo tarjeta (fondo claro,
+  esquinas redondeadas, espaciado vía `border-spacing`) en vez de una
+  tabla con rayado alterno, para acercarse al PDF de la app de
+  referencia. Hallazgo real al intentar mostrar la intensidad con el
+  mismo icono de rayo que la app: un `<svg>` inline no se renderiza en
+  absoluto con esta configuración de dompdf (confirmado aparte, con un
+  HTML mínimo), y el carácter Unicode "●" probado antes tampoco - sale
+  como "?" con la fuente por defecto. Lo que sí funciona de forma
+  fiable es un `<img src="data:image/svg+xml;base64,...">`, así que
+  `boltDataUri()` en el controlador construye esos dos *data URIs*
+  (rayo activo/apagado) una sola vez por exportación y se los pasa a
+  la vista, en vez de generar SVG dentro del bucle Blade.
 
 ## Notas de arquitectura
 

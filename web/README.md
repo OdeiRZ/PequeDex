@@ -166,7 +166,25 @@ porque la verificación local solo cubría los otros tres.
   `responseType: 'blob'` en vez de un `<a href>` directo — la API usa
   token Bearer, no cookies, así que un enlace normal no llevaría la
   cabecera de autorización — y dispara la descarga con un `<a download>`
-  temporal sobre un `URL.createObjectURL(blob)`.
+  temporal sobre un `URL.createObjectURL(blob)`. Bug real encontrado
+  al probar en vivo: `ContractionController@store` no pasaba
+  `ended_at` a `create()`, así que Eloquent omitía la clave del JSON
+  de respuesta en vez de mandar `null` — como el frontend detecta la
+  contracción en marcha comparando `ended_at === null`, el botón de
+  inicio/detener se quedaba atascado y `contractionStats.ts` contaba
+  la fila activa como "completada", dando `NaN:NaN` en la duración
+  media (ver la nota del mismo problema con `intensity` en
+  `api/README.md`). `ContractionTimeline.vue` fue rediseñado tras una
+  segunda pasada para acercarse más a la app de referencia: filas en
+  píldora con la hora y el número de contracción grandes junto al
+  círculo (conectados por una línea gruesa), duración/intensidad/menú
+  más discretos dentro de la píldora, separador de día entre grupos, y
+  chip de intervalo alineado a la derecha en vez de centrado. Los
+  botones de "Inicio de contracción"/"Detener" y de rotura de bolsa
+  dejaron de estar en el flujo normal de la página y pasaron a un pie
+  fijo teletransportado a `<body>` (mismo patrón que `BottomSheet.vue`,
+  para no depender de que ningún ancestro tenga `transform`), flotando
+  sobre el historial en la parte inferior de la pantalla.
 
 ## Idioma
 

@@ -23,6 +23,29 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   tabla `contractions` y columna `babies.water_broke_at`. Traducido a
   español e inglés desde el primer commit.
 
+  Pasada de pulido visual sobre la primera versión, acercando el
+  diseño a la app de referencia: filas de la línea temporal en forma
+  de píldora (hora y número de contracción grandes junto a un círculo
+  conectado por una línea gruesa, duración e intensidad más discretas
+  dentro de la píldora), separador de día con fecha completa entre
+  grupos, chip de intervalo alineado a la derecha, y los botones de
+  inicio/detener y rotura de bolsa flotando fijos sobre el historial
+  en vez de ir en el flujo normal de la página. También corrige un
+  bug real encontrado durante las pruebas: el backend omitía la clave
+  `ended_at` en la respuesta al crear una contracción (en vez de
+  mandar `null`), así que el botón de inicio/detener se quedaba
+  atascado en "Inicio de contracción" y la duración media mostraba
+  "NaN:NaN" mientras una contracción seguía en marcha.
+
+  El PDF exportado recibió el mismo tratamiento: filas tipo tarjeta en
+  vez de tabla con rayado alterno, cabeceras "Inicio/Fin de
+  contracción" como el original, intervalo en píldora con borde, e
+  intensidad mostrada con el mismo icono de rayo que la app (no un
+  número ni un carácter Unicode — dompdf no renderiza ni `<svg>`
+  inline ni "●" con la fuente por defecto; sí renderiza un `<img
+  src="data:image/svg+xml;base64,...">`, así que el rayo se genera una
+  vez por exportación como dos *data URIs* y se pasa a la vista).
+
 - Soporte real para varios bebés por cuidador (p. ej. un hijo ya
   nacido y un segundo embarazo en marcha a la vez) — el backend ya lo
   permitía (`baby_user` es una tabla pivote de muchos-a-muchos), pero

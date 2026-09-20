@@ -1247,9 +1247,7 @@ const sleepPredictionLabel = computed(() => {
               actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES
             "
             class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold disabled:cursor-not-allowed"
-            :class="
-              actionBarSelection.includes(option.category) ? 'text-text' : 'text-text-muted'
-            "
+            :class="actionBarSelection.includes(option.category) ? 'text-text' : 'text-text-muted'"
             @click="toggleActionBarCategory(option.category)"
           >
             <span class="relative">
@@ -1267,7 +1265,13 @@ const sleepPredictionLabel = computed(() => {
                 v-if="actionBarSelection.includes(option.category)"
                 class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" class="h-2 w-2">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3.5"
+                  class="h-2 w-2"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </span>
@@ -1514,10 +1518,7 @@ const sleepPredictionLabel = computed(() => {
           </p>
         </section>
 
-        <section
-          v-if="enabledCategories.includes('sleep')"
-          class="card flex items-start gap-3 p-4"
-        >
+        <section v-if="enabledCategories.includes('sleep')" class="card flex items-start gap-3 p-4">
           <span
             class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
             :class="[categoryText.sleep, categoryBg.sleep]"

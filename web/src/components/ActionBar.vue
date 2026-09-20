@@ -64,7 +64,11 @@ const sizes = computed(() => SIZES[props.items.length] ?? SIZES[5])
         class="grid place-items-center rounded-full transition-[height,width] duration-150"
         :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
       >
-        <CategoryIcon :category="item.category" class="transition-[height,width] duration-150" :class="sizes.icon" />
+        <CategoryIcon
+          :category="item.category"
+          class="transition-[height,width] duration-150"
+          :class="sizes.icon"
+        />
       </span>
       {{ item.label }}
     </button>

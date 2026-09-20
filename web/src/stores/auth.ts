@@ -90,7 +90,9 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async updateActionBarCategories(categories: Category[]) {
-      const { data } = await apiClient.put('/user/action-bar', { action_bar_categories: categories })
+      const { data } = await apiClient.put('/user/action-bar', {
+        action_bar_categories: categories,
+      })
       this.user = data
     },
 

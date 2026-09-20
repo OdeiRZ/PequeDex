@@ -30,7 +30,7 @@
         .num-cell { color: #a3968a; font-size: 10px; }
         .duration { font-weight: bold; font-size: 13px; color: #a65a6b; }
         .bolts { text-align: right; }
-        .bolts img { margin-left: 3px; }
+        .bolts img { margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -62,7 +62,7 @@
                         <td class="duration">{{ $row['duration'] ?? '—' }}</td>
                         <td class="bolts">
                             @for ($bolt = 0; $bolt < 3; $bolt++)
-                                <img src="{{ $bolt <= $row['intensity'] ? $boltOn : $boltOff }}" width="11" height="11" alt="" />
+                                <img src="{{ $bolt <= $row['intensity'] ? $boltOn : $boltOff }}" width="16" height="16" alt="" />
                             @endfor
                         </td>
                     </tr>

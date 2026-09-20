@@ -220,10 +220,29 @@
   box-sizing: border-box;
 }
 
+/* Two fixed, off-screen radial washes in the brand's own colors, faint
+   enough to read as depth rather than decoration - the flat single-tone
+   --surface-sunken this replaces was the single biggest reason the app
+   read as "flat": every card sat on an identical background regardless
+   of theme or scroll position. `background-attachment: fixed` keeps the
+   wash anchored to the viewport (not the page) so it doesn't visibly
+   scroll with the content. */
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--surface-sunken);
+  background:
+    radial-gradient(
+      ellipse 70% 45% at 15% -8%,
+      color-mix(in srgb, var(--brand) 16%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 100% 15%,
+      color-mix(in srgb, var(--brand-teal) 14%, transparent),
+      transparent
+    ),
+    var(--surface-sunken);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-sans);
   line-height: 1.5;

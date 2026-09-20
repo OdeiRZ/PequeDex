@@ -26,6 +26,7 @@ import MilestoneStories from '@/components/MilestoneStories.vue'
 import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
+import TodaySummary from '@/components/TodaySummary.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import {
@@ -1500,8 +1501,13 @@ const feedPredictionLabel = computed(() => {
           </div>
         </div>
 
+        <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
+
         <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
-          <h2 class="font-display text-base font-bold">{{ t('dashboard.milestones.title') }}</h2>
+          <h2 class="flex items-center gap-2 font-display text-base font-bold">
+            <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
+            {{ t('dashboard.milestones.title') }}
+          </h2>
           <MilestoneStories
             :milestones="babies.milestones"
             @open="viewingMilestoneId = $event"
@@ -1517,7 +1523,13 @@ const feedPredictionLabel = computed(() => {
         />
 
         <section class="flex flex-col gap-2">
-          <h2 class="font-display text-base font-bold">{{ t('dashboard.timeline.title') }}</h2>
+          <h2 class="flex items-center gap-2 font-display text-base font-bold">
+            <span
+              class="h-4 w-1.5 shrink-0 rounded-full"
+              style="background: linear-gradient(180deg, var(--brand), var(--brand-teal))"
+            ></span>
+            {{ t('dashboard.timeline.title') }}
+          </h2>
           <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
             <EntryCard
               v-for="entry in babies.timeline"
@@ -1571,7 +1583,10 @@ const feedPredictionLabel = computed(() => {
         </section>
 
         <section v-if="enabledCategories.includes('growth')" class="flex flex-col gap-2">
-          <h2 class="font-display text-base font-bold">{{ t('dashboard.growth.title') }}</h2>
+          <h2 class="flex items-center gap-2 font-display text-base font-bold">
+            <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
+            {{ t('dashboard.growth.title') }}
+          </h2>
           <ul class="flex flex-col gap-2">
             <EntryCard
               v-for="measurement in babies.growthMeasurements"

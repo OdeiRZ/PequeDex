@@ -133,6 +133,11 @@ export default {
       growth: '+ Measurement',
       milestone: '+ Milestone',
     },
+    todaySummary: {
+      feed: 'feeds today',
+      sleep: 'asleep today',
+      diaper: 'diapers today',
+    },
     feedForm: {
       editTitle: 'Edit feed',
       type: 'Type',

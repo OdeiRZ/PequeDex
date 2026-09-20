@@ -208,6 +208,20 @@ verse bien en una captura:
   gana un icono y un color por tipo (`toast.show(mensaje, 'error')`,
   antes todo salía en el mismo verde de éxito). Todo con su reserva
   bajo `@media (prefers-reduced-motion: reduce)`.
+- **Jerarquía visual** — la pasada de interactividad de arriba no bastó
+  por sí sola: la app seguía leyendo "plana" porque cada sección era el
+  mismo bloque blanco de mismo tamaño apilado, sin nada que rompiera el
+  ritmo. `TodaySummary.vue` (justo bajo la cabecera del bebé) resuelve
+  eso con una fila de estadísticas de hoy en relleno sólido por
+  categoría y cifras grandes (`font-display text-xl`) — el primer sitio
+  de la página con una escala tipográfica real, no texto uniforme. El
+  fondo de `body` en `base.css` pasa de `--surface-sunken` plano a ese
+  mismo tono más dos veladuras radiales fijas (`background-attachment:
+  fixed`) en `--brand`/`--brand-teal` vía `color-mix()`, muy tenues,
+  para que las tarjetas blancas lean como si flotasen sobre algo en vez
+  de fundirse con el fondo. Los títulos de sección sueltos (Hitos,
+  Línea temporal, Crecimiento) ganan una barrita de acento de color
+  junto al texto.
 - **`src/theme.ts` / `ThemeToggle.vue`**: claro/oscuro/sistema,
   persistido en `localStorage` (`pequedex_theme`) y aplicado antes del
   montaje en `main.ts` para que no parpadee el tema equivocado en la

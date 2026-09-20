@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Segunda pasada de estilo, esta vez estructural en vez de solo
+  micro-interacciones: `TodaySummary.vue`, una fila de estadísticas
+  ("4 tomas hoy", "2h de sueño hoy", "3 pañales hoy") justo bajo la
+  cabecera del bebé, con relleno sólido del color de cada categoría y
+  cifras grandes — el primer sitio de la página con jerarquía
+  tipográfica real, no solo texto de un mismo tamaño apilado. El fondo
+  de `body` pasa de un tono plano único a dos veladuras radiales fijas
+  en los colores de marca (`color-mix`, muy tenues), para que las
+  tarjetas lean como si flotaran en vez de fundirse con el fondo.
+  Los títulos de sección sueltos (Hitos, Línea temporal, Crecimiento)
+  ganan una barra de acento de color junto al texto, rompiendo la
+  monotonía de secciones idénticas apiladas verticalmente.
+
 - Predicción de la siguiente toma, misma idea honesta que la de sueño:
   media móvil del hueco entre las tomas del propio bebé
   (`FeedPatternPredictor`), sin datos inventados por debajo de 3 tomas

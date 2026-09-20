@@ -134,6 +134,11 @@ export default {
       growth: '+ Medida',
       milestone: '+ Hito',
     },
+    todaySummary: {
+      feed: 'tomas hoy',
+      sleep: 'de sueño hoy',
+      diaper: 'pañales hoy',
+    },
     feedForm: {
       editTitle: 'Editar toma',
       type: 'Tipo',

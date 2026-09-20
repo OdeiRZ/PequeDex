@@ -38,3 +38,15 @@ export const categorySolidBg: Record<Category, string> = {
   growth: 'bg-growth',
   milestone: 'bg-milestone',
 }
+
+// Hover-only ring in the category's own color, paired with
+// `.card-interactive`'s hover lift on EntryCard - the card's rest state
+// already reads as "feed" etc. via categoryBg, so the ring only needs to
+// show up as extra emphasis on hover, not all the time.
+export const categoryRing: Record<Category, string> = {
+  feed: 'hover:ring-feed/40',
+  sleep: 'hover:ring-sleep/40',
+  diaper: 'hover:ring-diaper/40',
+  growth: 'hover:ring-growth/40',
+  milestone: 'hover:ring-milestone/40',
+}

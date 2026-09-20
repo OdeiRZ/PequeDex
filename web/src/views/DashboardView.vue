@@ -166,7 +166,7 @@ async function onSubmitProfile() {
     await auth.updateProfile({ name: profileName.value, email: profileEmail.value })
     toast.show(t('profile.toastSaved'))
   } catch {
-    toast.show(t('profile.saveError'))
+    toast.show(t('profile.saveError'), 'error')
   } finally {
     savingProfile.value = false
   }
@@ -186,7 +186,7 @@ async function onSubmitPassword() {
     newPasswordConfirmation.value = ''
     toast.show(t('profile.toastPasswordSaved'))
   } catch {
-    toast.show(t('profile.passwordError'))
+    toast.show(t('profile.passwordError'), 'error')
   } finally {
     savingPassword.value = false
   }
@@ -206,7 +206,7 @@ async function onAvatarSelected(event: Event) {
     await auth.uploadAvatar(file)
     toast.show(t('profile.toastAvatarSaved'))
   } catch {
-    toast.show(t('profile.avatarError'))
+    toast.show(t('profile.avatarError'), 'error')
   } finally {
     uploadingAvatar.value = false
     ;(event.target as HTMLInputElement).value = ''
@@ -220,7 +220,7 @@ async function onRemoveAvatar() {
     await auth.removeAvatar()
     toast.show(t('profile.toastAvatarRemoved'))
   } catch {
-    toast.show(t('profile.avatarError'))
+    toast.show(t('profile.avatarError'), 'error')
   } finally {
     uploadingAvatar.value = false
   }
@@ -444,7 +444,7 @@ async function toggleActionBarCategory(category: Category) {
   } catch {
     if (token === actionBarSaveToken) {
       actionBarSelection.value = previous
-      toast.show(t('profile.actionBar.saveError'))
+      toast.show(t('profile.actionBar.saveError'), 'error')
     }
   }
 }
@@ -501,7 +501,7 @@ async function onSubmitFeed() {
     }
     closeSheet()
   } catch {
-    toast.show(t('dashboard.saveError'))
+    toast.show(t('dashboard.saveError'), 'error')
   } finally {
     savingFeed.value = false
   }
@@ -538,7 +538,7 @@ async function onSubmitSleep() {
     }
     closeSheet()
   } catch {
-    toast.show(t('dashboard.saveError'))
+    toast.show(t('dashboard.saveError'), 'error')
   } finally {
     savingSleep.value = false
   }
@@ -581,7 +581,7 @@ async function onSubmitDiaper() {
     }
     closeSheet()
   } catch {
-    toast.show(t('dashboard.saveError'))
+    toast.show(t('dashboard.saveError'), 'error')
   } finally {
     savingDiaper.value = false
   }
@@ -643,7 +643,7 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
     }
     toast.show(t(`dashboard.toastRemoved.${key}`))
   } catch {
-    toast.show(t(`dashboard.removeError.${key}`))
+    toast.show(t(`dashboard.removeError.${key}`), 'error')
   }
 }
 
@@ -662,7 +662,7 @@ async function onDeleteGrowthMeasurement(id: number) {
     await babies.deleteGrowthMeasurement(id)
     toast.show(t('dashboard.toastRemoved.growth'))
   } catch {
-    toast.show(t('dashboard.removeError.growth'))
+    toast.show(t('dashboard.removeError.growth'), 'error')
   }
 }
 
@@ -671,7 +671,7 @@ async function onDeleteMilestone(id: number) {
     await babies.deleteMilestone(id)
     toast.show(t('dashboard.toastRemoved.milestone'))
   } catch {
-    toast.show(t('dashboard.removeError.milestone'))
+    toast.show(t('dashboard.removeError.milestone'), 'error')
   }
 }
 
@@ -727,7 +727,7 @@ async function onToggleMilestoneLike() {
   try {
     await babies.toggleMilestoneLike(viewingMilestone.value.id)
   } catch {
-    toast.show(t('dashboard.milestones.likeError'))
+    toast.show(t('dashboard.milestones.likeError'), 'error')
   }
 }
 
@@ -925,7 +925,7 @@ async function onRegenerateInviteCode() {
     await babies.regenerateInviteCode()
     toast.show(t('dashboard.toastInviteRegenerated'))
   } catch {
-    toast.show(t('dashboard.inviteCodeError'))
+    toast.show(t('dashboard.inviteCodeError'), 'error')
   }
 }
 
@@ -1097,7 +1097,7 @@ async function onSubmitMilestone() {
     }
     closeSheet()
   } catch {
-    toast.show(t('dashboard.saveError'))
+    toast.show(t('dashboard.saveError'), 'error')
   } finally {
     savingMilestone.value = false
   }
@@ -1487,7 +1487,7 @@ const sleepPredictionLabel = computed(() => {
           />
         </section>
 
-        <DailyRhythm :timeline="babies.timeline" />
+        <DailyRhythm :timeline="babies.timeline" :date-locale="dateLocale" />
         <WeeklySleep
           v-if="enabledCategories.includes('sleep')"
           :sleeps="babies.recentSleeps"
@@ -1496,7 +1496,7 @@ const sleepPredictionLabel = computed(() => {
 
         <section class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.timeline.title') }}</h2>
-          <ul class="flex flex-col gap-2">
+          <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
             <EntryCard
               v-for="entry in babies.timeline"
               :key="`${entry.type}-${entry.data.id}`"
@@ -1509,7 +1509,7 @@ const sleepPredictionLabel = computed(() => {
                 <DeleteButton @click="onDeleteEntry(entry)" />
               </template>
             </EntryCard>
-          </ul>
+          </TransitionGroup>
           <p
             v-if="babies.timeline.length === 0"
             class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"

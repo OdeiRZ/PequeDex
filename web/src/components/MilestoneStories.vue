@@ -15,11 +15,11 @@ const { t } = useI18n()
       v-for="milestone in milestones"
       :key="milestone.id"
       type="button"
-      class="flex w-16 shrink-0 flex-col items-center gap-1.5"
+      class="flex w-16 shrink-0 flex-col items-center gap-1.5 transition-transform duration-150 hover:-translate-y-0.5 active:scale-95"
       @click="$emit('open', milestone.id)"
     >
       <span
-        class="grid h-14 w-14 shrink-0 place-items-center rounded-full p-[2.5px]"
+        class="grid h-14 w-14 shrink-0 place-items-center rounded-full p-[2.5px] transition-shadow duration-150 hover:shadow-[0_4px_16px_-4px_var(--milestone)]"
         style="
           background: conic-gradient(
             from 200deg,
@@ -49,11 +49,11 @@ const { t } = useI18n()
 
     <button
       type="button"
-      class="flex w-16 shrink-0 flex-col items-center gap-1.5"
+      class="group flex w-16 shrink-0 flex-col items-center gap-1.5 transition-transform duration-150 hover:-translate-y-0.5 active:scale-95"
       @click="$emit('create')"
     >
       <span
-        class="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border bg-surface-sunken text-xl font-bold text-brand"
+        class="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border bg-surface-sunken text-xl font-bold text-brand transition-[border-color,transform] duration-200 group-hover:scale-110 group-hover:border-brand"
       >
         +
       </span>

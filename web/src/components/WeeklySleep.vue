@@ -56,20 +56,27 @@ function hoursLabel(hours: number): string {
         <div
           v-for="day in days"
           :key="day.date"
-          class="flex h-full flex-1 flex-col items-center justify-end gap-1"
+          class="group flex h-full flex-1 flex-col items-center justify-end gap-1"
         >
-          <span class="text-[0.6rem] tabular-nums text-text-muted">{{
-            hoursLabel(day.hours)
-          }}</span>
+          <span
+            class="text-[0.6rem] tabular-nums text-text-muted transition-[color,transform] duration-150 group-hover:scale-110 group-hover:text-sleep group-hover:font-bold"
+          >
+            {{ hoursLabel(day.hours) }}
+          </span>
           <div class="flex w-full flex-1 items-end">
             <div
-              class="w-full rounded-md bg-sleep transition-all"
+              class="w-full origin-bottom rounded-md bg-sleep transition-transform duration-150 ease-out group-hover:scale-x-110 group-hover:brightness-110"
+              :class="
+                isToday(day.date) ? 'ring-2 ring-sleep/50 ring-offset-1 ring-offset-surface' : ''
+              "
               :style="{ height: `${barHeightPercent(day.hours)}%` }"
             ></div>
           </div>
           <span
-            class="text-[0.62rem] capitalize"
-            :class="isToday(day.date) ? 'font-bold text-text' : 'text-text-muted'"
+            class="text-[0.62rem] capitalize transition-colors duration-150"
+            :class="
+              isToday(day.date) ? 'font-bold text-sleep' : 'text-text-muted group-hover:text-text'
+            "
           >
             {{ dayLabel(day.date) }}
           </span>

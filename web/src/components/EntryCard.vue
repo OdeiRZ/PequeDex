@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import CategoryIcon from './CategoryIcon.vue'
-import { categoryText, categoryBg, type Category } from '@/lib/category'
+import { categoryText, categoryBg, categoryRing, type Category } from '@/lib/category'
 
 defineProps<{
   category: Category
@@ -16,21 +16,24 @@ defineEmits<{ open: [] }>()
 </script>
 
 <template>
-  <li class="flex items-center gap-3 rounded-2xl p-3 shadow-sm" :class="categoryBg[category]">
+  <li
+    class="card-interactive flex items-center gap-3 rounded-2xl p-3 shadow-sm ring-1 ring-transparent"
+    :class="[categoryBg[category], categoryRing[category]]"
+  >
     <button
       type="button"
-      class="flex min-w-0 flex-1 items-center gap-3 text-left"
+      class="group flex min-w-0 flex-1 items-center gap-3 text-left"
       @click="$emit('open')"
     >
       <img
         v-if="photoSrc"
         :src="photoSrc"
         :alt="photoAlt ?? ''"
-        class="h-10 w-10 shrink-0 rounded-lg object-cover"
+        class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110"
       />
       <span
         v-else
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110"
         :class="categoryText[category]"
       >
         <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />

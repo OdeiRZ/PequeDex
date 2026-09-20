@@ -39,4 +39,22 @@ describe('toast store', () => {
     vi.advanceTimersByTime(2000)
     expect(toast.message).toBeNull()
   })
+
+  it('defaults to type success and bumps key on every show', () => {
+    const toast = useToastStore()
+
+    toast.show('Guardado.')
+    expect(toast.type).toBe('success')
+    const firstKey = toast.key
+
+    toast.show('Guardado.')
+    expect(toast.key).toBe(firstKey + 1)
+  })
+
+  it('accepts an explicit error type', () => {
+    const toast = useToastStore()
+
+    toast.show('No se ha podido guardar.', 'error')
+    expect(toast.type).toBe('error')
+  })
 })

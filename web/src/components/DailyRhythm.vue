@@ -3,20 +3,26 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 
-const props = defineProps<{ timeline: TimelineEntry[] }>()
+const props = defineProps<{ timeline: TimelineEntry[]; dateLocale?: string }>()
 
 const { t } = useI18n()
 
 const DAY_MS = 86_400_000
 
+interface RhythmTick {
+  left: number
+  time: string
+}
+
 interface RhythmSegment {
   left: number
   width: number
+  time: string
 }
 
 interface RhythmData {
-  feedTicks: number[]
-  diaperTicks: number[]
+  feedTicks: RhythmTick[]
+  diaperTicks: RhythmTick[]
   sleepSegments: RhythmSegment[]
   hasData: boolean
 }
@@ -37,17 +43,20 @@ const rhythm = computed<RhythmData>(() => {
     return ((clamped - start.getTime()) / DAY_MS) * 100
   }
 
-  const feedTicks: number[] = []
-  const diaperTicks: number[] = []
+  const toTime = (date: Date): string =>
+    date.toLocaleTimeString(props.dateLocale, { hour: '2-digit', minute: '2-digit' })
+
+  const feedTicks: RhythmTick[] = []
+  const diaperTicks: RhythmTick[] = []
   const sleepSegments: RhythmSegment[] = []
 
   for (const entry of props.timeline) {
     if (entry.type === 'feed') {
       const at = new Date(entry.data.started_at)
-      if (at >= start && at <= end) feedTicks.push(toPercent(at))
+      if (at >= start && at <= end) feedTicks.push({ left: toPercent(at), time: toTime(at) })
     } else if (entry.type === 'diaper_change') {
       const at = new Date(entry.data.changed_at)
-      if (at >= start && at <= end) diaperTicks.push(toPercent(at))
+      if (at >= start && at <= end) diaperTicks.push({ left: toPercent(at), time: toTime(at) })
     } else {
       const segStart = new Date(entry.data.started_at)
       const segEnd = entry.data.ended_at ? new Date(entry.data.ended_at) : now
@@ -57,7 +66,8 @@ const rhythm = computed<RhythmData>(() => {
       // A nap logged as a single instant would otherwise render as a
       // zero-width, invisible sliver - 1% keeps it visible as a mark.
       const width = Math.max(1, toPercent(segEnd) - left)
-      sleepSegments.push({ left, width })
+      const time = entry.data.ended_at ? `${toTime(segStart)}–${toTime(segEnd)}` : toTime(segStart)
+      sleepSegments.push({ left, width, time })
     }
   }
 
@@ -82,20 +92,23 @@ const rhythm = computed<RhythmData>(() => {
         <span
           v-for="(seg, i) in rhythm.sleepSegments"
           :key="`sleep-${i}`"
-          class="absolute top-[3px] bottom-[3px] rounded-full bg-sleep opacity-90"
+          :title="`${t('dashboard.rhythm.sleep')} ${seg.time}`"
+          class="absolute top-[3px] bottom-[3px] cursor-default rounded-full bg-sleep opacity-90 transition-[opacity,transform] duration-150 hover:z-10 hover:scale-y-125 hover:opacity-100"
           :style="{ left: `${seg.left}%`, width: `${seg.width}%` }"
         ></span>
         <span
           v-for="(tick, i) in rhythm.feedTicks"
           :key="`feed-${i}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] rounded-full bg-feed"
-          :style="{ left: `${tick}%` }"
+          :title="`${t('dashboard.rhythm.feed')} ${tick.time}`"
+          class="absolute top-[3px] bottom-[3px] w-[5px] cursor-default rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125"
+          :style="{ left: `${tick.left}%` }"
         ></span>
         <span
           v-for="(tick, i) in rhythm.diaperTicks"
           :key="`diaper-${i}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] rounded-full bg-diaper"
-          :style="{ left: `${tick}%` }"
+          :title="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
+          class="absolute top-[3px] bottom-[3px] w-[5px] cursor-default rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125"
+          :style="{ left: `${tick.left}%` }"
         ></span>
       </div>
       <div class="mb-2.5 flex justify-between text-xs tabular-nums text-text-muted">

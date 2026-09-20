@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Pasada de pulido visual e interactivo inspirada en LudoDex/MIRA
+  MarketLens (adaptada a esta app, no copiada literal — ninguna de las
+  dos usa Tailwind): toasts con icono y color por tipo
+  (éxito/error, antes un único verde para ambos), una celebración de un
+  solo disparo en la marca del encabezado tras un guardado correcto,
+  tarjetas de la línea temporal con elevación/anillo de color al pasar
+  el ratón y una animación de entrada/salida (`TransitionGroup`) al
+  añadir o borrar una, barras de "Sueño esta semana" con crecimiento y
+  brillo al pasar el ratón (el día de hoy con un anillo propio), marcas
+  de "Ritmo de hoy" con tooltip nativo (hora exacta) y crecimiento al
+  pasar el ratón, y retroalimentación táctil (elevación/escala) en
+  botones, hitos y tarjetas en general. Todo con reserva para
+  `prefers-reduced-motion: reduce`.
+
 - Barra de accesos rápidos personalizable desde "Tu cuenta": cada
   usuario elige qué categorías (toma, sueño, pañal, medida, hito) quiere
   ver en la barra inferior del dashboard, con un mínimo de 3 — al

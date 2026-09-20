@@ -189,6 +189,25 @@ verse bien en una captura:
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares;
   el resto usa la fuente del sistema — carga instantánea y cifras
   tabulares (`tabular-nums`) para pesos, percentiles y horas.
+- **Interactividad** — pasada inspirada en cómo se hizo en LudoDex/MIRA
+  MarketLens, pero adaptada a esta app (ninguna de las dos usa
+  Tailwind, así que nada es un copia-pega literal): `.btn-primary`/
+  `.btn-ghost`/`.card-interactive` en `base.css` dan elevación al pasar
+  el ratón y un `scale(0.96-0.985)` al pulsar, en vez de solo cambiar
+  de color. `EntryCard.vue` añade `.card-interactive` con un anillo del
+  color de su categoría al pasar el ratón, y la línea temporal entera
+  entra/sale con un `TransitionGroup` (`entry-list-*` en `base.css`,
+  global — no `scoped`, porque `TransitionGroup` aplica esas clases al
+  elemento raíz de cada `EntryCard`, no dentro de su propio árbol de
+  estilos). `AppHeader.vue` celebra un guardado con éxito con un
+  bote-y-giro de un solo disparo en la marca (`@keyframes mark-pop`,
+  distinto de los bucles `footprint-bob`/`heartbeat` ya existentes,
+  usados solo en la pantalla de carga) — el mismo truco de
+  "desactivar y reactivar en el siguiente frame" que usa LudoDex para
+  poder repetir la animación en guardados seguidos. `ToastNotification.vue`
+  gana un icono y un color por tipo (`toast.show(mensaje, 'error')`,
+  antes todo salía en el mismo verde de éxito). Todo con su reserva
+  bajo `@media (prefers-reduced-motion: reduce)`.
 - **`src/theme.ts` / `ThemeToggle.vue`**: claro/oscuro/sistema,
   persistido en `localStorage` (`pequedex_theme`) y aplicado antes del
   montaje en `main.ts` para que no parpadee el tema equivocado en la

@@ -161,6 +161,7 @@
 
   --animate-footprint-bob: footprint-bob 2.8s ease-in-out infinite;
   --animate-heartbeat: heartbeat 1.15s ease-in-out infinite;
+  --animate-mark-pop: mark-pop 0.5s ease;
 }
 
 /* AppMark's loading animation: a step-like bob on the footprint, with the
@@ -191,6 +192,25 @@
   }
   60% {
     transform: scale(1);
+  }
+}
+
+/* One-shot celebration for AppMark after a successful save/log (see
+   AppHeader.vue) - a small hop-and-wiggle, distinct from the always-on
+   loading loops above (footprint-bob/heartbeat are `infinite`, this
+   isn't). */
+@keyframes mark-pop {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  35% {
+    transform: rotate(-8deg) scale(1.18);
+  }
+  65% {
+    transform: rotate(6deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
   }
 }
 
@@ -244,6 +264,20 @@ body {
     padding: 0.75rem 1rem;
     font-weight: 700;
     color: var(--brand-ink);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 16px -6px rgb(var(--shadow-color) / 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
   }
 
   .btn-primary:disabled {
@@ -255,6 +289,17 @@ body {
     padding: 0.75rem 1rem;
     font-weight: 700;
     color: var(--text-muted);
+    transition:
+      transform 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--brand);
+  }
+
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.96);
   }
 
   .card {
@@ -263,5 +308,72 @@ body {
     box-shadow:
       0 1px 2px rgb(var(--shadow-color) / 0.06),
       0 8px 24px -12px rgb(var(--shadow-color) / 0.18);
+  }
+
+  /* Opt-in for cards that are themselves a click target (EntryCard,
+     milestone/timeline rows) - not every .card is interactive (some are
+     just containers around a form), so the lift lives behind its own
+     class instead of on .card itself. */
+  .card-interactive {
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 2px 4px rgb(var(--shadow-color) / 0.08),
+      0 14px 28px -12px rgb(var(--shadow-color) / 0.28);
+  }
+
+  .card-interactive:active {
+    transform: translateY(0) scale(0.985);
+  }
+}
+
+/* Timeline entries (EntryCard) popping in/out - global, not scoped,
+   since TransitionGroup applies these class names straight onto each
+   child component's root element. A gentle spring on enter/move, a
+   quick fade+slide-away on leave (deleting something shouldn't linger). */
+.entry-list-enter-active,
+.entry-list-move {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.entry-list-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.entry-list-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.96);
+}
+
+.entry-list-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary,
+  .btn-ghost,
+  .card-interactive,
+  .entry-list-enter-active,
+  .entry-list-leave-active,
+  .entry-list-move {
+    transition: none !important;
+  }
+
+  .btn-primary:hover:not(:disabled),
+  .btn-primary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled),
+  .card-interactive:hover,
+  .card-interactive:active,
+  .entry-list-enter-from,
+  .entry-list-leave-to {
+    transform: none !important;
   }
 }

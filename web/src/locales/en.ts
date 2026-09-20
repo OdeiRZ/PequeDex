@@ -102,7 +102,7 @@ export default {
       'Your water broke. Head to the hospital when your midwife or doctor tells you to.',
     breakInfoTitle: 'Water breaking',
     breakInfoLabel: 'Date and time',
-    breakReset: 'Reset',
+    breakReset: 'False alarm',
     toastUpdated: 'Saved.',
     toastDeleted: 'Contraction deleted.',
     toastReset: 'Reset.',

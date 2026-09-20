@@ -103,7 +103,7 @@ export default {
       'Tu bolsa de aguas se rompió. Ve al hospital cuando tu matrona o médico te lo indique.',
     breakInfoTitle: 'Rotura de bolsa de aguas',
     breakInfoLabel: 'Fecha y hora',
-    breakReset: 'Restablecer',
+    breakReset: 'Falsa alarma',
     toastUpdated: 'Guardado.',
     toastDeleted: 'Contracción eliminada.',
     toastReset: 'Restablecido.',

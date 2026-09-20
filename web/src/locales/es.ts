@@ -111,6 +111,9 @@ export default {
       growth: 'No se ha podido eliminar la medida.',
       milestone: 'No se ha podido eliminar el hito.',
     },
+    babySwitcher: {
+      unnamed: 'Bebé sin nombre',
+    },
     babySettingsButton: 'Sexo / fecha de nacimiento',
     babySettings: {
       sexLabel: 'Sexo (opcional, solo para el percentil de crecimiento)',
@@ -119,6 +122,7 @@ export default {
       sexGirl: 'Niña',
       birthDate: 'Fecha de nacimiento (opcional)',
       toastSaved: 'Guardado.',
+      addAnotherBaby: 'Añadir otro bebé',
       leaveBaby: 'Abandonar este bebé',
       leaveConfirm:
         '¿Seguro que quieres dejar de ser cuidador de este bebé? Necesitarás el código de invitación para volver a unirte.',

@@ -110,6 +110,9 @@ export default {
       growth: 'Could not delete the measurement.',
       milestone: 'Could not delete the milestone.',
     },
+    babySwitcher: {
+      unnamed: 'Unnamed baby',
+    },
     babySettingsButton: 'Sex / date of birth',
     babySettings: {
       sexLabel: 'Sex (optional, only used for the growth percentile)',
@@ -118,6 +121,7 @@ export default {
       sexGirl: 'Girl',
       birthDate: 'Date of birth (optional)',
       toastSaved: 'Saved.',
+      addAnotherBaby: 'Add another baby',
       leaveBaby: 'Leave this baby',
       leaveConfirm:
         "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",

@@ -242,6 +242,7 @@ async function onCreateBaby() {
   try {
     await babies.create({ name: babyName.value || undefined, due_date: dueDate.value || undefined })
     toast.show(t('dashboard.onboarding.toastCreated'))
+    closeSheet()
     await loadBabyData()
   } catch {
     createError.value = t('dashboard.onboarding.createError')
@@ -261,12 +262,20 @@ async function onJoinBaby() {
   try {
     await babies.join(inviteCodeInput.value)
     toast.show(t('dashboard.onboarding.toastJoined'))
+    closeSheet()
     await loadBabyData()
   } catch {
     joinError.value = t('dashboard.onboarding.joinError')
   } finally {
     joiningBaby.value = false
   }
+}
+
+async function onSwitchBaby(id: number) {
+  if (id === babies.current?.id) return
+
+  babies.switchBaby(id)
+  await loadBabyData()
 }
 
 // --- Sincronización entre cuidadores: sondeo periódico de la línea
@@ -297,7 +306,7 @@ onUnmounted(() => {
 // --- Hojas inferiores: una por cada botón de la barra de acciones, más
 // el ajuste de sexo/fecha de nacimiento del bebé. ---
 
-type Sheet = Category | 'settings' | null
+type Sheet = Category | 'settings' | 'addBaby' | null
 const activeSheet = ref<Sheet>(null)
 
 // The API returns datetimes as UTC ISO strings (app.timezone is UTC) -
@@ -365,6 +374,12 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     babyBirthDate.value = babies.current?.birth_date ?? ''
     confirmingLeave.value = false
     leaveError.value = null
+  } else if (sheet === 'addBaby') {
+    babyName.value = ''
+    dueDate.value = ''
+    createError.value = null
+    inviteCodeInput.value = ''
+    joinError.value = null
   }
 
   activeSheet.value = sheet
@@ -1396,6 +1411,23 @@ const feedPredictionLabel = computed(() => {
 
     <template v-else>
       <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-8">
+        <div v-if="babies.babies.length > 1" class="-mb-2 flex gap-2 overflow-x-auto pb-1">
+          <button
+            v-for="baby in babies.babies"
+            :key="baby.id"
+            type="button"
+            class="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-[transform,background-color,color] duration-150 active:scale-95"
+            :class="
+              baby.id === babies.current?.id
+                ? 'bg-brand text-brand-ink shadow-sm'
+                : 'bg-surface text-text-muted hover:text-text'
+            "
+            @click="onSwitchBaby(baby.id)"
+          >
+            {{ baby.name || t('dashboard.babySwitcher.unnamed') }}
+          </button>
+        </div>
+
         <div
           class="relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
@@ -1986,6 +2018,13 @@ const feedPredictionLabel = computed(() => {
 
         <div class="mt-6 flex flex-col gap-3 border-t border-border pt-5">
           <button
+            type="button"
+            class="text-center text-sm font-semibold text-brand"
+            @click="openSheet('addBaby')"
+          >
+            {{ t('dashboard.babySettings.addAnotherBaby') }}
+          </button>
+          <button
             v-if="!confirmingLeave"
             type="button"
             class="text-center text-sm font-semibold text-danger"
@@ -2017,6 +2056,62 @@ const feedPredictionLabel = computed(() => {
             </div>
           </template>
         </div>
+      </BottomSheet>
+
+      <BottomSheet :open="activeSheet === 'addBaby'" @update:open="closeSheet">
+        <h3 class="mb-4 font-display text-base font-bold">
+          {{ t('dashboard.babySettings.addAnotherBaby') }}
+        </h3>
+
+        <section class="flex flex-col gap-4">
+          <h4 class="font-display text-sm font-bold">
+            {{ t('dashboard.onboarding.createTitle') }}
+          </h4>
+          <form class="flex flex-col gap-4" @submit.prevent="onCreateBaby">
+            <div>
+              <label for="add-baby-name" class="field-label">{{
+                t('dashboard.onboarding.name')
+              }}</label>
+              <input id="add-baby-name" v-model="babyName" type="text" class="field-input" />
+            </div>
+            <div>
+              <label for="add-due-date" class="field-label">{{
+                t('dashboard.onboarding.dueDate')
+              }}</label>
+              <input id="add-due-date" v-model="dueDate" type="date" class="field-input" />
+            </div>
+            <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
+              {{ createError }}
+            </p>
+            <button type="submit" :disabled="creatingBaby" class="btn-primary">
+              {{ t('dashboard.onboarding.create') }}
+            </button>
+          </form>
+        </section>
+
+        <section class="mt-6 flex flex-col gap-4 border-t border-border pt-5">
+          <h4 class="font-display text-sm font-bold">{{ t('dashboard.onboarding.joinTitle') }}</h4>
+          <form class="flex flex-col gap-4" @submit.prevent="onJoinBaby">
+            <div>
+              <label for="add-invite-code" class="field-label">{{
+                t('dashboard.onboarding.inviteCode')
+              }}</label>
+              <input
+                id="add-invite-code"
+                v-model="inviteCodeInput"
+                type="text"
+                required
+                class="field-input uppercase tracking-widest"
+              />
+            </div>
+            <p v-if="joinError" role="alert" class="text-sm font-medium text-danger">
+              {{ joinError }}
+            </p>
+            <button type="submit" :disabled="joiningBaby" class="btn-primary">
+              {{ t('dashboard.onboarding.join') }}
+            </button>
+          </form>
+        </section>
       </BottomSheet>
     </template>
   </template>

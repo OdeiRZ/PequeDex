@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiClient } from '@/lib/api'
+import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
 
 export type BabySex = 'nino' | 'nina'
 
@@ -158,6 +159,10 @@ interface UpdateBabyPayload {
 
 interface BabiesState {
   current: Baby | null
+  /** Every baby this caregiver has - almost always just one, but a second
+   * pregnancy while an older child is already being tracked means more
+   * than one at once. `current` is always one of these (or null). */
+  babies: Baby[]
   timeline: TimelineEntry[]
   growthMeasurements: GrowthMeasurement[]
   milestones: Milestone[]
@@ -169,6 +174,7 @@ interface BabiesState {
 export const useBabiesStore = defineStore('babies', {
   state: (): BabiesState => ({
     current: null,
+    babies: [],
     timeline: [],
     growthMeasurements: [],
     milestones: [],
@@ -178,33 +184,69 @@ export const useBabiesStore = defineStore('babies', {
   }),
 
   actions: {
-    /** Loads the user's own baby, if any - there's normally at most one. */
+    /** Loads every baby this caregiver has, and picks which one is
+     * "current" - the previously-active one if it's still among them
+     * (e.g. after a second baby was added elsewhere), otherwise the
+     * first. */
     async fetchCurrent() {
       const { data } = await apiClient.get('/babies')
-      this.current = data.data[0] ?? null
+      this.babies = data.data
+
+      const storedId = getStoredActiveBabyId()
+      this.current = this.babies.find((baby) => baby.id === storedId) ?? this.babies[0] ?? null
+      if (this.current) {
+        storeActiveBabyId(this.current.id)
+      }
+    },
+
+    /** Switches which already-loaded baby is shown - the caller (e.g.
+     * DashboardView) still has to reload baby-scoped data (timeline,
+     * predictions...) same as after create()/join(), since those belong
+     * to whichever baby was current at the time they were fetched. */
+    switchBaby(id: number) {
+      const baby = this.babies.find((b) => b.id === id)
+      if (!baby) return
+
+      this.current = baby
+      storeActiveBabyId(baby.id)
     },
 
     async create(payload: { name?: string; due_date?: string }) {
       const { data } = await apiClient.post('/babies', payload)
+      this.babies.push(data.data)
       this.current = data.data
+      storeActiveBabyId(data.data.id)
     },
 
     async join(inviteCode: string) {
       const { data } = await apiClient.post('/babies/join', { invite_code: inviteCode })
+      if (!this.babies.some((baby) => baby.id === data.data.id)) {
+        this.babies.push(data.data)
+      }
       this.current = data.data
+      storeActiveBabyId(data.data.id)
     },
 
     async updateBaby(payload: UpdateBabyPayload) {
       const { data } = await apiClient.put(`/babies/${this.current!.id}`, payload)
       this.current = data.data
+      this.babies = this.babies.map((baby) => (baby.id === data.data.id ? data.data : baby))
     },
 
     /** Unlinks the current user from the baby - the reverse of join(). The
      * backend rejects this as the last remaining caregiver (422), leaving
-     * `current` untouched in that case. */
+     * `current` untouched in that case. Falls back to another already-
+     * loaded baby, if the caregiver still has one, instead of always
+     * dropping to the onboarding screen. */
     async leave() {
-      await apiClient.delete(`/babies/${this.current!.id}/leave`)
-      this.current = null
+      const leftId = this.current!.id
+      await apiClient.delete(`/babies/${leftId}/leave`)
+
+      this.babies = this.babies.filter((baby) => baby.id !== leftId)
+      this.current = this.babies[0] ?? null
+      if (this.current) {
+        storeActiveBabyId(this.current.id)
+      }
     },
 
     async regenerateInviteCode() {
@@ -214,6 +256,7 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.post(`/babies/${this.current.id}/invite-code`)
       this.current = data.data
+      this.babies = this.babies.map((baby) => (baby.id === data.data.id ? data.data : baby))
     },
 
     async fetchTimeline() {

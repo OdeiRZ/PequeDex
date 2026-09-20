@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Soporte real para varios bebés por cuidador (p. ej. un hijo ya
+  nacido y un segundo embarazo en marcha a la vez) — el backend ya lo
+  permitía (`baby_user` es una tabla pivote de muchos-a-muchos), pero
+  el frontend siempre cogía el primero de la lista y no había forma de
+  cambiar. Ahora `babies.ts` guarda la lista completa y cuál está
+  activo, persistido en `localStorage` (`pequedex_active_baby`) para
+  que sobreviva a un recargo de página. Un selector de chips aparece
+  sobre la cabecera solo cuando hay más de un bebé (cero ruido visual
+  para el caso normal de uno solo), y "Añadir otro bebé" desde los
+  ajustes del bebé actual abre los mismos formularios de crear/unirse
+  del arranque inicial, ahora también disponibles con un bebé ya
+  activo. Al abandonar un bebé, cae al siguiente que quede en vez de
+  volver siempre a la pantalla de "empieza con tu bebé".
+
 - Segunda pasada de estilo, esta vez estructural en vez de solo
   micro-interacciones: `TodaySummary.vue`, una fila de estadísticas
   ("4 tomas hoy", "2h de sueño hoy", "3 pañales hoy") justo bajo la

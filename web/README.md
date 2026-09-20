@@ -65,6 +65,24 @@ porque la verificación local solo cubría los otros tres.
   pedir la lista entera. `createMilestone()` construye un `FormData` a
   mano en vez de mandar JSON porque la foto es un archivo real, no una
   URL.
+- **Varios bebés por cuidador** (`babies.ts`, `src/lib/activeBaby.ts`)
+  — el backend ya soportaba esto (`baby_user` es muchos-a-muchos), el
+  hueco estaba en el frontend: `fetchCurrent()` cogía siempre
+  `data[0]`. Ahora guarda la lista completa en `babies` y cuál está
+  activo en `current`, restaurado desde `localStorage`
+  (`pequedex_active_baby`, mismo patrón que la preferencia de idioma en
+  `i18n.ts`) si ese bebé sigue entre los suyos - no siempre el primero,
+  por si el orden cambia. `switchBaby()` solo cambia `current`; quien
+  llama (`onSwitchBaby()` en `DashboardView.vue`) es responsable de
+  recargar los datos propios del bebé (`loadBabyData()`), igual que ya
+  hacía tras `create()`/`join()`. El selector en sí
+  (`DashboardView.vue`, fila de chips sobre la cabecera) solo se
+  renderiza con más de un bebé — cero cambio visual para el caso normal
+  de uno solo. "Añadir otro bebé" (en los ajustes del bebé activo) abre
+  una hoja con los mismos formularios de crear/unirse del onboarding
+  inicial (`onCreateBaby()`/`onJoinBaby()` reutilizados tal cual, con un
+  `closeSheet()` añadido que no hace nada cuando se llaman desde la
+  pantalla de onboarding, donde no hay ninguna hoja abierta).
 - `src/views/DashboardView.vue` — onboarding (crear un bebé o unirse con
   código) cuando el usuario no tiene ninguno todavía, y si ya lo tiene:
   botones de registro rápido (toma/sueño/pañal/medida/hito, con la hora

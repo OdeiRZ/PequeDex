@@ -20,9 +20,19 @@ const baby = {
   invite_code: 'ABCD1234',
 }
 
+const secondBaby = {
+  id: 2,
+  name: 'Segundo',
+  due_date: null,
+  birth_date: '2024-01-10',
+  sex: null,
+  invite_code: 'EFGH5678',
+}
+
 describe('useBabiesStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.clear()
     vi.mocked(apiClient.get).mockReset()
     vi.mocked(apiClient.post).mockReset()
     vi.mocked(apiClient.put).mockReset()
@@ -45,6 +55,37 @@ describe('useBabiesStore', () => {
     await store.fetchCurrent()
 
     expect(store.current).toBeNull()
+  })
+
+  it('loads every baby into `babies`, defaulting current to the first', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [baby, secondBaby] } })
+    const store = useBabiesStore()
+
+    await store.fetchCurrent()
+
+    expect(store.babies).toEqual([baby, secondBaby])
+    expect(store.current).toEqual(baby)
+  })
+
+  it('restores the previously-active baby instead of always the first', async () => {
+    localStorage.setItem('pequedex_active_baby', '2')
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [baby, secondBaby] } })
+    const store = useBabiesStore()
+
+    await store.fetchCurrent()
+
+    expect(store.current).toEqual(secondBaby)
+  })
+
+  it('switches the current baby among the already-loaded ones', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [baby, secondBaby] } })
+    const store = useBabiesStore()
+    await store.fetchCurrent()
+
+    store.switchBaby(2)
+
+    expect(store.current).toEqual(secondBaby)
+    expect(localStorage.getItem('pequedex_active_baby')).toBe('2')
   })
 
   it('creates a baby', async () => {
@@ -136,6 +177,19 @@ describe('useBabiesStore', () => {
 
     expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/leave')
     expect(store.current).toBeNull()
+  })
+
+  it('falls back to another already-loaded baby when leaving, instead of always going to null', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [baby, secondBaby] } })
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({})
+    const store = useBabiesStore()
+    await store.fetchCurrent()
+
+    await store.leave()
+
+    expect(store.babies).toEqual([secondBaby])
+    expect(store.current).toEqual(secondBaby)
+    expect(localStorage.getItem('pequedex_active_baby')).toBe('2')
   })
 
   it('updates the baby (sex/birth_date)', async () => {

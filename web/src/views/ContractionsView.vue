@@ -250,7 +250,7 @@ async function onExportPdf() {
 </script>
 
 <template>
-  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-8">
+  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-28">
     <div class="flex items-center justify-between">
       <RouterLink
         :to="{ name: 'dashboard' }"
@@ -334,10 +334,35 @@ async function onExportPdf() {
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5">
+      <ContractionTimeline
+        v-if="babies.contractions.length > 0"
+        :contractions="babies.contractions"
+        :date-locale="dateLocale"
+        :now="now"
+        @edit="openEditSheet"
+      />
+      <p
+        v-else
+        class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
+      >
+        {{ t('contractions.empty') }}
+      </p>
+    </template>
+
+    <!-- Floating over the timeline, pinned to the bottom of the screen -
+         same spot as the reference app's own start/stop and water-break
+         buttons - not inline above the list. Teleported to <body>, same
+         technique as BottomSheet.vue, so a `fixed` position isn't at the
+         mercy of some ancestor's `transform` turning it into a
+         containing block. -->
+    <Teleport v-if="!loading && !loadError" to="body">
+      <div
+        class="fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-md items-center gap-2.5 border-t border-border bg-bg/95 px-4 pt-3 backdrop-blur"
+        style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
+      >
         <button
           type="button"
-          class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 border-border px-3 py-2 text-text-muted"
+          class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 border-border bg-surface px-3 py-2 text-text-muted"
           @click="onDropletClick"
         >
           <svg
@@ -407,21 +432,7 @@ async function onExportPdf() {
           {{ activeContraction ? t('contractions.stop') : t('contractions.start') }}
         </button>
       </div>
-
-      <ContractionTimeline
-        v-if="babies.contractions.length > 0"
-        :contractions="babies.contractions"
-        :date-locale="dateLocale"
-        :now="now"
-        @edit="openEditSheet"
-      />
-      <p
-        v-else
-        class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
-      >
-        {{ t('contractions.empty') }}
-      </p>
-    </template>
+    </Teleport>
 
     <BottomSheet :open="activeSheet === 'editContraction'" @update:open="closeSheet">
       <h3 class="mb-4 font-display text-base font-bold">{{ t('contractions.editTitle') }}</h3>

@@ -103,16 +103,16 @@ const rows = computed<Row[]>(() => {
         </span>
       </li>
 
-      <li class="flex gap-2">
-        <div
-          class="w-11 shrink-0 pt-2.5 text-right text-xs font-semibold tabular-nums text-text-muted"
-        >
-          {{ row.timeLabel }}
+      <li class="flex items-start gap-2.5">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-end pr-0.5">
+          <span class="text-right text-sm font-bold tabular-nums text-text-muted">
+            {{ row.timeLabel }}
+          </span>
         </div>
 
         <div class="flex flex-col items-center">
           <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sleep text-xs font-bold text-brand-ink"
+            class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sleep text-base font-bold text-brand-ink"
           >
             {{ row.number }}
           </span>
@@ -122,7 +122,7 @@ const rows = computed<Row[]>(() => {
         <div class="min-w-0 flex-1 pb-4">
           <button
             type="button"
-            class="flex w-full items-center gap-3 rounded-full border-2 px-4 py-3 text-left transition-colors"
+            class="flex h-12 w-full items-center gap-3 rounded-full border-2 px-4 text-left transition-colors"
             :class="
               row.isRunning
                 ? 'border-brand bg-transparent'
@@ -131,13 +131,13 @@ const rows = computed<Row[]>(() => {
             @click="$emit('edit', row.contraction.id)"
           >
             <span
-              class="font-display text-base font-bold tabular-nums"
+              class="text-sm font-semibold tabular-nums"
               :class="row.isRunning ? 'text-brand' : ''"
             >
               {{ row.durationLabel }}
             </span>
 
-            <span class="ml-auto flex shrink-0 items-center gap-2">
+            <span class="ml-auto flex shrink-0 items-center gap-1.5">
               <span class="flex gap-0.5">
                 <svg
                   v-for="bolt in 3"
@@ -148,14 +148,14 @@ const rows = computed<Row[]>(() => {
                   stroke-width="1.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="h-3.5 w-3.5"
+                  class="h-3 w-3"
                   :class="bolt <= row.contraction.intensity + 1 ? 'text-milestone' : 'text-border'"
                 >
                   <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
                 </svg>
               </span>
 
-              <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-text-muted">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-text-muted">
                 <circle cx="12" cy="5" r="1.6" />
                 <circle cx="12" cy="12" r="1.6" />
                 <circle cx="12" cy="19" r="1.6" />

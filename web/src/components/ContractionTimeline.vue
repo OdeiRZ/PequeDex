@@ -116,7 +116,7 @@ const rows = computed<Row[]>(() => {
           >
             {{ row.number }}
           </span>
-          <span v-if="index < rows.length - 1" class="w-1 flex-1 rounded-full bg-border"></span>
+          <span v-if="index < rows.length - 1" class="w-2 flex-1 rounded-full bg-border"></span>
         </div>
 
         <div class="min-w-0 flex-1 pb-4">

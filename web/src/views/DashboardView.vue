@@ -1229,35 +1229,37 @@ const sleepPredictionLabel = computed(() => {
         <p class="mb-3 text-xs text-text-muted">
           {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
         </p>
-        <ul class="flex flex-col gap-2.5">
-          <li
+        <div class="flex flex-wrap gap-2.5">
+          <button
             v-for="option in actionBarToggleOptions"
             :key="option.category"
-            class="flex items-center gap-3"
+            type="button"
+            :aria-pressed="actionBarSelection.includes(option.category)"
+            :aria-label="option.label"
+            :disabled="
+              savingActionBarCategory !== null ||
+              (actionBarSelection.includes(option.category) &&
+                actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES)
+            "
+            class="flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[0.65rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            :class="
+              actionBarSelection.includes(option.category) ? 'text-text' : 'text-text-muted'
+            "
+            @click="toggleActionBarCategory(option.category)"
           >
-            <input
-              :id="`action-bar-${option.category}`"
-              type="checkbox"
-              class="h-4 w-4 shrink-0 rounded accent-brand"
-              :checked="actionBarSelection.includes(option.category)"
-              :disabled="
-                savingActionBarCategory !== null ||
-                (actionBarSelection.includes(option.category) &&
-                  actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES)
+            <span
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-full ring-2 ring-transparent transition-colors"
+              :class="
+                actionBarSelection.includes(option.category)
+                  ? [categoryText[option.category], categoryBg[option.category], 'ring-current/25']
+                  : 'bg-surface-sunken text-text-muted'
               "
-              @change="toggleActionBarCategory(option.category)"
-            />
-            <label :for="`action-bar-${option.category}`" class="flex items-center gap-2 text-sm">
-              <span
-                class="grid h-6 w-6 shrink-0 place-items-center rounded-full"
-                :class="[categoryText[option.category], categoryBg[option.category]]"
-              >
-                <CategoryIcon :category="option.category" class="h-3.5 w-3.5" />
-              </span>
-              {{ option.label }}
-            </label>
-          </li>
-        </ul>
+            >
+              <CategoryIcon :category="option.category" class="h-5 w-5" />
+            </span>
+            {{ option.label }}
+          </button>
+        </div>
       </div>
 
       <form

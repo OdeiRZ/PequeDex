@@ -28,7 +28,13 @@ import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
-import { categoryBg, categoryText, type Category } from '@/lib/category'
+import {
+  ALL_CATEGORIES,
+  categoryBg,
+  categoryText,
+  MIN_ACTION_BAR_CATEGORIES,
+  type Category,
+} from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { getBabyAge } from '@/lib/babyAge'
 import { storeLocale } from '@/i18n'
@@ -375,6 +381,7 @@ watch(
     currentPassword.value = ''
     newPassword.value = ''
     newPasswordConfirmation.value = ''
+    actionBarSelection.value = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
   },
 )
 
@@ -382,13 +389,59 @@ function closeSheet() {
   activeSheet.value = null
 }
 
-const actionBarItems = computed(() => [
+// null en el usuario = las 5 visibles (valor por defecto, sin
+// personalizar) - el mismo significado que usa el backend.
+const enabledCategories = computed<Category[]>(
+  () => auth.user?.action_bar_categories ?? [...ALL_CATEGORIES],
+)
+
+const actionBarItems = computed(() => {
+  const allItems: { category: Category; label: string }[] = [
+    { category: 'feed', label: t('dashboard.quickLog.feed') },
+    { category: 'sleep', label: t('dashboard.quickLog.sleep') },
+    { category: 'diaper', label: t('dashboard.quickLog.diaper') },
+    { category: 'growth', label: t('dashboard.quickLog.growth') },
+    { category: 'milestone', label: t('dashboard.quickLog.milestone') },
+  ]
+  return allItems.filter((item) => enabledCategories.value.includes(item.category))
+})
+
+// --- Ajustes: barra de accesos personalizable ---
+
+const actionBarSelection = ref<Category[]>([...ALL_CATEGORIES])
+const savingActionBarCategory = ref<Category | null>(null)
+
+const actionBarToggleOptions = computed(() => [
   { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
   { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
   { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
   { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
   { category: 'milestone' as const, label: t('dashboard.quickLog.milestone') },
 ])
+
+// Guardado al vuelo (como el selector de idioma), no un formulario con
+// botón "Guardar" aparte - cada checkbox es su propio cambio. Si al
+// desmarcar quedarían menos de MIN_ACTION_BAR_CATEGORIES, el checkbox se
+// deshabilita en la plantilla en vez de dejar que el usuario llegue al
+// error 422 del backend.
+async function toggleActionBarCategory(category: Category) {
+  const previous = actionBarSelection.value
+  const isSelected = previous.includes(category)
+  if (isSelected && previous.length <= MIN_ACTION_BAR_CATEGORIES) return
+
+  const next = isSelected ? previous.filter((c) => c !== category) : [...previous, category]
+
+  actionBarSelection.value = next
+  savingActionBarCategory.value = category
+  try {
+    await auth.updateActionBarCategories(next)
+  } catch {
+    actionBarSelection.value = previous
+    toast.show(t('profile.actionBar.saveError'))
+  } finally {
+    savingActionBarCategory.value = null
+  }
+}
 
 // --- Registro rápido: toma ---
 
@@ -1171,6 +1224,42 @@ const sleepPredictionLabel = computed(() => {
         />
       </div>
 
+      <div class="mt-6 border-t border-border pt-5">
+        <span class="field-label">{{ t('profile.actionBar.title') }}</span>
+        <p class="mb-3 text-xs text-text-muted">
+          {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
+        </p>
+        <ul class="flex flex-col gap-2.5">
+          <li
+            v-for="option in actionBarToggleOptions"
+            :key="option.category"
+            class="flex items-center gap-3"
+          >
+            <input
+              :id="`action-bar-${option.category}`"
+              type="checkbox"
+              class="h-4 w-4 shrink-0 rounded accent-brand"
+              :checked="actionBarSelection.includes(option.category)"
+              :disabled="
+                savingActionBarCategory !== null ||
+                (actionBarSelection.includes(option.category) &&
+                  actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES)
+              "
+              @change="toggleActionBarCategory(option.category)"
+            />
+            <label :for="`action-bar-${option.category}`" class="flex items-center gap-2 text-sm">
+              <span
+                class="grid h-6 w-6 shrink-0 place-items-center rounded-full"
+                :class="[categoryText[option.category], categoryBg[option.category]]"
+              >
+                <CategoryIcon :category="option.category" class="h-3.5 w-3.5" />
+              </span>
+              {{ option.label }}
+            </label>
+          </li>
+        </ul>
+      </div>
+
       <form
         class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
         @submit.prevent="onSubmitPassword"
@@ -1368,7 +1457,7 @@ const sleepPredictionLabel = computed(() => {
           </div>
         </div>
 
-        <section class="flex flex-col gap-2">
+        <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.milestones.title') }}</h2>
           <MilestoneStories
             :milestones="babies.milestones"
@@ -1378,7 +1467,11 @@ const sleepPredictionLabel = computed(() => {
         </section>
 
         <DailyRhythm :timeline="babies.timeline" />
-        <WeeklySleep :sleeps="babies.recentSleeps" :date-locale="dateLocale" />
+        <WeeklySleep
+          v-if="enabledCategories.includes('sleep')"
+          :sleeps="babies.recentSleeps"
+          :date-locale="dateLocale"
+        />
 
         <section class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.timeline.title') }}</h2>
@@ -1404,7 +1497,10 @@ const sleepPredictionLabel = computed(() => {
           </p>
         </section>
 
-        <section class="card flex items-start gap-3 p-4">
+        <section
+          v-if="enabledCategories.includes('sleep')"
+          class="card flex items-start gap-3 p-4"
+        >
           <span
             class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
             :class="[categoryText.sleep, categoryBg.sleep]"
@@ -1419,7 +1515,7 @@ const sleepPredictionLabel = computed(() => {
           </div>
         </section>
 
-        <section class="flex flex-col gap-2">
+        <section v-if="enabledCategories.includes('growth')" class="flex flex-col gap-2">
           <h2 class="font-display text-base font-bold">{{ t('dashboard.growth.title') }}</h2>
           <ul class="flex flex-col gap-2">
             <EntryCard

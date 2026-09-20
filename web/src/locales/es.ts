@@ -276,5 +276,10 @@ export default {
     toastAvatarSaved: 'Foto actualizada.',
     toastAvatarRemoved: 'Foto eliminada.',
     avatarError: 'No se ha podido actualizar la foto.',
+    actionBar: {
+      title: 'Accesos de la barra principal',
+      description: 'Elige qué accesos rápidos quieres ver abajo. Mínimo {min}.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

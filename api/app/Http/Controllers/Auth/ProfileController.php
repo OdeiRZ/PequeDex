@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
@@ -25,6 +26,16 @@ class ProfileController extends Controller
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
         ]);
+
+        return response()->json($user);
+    }
+
+    public function updateActionBarCategories(UpdateActionBarCategoriesRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['action_bar_categories' => $request->validated('action_bar_categories')]);
 
         return response()->json($user);
     }

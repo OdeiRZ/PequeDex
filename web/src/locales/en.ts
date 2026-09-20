@@ -274,5 +274,10 @@ export default {
     toastAvatarSaved: 'Photo updated.',
     toastAvatarRemoved: 'Photo removed.',
     avatarError: 'Could not update the photo.',
+    actionBar: {
+      title: 'Main bar shortcuts',
+      description: 'Choose which quick actions to show at the bottom. Minimum {min}.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

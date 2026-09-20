@@ -9,6 +9,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Barra de accesos rápidos personalizable desde "Tu cuenta": cada
+  usuario elige qué categorías (toma, sueño, pañal, medida, hito) quiere
+  ver en la barra inferior del dashboard, con un mínimo de 3 — al
+  desmarcar una categoría también desaparecen sus bloques asociados
+  (p. ej. "Sueño esta semana" y la predicción si se desactiva sueño,
+  la lista de medidas si se desactiva crecimiento). Guardado al vuelo,
+  igual que el selector de idioma. Nueva columna `action_bar_categories`
+  (JSON nullable, `null` = las 5 visibles) en `users`.
+
 - Monitorización de errores en producción vía Sentry (plan gratuito,
   `sentry/sentry-laravel`), cableada en `bootstrap/app.php`
   (`Sentry\Laravel\Integration::handles()`) — mismo patrón ya en marcha

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiClient, clearStoredToken, getStoredToken, storeToken } from '@/lib/api'
+import type { Category } from '@/lib/category'
 import { useBabiesStore } from './babies'
 
 export interface User {
@@ -7,6 +8,8 @@ export interface User {
   name: string
   email: string
   avatar: string | null
+  // null = las 5 categorias visibles (valor por defecto, sin personalizar).
+  action_bar_categories: Category[] | null
 }
 
 interface RegisterPayload {
@@ -83,6 +86,11 @@ export const useAuthStore = defineStore('auth', {
 
     async updateProfile(payload: UpdateProfilePayload) {
       const { data } = await apiClient.put('/user', payload)
+      this.user = data
+    },
+
+    async updateActionBarCategories(categories: Category[]) {
+      const { data } = await apiClient.put('/user/action-bar', { action_bar_categories: categories })
       this.user = data
     },
 

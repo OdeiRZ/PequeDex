@@ -11,7 +11,13 @@ vi.mock('@/lib/api', async (importOriginal) => {
   }
 })
 
-const user = { id: 1, name: 'Odei', email: 'odei@example.com', avatar: null }
+const user = {
+  id: 1,
+  name: 'Odei',
+  email: 'odei@example.com',
+  avatar: null,
+  action_bar_categories: null,
+}
 
 describe('useAuthStore', () => {
   beforeEach(() => {
@@ -156,6 +162,22 @@ describe('useAuthStore', () => {
     await store.uploadAvatar(new File(['x'], 'yo.jpg', { type: 'image/jpeg' }))
 
     expect(store.user).toEqual(withAvatar)
+  })
+
+  it('updates the action bar categories, replacing the stored user', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    const updated = { ...user, action_bar_categories: ['feed', 'diaper', 'growth'] }
+    vi.mocked(apiClient.put).mockResolvedValue({ data: updated })
+
+    await store.updateActionBarCategories(['feed', 'diaper', 'growth'])
+
+    expect(store.user).toEqual(updated)
+    expect(apiClient.put).toHaveBeenCalledWith('/user/action-bar', {
+      action_bar_categories: ['feed', 'diaper', 'growth'],
+    })
   })
 
   it('removes the avatar locally after the request succeeds', async () => {

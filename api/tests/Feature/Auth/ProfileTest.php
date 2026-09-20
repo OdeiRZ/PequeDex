@@ -100,9 +100,36 @@ it('removes the avatar', function () {
     expect($user->refresh()->avatar)->toBeNull();
 });
 
+it('updates the action bar categories', function () {
+    $user = actingAsUser();
+
+    $this->putJson('/api/user/action-bar', [
+        'action_bar_categories' => ['feed', 'diaper', 'growth'],
+    ])->assertOk()->assertJsonPath('action_bar_categories', ['feed', 'diaper', 'growth']);
+
+    expect($user->refresh()->action_bar_categories)->toBe(['feed', 'diaper', 'growth']);
+});
+
+it('rejects fewer than 3 action bar categories', function () {
+    actingAsUser();
+
+    $this->putJson('/api/user/action-bar', [
+        'action_bar_categories' => ['feed', 'sleep'],
+    ])->assertUnprocessable()->assertJsonValidationErrors('action_bar_categories');
+});
+
+it('rejects an unknown action bar category', function () {
+    actingAsUser();
+
+    $this->putJson('/api/user/action-bar', [
+        'action_bar_categories' => ['feed', 'sleep', 'not-a-real-category'],
+    ])->assertUnprocessable()->assertJsonValidationErrors('action_bar_categories.2');
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
     $this->postJson('/api/user/avatar', [])->assertUnauthorized();
     $this->deleteJson('/api/user/avatar')->assertUnauthorized();
+    $this->putJson('/api/user/action-bar', ['action_bar_categories' => ['feed', 'sleep', 'diaper']])->assertUnauthorized();
 });

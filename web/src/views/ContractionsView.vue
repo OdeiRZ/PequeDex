@@ -362,24 +362,28 @@ async function onExportPdf() {
       >
         <button
           type="button"
-          class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 border-border bg-surface px-3 py-2 text-text-muted"
+          class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 px-4 py-2.5 shadow-sm transition-colors"
+          :class="
+            babies.current?.water_broke_at
+              ? 'border-brand-teal bg-brand-teal text-brand-ink'
+              : 'border-brand-teal bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20'
+          "
           @click="onDropletClick"
         >
           <svg
             viewBox="0 0 24 24"
             :fill="babies.current?.water_broke_at ? 'currentColor' : 'none'"
             stroke="currentColor"
-            stroke-width="1.75"
+            stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="h-5 w-5"
-            :class="babies.current?.water_broke_at ? 'text-sleep' : ''"
+            class="h-7 w-7"
           >
             <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
           </svg>
           <span
             v-if="babies.current?.water_broke_at"
-            class="text-[0.6rem] leading-tight tabular-nums"
+            class="text-[0.65rem] font-bold leading-tight tabular-nums"
           >
             {{
               new Date(babies.current.water_broke_at).toLocaleTimeString(dateLocale, {
@@ -390,7 +394,7 @@ async function onExportPdf() {
           </span>
           <span
             v-if="babies.current?.water_broke_at"
-            class="text-[0.6rem] leading-tight tabular-nums"
+            class="text-[0.65rem] font-bold leading-tight tabular-nums"
           >
             {{
               new Date(babies.current.water_broke_at).toLocaleDateString(dateLocale, {

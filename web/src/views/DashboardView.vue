@@ -31,6 +31,7 @@ import WeeklySleep from '@/components/WeeklySleep.vue'
 import {
   ALL_CATEGORIES,
   categoryBg,
+  categorySolidBg,
   categoryText,
   MIN_ACTION_BAR_CATEGORIES,
   type Category,
@@ -409,7 +410,6 @@ const actionBarItems = computed(() => {
 // --- Ajustes: barra de accesos personalizable ---
 
 const actionBarSelection = ref<Category[]>([...ALL_CATEGORIES])
-const savingActionBarCategory = ref<Category | null>(null)
 
 const actionBarToggleOptions = computed(() => [
   { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
@@ -420,26 +420,32 @@ const actionBarToggleOptions = computed(() => [
 ])
 
 // Guardado al vuelo (como el selector de idioma), no un formulario con
-// botón "Guardar" aparte - cada checkbox es su propio cambio. Si al
-// desmarcar quedarían menos de MIN_ACTION_BAR_CATEGORIES, el checkbox se
-// deshabilita en la plantilla en vez de dejar que el usuario llegue al
-// error 422 del backend.
+// botón "Guardar" aparte. El toggle en sí es instantáneo (sin deshabilitar
+// nada mientras la petición está en curso - eso es lo que hacía parpadear
+// los 5 iconos en cada pulsación) y solo se deshace si el PUT falla; el
+// token descarta la respuesta de una petición ya superada por un click
+// más reciente sobre la misma categoría, para no revertir un estado que
+// el usuario ya cambió otra vez. Si al desmarcar quedarían menos de
+// MIN_ACTION_BAR_CATEGORIES, el icono se deshabilita en la plantilla en
+// vez de dejar que el usuario llegue al error 422 del backend.
+let actionBarSaveToken = 0
+
 async function toggleActionBarCategory(category: Category) {
   const previous = actionBarSelection.value
   const isSelected = previous.includes(category)
   if (isSelected && previous.length <= MIN_ACTION_BAR_CATEGORIES) return
 
   const next = isSelected ? previous.filter((c) => c !== category) : [...previous, category]
-
   actionBarSelection.value = next
-  savingActionBarCategory.value = category
+
+  const token = ++actionBarSaveToken
   try {
     await auth.updateActionBarCategories(next)
   } catch {
-    actionBarSelection.value = previous
-    toast.show(t('profile.actionBar.saveError'))
-  } finally {
-    savingActionBarCategory.value = null
+    if (token === actionBarSaveToken) {
+      actionBarSelection.value = previous
+      toast.show(t('profile.actionBar.saveError'))
+    }
   }
 }
 
@@ -1229,7 +1235,7 @@ const sleepPredictionLabel = computed(() => {
         <p class="mb-3 text-xs text-text-muted">
           {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
         </p>
-        <div class="flex flex-wrap gap-2.5">
+        <div class="flex flex-wrap gap-3">
           <button
             v-for="option in actionBarToggleOptions"
             :key="option.category"
@@ -1237,25 +1243,34 @@ const sleepPredictionLabel = computed(() => {
             :aria-pressed="actionBarSelection.includes(option.category)"
             :aria-label="option.label"
             :disabled="
-              savingActionBarCategory !== null ||
-              (actionBarSelection.includes(option.category) &&
-                actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES)
+              actionBarSelection.includes(option.category) &&
+              actionBarSelection.length <= MIN_ACTION_BAR_CATEGORIES
             "
-            class="flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[0.65rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold disabled:cursor-not-allowed"
             :class="
               actionBarSelection.includes(option.category) ? 'text-text' : 'text-text-muted'
             "
             @click="toggleActionBarCategory(option.category)"
           >
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-full ring-2 ring-transparent transition-colors"
-              :class="
-                actionBarSelection.includes(option.category)
-                  ? [categoryText[option.category], categoryBg[option.category], 'ring-current/25']
-                  : 'bg-surface-sunken text-text-muted'
-              "
-            >
-              <CategoryIcon :category="option.category" class="h-5 w-5" />
+            <span class="relative">
+              <span
+                class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90 group-disabled:shadow-none"
+                :class="
+                  actionBarSelection.includes(option.category)
+                    ? [categorySolidBg[option.category], 'border-transparent text-white']
+                    : 'border-border bg-surface text-text-muted group-hover:border-text-muted group-disabled:opacity-50'
+                "
+              >
+                <CategoryIcon :category="option.category" class="h-5 w-5" />
+              </span>
+              <span
+                v-if="actionBarSelection.includes(option.category)"
+                class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" class="h-2 w-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
             </span>
             {{ option.label }}
           </button>

@@ -26,3 +26,15 @@ export const categoryBg: Record<Category, string> = {
   growth: 'bg-growth/15',
   milestone: 'bg-milestone/15',
 }
+
+// Solid (non-tinted) background - used where a toggled-on state needs to
+// read clearly as "on" against a muted/outlined "off" state (see the
+// action-bar picker in DashboardView.vue), rather than the softer tint
+// above used for at-rest badges.
+export const categorySolidBg: Record<Category, string> = {
+  feed: 'bg-feed',
+  sleep: 'bg-sleep',
+  diaper: 'bg-diaper',
+  growth: 'bg-growth',
+  milestone: 'bg-milestone',
+}

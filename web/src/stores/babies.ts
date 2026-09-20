@@ -90,6 +90,14 @@ export interface SleepPrediction {
   prediction: { type: 'wake_up' | 'next_sleep'; at: string; based_on: string } | null
 }
 
+export interface FeedPrediction {
+  has_enough_data: boolean
+  sample_size: number
+  minimum_sample_size: number
+  average_gap_minutes: number | null
+  prediction: { type: 'next_feed'; at: string; based_on: string } | null
+}
+
 export type TimelineEntry =
   | { type: 'feed'; at: string; data: Feed }
   | { type: 'sleep'; at: string; data: Sleep }
@@ -154,6 +162,7 @@ interface BabiesState {
   growthMeasurements: GrowthMeasurement[]
   milestones: Milestone[]
   sleepPrediction: SleepPrediction | null
+  feedPrediction: FeedPrediction | null
   recentSleeps: Sleep[]
 }
 
@@ -164,6 +173,7 @@ export const useBabiesStore = defineStore('babies', {
     growthMeasurements: [],
     milestones: [],
     sleepPrediction: null,
+    feedPrediction: null,
     recentSleeps: [],
   }),
 
@@ -358,6 +368,15 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/sleep-prediction`)
       this.sleepPrediction = data.data
+    },
+
+    async fetchFeedPrediction() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/feed-prediction`)
+      this.feedPrediction = data.data
     },
 
     // `days` is a lookback window, not the number of days the chart ends

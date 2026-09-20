@@ -252,4 +252,20 @@ describe('useBabiesStore', () => {
     expect(store.sleepPrediction?.has_enough_data).toBe(false)
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/sleep-prediction')
   })
+
+  it('fetches the feed prediction for the current baby', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        data: { has_enough_data: false, sample_size: 1, minimum_sample_size: 3, prediction: null },
+      },
+    })
+    const store = useBabiesStore()
+    await store.create({})
+
+    await store.fetchFeedPrediction()
+
+    expect(store.feedPrediction?.has_enough_data).toBe(false)
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/feed-prediction')
+  })
 })

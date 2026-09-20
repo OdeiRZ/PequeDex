@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Predicción de la siguiente toma, misma idea honesta que la de sueño:
+  media móvil del hueco entre las tomas del propio bebé
+  (`FeedPatternPredictor`), sin datos inventados por debajo de 3 tomas
+  registradas. Nueva tarjeta "Toma: predicción" en el dashboard, junto
+  a la de sueño, respetando la barra de accesos personalizable (no
+  aparece si la categoría "toma" está desactivada).
+
 - Pasada de pulido visual e interactivo inspirada en LudoDex/MIRA
   MarketLens (adaptada a esta app, no copiada literal — ninguna de las
   dos usa Tailwind): toasts con icono y color por tipo

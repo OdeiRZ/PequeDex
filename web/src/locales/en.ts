@@ -221,6 +221,12 @@ export default {
       wakeUp: 'Estimated wake-up: {at}',
       nextSleep: 'Estimated next nap: {at}',
     },
+    feedPrediction: {
+      title: 'Feed: prediction',
+      insufficientData: 'Not enough feeds logged yet ({sample}/{minimum}) to estimate a pattern.',
+      noPattern: 'Not enough regularity in the schedule to estimate the next feed.',
+      nextFeed: 'Estimated next feed: {at}',
+    },
     growth: {
       title: 'Growth',
       empty: 'No measurements logged yet.',

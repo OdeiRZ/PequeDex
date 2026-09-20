@@ -223,6 +223,13 @@ export default {
       wakeUp: 'Estimación de despertar: {at}',
       nextSleep: 'Estimación de la siguiente siesta: {at}',
     },
+    feedPrediction: {
+      title: 'Toma: predicción',
+      insufficientData:
+        'Todavía no hay suficientes tomas registradas ({sample}/{minimum}) para estimar un patrón.',
+      noPattern: 'No hay suficiente regularidad en los horarios para estimar la siguiente toma.',
+      nextFeed: 'Estimación de la siguiente toma: {at}',
+    },
     growth: {
       title: 'Crecimiento',
       empty: 'Todavía no hay medidas registradas.',

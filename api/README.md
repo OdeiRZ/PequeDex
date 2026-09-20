@@ -172,6 +172,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   media), no un modelo entrenado ni una tabla de edades. Por debajo de 3
   siestas completas en el historial, devuelve `has_enough_data: false`
   en vez de una predicción inventada con tan pocos datos.
+- `app/Services/Feeds/FeedPatternPredictor.php` — misma idea que el de
+  sueño, aplicada a tomas: media móvil del hueco entre tomas del propio
+  bebé. Más simple que el de sueño porque una toma es un instante
+  (`started_at`), no un intervalo con su propia duración y un estado
+  "en curso" — solo hay una cosa que predecir (la siguiente toma), no
+  dos. Huecos de más de 8h (frente a las 6h de sueño, porque las tomas
+  suelen estar más juntas entre sí que las siestas) se descartan de la
+  media por ser casi siempre un tramo nocturno, no el ritmo real del
+  bebé.
 - `app/Http/Requests/Concerns/ValidatesNotBeforeBirth.php` — trait
   compartido por los `Store`/`UpdateRequest` de tomas, sueño, pañales,
   medidas e hitos: nada de eso tiene sentido antes de que el bebé haya

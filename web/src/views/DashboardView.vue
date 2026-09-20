@@ -73,6 +73,7 @@ async function loadBabyData() {
       babies.fetchGrowthMeasurements(),
       babies.fetchMilestones(),
       babies.fetchSleepPrediction(),
+      babies.fetchFeedPrediction(),
       babies.fetchRecentSleeps(),
     ])
   } finally {
@@ -1125,6 +1126,27 @@ const sleepPredictionLabel = computed(() => {
     ? t('dashboard.sleepPrediction.wakeUp', { at })
     : t('dashboard.sleepPrediction.nextSleep', { at })
 })
+
+// --- Predicción de patrones de toma ---
+
+const feedPredictionLabel = computed(() => {
+  const prediction = babies.feedPrediction
+
+  if (!prediction || !prediction.has_enough_data) {
+    return t('dashboard.feedPrediction.insufficientData', {
+      sample: prediction?.sample_size ?? 0,
+      minimum: prediction?.minimum_sample_size ?? 3,
+    })
+  }
+
+  if (!prediction.prediction) {
+    return t('dashboard.feedPrediction.noPattern')
+  }
+
+  const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
+
+  return t('dashboard.feedPrediction.nextFeed', { at })
+})
 </script>
 
 <template>
@@ -1516,6 +1538,21 @@ const sleepPredictionLabel = computed(() => {
           >
             {{ t('dashboard.timeline.empty') }}
           </p>
+        </section>
+
+        <section v-if="enabledCategories.includes('feed')" class="card flex items-start gap-3 p-4">
+          <span
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+            :class="[categoryText.feed, categoryBg.feed]"
+          >
+            <CategoryIcon category="feed" class="h-[1.05rem] w-[1.05rem]" />
+          </span>
+          <div>
+            <h2 class="font-display text-sm font-bold">
+              {{ t('dashboard.feedPrediction.title') }}
+            </h2>
+            <p class="text-sm text-text-muted">{{ feedPredictionLabel }}</p>
+          </div>
         </section>
 
         <section v-if="enabledCategories.includes('sleep')" class="card flex items-start gap-3 p-4">

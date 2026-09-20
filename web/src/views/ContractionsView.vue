@@ -348,11 +348,19 @@ async function onExportPdf() {
           >
             <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
           </svg>
-          <span v-if="babies.current?.water_broke_at" class="text-[0.6rem] tabular-nums">
+          <span v-if="babies.current?.water_broke_at" class="text-[0.6rem] leading-tight tabular-nums">
             {{
               new Date(babies.current.water_broke_at).toLocaleTimeString(dateLocale, {
                 hour: '2-digit',
                 minute: '2-digit',
+              })
+            }}
+          </span>
+          <span v-if="babies.current?.water_broke_at" class="text-[0.6rem] leading-tight tabular-nums">
+            {{
+              new Date(babies.current.water_broke_at).toLocaleDateString(dateLocale, {
+                day: '2-digit',
+                month: '2-digit',
               })
             }}
           </span>

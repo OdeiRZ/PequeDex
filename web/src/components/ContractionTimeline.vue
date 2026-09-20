@@ -103,7 +103,7 @@ const rows = computed<Row[]>(() => {
         </span>
       </li>
 
-      <li class="flex items-start gap-2.5">
+      <li class="flex gap-2.5">
         <div class="flex h-12 w-12 shrink-0 items-center justify-end pr-0.5">
           <span class="text-right text-sm font-bold tabular-nums text-text-muted">
             {{ row.timeLabel }}

@@ -14,7 +14,7 @@ class Baby extends Model
     /** @use HasFactory<BabyFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'due_date', 'birth_date', 'sex', 'invite_code'];
+    protected $fillable = ['name', 'due_date', 'birth_date', 'sex', 'invite_code', 'water_broke_at'];
 
     /**
      * @return array<string, string>
@@ -25,6 +25,9 @@ class Baby extends Model
             'due_date' => 'date:Y-m-d',
             'birth_date' => 'date:Y-m-d',
             'sex' => BabySex::class,
+            // Unlike due_date/birth_date, the time matters here (see
+            // ContractionsView.vue) - a plain datetime cast, not date:Y-m-d.
+            'water_broke_at' => 'datetime',
         ];
     }
 
@@ -97,5 +100,13 @@ class Baby extends Model
     public function milestones(): HasMany
     {
         return $this->hasMany(Milestone::class);
+    }
+
+    /**
+     * @return HasMany<Contraction, $this>
+     */
+    public function contractions(): HasMany
+    {
+        return $this->hasMany(Contraction::class);
     }
 }

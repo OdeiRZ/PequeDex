@@ -99,6 +99,13 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 10. ✅ Barra de accesos rápidos personalizable por cuidador (mínimo 3 de
     las 5 categorías), con los bloques del dashboard ligados a cada una
     apareciendo o no según la elección — ver `web/README.md`.
+11. ✅ Varios bebés por cuidador: selector de bebé activo, restaurado
+    entre visitas, para quien tiene más de uno vinculado a su cuenta —
+    ver `web/README.md`.
+12. ✅ Contador de contracciones (antes del parto): cronómetro con
+    estadísticas de la última hora, línea temporal con intensidad y
+    registro de rotura de bolsa de aguas, exportable a PDF — ver
+    `web/README.md`/`api/README.md`.
 
 ## Licencia
 

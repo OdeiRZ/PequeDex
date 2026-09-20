@@ -18,6 +18,7 @@ const baby = {
   birth_date: null,
   sex: null,
   invite_code: 'ABCD1234',
+  water_broke_at: null,
 }
 
 const secondBaby = {
@@ -27,6 +28,7 @@ const secondBaby = {
   birth_date: '2024-01-10',
   sex: null,
   invite_code: 'EFGH5678',
+  water_broke_at: null,
 }
 
 describe('useBabiesStore', () => {
@@ -321,5 +323,124 @@ describe('useBabiesStore', () => {
 
     expect(store.feedPrediction?.has_enough_data).toBe(false)
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/feed-prediction')
+  })
+
+  it('fetches contractions for the current baby', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const contraction = {
+      id: 1,
+      baby_id: 1,
+      user_id: 1,
+      started_at: '2026-09-16T15:13:00Z',
+      ended_at: null,
+      intensity: 0,
+    }
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [contraction] } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    await store.fetchContractions()
+
+    expect(store.contractions).toEqual([contraction])
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/contractions')
+  })
+
+  it('starts a contraction and pushes it onto the front of the list', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    const started = {
+      id: 1,
+      baby_id: 1,
+      user_id: 1,
+      started_at: '2026-09-16T15:13:00Z',
+      ended_at: null,
+      intensity: 0,
+    }
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: started } })
+
+    const result = await store.startContraction()
+
+    expect(result).toEqual(started)
+    expect(store.contractions).toEqual([started])
+    expect(apiClient.post).toHaveBeenCalledWith('/babies/1/contractions')
+  })
+
+  it('updates a contraction in place (used both to stop it and to edit it)', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.contractions = [
+      {
+        id: 1,
+        baby_id: 1,
+        user_id: 1,
+        started_at: '2026-09-16T15:13:00Z',
+        ended_at: null,
+        intensity: 0,
+      },
+    ]
+
+    const stopped = {
+      id: 1,
+      baby_id: 1,
+      user_id: 1,
+      started_at: '2026-09-16T15:13:00Z',
+      ended_at: '2026-09-16T15:13:33Z',
+      intensity: 1,
+    }
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { data: stopped } })
+
+    await store.updateContraction(1, {
+      started_at: '2026-09-16T15:13:00Z',
+      ended_at: '2026-09-16T15:13:33Z',
+      intensity: 1,
+    })
+
+    expect(store.contractions).toEqual([stopped])
+    expect(apiClient.put).toHaveBeenCalledWith('/babies/1/contractions/1', {
+      started_at: '2026-09-16T15:13:00Z',
+      ended_at: '2026-09-16T15:13:33Z',
+      intensity: 1,
+    })
+  })
+
+  it('deletes a contraction locally after the request succeeds', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.contractions = [
+      {
+        id: 1,
+        baby_id: 1,
+        user_id: 1,
+        started_at: '2026-09-16T15:13:00Z',
+        ended_at: null,
+        intensity: 0,
+      },
+    ]
+    vi.mocked(apiClient.delete).mockResolvedValue({})
+
+    await store.deleteContraction(1)
+
+    expect(store.contractions).toEqual([])
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/contractions/1')
+  })
+
+  it('sets water_broke_at via updateBaby', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    const withBreak = { ...baby, water_broke_at: '2026-09-20T17:24:00Z' }
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { data: withBreak } })
+
+    await store.updateBaby({ water_broke_at: '2026-09-20T17:24:00Z' })
+
+    expect(store.current?.water_broke_at).toBe('2026-09-20T17:24:00Z')
+    expect(apiClient.put).toHaveBeenCalledWith('/babies/1', {
+      water_broke_at: '2026-09-20T17:24:00Z',
+    })
   })
 })

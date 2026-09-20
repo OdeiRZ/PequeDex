@@ -139,6 +139,34 @@ porque la verificación local solo cubría los otros tres.
   nombre del bebé lo despliega; el botón de sexo/fecha de nacimiento,
   al lado, es un control aparte que no colapsa ni expande nada al
   pulsarlo.
+- **Contador de contracciones** (`src/views/ContractionsView.vue`,
+  `src/components/ContractionTimeline.vue`, ruta `/contracciones`) —
+  vista propia, no una categoría más de la barra de accesos: el
+  cronómetro en vivo y la línea temporal con intervalos no encajan en
+  el patrón de hoja-inferior del resto de categorías, y solo tiene
+  sentido antes de nacer el bebé. Se enlaza desde una tarjeta en el
+  dashboard visible solo mientras `babies.current.birth_date` está
+  vacío — desaparece sola en cuanto se rellena, sin quedar como enlace
+  muerto. `lib/contractionStats.ts` es una función pura (ventana de los
+  últimos 60 minutos) para "veces por hora / duración media / intervalo
+  medio", testeable sin montar Pinia. `ContractionsView.vue` mantiene un
+  único `now` (un `setInterval` de 1s) que pasa como prop a
+  `ContractionTimeline.vue`, para que el contador en vivo de la fila
+  activa y las estadísticas del encabezado no se desincronicen por
+  llevar cada uno su propio intervalo. Intensidad en 3 niveles — Leve/
+  Moderada/Intensa — en vez de los 4 del original de referencia (pedido
+  explícito). El registro de rotura de bolsa de aguas
+  (`babies.current.water_broke_at`, vía `updateBaby()`, sin acción de
+  store nueva) mejora el original en dos puntos pedidos: se ve la fecha
+  completa además de la hora, y es editable, no solo "restablecer".
+  `lib/datetimeInput.ts` (extraído de `DashboardView.vue`, que antes lo
+  definía inline) centraliza `toLocalInputValue`/`nowForInput`/
+  `toUtcIso`, reutilizado ahora por ambas vistas. La exportación a PDF
+  (`babies.exportContractionsPdf()`) pide el endpoint con
+  `responseType: 'blob'` en vez de un `<a href>` directo — la API usa
+  token Bearer, no cookies, así que un enlace normal no llevaría la
+  cabecera de autorización — y dispara la descarga con un `<a download>`
+  temporal sobre un `URL.createObjectURL(blob)`.
 
 ## Idioma
 

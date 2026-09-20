@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Contador de contracciones, calcado (adaptado a la identidad visual de
+  PequeDex) de una app de referencia: cronómetro de inicio/detener con
+  estadísticas sobre la última hora (veces por hora, duración e
+  intervalo medios), línea temporal con número secuencial, intensidad
+  en 3 niveles (Leve/Moderada/Intensa — el original tenía 4) y edición
+  de cada contracción; registro de rotura de bolsa de aguas con fecha y
+  hora completas y editables (mejora sobre el original, que solo
+  mostraba la hora y no dejaba corregirla); exportación a PDF agrupada
+  por día. Vive en `/contracciones`, enlazada desde una tarjeta en el
+  dashboard que solo aparece mientras el bebé no ha nacido
+  (`birth_date` vacío) — desaparece sola en cuanto se rellena. Nueva
+  tabla `contractions` y columna `babies.water_broke_at`. Traducido a
+  español e inglés desde el primer commit.
+
 - Soporte real para varios bebés por cuidador (p. ej. un hijo ya
   nacido y un segundo embarazo en marcha a la vez) — el backend ya lo
   permitía (`baby_user` es una tabla pivote de muchos-a-muchos), pero

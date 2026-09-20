@@ -11,6 +11,7 @@ export interface Baby {
   birth_date: string | null
   sex: BabySex | null
   invite_code: string
+  water_broke_at: string | null
 }
 
 export type FeedType = 'pecho' | 'biberon' | 'solido'
@@ -99,6 +100,15 @@ export interface FeedPrediction {
   prediction: { type: 'next_feed'; at: string; based_on: string } | null
 }
 
+export interface Contraction {
+  id: number
+  baby_id: number
+  user_id: number
+  started_at: string
+  ended_at: string | null
+  intensity: 0 | 1 | 2
+}
+
 export type TimelineEntry =
   | { type: 'feed'; at: string; data: Feed }
   | { type: 'sleep'; at: string; data: Sleep }
@@ -155,6 +165,13 @@ interface UpdateBabyPayload {
   due_date?: string | null
   birth_date?: string | null
   sex?: BabySex | null
+  water_broke_at?: string | null
+}
+
+interface UpdateContractionPayload {
+  started_at: string
+  ended_at: string | null
+  intensity: 0 | 1 | 2
 }
 
 interface BabiesState {
@@ -169,6 +186,7 @@ interface BabiesState {
   sleepPrediction: SleepPrediction | null
   feedPrediction: FeedPrediction | null
   recentSleeps: Sleep[]
+  contractions: Contraction[]
 }
 
 export const useBabiesStore = defineStore('babies', {
@@ -181,6 +199,7 @@ export const useBabiesStore = defineStore('babies', {
     sleepPrediction: null,
     feedPrediction: null,
     recentSleeps: [],
+    contractions: [],
   }),
 
   actions: {
@@ -420,6 +439,49 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/feed-prediction`)
       this.feedPrediction = data.data
+    },
+
+    async fetchContractions() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/contractions`)
+      this.contractions = data.data
+    },
+
+    // Pushes onto the front instead of refetching the whole list - the
+    // timer screen needs the new id immediately (to be able to stop
+    // *this* contraction), and a full refetch would also be wasteful for
+    // something that can happen every couple of minutes during labor.
+    async startContraction() {
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/contractions`)
+      this.contractions.unshift(data.data)
+      return data.data as Contraction
+    },
+
+    async updateContraction(id: number, payload: UpdateContractionPayload) {
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/contractions/${id}`,
+        payload,
+      )
+      this.contractions = this.contractions.map((c) => (c.id === id ? data.data : c))
+    },
+
+    async deleteContraction(id: number) {
+      await apiClient.delete(`/babies/${this.current!.id}/contractions/${id}`)
+      this.contractions = this.contractions.filter((c) => c.id !== id)
+    },
+
+    // Returns the raw PDF as a Blob rather than triggering the download
+    // itself - the API is Bearer-token auth, not cookies, so a plain
+    // <a href> to this URL wouldn't carry the Authorization header; the
+    // view turns this into an object URL and a temporary download link.
+    async exportContractionsPdf(): Promise<Blob> {
+      const { data } = await apiClient.get(`/babies/${this.current!.id}/contractions/export`, {
+        responseType: 'blob',
+      })
+      return data
     },
 
     // `days` is a lookback window, not the number of days the chart ends

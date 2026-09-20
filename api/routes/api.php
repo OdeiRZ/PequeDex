@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Babies\BabyController;
 use App\Http\Controllers\Babies\TimelineController;
+use App\Http\Controllers\Contractions\ContractionController;
+use App\Http\Controllers\Contractions\ContractionsExportController;
 use App\Http\Controllers\DiaperChanges\DiaperChangeController;
 use App\Http\Controllers\Feeds\FeedController;
 use App\Http\Controllers\Feeds\FeedPredictionController;
@@ -54,6 +56,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/babies/{baby}/sleeps/{sleep}', [SleepController::class, 'update']);
     Route::delete('/babies/{baby}/sleeps/{sleep}', [SleepController::class, 'destroy']);
     Route::get('/babies/{baby}/sleep-prediction', [SleepPredictionController::class, 'show']);
+
+    Route::get('/babies/{baby}/contractions', [ContractionController::class, 'index']);
+    Route::post('/babies/{baby}/contractions', [ContractionController::class, 'store']);
+    Route::put('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'update']);
+    Route::delete('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'destroy']);
+    Route::get('/babies/{baby}/contractions/export', [ContractionsExportController::class, 'show']);
 
     Route::get('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'index']);
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);

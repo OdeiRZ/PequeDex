@@ -154,6 +154,26 @@ it('lets a linked caregiver update sex and birth date', function () {
     expect($baby->refresh()->sex)->toBe(BabySex::Nina);
 });
 
+it('sets, edits and resets water_broke_at', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['water_broke_at' => null]);
+    $baby->users()->attach($user);
+
+    $this->putJson("/api/babies/{$baby->id}", ['water_broke_at' => '2026-09-20 17:24:00'])
+        ->assertOk()
+        ->assertJsonPath('data.water_broke_at', '2026-09-20T17:24:00.000000Z');
+
+    $this->putJson("/api/babies/{$baby->id}", ['water_broke_at' => '2026-09-20 18:00:00'])
+        ->assertOk()
+        ->assertJsonPath('data.water_broke_at', '2026-09-20T18:00:00.000000Z');
+
+    $this->putJson("/api/babies/{$baby->id}", ['water_broke_at' => null])
+        ->assertOk()
+        ->assertJsonPath('data.water_broke_at', null);
+
+    expect($baby->refresh()->water_broke_at)->toBeNull();
+});
+
 it('rejects updating a baby the user is not linked to', function () {
     actingAsUser();
     $baby = Baby::factory()->create();

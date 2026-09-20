@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -38,6 +39,7 @@ import {
   type Category,
 } from '@/lib/category'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
+import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
 import { storeLocale } from '@/i18n'
 
@@ -308,34 +310,6 @@ onUnmounted(() => {
 
 type Sheet = Category | 'settings' | 'addBaby' | null
 const activeSheet = ref<Sheet>(null)
-
-// The API returns datetimes as UTC ISO strings (app.timezone is UTC) -
-// this converts one into the local "YYYY-MM-DDTHH:mm" value a
-// <input type="datetime-local"> expects, so editing an existing entry
-// shows its real local time instead of its raw UTC one.
-function toLocalInputValue(iso: string): string {
-  const date = new Date(iso)
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-  return date.toISOString().slice(0, 16)
-}
-
-function nowForInput(): string {
-  return toLocalInputValue(new Date().toISOString())
-}
-
-// The inverse of toLocalInputValue, for the way back to the API: a
-// <input type="datetime-local"> value has no timezone of its own - `new
-// Date(...)` on a string like that is parsed as the *browser's* local
-// time, exactly what was intended, so its own toISOString() is the
-// correct UTC instant to send. Sending the naive value directly would
-// have the backend (app.timezone=UTC) read "20:30" local as "20:30 UTC"
-// instead, silently shifting every save by the browser's own offset -
-// found while wiring up editing: saving a feed without touching its
-// time still moved it by +2h in local dev (UTC+2), because create and
-// edit both went straight through this same untranslated path.
-function toUtcIso(localValue: string): string {
-  return new Date(localValue).toISOString()
-}
 
 function openSheet(sheet: Exclude<Sheet, null>) {
   if (sheet === 'feed') {
@@ -1532,6 +1506,35 @@ const feedPredictionLabel = computed(() => {
             </div>
           </div>
         </div>
+
+        <RouterLink
+          v-if="babies.current && !babies.current.birth_date"
+          :to="{ name: 'contractions' }"
+          class="card-interactive flex items-center gap-3 rounded-2xl p-4"
+        >
+          <span
+            class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sleep/15 text-sleep"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+              <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+            </svg>
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-semibold">{{ t('contractions.linkCardTitle') }}</div>
+            <div class="text-xs text-text-muted">{{ t('contractions.linkCardBody') }}</div>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-4 w-4 shrink-0 text-text-muted"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </RouterLink>
 
         <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
 

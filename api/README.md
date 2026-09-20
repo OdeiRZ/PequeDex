@@ -190,6 +190,42 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   puede no haber nada contra lo que comparar). `after_or_equal`, no
   `after`: el día exacto del nacimiento es válido (un hito de
   "Nacimiento" ese mismo día).
+- **Contador de contracciones**
+  (`app/Http/Controllers/Contractions/ContractionController.php`,
+  `Contraction`, tabla `contractions`) — mismo patrón de autorización
+  que `SleepController`: `index()`/`destroy()` llaman
+  `authorize('view'|'update', $baby)` en el controlador,
+  `store()`/`update()` no llaman `authorize()` ahí porque
+  `StoreContractionRequest`/`UpdateContractionRequest` ya usan el trait
+  `AuthorizesBabyAccess`, que autoriza antes de que corran las
+  `rules()`. A diferencia de todos los demás `Store`/`UpdateRequest` de
+  la app, estos dos no usan `ValidatesNotBeforeBirth`: una contracción
+  se registra precisamente antes de que exista `birth_date`, así que
+  exigir `after_or_equal:birth_date` invertiría el propósito entero de
+  la funcionalidad. `store()` no recibe body en el caso normal ("Inicio
+  de contracción" pulsado ahora mismo) — `started_at` es `sometimes` y
+  el controlador usa `$request->validated('started_at') ?? now()`; fija
+  `intensity: 0` explícitamente en el array de `create()` en vez de
+  confiar en el `->default(0)` de la migración, porque Eloquent no
+  repuebla en memoria un atributo omitido a partir del valor por
+  defecto de la columna — solo lo hace la fila en la base de datos, así
+  que el JSON de respuesta devolvía `null` sin este fix.
+  `Baby::water_broke_at` (columna nueva, `datetime` normal, no
+  `date:Y-m-d` como `due_date`/`birth_date` — aquí sí importa la hora)
+  se actualiza reutilizando `BabyController@update`/`UpdateBabyRequest`
+  sin flujo nuevo: fijar, editar y "restablecer" (`null`) son los
+  mismos tres casos que ya cubre esa ruta.
+- `app/Http/Controllers/Contractions/ContractionsExportController.php`
+  + `resources/views/pdf/contractions.blade.php` — exportación a PDF
+  vía `barryvdh/laravel-dompdf` (`Pdf::loadView(...)->stream()`, sin
+  guardar el archivo en disco), agrupada por día, con el intervalo a la
+  contracción anterior calculado sobre la lista completa del bebé, no
+  solo del día — así el primer registro de un día nuevo compara contra
+  el último del día anterior, igual que la app de referencia que
+  inspiró esta funcionalidad. Devuelve el PDF inline
+  (`Content-Type: application/pdf`), no como adjunto forzado, porque el
+  frontend lo pide como blob autenticado por Bearer token, no con un
+  enlace directo.
 
 ## Notas de arquitectura
 

@@ -23,6 +23,7 @@ class UpdateBabyRequest extends FormRequest
             'due_date' => ['sometimes', 'nullable', 'date'],
             'birth_date' => ['sometimes', 'nullable', 'date'],
             'sex' => ['sometimes', 'nullable', Rule::enum(BabySex::class)],
+            'water_broke_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

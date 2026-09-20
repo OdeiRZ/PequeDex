@@ -15,6 +15,10 @@ export default {
     toggleTheme: 'Toggle theme',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
+    back: 'Back',
+    yes: 'Yes',
+    no: 'No',
+    ok: 'OK',
   },
   auth: {
     login: {
@@ -64,6 +68,44 @@ export default {
   notFound: {
     title: 'Page not found',
     back: 'Go back',
+  },
+  contractions: {
+    title: 'Contractions',
+    linkCardTitle: 'Contraction timer',
+    linkCardBody: 'Time and track your contractions before labor.',
+    start: 'Start contraction',
+    stop: 'Stop',
+    empty: 'No contractions logged yet.',
+    interval: 'Interval: {interval}',
+    longGap: '> {min} min',
+    export: 'Export PDF',
+    exportError: 'Could not export the PDF.',
+    stats: {
+      perHour: 'Times per hour',
+      avgDuration: 'Average duration',
+      avgInterval: 'Average interval',
+    },
+    editTitle: 'Contraction',
+    startedAt: 'Contraction start',
+    endedAt: 'Contraction end',
+    intensityLabel: 'Intensity',
+    intensity: {
+      leve: 'Mild',
+      moderada: 'Moderate',
+      intensa: 'Intense',
+    },
+    delete: 'Delete this contraction',
+    breakConfirmTitle: 'Did your water break?',
+    hospitalTitle: "It's time to go to the hospital!",
+    hospitalBody:
+      'Your water broke. Head to the hospital when your midwife or doctor tells you to.',
+    breakInfoTitle: 'Water breaking',
+    breakInfoLabel: 'Date and time',
+    breakReset: 'Reset',
+    toastUpdated: 'Saved.',
+    toastDeleted: 'Contraction deleted.',
+    toastReset: 'Reset.',
+    toastError: 'Could not save. Please try again.',
   },
   dashboard: {
     onboarding: {

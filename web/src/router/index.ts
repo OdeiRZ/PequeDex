@@ -42,6 +42,12 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      path: '/contracciones',
+      name: 'contractions',
+      component: () => import('@/views/ContractionsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

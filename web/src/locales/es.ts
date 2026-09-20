@@ -15,6 +15,10 @@ export default {
     toggleTheme: 'Cambiar tema',
     showPassword: 'Mostrar contraseña',
     hidePassword: 'Ocultar contraseña',
+    back: 'Volver',
+    yes: 'Sí',
+    no: 'No',
+    ok: 'Vale',
   },
   auth: {
     login: {
@@ -65,6 +69,44 @@ export default {
   notFound: {
     title: 'Página no encontrada',
     back: 'Volver',
+  },
+  contractions: {
+    title: 'Contracciones',
+    linkCardTitle: 'Contador de contracciones',
+    linkCardBody: 'Cronometra y registra tus contracciones antes del parto.',
+    start: 'Inicio de contracción',
+    stop: 'Detener',
+    empty: 'Todavía no hay contracciones registradas.',
+    interval: 'Intervalo: {interval}',
+    longGap: '> {min} min',
+    export: 'Exportar PDF',
+    exportError: 'No se ha podido exportar el PDF.',
+    stats: {
+      perHour: 'Veces por hora',
+      avgDuration: 'Duración promedio',
+      avgInterval: 'Intervalo promedio',
+    },
+    editTitle: 'Contracción',
+    startedAt: 'Inicio de contracción',
+    endedAt: 'Fin de contracción',
+    intensityLabel: 'Intensidad',
+    intensity: {
+      leve: 'Leve',
+      moderada: 'Moderada',
+      intensa: 'Intensa',
+    },
+    delete: 'Eliminar esta contracción',
+    breakConfirmTitle: '¿Se rompió tu bolsa de aguas?',
+    hospitalTitle: '¡Es hora de ir al hospital!',
+    hospitalBody:
+      'Tu bolsa de aguas se rompió. Ve al hospital cuando tu matrona o médico te lo indique.',
+    breakInfoTitle: 'Rotura de bolsa de aguas',
+    breakInfoLabel: 'Fecha y hora',
+    breakReset: 'Restablecer',
+    toastUpdated: 'Guardado.',
+    toastDeleted: 'Contracción eliminada.',
+    toastReset: 'Restablecido.',
+    toastError: 'No se ha podido guardar. Inténtalo de nuevo.',
   },
   dashboard: {
     onboarding: {

@@ -145,11 +145,13 @@ const rows = computed<Row[]>(() => {
                   viewBox="0 0 24 24"
                   :fill="bolt <= row.contraction.intensity + 1 ? 'currentColor' : 'none'"
                   stroke="currentColor"
-                  stroke-width="1.5"
+                  stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   class="h-5 w-5"
-                  :class="bolt <= row.contraction.intensity + 1 ? 'text-milestone' : 'text-border'"
+                  :class="
+                    bolt <= row.contraction.intensity + 1 ? 'text-milestone' : 'text-text-muted'
+                  "
                 >
                   <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
                 </svg>

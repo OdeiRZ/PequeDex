@@ -64,6 +64,25 @@ it('stops a contraction and sets its intensity via update', function () {
         ->assertJsonPath('data.intensity', 1);
 });
 
+it('accepts ended_at equal to started_at, for a contraction under a minute long', function () {
+    // The frontend's datetime-local inputs only have minute precision,
+    // so a genuinely short contraction can end up with started_at ===
+    // ended_at once edited - this must not be rejected as invalid.
+    $user = actingAsUser();
+    $baby = babyForContractionTest($user);
+    $contraction = Contraction::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-09-16 15:13:00',
+        'ended_at' => null,
+    ]);
+
+    $this->putJson("/api/babies/{$baby->id}/contractions/{$contraction->id}", [
+        'started_at' => '2026-09-16 15:13:00',
+        'ended_at' => '2026-09-16 15:13:00',
+        'intensity' => 0,
+    ])->assertOk()
+        ->assertJsonPath('data.ended_at', '2026-09-16T15:13:00.000000Z');
+});
+
 it('rejects an intensity outside 0-2', function () {
     $user = actingAsUser();
     $baby = babyForContractionTest($user);

@@ -105,6 +105,25 @@ const editEndedAt = ref('')
 const editIntensity = ref<0 | 1 | 2>(0)
 const savingEdit = ref(false)
 
+// Read-only, purely illustrative - recomputed live as the start/end
+// fields change, but there's nothing to submit for it: `started_at`/
+// `ended_at` are what the backend actually stores, duration is always
+// derived from those.
+const editDurationLabel = computed(() => {
+  if (!editStartedAt.value || !editEndedAt.value) return '--:--:--'
+
+  const totalSeconds = Math.max(
+    0,
+    Math.round(
+      (new Date(editEndedAt.value).getTime() - new Date(editStartedAt.value).getTime()) / 1000,
+    ),
+  )
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+})
+
 const intensityOptions = computed(() => [
   { value: 0 as const, label: t('contractions.intensity.leve') },
   { value: 1 as const, label: t('contractions.intensity.moderada') },
@@ -307,12 +326,12 @@ async function onExportPdf() {
     </div>
 
     <template v-else>
-      <div class="card grid grid-cols-3 divide-x divide-border p-4 text-center">
+      <div class="card grid grid-cols-3 divide-x divide-border p-5 text-center">
         <div>
           <div class="text-xs font-semibold text-text-muted">
             {{ t('contractions.stats.perHour') }}
           </div>
-          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
             {{ stats.perHour ?? '-' }}
           </div>
         </div>
@@ -320,7 +339,7 @@ async function onExportPdf() {
           <div class="text-xs font-semibold text-text-muted">
             {{ t('contractions.stats.avgDuration') }}
           </div>
-          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
             {{ formatStat(stats.avgDurationSec) }}
           </div>
         </div>
@@ -328,7 +347,7 @@ async function onExportPdf() {
           <div class="text-xs font-semibold text-text-muted">
             {{ t('contractions.stats.avgInterval') }}
           </div>
-          <div class="mt-1 font-display text-lg font-bold tabular-nums">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
             {{ formatStat(stats.avgIntervalSec) }}
           </div>
         </div>
@@ -461,6 +480,13 @@ async function onExportPdf() {
             type="datetime-local"
             class="field-input"
           />
+        </div>
+
+        <div>
+          <span class="field-label">{{ t('contractions.duration') }}</span>
+          <p class="field-input font-display tabular-nums text-text-muted">
+            {{ editDurationLabel }}
+          </p>
         </div>
 
         <div>

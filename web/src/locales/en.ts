@@ -88,6 +88,7 @@ export default {
     editTitle: 'Contraction',
     startedAt: 'Contraction start',
     endedAt: 'Contraction end',
+    duration: 'Duration',
     intensityLabel: 'Intensity',
     intensity: {
       leve: 'Mild',

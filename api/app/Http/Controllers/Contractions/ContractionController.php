@@ -30,6 +30,11 @@ class ContractionController extends Controller
             // passed in, so an omitted key comes back null in the JSON
             // response even though the DB row itself got 0.
             'intensity' => 0,
+            // Same reasoning: without this, the key is missing from the
+            // JSON response entirely (not even `null`), so the frontend's
+            // `ended_at === null` check to detect the running contraction
+            // never matches and the start/stop button gets stuck.
+            'ended_at' => null,
         ]);
 
         return response()->json(['data' => $contraction], 201);

@@ -16,11 +16,18 @@ it('starts a contraction with no body, defaulting started_at to now', function (
     $user = actingAsUser();
     $baby = babyForContractionTest($user);
 
-    $this->postJson("/api/babies/{$baby->id}/contractions")
+    $response = $this->postJson("/api/babies/{$baby->id}/contractions")
         ->assertCreated()
         ->assertJsonPath('data.ended_at', null)
         ->assertJsonPath('data.intensity', 0)
         ->assertJsonPath('data.user_id', $user->id);
+
+    // assertJsonPath('data.ended_at', null) also passes if the key is
+    // simply missing (Arr::get resolves a missing path to null too), so
+    // this asserts the key is actually present - it caught a real bug
+    // where the frontend's `ended_at === null` check to find the running
+    // contraction never matched because the key was absent, not null.
+    expect($response->json('data'))->toHaveKey('ended_at');
 });
 
 it('accepts a backdated started_at when one is sent', function () {

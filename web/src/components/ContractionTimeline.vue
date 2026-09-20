@@ -137,8 +137,8 @@ const rows = computed<Row[]>(() => {
               {{ row.durationLabel }}
             </span>
 
-            <span class="ml-auto flex shrink-0 items-center gap-1.5">
-              <span class="flex gap-0.5">
+            <span class="ml-auto flex shrink-0 items-center gap-2">
+              <span class="flex gap-1">
                 <svg
                   v-for="bolt in 3"
                   :key="bolt"
@@ -148,17 +148,17 @@ const rows = computed<Row[]>(() => {
                   stroke-width="1.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="h-3 w-3"
+                  class="h-4 w-4"
                   :class="bolt <= row.contraction.intensity + 1 ? 'text-milestone' : 'text-border'"
                 >
                   <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
                 </svg>
               </span>
 
-              <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 text-text-muted">
-                <circle cx="12" cy="5" r="1.6" />
-                <circle cx="12" cy="12" r="1.6" />
-                <circle cx="12" cy="19" r="1.6" />
+              <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-text-muted">
+                <circle cx="12" cy="5" r="1.8" />
+                <circle cx="12" cy="12" r="1.8" />
+                <circle cx="12" cy="19" r="1.8" />
               </svg>
             </span>
           </button>

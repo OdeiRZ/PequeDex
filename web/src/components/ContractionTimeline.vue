@@ -104,15 +104,15 @@ const rows = computed<Row[]>(() => {
       </li>
 
       <li class="flex gap-2.5">
-        <div class="flex h-12 w-12 shrink-0 items-center justify-end pr-0.5">
-          <span class="text-right text-sm font-bold tabular-nums text-text-muted">
+        <div class="flex h-14 w-12 shrink-0 items-center justify-end pr-0.5">
+          <span class="text-right text-base font-bold tabular-nums text-text-muted">
             {{ row.timeLabel }}
           </span>
         </div>
 
         <div class="flex flex-col items-center">
           <span
-            class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sleep text-base font-bold text-brand-ink"
+            class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-sleep text-lg font-bold text-brand-ink"
           >
             {{ row.number }}
           </span>
@@ -122,7 +122,7 @@ const rows = computed<Row[]>(() => {
         <div class="min-w-0 flex-1 pb-4">
           <button
             type="button"
-            class="flex h-12 w-full items-center gap-3 rounded-full border-2 px-4 text-left transition-colors"
+            class="flex h-14 w-full items-center gap-3 rounded-full border-2 px-4 text-left transition-colors"
             :class="
               row.isRunning
                 ? 'border-brand bg-transparent'
@@ -131,7 +131,7 @@ const rows = computed<Row[]>(() => {
             @click="$emit('edit', row.contraction.id)"
           >
             <span
-              class="text-sm font-semibold tabular-nums"
+              class="text-base font-bold tabular-nums"
               :class="row.isRunning ? 'text-brand' : ''"
             >
               {{ row.durationLabel }}

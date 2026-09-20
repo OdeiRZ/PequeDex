@@ -141,6 +141,34 @@ alguna vez desde "Tu cuenta". Los mensajes viven en
 (`izquierdo`/`derecho`/`ambos`, `mojado`/`sucio`/`ambos`) se traducen en
 el punto de uso — son valores internos en español, no texto de interfaz.
 
+## Barra de accesos personalizable
+
+Cada cuidador elige qué categorías (toma/sueño/pañal/crecimiento/hito)
+quiere ver en la barra de accesos rápidos del dashboard, desde "Tu
+cuenta" (`DashboardView.vue`, junto al selector de idioma) — a
+diferencia del idioma, esto sí vive en el backend
+(`auth.updateActionBarCategories()` → `PUT /user/action-bar`, ver
+`api/README.md`), porque afecta a qué bloques se ven y no solo al
+texto de la interfaz. Cada categoría es un botón-toggle (el propio
+icono, no un checkbox aparte): relleno sólido con el color de la
+categoría y una marca de verificación cuando está activa, contorno
+gris cuando no. El guardado es al vuelo, igual que el idioma — sin
+deshabilitar el resto de iconos mientras la petición está en curso
+(eso hacía parpadear los 5 en cada pulsación en una versión anterior),
+solo revierte si la petición llega a fallar de verdad.
+
+Con un mínimo de 3 categorías (`MIN_ACTION_BAR_CATEGORIES` en
+`lib/category.ts`, igual que el `min:3` del backend): al llegar al
+mínimo, el icono de cada categoría todavía activa se deshabilita en
+vez de dejar que el usuario llegue al error de validación del
+servidor. `ActionBar.vue` no solo quita el icono de la categoría
+desactivada — con menos elementos, el resto crece de forma notable
+(32px con las 5, 44px con 4, 56px con 3) en vez de dejar hueco vacío
+en la barra, con el texto y el padding del contenedor escalando junto
+al icono. Las secciones del dashboard ligadas a una categoría
+desactivada (predicción y semana de sueño, lista de crecimiento,
+hitos) también dejan de renderizarse, igual que su acceso rápido.
+
 ## Diseño
 
 Tailwind CSS v4 (`@tailwindcss/vite`, configuración CSS-first vía

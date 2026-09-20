@@ -14,9 +14,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   ver en la barra inferior del dashboard, con un mínimo de 3 — al
   desmarcar una categoría también desaparecen sus bloques asociados
   (p. ej. "Sueño esta semana" y la predicción si se desactiva sueño,
-  la lista de medidas si se desactiva crecimiento). Guardado al vuelo,
-  igual que el selector de idioma. Nueva columna `action_bar_categories`
-  (JSON nullable, `null` = las 5 visibles) en `users`.
+  la lista de medidas si se desactiva crecimiento). Cada categoría es
+  un icono-toggle (relleno sólido + marca de verificación si está
+  activa, contorno gris si no), guardado al vuelo sin bloquear el
+  resto de iconos mientras se guarda. Con menos de 5 seleccionadas, la
+  barra real del dashboard agranda los iconos restantes de forma
+  notable (32px → 44px → 56px) en vez de dejar hueco vacío. Nueva
+  columna `action_bar_categories` (JSON nullable, `null` = las 5
+  visibles) en `users`.
 
 - Monitorización de errores en producción vía Sentry (plan gratuito,
   `sentry/sentry-laravel`), cableada en `bootstrap/app.php`

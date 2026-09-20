@@ -57,6 +57,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   depender de nada externo solo para esto. Sin errores por campo en la
   respuesta como en LudoDex/MIRA - el frontend de esta app no los pinta,
   así que no hace falta desglosarlos aquí tampoco.
+- `ProfileController::updateActionBarCategories()` — qué categorías
+  (toma/sueño/pañal/crecimiento/hito) quiere cada cuidador en la barra
+  de accesos del dashboard (ver `web/README.md`). Columna
+  `users.action_bar_categories` (JSON nullable, `null` = las 5
+  visibles, valor por defecto sin migrar filas existentes).
+  `UpdateActionBarCategoriesRequest` exige un array de al menos 3
+  valores conocidos (`min:3` + `Rule::in`) — el mismo mínimo que
+  impone el frontend deshabilitando el icono antes de dejar
+  deseleccionar más, para que nunca llegue a depender solo de la
+  validación del servidor.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

@@ -96,6 +96,9 @@ Repo único con dos aplicaciones independientes, cada una con su propio
    frontend en [Cloudflare Pages](https://pages.cloudflare.com). Verificado
    de punta a punta contra los servicios reales (registro, crear un bebé,
    subir la foto de un hito) tras el despliegue.
+10. ✅ Barra de accesos rápidos personalizable por cuidador (mínimo 3 de
+    las 5 categorías), con los bloques del dashboard ligados a cada una
+    apareciendo o no según la elección — ver `web/README.md`.
 
 ## Licencia
 

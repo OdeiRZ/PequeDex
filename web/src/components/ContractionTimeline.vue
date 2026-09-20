@@ -119,7 +119,7 @@ const rows = computed<Row[]>(() => {
           <span v-if="index < rows.length - 1" class="w-2 flex-1 rounded-full bg-border"></span>
         </div>
 
-        <div class="min-w-0 flex-1 pb-4">
+        <div class="min-w-0 flex-1 pb-2">
           <button
             type="button"
             class="flex h-14 w-full items-center gap-3 rounded-full border-2 px-4 text-left transition-colors"

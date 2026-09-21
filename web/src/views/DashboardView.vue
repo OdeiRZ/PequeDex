@@ -1346,12 +1346,14 @@ const feedPredictionLabel = computed(() => {
               category="feed"
               :title="t('dashboard.feedPrediction.title')"
               :meta="feedPredictionLabel"
+              :interactive="false"
             />
             <EntryCard
               v-if="enabledCategories.includes('sleep')"
               category="sleep"
               :title="t('dashboard.sleepPrediction.title')"
               :meta="sleepPredictionLabel"
+              :interactive="false"
             />
           </ul>
 

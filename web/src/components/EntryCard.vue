@@ -2,28 +2,38 @@
 import CategoryIcon from './CategoryIcon.vue'
 import { categoryText, categoryBg, categoryRing, type Category } from '@/lib/category'
 
-defineProps<{
-  category: Category
-  title: string
-  meta: string
-  description?: string | null
-  badge?: string | null
-  photoSrc?: string | null
-  photoAlt?: string
-}>()
+withDefaults(
+  defineProps<{
+    category: Category
+    title: string
+    meta: string
+    description?: string | null
+    badge?: string | null
+    photoSrc?: string | null
+    photoAlt?: string
+    /** False for a row that isn't a real, editable entity behind it -
+     * a prediction, say. Same layout, but no hover lift/press feedback
+     * and no `open` click, so it doesn't invite a tap that does
+     * nothing. */
+    interactive?: boolean
+  }>(),
+  { interactive: true },
+)
 
 defineEmits<{ open: [] }>()
 </script>
 
 <template>
   <li
-    class="card-interactive flex items-center gap-3 rounded-2xl p-3 shadow-sm ring-1 ring-transparent"
-    :class="[categoryBg[category], categoryRing[category]]"
+    class="flex items-center gap-3 rounded-2xl p-3 shadow-sm ring-1 ring-transparent"
+    :class="[categoryBg[category], interactive && ['card-interactive', categoryRing[category]]]"
   >
-    <button
-      type="button"
-      class="group flex min-w-0 flex-1 items-center gap-3 text-left"
-      @click="$emit('open')"
+    <component
+      :is="interactive ? 'button' : 'div'"
+      :type="interactive ? 'button' : undefined"
+      class="flex min-w-0 flex-1 items-center gap-3 text-left"
+      :class="interactive && 'group'"
+      @click="interactive && $emit('open')"
     >
       <img
         v-if="photoSrc"
@@ -52,7 +62,7 @@ defineEmits<{ open: [] }>()
       >
         {{ badge }}
       </span>
-    </button>
+    </component>
 
     <slot name="actions" />
   </li>

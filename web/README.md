@@ -307,7 +307,15 @@ y pasaron a usar `EntryCard`, el mismo componente que cada fila de la
 línea temporal, para que se lean como un evento más en vez de un
 bloque visual aparte. Solo se muestran en "hoy" (`isRhythmToday`, ver
 la nota de "Línea temporal" más arriba); en un día pasado no tiene
-sentido estimar algo relativo a "ahora".
+sentido estimar algo relativo a "ahora". `EntryCard` trae de fábrica
+elevación al hover, icono que escala y un `<button>` con `@click` -
+pero no hay nada real detrás de una predicción que abrir, así que
+invitaban a un toque que no hacía nada. Nuevo prop `interactive`
+(`false` para estas dos, `true` por defecto en el resto): en `false`
+el contenido se envuelve en un `<div>` en vez de un `<button>`, sin
+`card-interactive` ni el grupo que dispara el hover del icono - mismo
+layout exacto, sin la promesa visual de que algo va a pasar al
+tocarlo.
 
 Nuevo interruptor "Predicciones" en "Tu cuenta" (`AccountSheet.vue`,
 junto a la barra de accesos, mismo patrón de guardado al vuelo con

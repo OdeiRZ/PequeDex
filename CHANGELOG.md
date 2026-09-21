@@ -886,6 +886,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- Las tarjetas de predicción (reubicadas arriba con el aspecto de un
+  evento registrado, ver más arriba) heredaban también la elevación al
+  hover, el icono que escala y el `<button>` de `EntryCard` — pero no
+  hay nada detrás que abrir, así que invitaban a un toque que no hacía
+  nada. Nuevo prop `interactive` en `EntryCard.vue` (`false` para estas
+  dos): mismo layout, sin la promesa visual de que algo va a pasar al
+  tocarlo.
 - Los errores de validación al registrar toma/sueño/pañal/medida/hito
   (p. ej. la hora de fin anterior a la de inicio) mostraban siempre el
   mismo toast fijo — "No se ha podido guardar. Comprueba tu conexión e

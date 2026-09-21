@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- "Línea temporal" del dashboard, hasta ahora un listado plano sin
+  ninguna referencia al día de cada entrada, gana separadores de día
+  (misma píldora visual que ya usaba el listado de contracciones) y
+  pasa a filtrarse por fecha: mientras "Ritmo de hoy" está en "hoy"
+  muestra lo más reciente agrupado por día (útil porque esa vista
+  puede alcanzar entradas de ayer una vez se acumulan suficientes
+  hoy), y al navegar a un día anterior con las flechas de esa misma
+  sección, la lista se filtra a solo las entradas de ese día concreto
+  — ambas secciones comparten ahora la misma navegación por día, en
+  vez de un segundo selector duplicado. Las predicciones de próxima
+  toma/próximo sueño se ocultan al navegar a un día pasado, ya que son
+  una estimación relativa a "ahora" sin sentido sobre un día ya
+  cerrado.
 - El PDF de contracciones gana cabecera y pie de página con los datos
   más relevantes del historial completo: fecha/hora de generación y una
   barra con tres estadísticas (contracciones totales, duración media,
@@ -843,6 +856,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- Las marcas de toma/pañal de "Ritmo de hoy" quedaban desplazadas unos
+  píxeles a la derecha de su hora real: cada marca es una barra de 5px
+  cuyo `left: X%` posicionaba el borde izquierdo en el instante exacto,
+  no el centro — más notorio cuanto más estrecha la gráfica. Centrada
+  con `-translate-x-1/2`; los segmentos de sueño no se tocan, ya que su
+  ancho representa la duración real y su borde izquierdo sí es el
+  punto correcto.
 - El icono de gota de la tarjeta "Contador de contracciones" en el
   dashboard sugería "agua" en vez de "cronómetro/contador" — se
   reutiliza dentro de la propia pantalla de contracciones para la

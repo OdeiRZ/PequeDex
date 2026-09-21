@@ -449,7 +449,19 @@ verse bien en una captura:
   recientes". Nuevo `lib/localDate.ts` para esta aritmética de fechas
   en hora local, no UTC — la ventana `[00:00, 24:00)` que ya usaba
   `DailyRhythm.vue` es local, así que la fecha que se compara y se
-  manda al backend tiene que estarlo también.
+  manda al backend tiene que estarlo también. Bug real encontrado en
+  vivo: las marcas de toma/pañal (barras de 5px) posicionaban su borde
+  izquierdo en el `left: X%` exacto en vez de su centro, así que se
+  veían desplazadas unos píxeles a la derecha de la hora real —
+  corregido con `-translate-x-1/2`; los segmentos de sueño no lo
+  necesitan, su ancho ya representa la duración real. "Línea temporal"
+  (`DashboardView.vue`) reutiliza ahora ese mismo `rhythmDate`/
+  `rhythmTimeline` en vez de leer `babies.timeline` directamente: gana
+  los mismos separadores de día (nuevo computed `groupedTimeline`) y
+  queda filtrada al día navegado, en vez de tener su propio selector
+  duplicado. Las tarjetas de predicción de próxima toma/próximo sueño
+  se ocultan mientras no se está en "hoy" (`v-if="... && isRhythmToday"`),
+  ya que estiman algo relativo a "ahora", no a un día ya cerrado.
 - **`EntryCard.vue`** cambia el borde de color fino por un lavado de
   fondo del color de categoría (`categoryBg`, ya existente) en toda la
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para

@@ -352,7 +352,9 @@ async function onExportPdf() {
     <template v-else>
       <div class="card grid grid-cols-3 divide-x divide-border p-5">
         <div class="flex flex-col items-center text-center">
-          <div class="text-xs font-semibold text-text-muted">
+          <div
+            class="flex min-h-8 items-center justify-center text-xs leading-tight font-semibold text-text-muted"
+          >
             {{ t('contractions.stats.perHour') }}
           </div>
           <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
@@ -360,7 +362,9 @@ async function onExportPdf() {
           </div>
         </div>
         <div class="flex flex-col items-center text-center">
-          <div class="text-xs font-semibold text-text-muted">
+          <div
+            class="flex min-h-8 items-center justify-center text-xs leading-tight font-semibold text-text-muted"
+          >
             {{ t('contractions.stats.avgDuration') }}
           </div>
           <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
@@ -368,7 +372,9 @@ async function onExportPdf() {
           </div>
         </div>
         <div class="flex flex-col items-center text-center">
-          <div class="text-xs font-semibold text-text-muted">
+          <div
+            class="flex min-h-8 items-center justify-center text-xs leading-tight font-semibold text-text-muted"
+          >
             {{ t('contractions.stats.avgInterval') }}
           </div>
           <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">

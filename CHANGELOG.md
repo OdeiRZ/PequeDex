@@ -862,7 +862,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   no el centro — más notorio cuanto más estrecha la gráfica. Centrada
   con `-translate-x-1/2`; los segmentos de sueño no se tocan, ya que su
   ancho representa la duración real y su borde izquierdo sí es el
-  punto correcto.
+  punto correcto. La propia escala horaria bajo la gráfica
+  ("0h/6h/12h/18h/24h") seguía sin coincidir con las marcas ya
+  corregidas: usaba `flex justify-between` sobre texto de ancho
+  desigual, que reparte espacio por hueco entre cajas de texto, no por
+  posición porcentual real, así que "6h"/"12h"/"18h" quedaban varios
+  puntos porcentuales fuera de su 25%/50%/75% real. Pasan a
+  posicionarse por el mismo porcentaje absoluto que las marcas (0h/24h
+  ancladas a los bordes, el resto centradas).
 - El icono de gota de la tarjeta "Contador de contracciones" en el
   dashboard sugería "agua" en vez de "cronómetro/contador" — se
   reutiliza dentro de la propia pantalla de contracciones para la

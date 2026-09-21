@@ -454,7 +454,17 @@ verse bien en una captura:
   izquierdo en el `left: X%` exacto en vez de su centro, así que se
   veían desplazadas unos píxeles a la derecha de la hora real —
   corregido con `-translate-x-1/2`; los segmentos de sueño no lo
-  necesitan, su ancho ya representa la duración real. "Línea temporal"
+  necesitan, su ancho ya representa la duración real. Seguía
+  reportándose el mismo desajuste tras ese arreglo: la propia escala
+  ("0h/6h/12h/18h/24h" bajo la gráfica) usaba `flex justify-between`
+  sobre texto de ancho desigual, que reparte espacio por hueco entre
+  cajas de texto en vez de por posición porcentual, así que
+  "6h"/"12h"/"18h" no caían en su 25%/50%/75% real - verificado en el
+  DOM tras el arreglo (`getBoundingClientRect()` de cada etiqueta
+  contra la barra). Pasan a posicionarse por el mismo porcentaje
+  absoluto que las marcas: 0h/24h ancladas a los bordes del contenedor
+  (son los límites del día, no puntos a centrar), 6h/12h/18h centradas
+  con `-translate-x-1/2` igual que las marcas. "Línea temporal"
   (`DashboardView.vue`) reutiliza ahora ese mismo `rhythmDate`/
   `rhythmTimeline` en vez de leer `babies.timeline` directamente: gana
   los mismos separadores de día (nuevo computed `groupedTimeline`) y

@@ -8,7 +8,22 @@ import { LONG_GAP_MINUTES } from '@/lib/contractionStats'
 // running row's live duration updates on the same tick as
 // ContractionsView's own timer, instead of drifting out of sync with a
 // second independent interval.
-const props = defineProps<{ contractions: Contraction[]; dateLocale: string; now: Date }>()
+const props = defineProps<{
+  contractions: Contraction[]
+  dateLocale: string
+  now: Date
+  // Live "time since the last contraction ended" - computed by
+  // ContractionsView.vue (it already owns `now` and knows whether one
+  // is currently running), but rendered here, right above the newest
+  // row's own pill and below that row's day separator - it reads as
+  // "the gap after this row", exactly where a real interval chip would
+  // go once the next contraction actually starts. Sitting above the
+  // day separator instead (where it lived before) put it above the
+  // wrong thing when the last contraction was logged on an earlier day
+  // than "now".
+  sinceLastLabel?: string | null
+  sinceLastAriaLabel?: string
+}>()
 defineEmits<{ edit: [id: number] }>()
 
 const { t } = useI18n()
@@ -102,6 +117,15 @@ const rows = computed<Row[]>(() => {
           {{ row.dayLabel }}
         </span>
         <span class="h-px flex-1 bg-border"></span>
+      </li>
+
+      <li v-if="index === 0 && sinceLastLabel" class="mb-2 flex justify-end">
+        <span
+          class="rounded-full border border-border px-4 py-1.5 text-base font-bold tabular-nums text-text-muted"
+          :aria-label="sinceLastAriaLabel"
+        >
+          {{ sinceLastLabel }}
+        </span>
       </li>
 
       <li class="flex gap-2.5">

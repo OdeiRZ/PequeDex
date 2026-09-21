@@ -401,20 +401,13 @@ async function onExportPdf() {
         </div>
       </div>
 
-      <div v-if="sinceLastLabel" class="flex justify-end">
-        <span
-          class="rounded-full border border-border px-4 py-1.5 text-base font-bold tabular-nums text-text-muted"
-          :aria-label="sinceLastAriaLabel"
-        >
-          {{ sinceLastLabel }}
-        </span>
-      </div>
-
       <ContractionTimeline
         v-if="babies.contractions.length > 0"
         :contractions="babies.contractions"
         :date-locale="dateLocale"
         :now="now"
+        :since-last-label="sinceLastLabel"
+        :since-last-aria-label="sinceLastAriaLabel"
         @edit="openEditSheet"
       />
       <p

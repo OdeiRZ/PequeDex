@@ -2,7 +2,7 @@
 // meaning - parsed as a local calendar date, not via `new Date(iso)`
 // directly, which treats a bare date string as UTC midnight and can
 // shift the displayed day by one depending on the browser's timezone.
-function parseDateOnly(value: string): Date {
+export function parseDateOnly(value: string): Date {
   const parts = value.split('-')
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
 }

@@ -300,8 +300,10 @@ export default {
     },
     rhythm: {
       title: "Today's rhythm",
-      range: '00–24h',
       empty: 'Nothing logged yet today.',
+      emptyOtherDay: 'Nothing logged that day.',
+      prevDay: 'Previous day',
+      nextDay: 'Next day',
       feed: 'Feed',
       sleep: 'Sleep',
       diaper: 'Diaper',

@@ -303,8 +303,10 @@ export default {
     },
     rhythm: {
       title: 'Ritmo de hoy',
-      range: '00–24h',
       empty: 'Todavía no hay nada registrado hoy.',
+      emptyOtherDay: 'Todavía no hay nada registrado ese día.',
+      prevDay: 'Día anterior',
+      nextDay: 'Día siguiente',
       feed: 'Toma',
       sleep: 'Sueño',
       diaper: 'Pañal',

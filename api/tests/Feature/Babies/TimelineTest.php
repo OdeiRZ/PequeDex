@@ -43,3 +43,41 @@ it('caps the timeline at the requested limit', function () {
         ->assertOk()
         ->assertJsonCount(2, 'data');
 });
+
+it('scopes the timeline to a day (plus the day before, for spanning sleeps), ignoring limit', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+
+    $onDay = Feed::factory()->for($baby)->for($user, 'loggedBy')->create(['started_at' => '2026-08-30 08:00:00']);
+    // Still returned - the backend deliberately over-fetches by a day so
+    // a sleep spanning midnight into the requested day isn't cut off;
+    // the frontend (DailyRhythm.vue) does the exact [00:00, 24:00)
+    // clipping from there.
+    $dayBefore = Feed::factory()->for($baby)->for($user, 'loggedBy')->create(['started_at' => '2026-08-29 08:00:00']);
+    $dayAfter = Feed::factory()->for($baby)->for($user, 'loggedBy')->create(['started_at' => '2026-08-31 08:00:00']);
+
+    $response = $this->getJson("/api/babies/{$baby->id}/timeline?date=2026-08-30&limit=1")
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    $ids = $response->json('data.*.data.id');
+    expect($ids)->toContain($onDay->id);
+    expect($ids)->toContain($dayBefore->id);
+    expect($ids)->not->toContain($dayAfter->id);
+});
+
+it('includes a sleep from the day before that spans into the requested day', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+
+    $overnightSleep = Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-29 23:00:00',
+        'ended_at' => '2026-08-30 06:00:00',
+    ]);
+
+    $response = $this->getJson("/api/babies/{$baby->id}/timeline?date=2026-08-30")->assertOk();
+
+    expect($response->json('data.*.data.id'))->toContain($overnightSleep->id);
+});

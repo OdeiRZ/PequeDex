@@ -181,6 +181,11 @@ interface BabiesState {
    * than one at once. `current` is always one of these (or null). */
   babies: Baby[]
   timeline: TimelineEntry[]
+  /** A single calendar day's worth of entries, for the "Ritmo" day
+   * navigator - separate from `timeline` (which is always "most recent
+   * N overall", live-polled while the dashboard is open) so browsing to
+   * a previous day doesn't fight with that poll overwriting it. */
+  dayTimeline: TimelineEntry[]
   growthMeasurements: GrowthMeasurement[]
   milestones: Milestone[]
   sleepPrediction: SleepPrediction | null
@@ -194,6 +199,7 @@ export const useBabiesStore = defineStore('babies', {
     current: null,
     babies: [],
     timeline: [],
+    dayTimeline: [],
     growthMeasurements: [],
     milestones: [],
     sleepPrediction: null,
@@ -285,6 +291,20 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`)
       this.timeline = data.data
+    },
+
+    // `date` is a plain "YYYY-MM-DD" - the backend returns every entry
+    // that could overlap that calendar day (see TimelineController),
+    // not the usual "most recent N overall".
+    async fetchDayTimeline(date: string) {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`, {
+        params: { date },
+      })
+      this.dayTimeline = data.data
     },
 
     async createFeed(payload: CreateFeedPayload) {

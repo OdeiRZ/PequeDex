@@ -31,6 +31,7 @@ import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/c
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
+import { addDays, todayDateOnlyString } from '@/lib/localDate'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
@@ -57,6 +58,9 @@ const loadError = ref(false)
 // when the join itself had actually worked.
 async function loadBabyData() {
   loading.value = true
+  // A baby switch (or fresh load) always lands back on today's rhythm,
+  // not wherever the previous baby's navigation happened to be left.
+  rhythmDate.value = todayDateOnlyString()
 
   try {
     await Promise.all([
@@ -69,6 +73,35 @@ async function loadBabyData() {
     ])
   } finally {
     loading.value = false
+  }
+}
+
+// --- "Ritmo": navegación por día ---
+//
+// `babies.timeline` is always "most recent N overall" (see
+// TimelineController) and live-polled every 5s while this view is
+// open - exactly right for today, but wrong for a previous day once
+// more than that many things have happened since (older entries fall
+// off the top-N before they'd ever reach that day). Browsing to a
+// previous day fetches that day specifically into `babies.dayTimeline`
+// instead, which `rhythmTimeline` below switches to.
+const rhythmDate = ref(todayDateOnlyString())
+const isRhythmToday = computed(() => rhythmDate.value === todayDateOnlyString())
+const rhythmTimeline = computed(() => (isRhythmToday.value ? babies.timeline : babies.dayTimeline))
+
+async function onRhythmPrevDay() {
+  rhythmDate.value = addDays(rhythmDate.value, -1)
+  if (!isRhythmToday.value) {
+    await babies.fetchDayTimeline(rhythmDate.value)
+  }
+}
+
+async function onRhythmNextDay() {
+  if (isRhythmToday.value) return
+
+  rhythmDate.value = addDays(rhythmDate.value, 1)
+  if (!isRhythmToday.value) {
+    await babies.fetchDayTimeline(rhythmDate.value)
   }
 }
 
@@ -1216,9 +1249,13 @@ const feedPredictionLabel = computed(() => {
           </section>
 
           <DailyRhythm
-            :timeline="babies.timeline"
+            :timeline="rhythmTimeline"
             :date-locale="dateLocale"
             :enabled-categories="enabledCategories"
+            :day="rhythmDate"
+            :is-today="isRhythmToday"
+            @prev="onRhythmPrevDay"
+            @next="onRhythmNextDay"
           />
           <WeeklySleep
             v-if="enabledCategories.includes('sleep')"

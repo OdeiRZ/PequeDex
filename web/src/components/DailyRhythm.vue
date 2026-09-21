@@ -3,12 +3,21 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
+import { parseDateOnly } from '@/lib/localDate'
 
 const props = defineProps<{
   timeline: TimelineEntry[]
   dateLocale?: string
   enabledCategories: Category[]
+  /** "YYYY-MM-DD", local calendar day being shown - the day navigator
+   * in DashboardView.vue owns this, not the component itself, so a
+   * baby switch or page reload can reset it back to today from one
+   * place. */
+  day: string
+  isToday: boolean
 }>()
+
+defineEmits<{ prev: []; next: [] }>()
 
 const { t } = useI18n()
 
@@ -32,15 +41,25 @@ interface RhythmData {
   hasData: boolean
 }
 
-// Only today's calendar day, not a rolling last-24h window - "ritmo de
-// hoy" means the day so far, so it lines up with what a caregiver
-// glancing at it would call "today". An ongoing sleep is clipped to
-// "now" rather than extending into the empty rest of the day.
+const dayLabel = computed(() =>
+  parseDateOnly(props.day).toLocaleDateString(props.dateLocale, {
+    day: 'numeric',
+    month: 'long',
+  }),
+)
+
+const title = computed(() => (props.isToday ? t('dashboard.rhythm.title') : dayLabel.value))
+
+// The shown day, not always today - browsing to a previous day (see
+// DashboardView.vue's day navigator) reuses this exact same clamping
+// logic unchanged, just against a different [start, end) window. An
+// ongoing sleep still clips against the real "now" as its fallback
+// end, same as before; `toPercent`'s own clamp already keeps that
+// inside the shown day's bounds regardless of which day that is.
 const rhythm = computed<RhythmData>(() => {
   const now = new Date()
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(now)
+  const start = parseDateOnly(props.day)
+  const end = new Date(start)
   end.setHours(23, 59, 59, 999)
 
   const toPercent = (date: Date): number => {
@@ -90,9 +109,47 @@ const rhythm = computed<RhythmData>(() => {
 
 <template>
   <section class="card p-4">
-    <div class="mb-1 flex items-baseline justify-between">
-      <h2 class="font-display text-sm font-bold">{{ t('dashboard.rhythm.title') }}</h2>
-      <span class="text-xs tabular-nums text-text-muted">{{ t('dashboard.rhythm.range') }}</span>
+    <div class="mb-1 flex items-center justify-between gap-2">
+      <button
+        type="button"
+        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text"
+        :aria-label="t('dashboard.rhythm.prevDay')"
+        @click="$emit('prev')"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-4 w-4"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <h2 class="min-w-0 flex-1 truncate text-center font-display text-sm font-bold">
+        {{ title }}
+      </h2>
+      <button
+        type="button"
+        :disabled="isToday"
+        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text disabled:opacity-30"
+        :aria-label="t('dashboard.rhythm.nextDay')"
+        @click="$emit('next')"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-4 w-4"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
     </div>
 
     <template v-if="rhythm.hasData">
@@ -141,7 +198,7 @@ const rhythm = computed<RhythmData>(() => {
       </div>
     </template>
     <p v-else class="py-2 text-center text-sm text-text-muted">
-      {{ t('dashboard.rhythm.empty') }}
+      {{ isToday ? t('dashboard.rhythm.empty') : t('dashboard.rhythm.emptyOtherDay') }}
     </p>
   </section>
 </template>

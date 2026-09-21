@@ -21,40 +21,45 @@ class ContractionsExportController extends Controller
     {
         $this->authorize('view', $baby);
 
-        $contractions = $baby->contractions()->orderBy('started_at')->get();
+        // Newest first, same order (and same numbering: the newest
+        // contraction gets the highest number, not #1) as the app's own
+        // ContractionTimeline.vue - this used to go oldest-first instead,
+        // inverted from what the app actually shows.
+        $contractions = $baby->contractions()->orderByDesc('started_at')->get()->values();
+        $total = $contractions->count();
 
-        $rows = [];
-        $previousEnd = null;
-
-        foreach ($contractions as $contraction) {
+        $rows = $contractions->map(function ($contraction, $index) use ($contractions, $total) {
             $startedAt = CarbonImmutable::parse($contraction->started_at);
             $endedAt = $contraction->ended_at ? CarbonImmutable::parse($contraction->ended_at) : null;
 
+            // The next entry in this newest-first list is the *older*
+            // neighbor - same reasoning as ContractionTimeline.vue's own
+            // `olderNeighbor` (the array's next index, not the previous
+            // one, because the list runs newest-to-oldest).
+            $olderNeighbor = $contractions->get($index + 1);
             $intervalLabel = null;
-            if ($previousEnd !== null) {
-                $gapMinutes = $previousEnd->diffInMinutes($startedAt);
+            if ($olderNeighbor !== null) {
+                $olderEnd = CarbonImmutable::parse($olderNeighbor->ended_at ?? $olderNeighbor->started_at);
+                $gapMinutes = $olderEnd->diffInMinutes($startedAt);
                 $intervalLabel = $gapMinutes > self::LONG_GAP_MINUTES
                     ? '> '.self::LONG_GAP_MINUTES.' min'
-                    : $previousEnd->diff($startedAt)->format('%I:%S');
+                    : $olderEnd->diff($startedAt)->format('%I:%S');
             }
 
-            $rows[] = [
+            return [
+                'number' => $total - $index,
                 'started_at' => $startedAt,
                 'ended_at' => $endedAt,
                 'duration' => $endedAt ? $startedAt->diff($endedAt)->format('%I:%S') : null,
                 'intensity' => $contraction->intensity,
                 'interval' => $intervalLabel,
             ];
-
-            $previousEnd = $endedAt ?? $startedAt;
-        }
+        });
 
         // Grouped by calendar day for the section headers in the PDF -
-        // the interval above is still computed across the whole ordered
-        // list beforehand, not reset per group, so the first row of a
-        // new day still shows its real gap from the last row of the
-        // previous one (same as the reference app's own PDF).
-        $groups = collect($rows)->groupBy(fn ($row) => $row['started_at']->translatedFormat('d \d\e F \d\e Y'));
+        // groups come out newest-day-first too, since $rows is already
+        // in that order and groupBy keeps first-seen order.
+        $groups = $rows->groupBy(fn ($row) => $row['started_at']->translatedFormat('d \d\e F \d\e Y'));
 
         $pdf = Pdf::loadView('pdf.contractions', [
             'groups' => $groups,

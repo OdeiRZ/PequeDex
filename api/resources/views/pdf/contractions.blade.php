@@ -48,15 +48,13 @@
             </tr>
         </thead>
         <tbody>
-            @php($n = 0)
             @foreach ($groups as $day => $rows)
                 <tr class="day-header">
                     <td colspan="5">{{ $day }}</td>
                 </tr>
                 @foreach ($rows as $row)
-                    @php($n++)
                     <tr>
-                        <td class="num-cell">#{{ $n }}</td>
+                        <td class="num-cell">#{{ $row['number'] }}</td>
                         <td>{{ $row['started_at']->translatedFormat('j \d\e F, H:i') }}</td>
                         <td>{{ $row['ended_at']?->translatedFormat('j \d\e F, H:i') ?? '—' }}</td>
                         <td class="duration">{{ $row['duration'] ?? '—' }}</td>

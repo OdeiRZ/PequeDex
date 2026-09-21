@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- El PDF de contracciones gana cabecera y pie de página con los datos
+  más relevantes del historial completo: fecha/hora de generación y una
+  barra con tres estadísticas (contracciones totales, duración media,
+  intervalo medio — este último excluye los huecos "> 60 min", que no
+  son un intervalo real entre labores, igual que en la tabla) en la
+  cabecera; nombre de la app con su logo en el pie, repetido en cada
+  página. La rotura de bolsa de aguas, que antes no aparecía en el PDF
+  en absoluto, se muestra ahora como una fila más dentro de la línea
+  temporal, en el hueco cronológico exacto que le corresponde entre las
+  contracciones (mismas columnas que el resto de filas: icono alineado
+  con el número, fecha con "Inicio de contracción", texto centrado en
+  el resto del ancho) — en azul en vez del marrón de marca del resto
+  del documento, para que se distinga como un evento aparte, no una
+  estadística más.
 - Navegación por día en "Ritmo de hoy": flechas para ver el ritmo y las
   tomas de días anteriores (la de avanzar se desactiva en "hoy" — nunca
   se navega al futuro). Antes `DailyRhythm.vue` estaba fijo al día

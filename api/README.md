@@ -263,7 +263,28 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   el separador de día se centra en su barra, las columnas se
   reequilibran (duración, que solo contiene "mm:ss", se estrecha en
   favor de inicio/fin/intensidad) y el contenido de la tabla pasa a
-  alinearse a la derecha.
+  alinearse a la derecha. Cabecera y pie de página nuevos: la cabecera
+  suma la fecha/hora de generación y una barra con tres estadísticas
+  sobre el historial completo del bebé (contracciones totales, duración
+  media, intervalo medio — acumuladas en segundos dentro del mismo
+  bucle que ya construía cada fila, no recalculadas aparte; el
+  intervalo medio excluye los huecos "> 60 min" por el mismo motivo que
+  se imprimen así en la tabla), y el pie repite en cada página
+  (`position: fixed`) el logo de la app junto a su nombre — el logo se
+  reconstruye a partir de `public/favicon.svg` con relleno plano en vez
+  del `<style>` con gradiente y media query del original
+  (`logoDataUri()`), porque dompdf no soporta ninguno de los dos de
+  forma fiable dentro de un `<img>` de datos. La rotura de bolsa de
+  aguas (`Baby::water_broke_at`) no aparecía en el PDF hasta ahora; se
+  fusiona como una entrada más (`type: contraction|water`) en la misma
+  colección que las filas de contracciones antes de ordenar por fecha y
+  agrupar por día, así que aparece en su hueco cronológico exacto — el
+  cálculo de intervalos sigue operando solo sobre `$contractions`, sin
+  verse afectado por la fusión. La fila usa las mismas columnas que el
+  resto de la tabla (icono en la columna del número, fecha en la
+  columna de inicio, texto centrado en el resto del ancho) pero en azul
+  (`#3f7ea6`) en vez del marrón de marca, para distinguirse como un
+  evento aparte.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

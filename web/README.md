@@ -230,7 +230,12 @@ porque la verificación local solo cubría los otros tres.
   revés) y recibió una pasada de legibilidad para papel: tipografía
   más grande, separador de día centrado, columnas reequilibradas
   (duración más estrecha, el resto más ancho) y contenido alineado a
-  la derecha (ver `api/README.md` para el detalle del lado backend).
+  la derecha. Ganó también cabecera con estadísticas y fecha de
+  generación, pie de página con el logo de la app, y la rotura de
+  bolsa de aguas integrada como una fila más en su hueco cronológico
+  dentro de la propia línea temporal, en azul para distinguirse como
+  evento aparte (ver `api/README.md` para el detalle del lado
+  backend).
 
 ## Idioma
 

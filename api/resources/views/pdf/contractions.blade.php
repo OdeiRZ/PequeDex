@@ -29,7 +29,7 @@
         .num-cell { color: #a3968a; font-size: 13px; }
         .duration { font-weight: bold; font-size: 16px; color: #a65a6b; }
         .bolts { text-align: right; }
-        .bolts img { margin-left: 4px; width: 20px; height: 20px; }
+        .bolts img { margin-left: 3px; width: 16px; height: 16px; }
     </style>
 </head>
 <body>
@@ -42,8 +42,8 @@
                 <th style="width: 7%;">#</th>
                 <th style="width: 29%;">Inicio de contracción</th>
                 <th style="width: 29%;">Fin de contracción</th>
-                <th style="width: 12%;">Duración</th>
-                <th class="num" style="width: 23%;">Intensidad</th>
+                <th style="width: 16%;">Duración</th>
+                <th class="num" style="width: 19%;">Intensidad</th>
             </tr>
         </thead>
         <tbody>
@@ -59,7 +59,7 @@
                         <td class="duration">{{ $row['duration'] ?? '—' }}</td>
                         <td class="bolts">
                             @for ($bolt = 0; $bolt < 3; $bolt++)
-                                <img src="{{ $bolt <= $row['intensity'] ? $boltOn : $boltOff }}" width="20" height="20" alt="" />
+                                <img src="{{ $bolt <= $row['intensity'] ? $boltOn : $boltOff }}" width="16" height="16" alt="" />
                             @endfor
                         </td>
                     </tr>

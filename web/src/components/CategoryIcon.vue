@@ -13,19 +13,50 @@ defineProps<{ category: Category }>()
     stroke-linecap="round"
     stroke-linejoin="round"
   >
-    <path
-      v-if="category === 'feed'"
-      d="M9 2h6M10 2v3.5a2 2 0 0 1-.4 1.2L8 9.6A4 4 0 0 0 7 12v7a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-7a4 4 0 0 0-1-2.4l-1.6-2.9A2 2 0 0 1 14 5.5V2M8 14h8"
-    />
-    <path v-else-if="category === 'sleep'" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+    <template v-if="category === 'feed'">
+      <path
+        stroke-width="2.4"
+        d="M9.5 4h5M10.5 4v2.6L8.5 9.3a2 2 0 0 0-.5 1.3V19a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8.4a2 2 0 0 0-.5-1.3l-2-2.7V4"
+      />
+      <path stroke-width="2" d="M8 13h8" />
+    </template>
+    <template v-else-if="category === 'sleep'">
+      <path
+        fill="currentColor"
+        stroke="none"
+        d="M21 13.2A9 9 0 1 1 10.8 3a7.2 7.2 0 0 0 10.2 10.2Z"
+      />
+      <rect
+        fill="currentColor"
+        stroke="none"
+        x="15.2"
+        y="3.3"
+        width="2.6"
+        height="2.6"
+        rx="0.6"
+        transform="rotate(45 16.5 4.6)"
+      />
+      <rect
+        fill="currentColor"
+        stroke="none"
+        x="18.7"
+        y="7.2"
+        width="1.7"
+        height="1.7"
+        rx="0.4"
+        transform="rotate(45 19.55 8.05)"
+      />
+    </template>
     <template v-else-if="category === 'diaper'">
-      <path d="M4 8c0-2.2 3.6-4 8-4s8 1.8 8 4-3.6 10-8 10-8-7.8-8-10Z" />
-      <path d="M8 18c0 1.1 1.8 2 4 2s4-.9 4-2" />
+      <rect stroke-width="2.2" x="4" y="6" width="16" height="13" rx="4" />
+      <path stroke-width="2.2" d="M14.5 6v2.8a2 2 0 0 0 2 2H20" />
     </template>
     <path v-else-if="category === 'growth'" d="M4 20 18 6M8 20h12V8" />
     <path
       v-else-if="category === 'milestone'"
-      d="m12 2 2.9 6.6L22 9.3l-5 4.9 1.2 7-6.2-3.4L5.8 21.2 7 14.2l-5-4.9 7.1-.7Z"
+      fill="currentColor"
+      stroke="none"
+      d="M12 1.5 14.53 8.52 21.99 8.75 16.09 13.33 18.17 20.49 12 16.3 5.83 20.49 7.91 13.33 2.01 8.75 9.47 8.52Z"
     />
   </svg>
 </template>

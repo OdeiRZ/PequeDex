@@ -176,12 +176,12 @@ const rhythm = computed<RhythmData>(() => {
           :style="{ left: `${tick.left}%` }"
         ></span>
       </div>
-      <div class="mb-2.5 flex justify-between text-xs tabular-nums text-text-muted">
-        <span>0h</span>
-        <span>6h</span>
-        <span>12h</span>
-        <span>18h</span>
-        <span>24h</span>
+      <div class="relative mb-2.5 h-4 text-xs tabular-nums text-text-muted">
+        <span class="absolute left-0">0h</span>
+        <span class="absolute left-1/4 -translate-x-1/2">6h</span>
+        <span class="absolute left-1/2 -translate-x-1/2">12h</span>
+        <span class="absolute left-3/4 -translate-x-1/2">18h</span>
+        <span class="absolute right-0">24h</span>
       </div>
       <div class="flex flex-wrap gap-3 text-xs text-text-muted">
         <span v-if="enabledCategories.includes('feed')" class="flex items-center gap-1.5"

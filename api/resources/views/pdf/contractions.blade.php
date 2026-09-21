@@ -18,9 +18,8 @@
         h1 { font-size: 26px; margin-bottom: 2px; color: #1a1a1a; }
         .subtitle { color: #7a6f66; margin-bottom: 20px; font-size: 15px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
-        th { text-align: left; padding: 4px 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; }
-        th.num { text-align: right; }
-        td { padding: 10px; vertical-align: top; background: #f3ece4; }
+        th { text-align: right; padding: 4px 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; }
+        td { padding: 10px; vertical-align: top; background: #f3ece4; text-align: right; }
         td:first-child { border-radius: 8px 0 0 8px; }
         td:last-child { border-radius: 0 8px 8px 0; }
         tr.day-header td { background: #8a9a5b; color: #fff; font-weight: bold; padding: 7px 10px; border-radius: 8px; font-size: 15px; text-align: center; }

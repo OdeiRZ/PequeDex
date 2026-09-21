@@ -166,7 +166,7 @@ export default {
       sexGirl: 'Niña',
       birthDate: 'Fecha de nacimiento (opcional)',
       toastSaved: 'Guardado.',
-      addAnotherBaby: 'Añadir otro bebé',
+      addAnotherBaby: 'Añadir bebé',
       deleteAllContractions: 'Eliminar todas las contracciones',
       deleteAllContractionsConfirm:
         '¿Seguro que quieres eliminar todas las contracciones registradas? No se puede deshacer - útil tras una falsa alarma, para empezar de cero.',
@@ -174,12 +174,13 @@ export default {
       deletingContractions: 'Eliminando...',
       deleteAllContractionsError: 'No se han podido eliminar las contracciones.',
       toastContractionsDeleted: 'Contracciones eliminadas.',
-      leaveBaby: 'Abandonar este bebé',
+      leaveBaby: 'Dejar de cuidar a este bebé',
       leaveConfirm:
         '¿Seguro que quieres dejar de ser cuidador de este bebé? Necesitarás el código de invitación para volver a unirte.',
-      leaveConfirmYes: 'Sí, abandonar',
-      leaving: 'Abandonando...',
-      leaveError: 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.',
+      leaveConfirmYes: 'Sí, dejar de cuidarlo',
+      leaving: 'Saliendo...',
+      leaveError:
+        'Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.',
       toastLeft: 'Has dejado de ser cuidador de este bebé.',
     },
     quickLog: {

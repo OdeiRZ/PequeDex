@@ -165,7 +165,7 @@ export default {
       sexGirl: 'Girl',
       birthDate: 'Date of birth (optional)',
       toastSaved: 'Saved.',
-      addAnotherBaby: 'Add another baby',
+      addAnotherBaby: 'Add a baby',
       deleteAllContractions: 'Delete all contractions',
       deleteAllContractionsConfirm:
         "Are you sure you want to delete every logged contraction? This can't be undone - useful after a false alarm, to start fresh.",

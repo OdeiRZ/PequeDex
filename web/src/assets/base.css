@@ -278,6 +278,8 @@ body {
   }
 
   .btn-primary {
+    position: relative;
+    overflow: hidden;
     border-radius: 0.75rem;
     background: var(--brand);
     padding: 0.75rem 1rem;
@@ -287,6 +289,29 @@ body {
       transform 0.15s ease,
       box-shadow 0.15s ease,
       background-color 0.15s ease;
+  }
+
+  /* A single diagonal shine sweeping across on hover - reads as "ready",
+     not just a flat color/shadow change. Sized well past the button's
+     own bounds so the gradient band clears both edges instead of
+     popping in/out abruptly. */
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in srgb, var(--brand-ink) 35%, transparent) 48%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.5s ease;
+    pointer-events: none;
+  }
+
+  .btn-primary:hover:not(:disabled)::after {
+    transform: translateX(120%);
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -378,6 +403,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .btn-primary,
+  .btn-primary::after,
   .btn-ghost,
   .card-interactive,
   .entry-list-enter-active,

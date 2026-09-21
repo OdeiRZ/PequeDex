@@ -81,17 +81,17 @@ const sizes = computed(() => {
           v-for="item in items"
           :key="item.category"
           type="button"
-          class="flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
+          class="group flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
           :class="[sizes.gap, sizes.text]"
           @click="$emit('select', item.category)"
         >
           <span
-            class="grid place-items-center rounded-full transition-[height,width] duration-150"
+            class="grid place-items-center rounded-full transition-[height,width,transform] duration-150 group-hover:-translate-y-0.5 group-active:scale-90 motion-reduce:transition-[height,width]"
             :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
           >
             <CategoryIcon
               :category="item.category"
-              class="transition-[height,width] duration-150"
+              class="transition-[height,width,transform] duration-150 group-hover:-rotate-[8deg] motion-reduce:transition-[height,width] motion-reduce:group-hover:rotate-0"
               :class="sizes.icon"
             />
           </span>

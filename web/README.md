@@ -161,7 +161,15 @@ porque la verificación local solo cubría los otros tres.
   único `now` (un `setInterval` de 1s) que pasa como prop a
   `ContractionTimeline.vue`, para que el contador en vivo de la fila
   activa y las estadísticas del encabezado no se desincronicen por
-  llevar cada uno su propio intervalo. Intensidad en 3 niveles — Leve/
+  llevar cada uno su propio intervalo. Ese mismo `now` alimenta
+  `sinceLastLabel` ("Desde la última: mm:ss", sobre el botón de
+  inicio): mientras no hay ninguna contracción en marcha pero ya existe
+  una anterior, cuenta en vivo el tiempo transcurrido desde su
+  `ended_at` - desaparece en cuanto se inicia una nueva y vuelve a
+  empezar desde cero al detenerla, sin dato nuevo que guardar (es el
+  mismo cálculo que ya hacía `ContractionTimeline.vue` para el chip de
+  intervalo, solo que en vivo en vez de a posteriori). Intensidad en 3
+  niveles — Leve/
   Moderada/Intensa — en vez de los 4 del original de referencia (pedido
   explícito). El registro de rotura de bolsa de aguas
   (`babies.current.water_broke_at`, vía `updateBaby()`, sin acción de

@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Contador de contracciones: el tiempo desde la última contracción se
+  ve ahora en vivo ("Desde la última: mm:ss", creciendo cada segundo)
+  sobre el botón de inicio, en vez de aparecer solo como una etiqueta
+  estática en la línea temporal una vez arrancaba la siguiente
+  contracción. Pedido explícito, mejora sobre el original (que no lo
+  mostraba en ningún momento antes del hecho). Desaparece mientras hay
+  una contracción en marcha y vuelve a empezar desde cero en cuanto se
+  detiene, repitiendo el ciclo — puramente derivado del `ended_at` de
+  la última contracción y el reloj compartido de la vista, sin dato
+  nuevo que guardar.
+
 - Contador de contracciones, calcado (adaptado a la identidad visual de
   PequeDex) de una app de referencia: cronómetro de inicio/detener con
   estadísticas sobre la última hora (veces por hora, duración e

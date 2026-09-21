@@ -9,6 +9,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Las predicciones de próxima toma/próximo sueño se mueven de un
+  recuadro destacado al final del dashboard a justo debajo de las
+  estadísticas de hoy, con el mismo aspecto que una fila de la línea
+  temporal (mismo componente `EntryCard`) en vez de un bloque visual
+  aparte — la pregunta de "¿cuándo toca lo siguiente?" queda arriba,
+  donde se mira primero, no enterrada bajo el ritmo y el historial.
+  Nuevo interruptor "Predicciones" en "Tu cuenta" (junto a la barra de
+  accesos, mismo guardado al vuelo con reversión si falla) para
+  desactivarlas por completo si no se quieren ver — activadas por
+  defecto. Nueva columna `users.predictions_enabled`.
 - Iconos de toma, sueño, pañal y hito renovados — los cinco eran trazos
   finos genéricos sin nada propio de un bebé real. Explorados en dos
   bocetos comparados antes de aplicarlos: biberón de trazo grueso con

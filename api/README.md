@@ -67,6 +67,11 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   impone el frontend deshabilitando el icono antes de dejar
   deseleccionar más, para que nunca llegue a depender solo de la
   validación del servidor.
+- `ProfileController::updatePredictionsEnabled()` — activa/desactiva
+  las predicciones de próxima toma/próximo sueño (ver `web/README.md`).
+  Columna `users.predictions_enabled` (booleana, `default(true)`),
+  `PUT /user/predictions`, mismo patrón que `action_bar_categories`
+  justo arriba pero sin array que validar, solo `required|boolean`.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

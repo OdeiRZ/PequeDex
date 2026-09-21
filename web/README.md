@@ -296,6 +296,27 @@ al icono. Las secciones del dashboard ligadas a una categoría
 desactivada (predicción y semana de sueño, lista de crecimiento,
 hitos) también dejan de renderizarse, igual que su acceso rápido.
 
+## Predicciones
+
+Las tarjetas de próxima toma/próximo sueño (`feedPredictionLabel`/
+`sleepPredictionLabel` en `DashboardView.vue`) vivían en un recuadro
+destacado con su propio icono grande, al final del dashboard, después
+de la línea temporal. Se movieron justo debajo de las estadísticas de
+hoy — es la pregunta que de verdad se mira primero al abrir la app —
+y pasaron a usar `EntryCard`, el mismo componente que cada fila de la
+línea temporal, para que se lean como un evento más en vez de un
+bloque visual aparte. Solo se muestran en "hoy" (`isRhythmToday`, ver
+la nota de "Línea temporal" más arriba); en un día pasado no tiene
+sentido estimar algo relativo a "ahora".
+
+Nuevo interruptor "Predicciones" en "Tu cuenta" (`AccountSheet.vue`,
+junto a la barra de accesos, mismo patrón de guardado al vuelo con
+reversión si el `PUT` falla) que activa/desactiva
+`auth.user.predictions_enabled` (`auth.updatePredictionsEnabled()` →
+`PUT /user/predictions`, ver `api/README.md`) — por si alguien
+prefiere no ver estimaciones, solo lo registrado. Activadas por
+defecto.
+
 ## Diseño
 
 Tailwind CSS v4 (`@tailwindcss/vite`, configuración CSS-first vía

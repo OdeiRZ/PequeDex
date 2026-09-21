@@ -13,6 +13,7 @@ import {
   type GrowthMeasurement,
   type MilestoneCategory,
   type Sleep,
+  type TimelineEntry,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import ActionBar from '@/components/ActionBar.vue'
@@ -88,6 +89,43 @@ async function loadBabyData() {
 const rhythmDate = ref(todayDateOnlyString())
 const isRhythmToday = computed(() => rhythmDate.value === todayDateOnlyString())
 const rhythmTimeline = computed(() => (isRhythmToday.value ? babies.timeline : babies.dayTimeline))
+
+// The flat "Línea temporal" list below reuses `rhythmTimeline` too - a
+// day separator between entries makes sense in both of its modes: on
+// "hoy" it's still "most recent N overall", which can span into
+// yesterday once N entries have piled up today; on a past day it's a
+// single calendar day, so at most one separator ever renders, acting
+// as a day label for the whole list. `en-CA` gives a stable
+// yyyy-mm-dd grouping key independent of `dateLocale`, which is only
+// used for the displayed label - same pattern as ContractionTimeline.vue.
+type TimelineListItem =
+  | { kind: 'separator'; key: string; label: string }
+  | { kind: 'entry'; key: string; entry: TimelineEntry }
+
+const groupedTimeline = computed<TimelineListItem[]>(() => {
+  const items: TimelineListItem[] = []
+  let previousDayKey: string | null = null
+
+  for (const entry of rhythmTimeline.value) {
+    const at = new Date(entry.at)
+    const dayKey = at.toLocaleDateString('en-CA')
+    if (dayKey !== previousDayKey) {
+      items.push({
+        kind: 'separator',
+        key: `day-${dayKey}`,
+        label: at.toLocaleDateString(dateLocale.value, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      })
+      previousDayKey = dayKey
+    }
+    items.push({ kind: 'entry', key: `${entry.type}-${entry.data.id}`, entry })
+  }
+
+  return items
+})
 
 async function onRhythmPrevDay() {
   rhythmDate.value = addDays(rhythmDate.value, -1)
@@ -1306,21 +1344,31 @@ const feedPredictionLabel = computed(() => {
               {{ t('dashboard.timeline.title') }}
             </h2>
             <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
-              <EntryCard
-                v-for="entry in babies.timeline"
-                :key="`${entry.type}-${entry.data.id}`"
-                :category="entryCategory(entry)"
-                :title="entryTitle(entry)"
-                :meta="new Date(entry.at).toLocaleString(dateLocale)"
-                @open="onOpenEntry(entry)"
-              >
-                <template #actions>
-                  <DeleteButton @click="onDeleteEntry(entry)" />
-                </template>
-              </EntryCard>
+              <template v-for="item in groupedTimeline" :key="item.key">
+                <li v-if="item.kind === 'separator'" class="my-1 flex items-center gap-3">
+                  <span class="h-px flex-1 bg-border"></span>
+                  <span
+                    class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
+                  >
+                    {{ item.label }}
+                  </span>
+                  <span class="h-px flex-1 bg-border"></span>
+                </li>
+                <EntryCard
+                  v-else
+                  :category="entryCategory(item.entry)"
+                  :title="entryTitle(item.entry)"
+                  :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
+                  @open="onOpenEntry(item.entry)"
+                >
+                  <template #actions>
+                    <DeleteButton @click="onDeleteEntry(item.entry)" />
+                  </template>
+                </EntryCard>
+              </template>
             </TransitionGroup>
             <p
-              v-if="babies.timeline.length === 0"
+              v-if="rhythmTimeline.length === 0"
               class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
             >
               {{ t('dashboard.timeline.empty') }}

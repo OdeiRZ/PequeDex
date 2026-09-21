@@ -64,6 +64,8 @@ class ContractionsExportController extends Controller
             }
 
             return [
+                'type' => 'contraction',
+                'sort_at' => $startedAt,
                 'number' => $total - $index,
                 'started_at' => $startedAt,
                 'ended_at' => $endedAt,
@@ -73,23 +75,39 @@ class ContractionsExportController extends Controller
             ];
         });
 
-        // Grouped by calendar day for the section headers in the PDF -
-        // groups come out newest-day-first too, since $rows is already
-        // in that order and groupBy keeps first-seen order.
-        $groups = $rows->groupBy(fn ($row) => $row['started_at']->translatedFormat('d \d\e F \d\e Y'));
-
         $waterBrokeAt = $baby->water_broke_at ? CarbonImmutable::parse($baby->water_broke_at) : null;
+
+        // The water-break marker sorts in among the contraction rows by
+        // its own timestamp (newest-first, same as everything else) -
+        // it's a real event on the same timeline, not a fact that only
+        // belongs in a header - instead of a fixed block before the
+        // table regardless of when it actually happened.
+        $entries = $rows->all();
+        if ($waterBrokeAt !== null) {
+            $entries[] = [
+                'type' => 'water',
+                'sort_at' => $waterBrokeAt,
+                'at' => $waterBrokeAt,
+            ];
+        }
+        $entries = collect($entries)->sortByDesc('sort_at')->values();
+
+        // Grouped by calendar day for the section headers in the PDF -
+        // groups come out newest-day-first too, since $entries is
+        // already in that order and groupBy keeps first-seen order.
+        $groups = $entries->groupBy(fn ($row) => $row['sort_at']->translatedFormat('d \d\e F \d\e Y'));
 
         $pdf = Pdf::loadView('pdf.contractions', [
             'groups' => $groups,
             'baby' => $baby,
             'boltOn' => $this->boltDataUri('#a65a6b'),
             'boltOff' => $this->boltDataUri('#e8ddd0'),
+            'waterIcon' => $this->waterIconDataUri(),
+            'logo' => $this->logoDataUri(),
             'generatedAt' => CarbonImmutable::now(),
             'totalContractions' => $total,
             'avgDuration' => $durationSeconds ? $this->formatSeconds(array_sum($durationSeconds) / count($durationSeconds)) : null,
             'avgInterval' => $intervalSeconds ? $this->formatSeconds(array_sum($intervalSeconds) / count($intervalSeconds)) : null,
-            'waterBrokeAt' => $waterBrokeAt,
         ]);
 
         return $pdf->stream('contracciones.pdf');
@@ -106,6 +124,37 @@ class ContractionsExportController extends Controller
     {
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="'.$color.'">'
             .'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
+    /** Same droplet path as the app's own water-break icon (ContractionsView.vue), in the blue used for the PDF's water-break row. */
+    private function waterIconDataUri(): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3f7ea6" stroke-width="2">'
+            .'<path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z"/></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
+    /**
+     * The app's favicon (public/favicon.svg) uses a <style> block with a
+     * prefers-color-scheme media query and a gradient fill - dompdf
+     * doesn't reliably support either inside a data-URI <img> the way it
+     * renders the bolt/droplet icons above (plain fill attributes, no
+     * <style>/media query), so this rebuilds the same two shapes (sole +
+     * heart) with a flat brand-maroon fill instead, for print.
+     */
+    private function logoDataUri(): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 100">'
+            .'<ellipse cx="42" cy="62" rx="26" ry="34" fill="#a65a6b"/>'
+            .'<ellipse cx="16" cy="24" rx="7" ry="9" transform="rotate(-10 16 24)" fill="#a65a6b"/>'
+            .'<ellipse cx="32" cy="14" rx="7.5" ry="10" transform="rotate(-4 32 14)" fill="#a65a6b"/>'
+            .'<ellipse cx="50" cy="12" rx="7.5" ry="10" fill="#a65a6b"/>'
+            .'<ellipse cx="66" cy="16" rx="7" ry="9.5" transform="rotate(8 66 16)" fill="#a65a6b"/>'
+            .'<path d="M42 54 c-4 -6 -13 -4 -13 3 c0 6 8 11 13 15 c5 -4 13 -9 13 -15 c0 -7 -9 -9 -13 -3 Z" fill="#ffffff"/>'
+            .'</svg>';
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }

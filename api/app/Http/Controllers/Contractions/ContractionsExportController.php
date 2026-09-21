@@ -21,6 +21,23 @@ class ContractionsExportController extends Controller
     {
         $this->authorize('view', $baby);
 
+        $pdf = Pdf::loadView('pdf.contractions', $this->buildViewData($baby));
+
+        return $pdf->stream('contracciones.pdf');
+    }
+
+    /**
+     * Everything the Blade view needs, split out from show() so the data
+     * (grouping, ordering, stats, the water-break entry's position in the
+     * timeline) can be tested directly - asserting on the array here is
+     * far more reliable than scraping text out of the rendered PDF's
+     * compressed content streams, which barryvdh/laravel-dompdf doesn't
+     * expose as plain searchable text.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildViewData(Baby $baby): array
+    {
         // Newest first, same order (and same numbering: the newest
         // contraction gets the highest number, not #1) as the app's own
         // ContractionTimeline.vue - this used to go oldest-first instead,
@@ -97,7 +114,7 @@ class ContractionsExportController extends Controller
         // already in that order and groupBy keeps first-seen order.
         $groups = $entries->groupBy(fn ($row) => $row['sort_at']->translatedFormat('d \d\e F \d\e Y'));
 
-        $pdf = Pdf::loadView('pdf.contractions', [
+        return [
             'groups' => $groups,
             'baby' => $baby,
             'boltOn' => $this->boltDataUri('#a65a6b'),
@@ -108,9 +125,7 @@ class ContractionsExportController extends Controller
             'totalContractions' => $total,
             'avgDuration' => $durationSeconds ? $this->formatSeconds(array_sum($durationSeconds) / count($durationSeconds)) : null,
             'avgInterval' => $intervalSeconds ? $this->formatSeconds(array_sum($intervalSeconds) / count($intervalSeconds)) : null,
-        ]);
-
-        return $pdf->stream('contracciones.pdf');
+        ];
     }
 
     /**

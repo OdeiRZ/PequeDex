@@ -1376,7 +1376,7 @@ const feedPredictionLabel = computed(() => {
           </section>
 
           <section
-            v-if="enabledCategories.includes('feed')"
+            v-if="enabledCategories.includes('feed') && isRhythmToday"
             class="card flex items-start gap-3 p-4"
           >
             <span
@@ -1394,7 +1394,7 @@ const feedPredictionLabel = computed(() => {
           </section>
 
           <section
-            v-if="enabledCategories.includes('sleep')"
+            v-if="enabledCategories.includes('sleep') && isRhythmToday"
             class="card flex items-start gap-3 p-4"
           >
             <span

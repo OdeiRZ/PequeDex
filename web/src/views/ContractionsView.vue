@@ -12,7 +12,7 @@ import {
   toLocalInputValueWithSeconds,
   toUtcIso,
 } from '@/lib/datetimeInput'
-import { summarizeRecentContractions } from '@/lib/contractionStats'
+import { LONG_GAP_MINUTES, summarizeRecentContractions } from '@/lib/contractionStats'
 
 const babies = useBabiesStore()
 const toast = useToastStore()
@@ -75,18 +75,31 @@ const lastStoppedContraction = computed<Contraction | undefined>(() =>
   activeContraction.value ? undefined : babies.contractions[0],
 )
 
+// Past LONG_GAP_MINUTES, stop ticking and show the same "> 60 min"
+// text as ContractionTimeline's own interval chips once a contraction
+// starts and this becomes a real interval - the two shouldn't disagree
+// about when a gap stops being "a real number of minutes" and starts
+// being "labor paused for a while". The elapsed time itself keeps
+// growing underneath regardless (nothing here freezes `now`), only the
+// displayed text stops changing.
 const sinceLastLabel = computed<string | null>(() => {
   const last = lastStoppedContraction.value
   if (!last?.ended_at) return null
 
-  const totalSeconds = Math.max(
-    0,
-    Math.round((now.value.getTime() - new Date(last.ended_at).getTime()) / 1000),
-  )
+  const elapsedMs = now.value.getTime() - new Date(last.ended_at).getTime()
+  if (Math.floor(elapsedMs / 60_000) >= LONG_GAP_MINUTES) {
+    return t('contractions.longGap', { min: LONG_GAP_MINUTES })
+  }
+
+  const totalSeconds = Math.max(0, Math.round(elapsedMs / 1000))
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 })
+
+const sinceLastAriaLabel = computed<string | undefined>(() =>
+  sinceLastLabel.value ? t('contractions.sinceLast', { time: sinceLastLabel.value }) : undefined,
+)
 
 const stats = computed(() => summarizeRecentContractions(babies.contractions, now.value))
 
@@ -388,9 +401,14 @@ async function onExportPdf() {
         </div>
       </div>
 
-      <p v-if="sinceLastLabel" class="text-center text-sm font-semibold text-text-muted">
-        {{ t('contractions.sinceLast', { time: sinceLastLabel }) }}
-      </p>
+      <div v-if="sinceLastLabel" class="flex justify-end">
+        <span
+          class="rounded-full border border-border px-4 py-1.5 text-base font-bold tabular-nums text-text-muted"
+          :aria-label="sinceLastAriaLabel"
+        >
+          {{ sinceLastLabel }}
+        </span>
+      </div>
 
       <ContractionTimeline
         v-if="babies.contractions.length > 0"

@@ -8,6 +8,16 @@ export interface ContractionStats {
 
 const WINDOW_MS = 60 * 60_000
 
+// Gaps longer than this print as "> 60 min" instead of the literal
+// duration, both in ContractionTimeline.vue's interval chips and in
+// ContractionsView.vue's live "Desde la última" counter - a gap this
+// long is almost never a real measurement, just a pause between labors
+// on different days. Same threshold as the backend's
+// ContractionsExportController (kept in sync by hand, not shared code -
+// nothing else ties a frontend constant to a Laravel one across the
+// API boundary in this app).
+export const LONG_GAP_MINUTES = 60
+
 // A rolling last-60-minutes window, not the whole history - matches the
 // reference app's own "Veces por hora" ("times per hour"). `null` in
 // every field with nothing in the window, so the view can render "-"

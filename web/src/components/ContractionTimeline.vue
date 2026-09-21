@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Contraction } from '@/stores/babies'
+import { LONG_GAP_MINUTES } from '@/lib/contractionStats'
 
 // `now` is passed in (not read from `new Date()` internally) so the
 // running row's live duration updates on the same tick as
@@ -11,8 +12,6 @@ const props = defineProps<{ contractions: Contraction[]; dateLocale: string; now
 defineEmits<{ edit: [id: number] }>()
 
 const { t } = useI18n()
-
-const LONG_GAP_MINUTES = 60
 
 interface Row {
   contraction: Contraction

@@ -788,6 +788,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- Antes de que naciera el bebé (sin `birth_date`, o con una
+  `birth_date` puesta de antemano que todavía no ha llegado), el
+  dashboard seguía mostrando estadísticas de hoy, ritmo, sueño de la
+  semana, línea temporal, predicciones, crecimiento, hitos y la barra
+  de accesos rápidos — no tiene sentido, no hay nada que trackear de
+  un bebé que aún no existe. Solo la tarjeta de "Contador de
+  contracciones" tenía en cuenta ese estado. `getBabyAge()` también
+  clasificaba una `birth_date` futura como "nacido, día 0" en vez de
+  "en camino"; corregido, y ese resultado (`isBorn`, nuevo computed en
+  `DashboardView.vue`) es ahora la única fuente de verdad para ocultar
+  todas esas secciones hasta que el bebé haya nacido de verdad.
+- La barra de accesos rápidos (Toma/Sueño/Pañal/Medida/Hito) vivía
+  renderizada al final de todo el contenido del dashboard con
+  `position: sticky`, así que solo empezaba a "pegarse" cuando el
+  scroll llegaba casi al fondo — en la práctica, no flotaba sobre la
+  línea temporal ni sobre nada anterior. Ahora se teletransporta a
+  `<body>` y es `fixed` de verdad (mismo patrón que los botones
+  flotantes de `ContractionsView.vue`), visible desde que se carga el
+  dashboard.
 - El enlace "Tu cuenta" del avatar (`AppHeader.vue`) no hacía nada
   fuera del dashboard — la hoja vivía solo dentro de
   `DashboardView.vue`, así que en `/contracciones` (o cualquier otra

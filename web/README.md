@@ -410,7 +410,26 @@ verse bien en una captura:
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones
-  de un formulario web.
+  de un formulario web. Bug real encontrado en vivo: vivía renderizada
+  al final de todo el contenido con `position: sticky`, así que solo
+  empezaba a "pegarse" con el scroll casi en el fondo del dashboard, no
+  flotaba de verdad sobre la línea temporal ni nada anterior. Se
+  teletransporta a `<body>` y pasa a `fixed` (mismo patrón que los
+  botones flotantes de `ContractionsView.vue`, para no depender de que
+  ningún ancestro tenga `transform`), envuelta en su propio
+  `mx-auto max-w-md` ya que fuera del flujo normal pierde el contexto
+  de ancho que le daba su contenedor.
+- **`isBorn`** (`DashboardView.vue`, `babyAgeInfo.value.type ===
+  'born'`) es la única fuente de verdad para "hay un bebé real que
+  trackear" - condiciona todo lo que va después de la tarjeta de
+  "Contador de contracciones" (estadísticas de hoy, ritmo, sueño de la
+  semana, línea temporal, predicciones, crecimiento, hitos, la propia
+  `ActionBar`): antes solo esa tarjeta miraba `birth_date`, y el resto
+  se veía igual con o sin bebé nacido. Cubre tanto la falta de
+  `birth_date` como una `birth_date` futura (fecha elegida de
+  antemano, o una fecha prevista puesta en el campo equivocado) -
+  `getBabyAge()` clasificaba antes ese segundo caso como "nacido, día
+  0" en vez de "en camino".
 - **`WeeklySleep.vue`** — una barra por cada uno de los últimos 7 días
   de calendario con las horas de sueño totales de ese día, justo bajo
   el "Ritmo de hoy": ver el patrón de la semana de un vistazo, no solo

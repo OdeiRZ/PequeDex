@@ -29,7 +29,14 @@ it('rejects an ended_at before started_at', function () {
     $this->postJson("/api/babies/{$baby->id}/sleeps", [
         'started_at' => '2026-08-30 20:00:00',
         'ended_at' => '2026-08-30 19:00:00',
-    ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('ended_at')
+        // Real Spanish sentence, not a fixed "check your connection" toast
+        // discarding it (that was the frontend's old, misleading fallback)
+        // nor Laravel's default translator producing "no es una fecha
+        // posterior a fecha" (both attributes resolve to the same generic
+        // "fecha" label, so the raw message doesn't say posterior to what).
+        ->assertJsonPath('errors.ended_at.0', 'La hora de fin debe ser posterior a la hora de inicio.');
 });
 
 it('rejects a started_at before the baby was born', function () {

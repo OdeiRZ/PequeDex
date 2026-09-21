@@ -25,4 +25,15 @@ class StoreContractionRequest extends FormRequest
             'started_at' => ['sometimes', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'started_at.date' => 'La hora de inicio no es una fecha válida.',
+            'started_at.before_or_equal' => 'La hora de inicio no puede ser posterior al momento actual.',
+        ];
+    }
 }

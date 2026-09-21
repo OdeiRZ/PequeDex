@@ -4,6 +4,7 @@ namespace App\Http\Requests\DiaperChanges;
 
 use App\Enums\DiaperType;
 use App\Http\Requests\Concerns\AuthorizesBabyAccess;
+use App\Http\Requests\Concerns\HasDateFieldMessages;
 use App\Http\Requests\Concerns\ValidatesNotBeforeBirth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 class UpdateDiaperChangeRequest extends FormRequest
 {
     use AuthorizesBabyAccess;
+    use HasDateFieldMessages;
     use ValidatesNotBeforeBirth;
 
     /**
@@ -22,6 +24,17 @@ class UpdateDiaperChangeRequest extends FormRequest
             'changed_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'type' => ['required', Rule::enum(DiaperType::class)],
             'notes' => ['nullable', 'string'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            ...$this->dateFieldMessages('changed_at', 'la hora del cambio'),
+            'type.required' => 'Selecciona el tipo de pañal.',
         ];
     }
 }

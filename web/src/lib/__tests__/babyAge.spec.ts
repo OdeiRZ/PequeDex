@@ -32,6 +32,14 @@ describe('getBabyAge', () => {
     expect(getBabyAge('2026-09-07', '2026-09-01', now)).toEqual({ type: 'born', days: 3, weeks: 0 })
   })
 
+  it('treats a birth_date that has not arrived yet as expecting, not born', () => {
+    // A birth_date picked ahead of time (or a due date entered into the
+    // wrong field) shouldn't read as "born today" - there's nothing to
+    // track yet.
+    const now = new Date(2026, 7, 1)
+    expect(getBabyAge('2026-08-15', null, now)).toEqual({ type: 'expecting', daysUntilDue: 14 })
+  })
+
   it('is unknown when neither date is set', () => {
     expect(getBabyAge(null, null)).toEqual({ type: 'unknown' })
   })

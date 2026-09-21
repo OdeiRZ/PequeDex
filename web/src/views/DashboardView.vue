@@ -590,6 +590,13 @@ const babyAgeInfo = computed(() =>
   getBabyAge(babies.current?.birth_date ?? null, babies.current?.due_date ?? null),
 )
 
+// Covers both "no birth_date at all" and "birth_date set but still in
+// the future" (a date picked ahead of time, or a due date entered into
+// the wrong field) - either way there's no baby to track feeds/sleep/
+// diapers/growth/milestones for yet, so everything below the
+// contractions link card stays hidden until this is true.
+const isBorn = computed(() => babyAgeInfo.value.type === 'born')
+
 const heroEyebrow = computed(() =>
   babies.current?.name
     ? t('dashboard.hero.eyebrow', { name: babies.current.name })
@@ -1165,7 +1172,7 @@ const feedPredictionLabel = computed(() => {
         </div>
 
         <RouterLink
-          v-if="babies.current && !babies.current.birth_date"
+          v-if="babies.current && !isBorn"
           :to="{ name: 'contractions' }"
           class="card-interactive flex items-center gap-3 rounded-2xl p-4"
         >
@@ -1193,120 +1200,128 @@ const feedPredictionLabel = computed(() => {
           </svg>
         </RouterLink>
 
-        <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
+        <template v-if="isBorn">
+          <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
 
-        <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
-          <h2 class="flex items-center gap-2 font-display text-base font-bold">
-            <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
-            {{ t('dashboard.milestones.title') }}
-          </h2>
-          <MilestoneStories
-            :milestones="babies.milestones"
-            @open="viewingMilestoneId = $event"
-            @create="openSheet('milestone')"
+          <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
+            <h2 class="flex items-center gap-2 font-display text-base font-bold">
+              <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
+              {{ t('dashboard.milestones.title') }}
+            </h2>
+            <MilestoneStories
+              :milestones="babies.milestones"
+              @open="viewingMilestoneId = $event"
+              @create="openSheet('milestone')"
+            />
+          </section>
+
+          <DailyRhythm
+            :timeline="babies.timeline"
+            :date-locale="dateLocale"
+            :enabled-categories="enabledCategories"
           />
-        </section>
+          <WeeklySleep
+            v-if="enabledCategories.includes('sleep')"
+            :sleeps="babies.recentSleeps"
+            :date-locale="dateLocale"
+          />
 
-        <DailyRhythm
-          :timeline="babies.timeline"
-          :date-locale="dateLocale"
-          :enabled-categories="enabledCategories"
-        />
-        <WeeklySleep
-          v-if="enabledCategories.includes('sleep')"
-          :sleeps="babies.recentSleeps"
-          :date-locale="dateLocale"
-        />
+          <section class="flex flex-col gap-2">
+            <h2 class="flex items-center gap-2 font-display text-base font-bold">
+              <span
+                class="h-4 w-1.5 shrink-0 rounded-full"
+                style="background: linear-gradient(180deg, var(--brand), var(--brand-teal))"
+              ></span>
+              {{ t('dashboard.timeline.title') }}
+            </h2>
+            <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
+              <EntryCard
+                v-for="entry in babies.timeline"
+                :key="`${entry.type}-${entry.data.id}`"
+                :category="entryCategory(entry)"
+                :title="entryTitle(entry)"
+                :meta="new Date(entry.at).toLocaleString(dateLocale)"
+                @open="onOpenEntry(entry)"
+              >
+                <template #actions>
+                  <DeleteButton @click="onDeleteEntry(entry)" />
+                </template>
+              </EntryCard>
+            </TransitionGroup>
+            <p
+              v-if="babies.timeline.length === 0"
+              class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
+            >
+              {{ t('dashboard.timeline.empty') }}
+            </p>
+          </section>
 
-        <section class="flex flex-col gap-2">
-          <h2 class="flex items-center gap-2 font-display text-base font-bold">
+          <section
+            v-if="enabledCategories.includes('feed')"
+            class="card flex items-start gap-3 p-4"
+          >
             <span
-              class="h-4 w-1.5 shrink-0 rounded-full"
-              style="background: linear-gradient(180deg, var(--brand), var(--brand-teal))"
-            ></span>
-            {{ t('dashboard.timeline.title') }}
-          </h2>
-          <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
-            <EntryCard
-              v-for="entry in babies.timeline"
-              :key="`${entry.type}-${entry.data.id}`"
-              :category="entryCategory(entry)"
-              :title="entryTitle(entry)"
-              :meta="new Date(entry.at).toLocaleString(dateLocale)"
-              @open="onOpenEntry(entry)"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+              :class="[categoryText.feed, categoryBg.feed]"
             >
-              <template #actions>
-                <DeleteButton @click="onDeleteEntry(entry)" />
-              </template>
-            </EntryCard>
-          </TransitionGroup>
-          <p
-            v-if="babies.timeline.length === 0"
-            class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
-          >
-            {{ t('dashboard.timeline.empty') }}
-          </p>
-        </section>
+              <CategoryIcon category="feed" class="h-[1.05rem] w-[1.05rem]" />
+            </span>
+            <div>
+              <h2 class="font-display text-sm font-bold">
+                {{ t('dashboard.feedPrediction.title') }}
+              </h2>
+              <p class="text-sm text-text-muted">{{ feedPredictionLabel }}</p>
+            </div>
+          </section>
 
-        <section v-if="enabledCategories.includes('feed')" class="card flex items-start gap-3 p-4">
-          <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
-            :class="[categoryText.feed, categoryBg.feed]"
+          <section
+            v-if="enabledCategories.includes('sleep')"
+            class="card flex items-start gap-3 p-4"
           >
-            <CategoryIcon category="feed" class="h-[1.05rem] w-[1.05rem]" />
-          </span>
-          <div>
-            <h2 class="font-display text-sm font-bold">
-              {{ t('dashboard.feedPrediction.title') }}
-            </h2>
-            <p class="text-sm text-text-muted">{{ feedPredictionLabel }}</p>
-          </div>
-        </section>
-
-        <section v-if="enabledCategories.includes('sleep')" class="card flex items-start gap-3 p-4">
-          <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
-            :class="[categoryText.sleep, categoryBg.sleep]"
-          >
-            <CategoryIcon category="sleep" class="h-[1.05rem] w-[1.05rem]" />
-          </span>
-          <div>
-            <h2 class="font-display text-sm font-bold">
-              {{ t('dashboard.sleepPrediction.title') }}
-            </h2>
-            <p class="text-sm text-text-muted">{{ sleepPredictionLabel }}</p>
-          </div>
-        </section>
-
-        <section v-if="enabledCategories.includes('growth')" class="flex flex-col gap-2">
-          <h2 class="flex items-center gap-2 font-display text-base font-bold">
-            <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
-            {{ t('dashboard.growth.title') }}
-          </h2>
-          <ul class="flex flex-col gap-2">
-            <EntryCard
-              v-for="measurement in babies.growthMeasurements"
-              :key="measurement.id"
-              category="growth"
-              :title="growthTitle(measurement)"
-              :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
-              @open="openGrowthEdit(measurement)"
+            <span
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+              :class="[categoryText.sleep, categoryBg.sleep]"
             >
-              <template #actions>
-                <DeleteButton @click="onDeleteGrowthMeasurement(measurement.id)" />
-              </template>
-            </EntryCard>
-          </ul>
-          <p
-            v-if="babies.growthMeasurements.length === 0"
-            class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
-          >
-            {{ t('dashboard.growth.empty') }}
-          </p>
-        </section>
+              <CategoryIcon category="sleep" class="h-[1.05rem] w-[1.05rem]" />
+            </span>
+            <div>
+              <h2 class="font-display text-sm font-bold">
+                {{ t('dashboard.sleepPrediction.title') }}
+              </h2>
+              <p class="text-sm text-text-muted">{{ sleepPredictionLabel }}</p>
+            </div>
+          </section>
+
+          <section v-if="enabledCategories.includes('growth')" class="flex flex-col gap-2">
+            <h2 class="flex items-center gap-2 font-display text-base font-bold">
+              <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
+              {{ t('dashboard.growth.title') }}
+            </h2>
+            <ul class="flex flex-col gap-2">
+              <EntryCard
+                v-for="measurement in babies.growthMeasurements"
+                :key="measurement.id"
+                category="growth"
+                :title="growthTitle(measurement)"
+                :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
+                @open="openGrowthEdit(measurement)"
+              >
+                <template #actions>
+                  <DeleteButton @click="onDeleteGrowthMeasurement(measurement.id)" />
+                </template>
+              </EntryCard>
+            </ul>
+            <p
+              v-if="babies.growthMeasurements.length === 0"
+              class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
+            >
+              {{ t('dashboard.growth.empty') }}
+            </p>
+          </section>
+        </template>
       </main>
 
-      <ActionBar :items="actionBarItems" @select="openSheet" />
+      <ActionBar v-if="isBorn" :items="actionBarItems" @select="openSheet" />
 
       <BottomSheet :open="activeSheet === 'feed'" @update:open="closeSheet">
         <h3 class="mb-4 flex items-center gap-2 font-display text-base font-bold">

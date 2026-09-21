@@ -29,8 +29,16 @@ export function getBabyAge(
   now: Date = new Date(),
 ): BabyAgeInfo {
   if (birthDate) {
-    const days = Math.max(0, daysBetween(parseDateOnly(birthDate), now))
-    return { type: 'born', days, weeks: Math.floor(days / 7) }
+    const days = daysBetween(parseDateOnly(birthDate), now)
+    // A `birth_date` in the future isn't really a birth yet - a date
+    // picked ahead of time, or a due date entered into the wrong field.
+    // Without this, it clamped to `days: 0` and read as "born today",
+    // which unlocked feed/sleep/timeline tracking for a baby that
+    // hasn't actually arrived.
+    if (days >= 0) {
+      return { type: 'born', days, weeks: Math.floor(days / 7) }
+    }
+    return { type: 'expecting', daysUntilDue: -days }
   }
 
   if (dueDate) {

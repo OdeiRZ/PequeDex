@@ -12,7 +12,7 @@ defineEmits<{ edit: [id: number] }>()
 
 const { t } = useI18n()
 
-const LONG_GAP_MINUTES = 50
+const LONG_GAP_MINUTES = 60
 
 interface Row {
   contraction: Contraction

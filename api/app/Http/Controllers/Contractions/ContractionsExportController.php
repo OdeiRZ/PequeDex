@@ -10,11 +10,12 @@ use Illuminate\Http\Response;
 
 class ContractionsExportController extends Controller
 {
-    /** Gaps longer than this print as "> 50 min" instead of the literal
-     * duration - same threshold and reasoning as the reference app this
-     * feature is modeled on: a gap this long is almost never a real
-     * measurement, just a pause between labors on different days. */
-    private const LONG_GAP_MINUTES = 50;
+    /** Gaps longer than this print as "> 60 min" instead of the literal
+     * duration: a gap this long is almost never a real measurement,
+     * just a pause between labors on different days. An hour is a
+     * cleaner, more meaningful cutoff than the reference app's original
+     * 50 minutes. */
+    private const LONG_GAP_MINUTES = 60;
 
     public function show(Baby $baby): Response
     {

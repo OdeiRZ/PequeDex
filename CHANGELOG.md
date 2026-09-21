@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Iconos de toma, sueño, pañal y hito renovados — los cinco eran trazos
+  finos genéricos sin nada propio de un bebé real. Explorados en dos
+  bocetos comparados antes de aplicarlos: biberón de trazo grueso con
+  la línea del nivel de leche (toma), luna llena rellena con dos
+  destellos en vez de solo el contorno (sueño), funda redondeada con
+  el pliegue lateral (pañal), y la misma estrella de hito redibujada
+  con las puntas más largas — una estrella de 5 puntas ocupa menos
+  área real que un círculo o rectángulo de la misma caja por sus
+  huecos cóncavos, así que a igual altura siempre leía más pequeña que
+  el resto. Crecimiento se queda igual: de varias alternativas
+  exploradas (regla, báscula, barras...) ninguna mejoraba a la actual.
 - "Línea temporal" del dashboard, hasta ahora un listado plano sin
   ninguna referencia al día de cada entrada, gana separadores de día
   (misma píldora visual que ya usaba el listado de contracciones) y
@@ -856,6 +867,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- Los errores de validación al registrar toma/sueño/pañal/medida/hito
+  (p. ej. la hora de fin anterior a la de inicio) mostraban siempre el
+  mismo toast fijo — "No se ha podido guardar. Comprueba tu conexión e
+  inténtalo de nuevo." — indistinguible de una caída de red real,
+  aunque el backend sí devolvía un mensaje concreto por campo. Ese
+  mensaje, a su vez, era una traducción literal de Laravel sin
+  atributos personalizados ("El campo ended at debe ser una fecha
+  posterior a fecha"), así que tampoco decía nada útil. Ahora el
+  backend devuelve una frase real por regla en cada `Store`/`Update`
+  Request ("La hora de fin debe ser posterior a la hora de inicio.")
+  y el frontend la muestra en vez de descartarla — el toast genérico
+  de conexión queda solo para cuando de verdad lo es (sin respuesta,
+  500, etc.).
 - Las marcas de toma/pañal de "Ritmo de hoy" quedaban desplazadas unos
   píxeles a la derecha de su hora real: cada marca es una barra de 5px
   cuyo `left: X%` posicionaba el borde izquierdo en el instante exacto,

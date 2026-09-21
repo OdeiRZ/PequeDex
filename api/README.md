@@ -190,6 +190,24 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   puede no haber nada contra lo que comparar). `after_or_equal`, no
   `after`: el día exacto del nacimiento es válido (un hito de
   "Nacimiento" ese mismo día).
+- `app/Http/Requests/Concerns/HasDateFieldMessages.php` — trait
+  hermano del anterior, mismo criterio de "compartido por todos los
+  `Store`/`Update` con un campo de fecha": los cuatro mensajes que se
+  repiten (`required`/`date`/`before_or_equal`-futuro/`after_or_equal`
+  -nacimiento) parametrizados por el nombre del campo y una etiqueta
+  articulada ("la hora de inicio", "la fecha de la medida"...). Bug
+  real reportado en vivo: sin mensajes propios, Laravel caía en su
+  traductor genérico (`lang/es/validation.php`), que para
+  `after_or_equal:started_at` resuelve el parámetro de comparación
+  a través del mismo array `attributes` que el propio campo - como
+  `started_at` mapea a "fecha" ahí, el mensaje salía "El campo ended
+  at debe ser una fecha posterior a fecha" (ni "ended_at" traducido,
+  ni queda claro posterior a qué). Aplicado a los doce
+  `Store`/`Update*Request` de tomas, sueños, pañales, medidas, hitos y
+  contracciones, con los mensajes propios de cada regla que no encajaba
+  en el trait (side/amount_ml de tomas, required_without_all de
+  medidas, título/foto de hitos, intensidad de contracciones) añadidos
+  aparte en cada uno.
 - **Contador de contracciones**
   (`app/Http/Controllers/Contractions/ContractionController.php`,
   `Contraction`, tabla `contractions`) — mismo patrón de autorización

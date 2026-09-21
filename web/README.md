@@ -34,6 +34,18 @@ porque la verificación local solo cubría los otros tres.
 
 - `src/lib/api.ts` — instancia de axios con interceptor que añade el token
   Bearer a cada petición, y cierra sesión automáticamente ante un 401.
+  `extractValidationMessage()` — bug real reportado en vivo: los
+  formularios de registro rápido (toma/sueño/pañal/medida/hito) y la
+  edición de contracciones capturaban cualquier fallo del guardado con
+  un `catch` sin distinguir causa, y siempre mostraban el mismo toast
+  fijo de "revisa tu conexión", tanto si era una caída de red real
+  como si el backend había rechazado los datos por una validación real
+  (la hora de fin anterior a la de inicio, por ejemplo) - el backend ya
+  devuelve un mensaje concreto por campo (ver `api/README.md`), pero se
+  descartaba sin más. Esta función devuelve el primer mensaje de campo
+  de una respuesta 422 (o `null` si el error no es un 422, para que el
+  `catch` de cada formulario siga usando su fallback genérico en los
+  casos que sí son de conexión).
 - `src/stores/auth.ts` — sesión (usuario + token), registro/login/logout, y
   restauración de sesión al recargar la página. También datos
   personales, cambio de contraseña y foto de perfil (`updateProfile`/
@@ -363,7 +375,20 @@ verse bien en una captura:
   (`text-feed`, `bg-feed/15`, …) están en `category.ts` como tablas de
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal
-  cual en el código fuente.
+  cual en el código fuente. Los iconos de `CategoryIcon.vue` (toma,
+  sueño, pañal, hito) se rediseñaron tras comparar dos bocetos con
+  Odei: biberón de trazo grueso con la línea de nivel de leche, luna
+  llena rellena con dos destellos, funda de pañal redondeada con el
+  pliegue lateral, y la estrella de hito redibujada con las puntas más
+  largas (una estrella de 5 puntas lee más pequeña que un círculo del
+  mismo tamaño de caja por sus huecos cóncavos, así que escalar solo
+  el chip que la contiene no bastaba). Ajuste posterior encontrado en
+  vivo: el pañal con `rx=6` sobre un rectángulo de 13 de alto se leía
+  casi como un círculo al tamaño real de la app (19-22px, no los
+  48-56px del boceto de muestra) — `rx=4` para que se note que es una
+  funda, no un óvalo. Crecimiento se queda con el icono de siempre; de
+  varias alternativas exploradas (regla, báscula, barras) ninguna lo
+  mejoraba.
 - **Hitos como diario interactivo** — los hitos no usan `EntryCard`, y su
   detalle ya no es una `BottomSheet` más: es el único de los cinco
   registros con categoría, reacciones y un visor propio a pantalla

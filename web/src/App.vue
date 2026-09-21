@@ -21,7 +21,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-screen max-w-md flex-col bg-bg text-text">
+  <div class="mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-bg text-text">
     <AppHeader />
     <RouterView />
     <ToastNotification />

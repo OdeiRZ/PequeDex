@@ -2,8 +2,13 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
+import type { Category } from '@/lib/category'
 
-const props = defineProps<{ timeline: TimelineEntry[]; dateLocale?: string }>()
+const props = defineProps<{
+  timeline: TimelineEntry[]
+  dateLocale?: string
+  enabledCategories: Category[]
+}>()
 
 const { t } = useI18n()
 
@@ -52,12 +57,15 @@ const rhythm = computed<RhythmData>(() => {
 
   for (const entry of props.timeline) {
     if (entry.type === 'feed') {
+      if (!props.enabledCategories.includes('feed')) continue
       const at = new Date(entry.data.started_at)
       if (at >= start && at <= end) feedTicks.push({ left: toPercent(at), time: toTime(at) })
     } else if (entry.type === 'diaper_change') {
+      if (!props.enabledCategories.includes('diaper')) continue
       const at = new Date(entry.data.changed_at)
       if (at >= start && at <= end) diaperTicks.push({ left: toPercent(at), time: toTime(at) })
     } else {
+      if (!props.enabledCategories.includes('sleep')) continue
       const segStart = new Date(entry.data.started_at)
       const segEnd = entry.data.ended_at ? new Date(entry.data.ended_at) : now
       if (segEnd < start || segStart > end) continue
@@ -119,14 +127,14 @@ const rhythm = computed<RhythmData>(() => {
         <span>24h</span>
       </div>
       <div class="flex flex-wrap gap-3 text-xs text-text-muted">
-        <span class="flex items-center gap-1.5"
+        <span v-if="enabledCategories.includes('feed')" class="flex items-center gap-1.5"
           ><span class="h-2 w-2 rounded-full bg-feed"></span>{{ t('dashboard.rhythm.feed') }}</span
         >
-        <span class="flex items-center gap-1.5"
+        <span v-if="enabledCategories.includes('sleep')" class="flex items-center gap-1.5"
           ><span class="h-2 w-2 rounded-full bg-sleep"></span
           >{{ t('dashboard.rhythm.sleep') }}</span
         >
-        <span class="flex items-center gap-1.5"
+        <span v-if="enabledCategories.includes('diaper')" class="flex items-center gap-1.5"
           ><span class="h-2 w-2 rounded-full bg-diaper"></span
           >{{ t('dashboard.rhythm.diaper') }}</span
         >

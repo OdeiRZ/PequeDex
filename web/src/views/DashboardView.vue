@@ -1207,7 +1207,11 @@ const feedPredictionLabel = computed(() => {
           />
         </section>
 
-        <DailyRhythm :timeline="babies.timeline" :date-locale="dateLocale" />
+        <DailyRhythm
+          :timeline="babies.timeline"
+          :date-locale="dateLocale"
+          :enabled-categories="enabledCategories"
+        />
         <WeeklySleep
           v-if="enabledCategories.includes('sleep')"
           :sleeps="babies.recentSleeps"

@@ -80,7 +80,7 @@ const stats = computed<Stat[]>(() => {
     <div
       v-for="stat in stats"
       :key="stat.category"
-      class="card-interactive flex items-center gap-2.5 rounded-2xl p-3"
+      class="card-interactive flex min-w-0 items-center gap-2.5 rounded-2xl p-3"
       :class="categorySolidBg[stat.category]"
     >
       <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/25 text-white">

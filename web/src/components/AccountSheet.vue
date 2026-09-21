@@ -176,6 +176,30 @@ async function toggleActionBarCategory(category: Category) {
   }
 }
 
+// --- Ajustes: predicciones ---
+
+// Mismo patrón que la barra de accesos: guardado al vuelo, revertido
+// solo si el PUT falla, con un token para descartar la respuesta de una
+// pulsación ya superada por otra más reciente.
+const predictionsEnabled = ref(true)
+let predictionsSaveToken = 0
+
+async function onTogglePredictions() {
+  const previous = predictionsEnabled.value
+  const next = !previous
+  predictionsEnabled.value = next
+
+  const token = ++predictionsSaveToken
+  try {
+    await auth.updatePredictionsEnabled(next)
+  } catch {
+    if (token === predictionsSaveToken) {
+      predictionsEnabled.value = previous
+      toast.show(t('profile.predictions.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -190,6 +214,7 @@ watch(
     newPassword.value = ''
     newPasswordConfirmation.value = ''
     actionBarSelection.value = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
+    predictionsEnabled.value = auth.user?.predictions_enabled ?? true
   },
 )
 </script>
@@ -323,6 +348,27 @@ watch(
           {{ option.label }}
         </button>
       </div>
+    </div>
+
+    <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
+      <div>
+        <span class="field-label">{{ t('profile.predictions.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.predictions.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="predictionsEnabled"
+        :aria-label="t('profile.predictions.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="predictionsEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onTogglePredictions"
+      >
+        <span
+          class="absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm transition-[left] duration-150 ease-out"
+          :style="{ left: predictionsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
     </div>
 
     <form

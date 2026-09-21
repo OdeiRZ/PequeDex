@@ -347,5 +347,10 @@ export default {
       description: 'Choose which quick actions to show at the bottom. Minimum {min}.',
       saveError: 'Could not save the change. Please try again.',
     },
+    predictions: {
+      title: 'Predictions',
+      description: 'Show estimates for the next feed and next sleep on the dashboard.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

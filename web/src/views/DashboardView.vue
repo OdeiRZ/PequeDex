@@ -1333,6 +1333,28 @@ const feedPredictionLabel = computed(() => {
         <template v-if="isBorn">
           <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
 
+          <ul
+            v-if="
+              auth.user?.predictions_enabled &&
+              isRhythmToday &&
+              (enabledCategories.includes('feed') || enabledCategories.includes('sleep'))
+            "
+            class="flex flex-col gap-2"
+          >
+            <EntryCard
+              v-if="enabledCategories.includes('feed')"
+              category="feed"
+              :title="t('dashboard.feedPrediction.title')"
+              :meta="feedPredictionLabel"
+            />
+            <EntryCard
+              v-if="enabledCategories.includes('sleep')"
+              category="sleep"
+              :title="t('dashboard.sleepPrediction.title')"
+              :meta="sleepPredictionLabel"
+            />
+          </ul>
+
           <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
             <h2 class="flex items-center gap-2 font-display text-base font-bold">
               <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
@@ -1398,42 +1420,6 @@ const feedPredictionLabel = computed(() => {
             >
               {{ t('dashboard.timeline.empty') }}
             </p>
-          </section>
-
-          <section
-            v-if="enabledCategories.includes('feed') && isRhythmToday"
-            class="card flex items-start gap-3 p-4"
-          >
-            <span
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
-              :class="[categoryText.feed, categoryBg.feed]"
-            >
-              <CategoryIcon category="feed" class="h-[1.05rem] w-[1.05rem]" />
-            </span>
-            <div>
-              <h2 class="font-display text-sm font-bold">
-                {{ t('dashboard.feedPrediction.title') }}
-              </h2>
-              <p class="text-sm text-text-muted">{{ feedPredictionLabel }}</p>
-            </div>
-          </section>
-
-          <section
-            v-if="enabledCategories.includes('sleep') && isRhythmToday"
-            class="card flex items-start gap-3 p-4"
-          >
-            <span
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
-              :class="[categoryText.sleep, categoryBg.sleep]"
-            >
-              <CategoryIcon category="sleep" class="h-[1.05rem] w-[1.05rem]" />
-            </span>
-            <div>
-              <h2 class="font-display text-sm font-bold">
-                {{ t('dashboard.sleepPrediction.title') }}
-              </h2>
-              <p class="text-sm text-text-muted">{{ sleepPredictionLabel }}</p>
-            </div>
           </section>
 
           <section v-if="enabledCategories.includes('growth')" class="flex flex-col gap-2">

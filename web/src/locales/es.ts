@@ -350,5 +350,10 @@ export default {
       description: 'Elige qué accesos rápidos quieres ver abajo. Mínimo {min}.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    predictions: {
+      title: 'Predicciones',
+      description: 'Muestra estimaciones de la próxima toma y el próximo sueño en el panel.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

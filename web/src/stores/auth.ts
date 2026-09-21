@@ -10,6 +10,7 @@ export interface User {
   avatar: string | null
   // null = las 5 categorias visibles (valor por defecto, sin personalizar).
   action_bar_categories: Category[] | null
+  predictions_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -92,6 +93,13 @@ export const useAuthStore = defineStore('auth', {
     async updateActionBarCategories(categories: Category[]) {
       const { data } = await apiClient.put('/user/action-bar', {
         action_bar_categories: categories,
+      })
+      this.user = data
+    },
+
+    async updatePredictionsEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/predictions', {
+        predictions_enabled: enabled,
       })
       this.user = data
     },

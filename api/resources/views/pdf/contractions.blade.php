@@ -41,10 +41,11 @@
         .bolts { text-align: right; }
         .bolts img { margin-left: 4px; width: 20px; height: 20px; }
 
-        tr.water-row td { background: #dce9f0; border: 1.5px solid #3f7ea6; border-radius: 8px; padding: 10px 14px; text-align: left; }
-        .water-row-icon { vertical-align: middle; margin-right: 8px; width: 20px; height: 20px; }
-        .water-row-title { font-size: 13px; font-weight: bold; color: #3f7ea6; text-transform: uppercase; letter-spacing: 0.5px; }
-        .water-row-value { font-size: 14px; font-weight: bold; color: #2b2420; }
+        tr.water-row td { background: #dce9f0; border-top: 1.5px solid #3f7ea6; border-bottom: 1.5px solid #3f7ea6; }
+        tr.water-row td:first-child { border-left: 1.5px solid #3f7ea6; border-radius: 8px 0 0 8px; }
+        tr.water-row td:nth-child(2) { font-weight: bold; color: #2b2420; }
+        tr.water-row td:last-child { border-right: 1.5px solid #3f7ea6; border-radius: 0 8px 8px 0; color: #3f7ea6; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; }
+        .water-row-icon { width: 20px; height: 20px; }
 
         .footer { position: fixed; bottom: -35px; left: 0; right: 0; text-align: center; font-size: 10px; color: #a3968a; border-top: 1px solid #e8ddd0; padding-top: 6px; }
         .footer img { vertical-align: middle; margin-right: 5px; width: 13px; height: 16px; }
@@ -90,12 +91,9 @@
                 @foreach ($rows as $row)
                     @if ($row['type'] === 'water')
                         <tr class="water-row">
-                            <td colspan="5">
-                                <img src="{{ $waterIcon }}" class="water-row-icon" alt="" />
-                                <span class="water-row-title">Rotura de bolsa de aguas</span>
-                                &nbsp;·&nbsp;
-                                <span class="water-row-value">{{ $row['at']->translatedFormat('j \d\e F, H:i') }}</span>
-                            </td>
+                            <td><img src="{{ $waterIcon }}" class="water-row-icon" alt="" /></td>
+                            <td>{{ $row['at']->translatedFormat('j \d\e F, H:i') }}</td>
+                            <td colspan="3">Rotura de bolsa de aguas</td>
                         </tr>
                     @else
                         <tr>

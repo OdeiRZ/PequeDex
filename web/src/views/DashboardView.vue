@@ -32,7 +32,7 @@ import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/c
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
-import { addDays, todayDateOnlyString } from '@/lib/localDate'
+import { addDays, parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
@@ -98,6 +98,30 @@ const rhythmTimeline = computed(() => (isRhythmToday.value ? babies.timeline : b
 // as a day label for the whole list. `en-CA` gives a stable
 // yyyy-mm-dd grouping key independent of `dateLocale`, which is only
 // used for the displayed label - same pattern as ContractionTimeline.vue.
+//
+// On a past day, `babies.dayTimeline` is deliberately wider than the
+// exact local calendar day (see TimelineController): its range starts
+// a day early to catch a sleep spanning midnight into the requested
+// day, computed against UTC day boundaries on the backend, not the
+// browser's local ones. Whenever the local timezone isn't UTC (e.g.
+// Europe/Madrid, UTC+1/+2), that widened UTC window leaks entries from
+// the *local* day before and after into the response - `DailyRhythm.vue`
+// already clips its own bars to `[start, end)` in local time for
+// exactly this reason, but this list rendered the raw response
+// unfiltered. Same clip here.
+const visibleTimeline = computed<TimelineEntry[]>(() => {
+  if (isRhythmToday.value) return rhythmTimeline.value
+
+  const dayStart = parseDateOnly(rhythmDate.value)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setHours(23, 59, 59, 999)
+
+  return rhythmTimeline.value.filter((entry) => {
+    const at = new Date(entry.at)
+    return at >= dayStart && at <= dayEnd
+  })
+})
+
 type TimelineListItem =
   | { kind: 'separator'; key: string; label: string }
   | { kind: 'entry'; key: string; entry: TimelineEntry }
@@ -106,7 +130,7 @@ const groupedTimeline = computed<TimelineListItem[]>(() => {
   const items: TimelineListItem[] = []
   let previousDayKey: string | null = null
 
-  for (const entry of rhythmTimeline.value) {
+  for (const entry of visibleTimeline.value) {
     const at = new Date(entry.at)
     const dayKey = at.toLocaleDateString('en-CA')
     if (dayKey !== previousDayKey) {
@@ -1368,7 +1392,7 @@ const feedPredictionLabel = computed(() => {
               </template>
             </TransitionGroup>
             <p
-              v-if="rhythmTimeline.length === 0"
+              v-if="visibleTimeline.length === 0"
               class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
             >
               {{ t('dashboard.timeline.empty') }}

@@ -471,7 +471,20 @@ verse bien en una captura:
   queda filtrada al día navegado, en vez de tener su propio selector
   duplicado. Las tarjetas de predicción de próxima toma/próximo sueño
   se ocultan mientras no se está en "hoy" (`v-if="... && isRhythmToday"`),
-  ya que estiman algo relativo a "ahora", no a un día ya cerrado.
+  ya que estiman algo relativo a "ahora", no a un día ya cerrado. Bug
+  real reproducido en producción, no solo local: al navegar a un día
+  pasado, "Línea temporal" mostraba también entradas de la madrugada
+  del día siguiente. `babies.dayTimeline` es deliberadamente más ancho
+  que el día exacto (empieza un día antes para no cortar un sueño que
+  cruza medianoche), calculado por el backend en límites UTC, no en la
+  zona horaria del navegador — con una zona por delante de UTC (Europe
+  /Madrid, UTC+1/+2) esa ventana se traduce a un tramo local que
+  empieza antes y termina después del día pedido. `DailyRhythm.vue` ya
+  recortaba esto por su cuenta para las barras (`[start, end)` en hora
+  local); "Línea temporal" renderizaba la respuesta del backend tal
+  cual. Nuevo `visibleTimeline`: en un día pasado, filtra
+  `rhythmTimeline` a los límites locales exactos del día antes de
+  agrupar - mismo recorte que `DailyRhythm.vue`, aplicado también aquí.
 - **`EntryCard.vue`** cambia el borde de color fino por un lavado de
   fondo del color de categoría (`categoryBg`, ya existente) en toda la
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para

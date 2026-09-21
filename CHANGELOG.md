@@ -870,6 +870,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   puntos porcentuales fuera de su 25%/50%/75% real. Pasan a
   posicionarse por el mismo porcentaje absoluto que las marcas (0h/24h
   ancladas a los bordes, el resto centradas).
+- Al navegar a un día pasado, "Línea temporal" seguía mostrando
+  también entradas de la madrugada del día siguiente — reproducido en
+  producción, no solo en local. El backend calcula el rango de ese día
+  (deliberadamente algo más ancho, para no cortar un sueño que cruza
+  medianoche) en límites UTC, no en la zona horaria del navegador; con
+  una zona por delante de UTC (Europe/Madrid) eso se traduce a un
+  tramo local que se pasa de la medianoche. "Ritmo de hoy" ya recortaba
+  esto por su cuenta para las barras; "Línea temporal" renderizaba la
+  respuesta del backend sin ese recorte. Ahora filtra también a los
+  límites locales exactos del día antes de agrupar.
 - El icono de gota de la tarjeta "Contador de contracciones" en el
   dashboard sugería "agua" en vez de "cronómetro/contador" — se
   reutiliza dentro de la propia pantalla de contracciones para la

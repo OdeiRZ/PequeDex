@@ -126,10 +126,30 @@ it('rejects an unknown action bar category', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('action_bar_categories.2');
 });
 
+it('turns predictions off and back on', function () {
+    $user = actingAsUser();
+
+    // Eloquent doesn't repopulate an in-memory model with a column's DB
+    // default when the attribute was omitted from create() - only the
+    // database row actually has it, so a fresh read is needed here.
+    expect($user->refresh()->predictions_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/predictions', ['predictions_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('predictions_enabled', false);
+    expect($user->refresh()->predictions_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/predictions', ['predictions_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('predictions_enabled', true);
+    expect($user->refresh()->predictions_enabled)->toBeTrue();
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
     $this->postJson('/api/user/avatar', [])->assertUnauthorized();
     $this->deleteJson('/api/user/avatar')->assertUnauthorized();
     $this->putJson('/api/user/action-bar', ['action_bar_categories' => ['feed', 'sleep', 'diaper']])->assertUnauthorized();
+    $this->putJson('/api/user/predictions', ['predictions_enabled' => false])->assertUnauthorized();
 });

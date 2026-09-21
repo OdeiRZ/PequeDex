@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
+use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Models\User;
 use App\Services\Users\AvatarProcessor;
@@ -36,6 +37,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['action_bar_categories' => $request->validated('action_bar_categories')]);
+
+        return response()->json($user);
+    }
+
+    public function updatePredictionsEnabled(UpdatePredictionsEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['predictions_enabled' => $request->validated('predictions_enabled')]);
 
         return response()->json($user);
     }

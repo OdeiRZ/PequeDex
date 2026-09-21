@@ -28,9 +28,22 @@ class ContractionsExportController extends Controller
         $contractions = $baby->contractions()->orderByDesc('started_at')->get()->values();
         $total = $contractions->count();
 
-        $rows = $contractions->map(function ($contraction, $index) use ($contractions, $total) {
+        // Accumulated alongside the per-row map below to build the
+        // summary stats in the header - real (unrounded) seconds, not the
+        // "mm:ss" labels, and long gaps are excluded from the interval
+        // average for the same reason they print as "> 60 min" instead of
+        // a literal duration: they're a pause between labors on
+        // different days, not a real measurement of contraction spacing.
+        $durationSeconds = [];
+        $intervalSeconds = [];
+
+        $rows = $contractions->map(function ($contraction, $index) use ($contractions, $total, &$durationSeconds, &$intervalSeconds) {
             $startedAt = CarbonImmutable::parse($contraction->started_at);
             $endedAt = $contraction->ended_at ? CarbonImmutable::parse($contraction->ended_at) : null;
+
+            if ($endedAt !== null) {
+                $durationSeconds[] = $startedAt->diffInSeconds($endedAt);
+            }
 
             // The next entry in this newest-first list is the *older*
             // neighbor - same reasoning as ContractionTimeline.vue's own
@@ -40,10 +53,14 @@ class ContractionsExportController extends Controller
             $intervalLabel = null;
             if ($olderNeighbor !== null) {
                 $olderEnd = CarbonImmutable::parse($olderNeighbor->ended_at ?? $olderNeighbor->started_at);
-                $gapMinutes = $olderEnd->diffInMinutes($startedAt);
-                $intervalLabel = $gapMinutes > self::LONG_GAP_MINUTES
-                    ? '> '.self::LONG_GAP_MINUTES.' min'
-                    : $olderEnd->diff($startedAt)->format('%I:%S');
+                $gapSeconds = (int) $olderEnd->diffInSeconds($startedAt);
+                $gapMinutes = intdiv($gapSeconds, 60);
+                if ($gapMinutes > self::LONG_GAP_MINUTES) {
+                    $intervalLabel = '> '.self::LONG_GAP_MINUTES.' min';
+                } else {
+                    $intervalLabel = $olderEnd->diff($startedAt)->format('%I:%S');
+                    $intervalSeconds[] = $gapSeconds;
+                }
             }
 
             return [
@@ -61,11 +78,18 @@ class ContractionsExportController extends Controller
         // in that order and groupBy keeps first-seen order.
         $groups = $rows->groupBy(fn ($row) => $row['started_at']->translatedFormat('d \d\e F \d\e Y'));
 
+        $waterBrokeAt = $baby->water_broke_at ? CarbonImmutable::parse($baby->water_broke_at) : null;
+
         $pdf = Pdf::loadView('pdf.contractions', [
             'groups' => $groups,
             'baby' => $baby,
             'boltOn' => $this->boltDataUri('#a65a6b'),
             'boltOff' => $this->boltDataUri('#e8ddd0'),
+            'generatedAt' => CarbonImmutable::now(),
+            'totalContractions' => $total,
+            'avgDuration' => $durationSeconds ? $this->formatSeconds(array_sum($durationSeconds) / count($durationSeconds)) : null,
+            'avgInterval' => $intervalSeconds ? $this->formatSeconds(array_sum($intervalSeconds) / count($intervalSeconds)) : null,
+            'waterBrokeAt' => $waterBrokeAt,
         ]);
 
         return $pdf->stream('contracciones.pdf');
@@ -84,5 +108,13 @@ class ContractionsExportController extends Controller
             .'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>';
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
+    /** mm:ss, same format used everywhere else in the export/app. */
+    private function formatSeconds(float $totalSeconds): string
+    {
+        $clamped = max(0, (int) round($totalSeconds));
+
+        return sprintf('%02d:%02d', intdiv($clamped, 60), $clamped % 60);
     }
 }

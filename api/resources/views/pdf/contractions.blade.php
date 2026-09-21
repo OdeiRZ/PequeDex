@@ -13,10 +13,24 @@
            setup, confirmed with an isolated test, and neither does the
            Unicode "●" tried before that, which came out as "?" with the
            default font), bordered pill for the interval - same visual
-           language, table markup. */
+           language, table markup. The water-alert block below borrows
+           the app's --danger token (#b3453f) rather than the brand
+           maroon used everywhere else, on purpose: it's meant to read as
+           urgent, not as "just another stat". */
         body { font-family: sans-serif; font-size: 14px; color: #2b2420; }
         h1 { font-size: 26px; margin-bottom: 2px; color: #1a1a1a; }
-        .subtitle { color: #7a6f66; margin-bottom: 20px; font-size: 15px; }
+        .subtitle { color: #7a6f66; margin-bottom: 4px; font-size: 15px; }
+        .meta { color: #a3968a; font-size: 11px; margin-bottom: 18px; }
+
+        table.stats-bar { width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 0 0 18px -8px; }
+        table.stats-bar td { width: 33.33%; background: #f3ece4; border-radius: 8px; padding: 10px 14px; text-align: center; }
+        .stats-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; margin-bottom: 4px; }
+        .stats-value { display: block; font-size: 19px; font-weight: bold; color: #a65a6b; }
+
+        .water-alert { background: #f6e0dd; border: 1.5px solid #b3453f; border-left: 7px solid #b3453f; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+        .water-alert-title { font-size: 14px; font-weight: bold; color: #b3453f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .water-alert-value { font-size: 16px; font-weight: bold; color: #2b2420; }
+
         table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
         th { text-align: right; padding: 4px 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; }
         td { padding: 10px; vertical-align: top; background: #f3ece4; text-align: right; }
@@ -30,11 +44,38 @@
         .duration { font-weight: bold; font-size: 16px; color: #a65a6b; }
         .bolts { text-align: right; }
         .bolts img { margin-left: 4px; width: 20px; height: 20px; }
+
+        .footer { position: fixed; bottom: -35px; left: 0; right: 0; text-align: center; font-size: 10px; color: #a3968a; border-top: 1px solid #e8ddd0; padding-top: 6px; }
     </style>
 </head>
 <body>
     <h1>Contracciones</h1>
     <p class="subtitle">{{ $baby->name ?: 'Bebé' }}</p>
+    <p class="meta">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</p>
+
+    <table class="stats-bar">
+        <tr>
+            <td>
+                <span class="stats-label">Contracciones</span>
+                <span class="stats-value">{{ $totalContractions }}</span>
+            </td>
+            <td>
+                <span class="stats-label">Duración media</span>
+                <span class="stats-value">{{ $avgDuration ?? '—' }}</span>
+            </td>
+            <td>
+                <span class="stats-label">Intervalo medio</span>
+                <span class="stats-value">{{ $avgInterval ?? '—' }}</span>
+            </td>
+        </tr>
+    </table>
+
+    @if ($waterBrokeAt)
+        <div class="water-alert">
+            <div class="water-alert-title">Rotura de bolsa de aguas</div>
+            <div class="water-alert-value">{{ $waterBrokeAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</div>
+        </div>
+    @endif
 
     <table>
         <thead>
@@ -74,5 +115,7 @@
             @endforeach
         </tbody>
     </table>
+
+    <div class="footer">PequeDex · Contador de contracciones</div>
 </body>
 </html>

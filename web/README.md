@@ -355,7 +355,20 @@ verse bien en una captura:
   poder repetir la animación en guardados seguidos. `ToastNotification.vue`
   gana un icono y un color por tipo (`toast.show(mensaje, 'error')`,
   antes todo salía en el mismo verde de éxito). Todo con su reserva
-  bajo `@media (prefers-reduced-motion: reduce)`.
+  bajo `@media (prefers-reduced-motion: reduce)`. Ronda posterior,
+  explorada antes en un boceto interactivo con tres propuestas de
+  botón eliminar comparadas en contexto: `DeleteButton.vue` separa la
+  tapa del icono de cubo (el trazo del borde superior + asa) del resto
+  del trazo en un `<path>` propio, con `transform-origin` en la
+  esquina donde se abre - gira al hover como aviso pasivo antes de
+  pulsar, con squish al hacerlo; el cierre de la fila en sí sigue
+  siendo la misma transición `entry-list-leave` de siempre, sin tocar.
+  `.btn-primary` gana un brillo diagonal de un solo barrido al hover
+  (`::after` con gradiente, `translateX` de fuera a fuera). Los
+  accesos de `ActionBar.vue` (sin ningún feedback propio hasta ahora,
+  más allá del color del texto) inclinan su icono y suben el círculo
+  ligeramente al pasar el ratón, vía clases `group-hover`/`motion-reduce`
+  de Tailwind en vez de CSS aparte.
 - **Jerarquía visual** — la pasada de interactividad de arriba no bastó
   por sí sola: la app seguía leyendo "plana" porque cada sección era el
   mismo bloque blanco de mismo tamaño apilado, sin nada que rompiera el

@@ -9,6 +9,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Micro-animaciones nuevas en tres botones que antes solo cambiaban de
+  color: el de eliminar de la línea temporal (la tapa del icono de
+  cubo se abre al pasar el ratón, como aviso pasivo antes de pulsar,
+  más un squish al hacerlo — explorado antes en un boceto interactivo
+  con tres propuestas comparadas en contexto), el botón primario (un
+  brillo diagonal cruza una vez al hover), y cada acceso de la barra
+  principal (el icono se inclina y el círculo sube ligeramente al
+  pasar el ratón, sin ningún feedback antes). Todas respetan
+  `prefers-reduced-motion`.
 - Las predicciones de próxima toma/próximo sueño se mueven de un
   recuadro destacado al final del dashboard a justo debajo de las
   estadísticas de hoy, con el mismo aspecto que una fila de la línea

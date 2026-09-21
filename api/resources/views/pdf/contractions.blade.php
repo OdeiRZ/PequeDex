@@ -23,7 +23,7 @@
         td { padding: 10px; vertical-align: top; background: #f3ece4; }
         td:first-child { border-radius: 8px 0 0 8px; }
         td:last-child { border-radius: 0 8px 8px 0; }
-        tr.day-header td { background: #8a9a5b; color: #fff; font-weight: bold; padding: 7px 10px; border-radius: 8px; font-size: 15px; }
+        tr.day-header td { background: #8a9a5b; color: #fff; font-weight: bold; padding: 7px 10px; border-radius: 8px; font-size: 15px; text-align: center; }
         tr.interval-row td { background: transparent; padding: 0 10px 6px; text-align: right; }
         .interval-pill { display: inline-block; border: 1px solid #d8cdc0; border-radius: 10px; padding: 3px 10px; color: #7a6f66; font-size: 13px; }
         .interval-pill b { color: #2b2420; }
@@ -40,11 +40,11 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 8%;">#</th>
-                <th style="width: 27%;">Inicio de contracción</th>
-                <th style="width: 27%;">Fin de contracción</th>
-                <th style="width: 18%;">Duración</th>
-                <th class="num" style="width: 20%;">Intensidad</th>
+                <th style="width: 7%;">#</th>
+                <th style="width: 29%;">Inicio de contracción</th>
+                <th style="width: 29%;">Fin de contracción</th>
+                <th style="width: 12%;">Duración</th>
+                <th class="num" style="width: 23%;">Intensidad</th>
             </tr>
         </thead>
         <tbody>

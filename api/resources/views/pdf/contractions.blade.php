@@ -44,7 +44,7 @@
         tr.water-row td { background: #dce9f0; border-top: 1.5px solid #3f7ea6; border-bottom: 1.5px solid #3f7ea6; }
         tr.water-row td:first-child { border-left: 1.5px solid #3f7ea6; border-radius: 8px 0 0 8px; }
         tr.water-row td:nth-child(2) { font-weight: bold; color: #2b2420; }
-        tr.water-row td:last-child { border-right: 1.5px solid #3f7ea6; border-radius: 0 8px 8px 0; color: #3f7ea6; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; }
+        tr.water-row td:last-child { border-right: 1.5px solid #3f7ea6; border-radius: 0 8px 8px 0; color: #3f7ea6; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; text-align: center; }
         .water-row-icon { width: 20px; height: 20px; }
 
         .footer { position: fixed; bottom: -35px; left: 0; right: 0; text-align: center; font-size: 10px; color: #a3968a; border-top: 1px solid #e8ddd0; padding-top: 6px; }

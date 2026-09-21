@@ -61,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/{baby}/contractions', [ContractionController::class, 'store']);
     Route::put('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'update']);
     Route::delete('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'destroy']);
+    Route::delete('/babies/{baby}/contractions', [ContractionController::class, 'destroyAll']);
     Route::get('/babies/{baby}/contractions/export', [ContractionsExportController::class, 'show']);
 
     Route::get('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'index']);

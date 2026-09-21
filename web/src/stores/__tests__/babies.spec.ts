@@ -428,6 +428,36 @@ describe('useBabiesStore', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/contractions/1')
   })
 
+  it('deletes every contraction locally after the bulk request succeeds', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.contractions = [
+      {
+        id: 1,
+        baby_id: 1,
+        user_id: 1,
+        started_at: '2026-09-16T15:13:00Z',
+        ended_at: null,
+        intensity: 0,
+      },
+      {
+        id: 2,
+        baby_id: 1,
+        user_id: 1,
+        started_at: '2026-09-16T15:20:00Z',
+        ended_at: null,
+        intensity: 1,
+      },
+    ]
+    vi.mocked(apiClient.delete).mockResolvedValue({})
+
+    await store.deleteAllContractions()
+
+    expect(store.contractions).toEqual([])
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/contractions')
+  })
+
   it('sets water_broke_at via updateBaby', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

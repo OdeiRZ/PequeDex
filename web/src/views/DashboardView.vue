@@ -263,6 +263,8 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     babyBirthDate.value = babies.current?.birth_date ?? ''
     confirmingLeave.value = false
     leaveError.value = null
+    confirmingDeleteContractions.value = false
+    deleteContractionsError.value = null
   } else if (sheet === 'addBaby') {
     babyName.value = ''
     dueDate.value = ''
@@ -782,6 +784,36 @@ async function onLeaveBaby() {
 function cancelLeaveBaby() {
   confirmingLeave.value = false
   leaveError.value = null
+}
+
+// --- Eliminar todas las contracciones: reinicio tras una falsa alarma,
+// no una acción por fila. Mismo patrón de confirmación que abandonar
+// el bebé, con su propio estado - no tiene sentido compartirlo, son
+// dos confirmaciones independientes que podrían coexistir en la misma
+// hoja. ---
+
+const confirmingDeleteContractions = ref(false)
+const deletingContractions = ref(false)
+const deleteContractionsError = ref<string | null>(null)
+
+async function onDeleteAllContractions() {
+  deletingContractions.value = true
+  deleteContractionsError.value = null
+
+  try {
+    await babies.deleteAllContractions()
+    confirmingDeleteContractions.value = false
+    toast.show(t('dashboard.babySettings.toastContractionsDeleted'))
+  } catch {
+    deleteContractionsError.value = t('dashboard.babySettings.deleteAllContractionsError')
+  } finally {
+    deletingContractions.value = false
+  }
+}
+
+function cancelDeleteAllContractions() {
+  confirmingDeleteContractions.value = false
+  deleteContractionsError.value = null
 }
 
 async function onRegenerateInviteCode() {
@@ -1742,6 +1774,47 @@ const feedPredictionLabel = computed(() => {
           >
             {{ t('dashboard.babySettings.addAnotherBaby') }}
           </button>
+
+          <template v-if="!isBorn">
+            <button
+              v-if="!confirmingDeleteContractions"
+              type="button"
+              class="text-center text-sm font-semibold text-danger"
+              @click="confirmingDeleteContractions = true"
+            >
+              {{ t('dashboard.babySettings.deleteAllContractions') }}
+            </button>
+            <template v-else>
+              <p class="text-sm text-text-muted">
+                {{ t('dashboard.babySettings.deleteAllContractionsConfirm') }}
+              </p>
+              <p
+                v-if="deleteContractionsError"
+                role="alert"
+                class="text-sm font-medium text-danger"
+              >
+                {{ deleteContractionsError }}
+              </p>
+              <div class="flex gap-3">
+                <button type="button" class="btn-ghost flex-1" @click="cancelDeleteAllContractions">
+                  {{ t('common.cancel') }}
+                </button>
+                <button
+                  type="button"
+                  :disabled="deletingContractions"
+                  class="btn-primary flex-1 !bg-danger !text-white"
+                  @click="onDeleteAllContractions"
+                >
+                  {{
+                    deletingContractions
+                      ? t('dashboard.babySettings.deletingContractions')
+                      : t('dashboard.babySettings.deleteAllContractionsConfirmYes')
+                  }}
+                </button>
+              </div>
+            </template>
+          </template>
+
           <button
             v-if="!confirmingLeave"
             type="button"

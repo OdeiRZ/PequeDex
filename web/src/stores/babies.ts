@@ -493,6 +493,13 @@ export const useBabiesStore = defineStore('babies', {
       this.contractions = this.contractions.filter((c) => c.id !== id)
     },
 
+    // Bulk reset for a false alarm, not a per-row action - see the
+    // confirmation in DashboardView.vue's baby settings sheet.
+    async deleteAllContractions() {
+      await apiClient.delete(`/babies/${this.current!.id}/contractions`)
+      this.contractions = []
+    },
+
     // Returns the raw PDF as a Blob rather than triggering the download
     // itself - the API is Bearer-token auth, not cookies, so a plain
     // <a href> to this URL wouldn't carry the Authorization header; the

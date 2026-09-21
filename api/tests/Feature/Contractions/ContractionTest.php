@@ -104,6 +104,26 @@ it('deletes a contraction', function () {
     $this->assertDatabaseMissing('contractions', ['id' => $contraction->id]);
 });
 
+it('deletes every contraction for the baby, and only that baby', function () {
+    $user = actingAsUser();
+    $baby = babyForContractionTest($user);
+    $otherBaby = babyForContractionTest($user);
+    Contraction::factory()->for($baby)->for($user, 'loggedBy')->count(3)->create();
+    $untouched = Contraction::factory()->for($otherBaby)->for($user, 'loggedBy')->create();
+
+    $this->deleteJson("/api/babies/{$baby->id}/contractions")->assertNoContent();
+
+    expect($baby->contractions()->count())->toBe(0);
+    $this->assertDatabaseHas('contractions', ['id' => $untouched->id]);
+});
+
+it('rejects deleting all contractions for a baby the user is not linked to', function () {
+    actingAsUser();
+    $baby = babyForContractionTest(User::factory()->create());
+
+    $this->deleteJson("/api/babies/{$baby->id}/contractions")->assertForbidden();
+});
+
 it('rejects any access to contractions for a baby the user is not linked to', function () {
     actingAsUser();
     $other = User::factory()->create();

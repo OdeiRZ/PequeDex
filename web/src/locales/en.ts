@@ -166,6 +166,13 @@ export default {
       birthDate: 'Date of birth (optional)',
       toastSaved: 'Saved.',
       addAnotherBaby: 'Add another baby',
+      deleteAllContractions: 'Delete all contractions',
+      deleteAllContractionsConfirm:
+        "Are you sure you want to delete every logged contraction? This can't be undone - useful after a false alarm, to start fresh.",
+      deleteAllContractionsConfirmYes: 'Yes, delete all',
+      deletingContractions: 'Deleting...',
+      deleteAllContractionsError: 'Could not delete the contractions.',
+      toastContractionsDeleted: 'Contractions deleted.',
       leaveBaby: 'Leave this baby',
       leaveConfirm:
         "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",

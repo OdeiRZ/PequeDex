@@ -167,6 +167,13 @@ export default {
       birthDate: 'Fecha de nacimiento (opcional)',
       toastSaved: 'Guardado.',
       addAnotherBaby: 'Añadir otro bebé',
+      deleteAllContractions: 'Eliminar todas las contracciones',
+      deleteAllContractionsConfirm:
+        '¿Seguro que quieres eliminar todas las contracciones registradas? No se puede deshacer - útil tras una falsa alarma, para empezar de cero.',
+      deleteAllContractionsConfirmYes: 'Sí, eliminar todas',
+      deletingContractions: 'Eliminando...',
+      deleteAllContractionsError: 'No se han podido eliminar las contracciones.',
+      toastContractionsDeleted: 'Contracciones eliminadas.',
       leaveBaby: 'Abandonar este bebé',
       leaveConfirm:
         '¿Seguro que quieres dejar de ser cuidador de este bebé? Necesitarás el código de invitación para volver a unirte.',

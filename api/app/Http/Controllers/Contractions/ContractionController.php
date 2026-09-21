@@ -56,4 +56,16 @@ class ContractionController extends Controller
 
         return response()->json(status: 204);
     }
+
+    // Bulk reset for a false alarm - practice contractions days before
+    // the real thing, with nothing worth keeping row-by-row. Same
+    // authorization as destroy() (an edit-level action, not just view).
+    public function destroyAll(Baby $baby): JsonResponse
+    {
+        $this->authorize('update', $baby);
+
+        $baby->contractions()->delete();
+
+        return response()->json(status: 204);
+    }
 }

@@ -60,30 +60,44 @@ const sizes = computed(() => {
 </script>
 
 <template>
-  <nav
-    class="sticky z-10 mx-4 grid gap-1 rounded-full bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.35)] transition-[padding] duration-150"
-    :class="[sizes.gridCols, sizes.padding]"
-    style="bottom: calc(0.75rem + env(safe-area-inset-bottom))"
-  >
-    <button
-      v-for="item in items"
-      :key="item.category"
-      type="button"
-      class="flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
-      :class="[sizes.gap, sizes.text]"
-      @click="$emit('select', item.category)"
+  <!-- Teleported to <body> and genuinely `fixed`, not `sticky` - it used
+       to be rendered inline near the very end of the page (after the
+       whole timeline/growth/milestones flow), so `sticky` only ever
+       engaged once scrolled almost to the bottom of a long dashboard.
+       Now it floats over the content from the moment the dashboard
+       renders, same technique as ContractionsView's own floating
+       buttons (Teleport avoids depending on no ancestor ever getting a
+       `transform`). -->
+  <Teleport to="body">
+    <div
+      class="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md px-4"
+      style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
     >
-      <span
-        class="grid place-items-center rounded-full transition-[height,width] duration-150"
-        :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
+      <nav
+        class="grid gap-1 rounded-full bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.35)] transition-[padding] duration-150"
+        :class="[sizes.gridCols, sizes.padding]"
       >
-        <CategoryIcon
-          :category="item.category"
-          class="transition-[height,width] duration-150"
-          :class="sizes.icon"
-        />
-      </span>
-      {{ item.label }}
-    </button>
-  </nav>
+        <button
+          v-for="item in items"
+          :key="item.category"
+          type="button"
+          class="flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
+          :class="[sizes.gap, sizes.text]"
+          @click="$emit('select', item.category)"
+        >
+          <span
+            class="grid place-items-center rounded-full transition-[height,width] duration-150"
+            :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
+          >
+            <CategoryIcon
+              :category="item.category"
+              class="transition-[height,width] duration-150"
+              :class="sizes.icon"
+            />
+          </span>
+          {{ item.label }}
+        </button>
+      </nav>
+    </div>
+  </Teleport>
 </template>

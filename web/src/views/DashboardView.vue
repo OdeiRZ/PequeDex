@@ -1041,7 +1041,7 @@ const feedPredictionLabel = computed(() => {
     </main>
 
     <template v-else>
-      <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-8">
+      <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-28">
         <div v-if="babies.babies.length > 1" class="-mb-2 flex gap-2 overflow-x-auto pb-1">
           <button
             v-for="baby in babies.babies"

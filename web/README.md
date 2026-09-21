@@ -162,13 +162,23 @@ porque la verificación local solo cubría los otros tres.
   `ContractionTimeline.vue`, para que el contador en vivo de la fila
   activa y las estadísticas del encabezado no se desincronicen por
   llevar cada uno su propio intervalo. Ese mismo `now` alimenta
-  `sinceLastLabel` ("Desde la última: mm:ss", sobre el botón de
-  inicio): mientras no hay ninguna contracción en marcha pero ya existe
-  una anterior, cuenta en vivo el tiempo transcurrido desde su
-  `ended_at` - desaparece en cuanto se inicia una nueva y vuelve a
-  empezar desde cero al detenerla, sin dato nuevo que guardar (es el
-  mismo cálculo que ya hacía `ContractionTimeline.vue` para el chip de
-  intervalo, solo que en vivo en vez de a posteriori). Intensidad en 3
+  `sinceLastLabel` ("Desde la última: mm:ss", justo encima de la fila
+  más reciente de la línea temporal — vivió primero sobre el botón de
+  inicio, en la barra flotante, pero quedaba lejos de la contracción a
+  la que se refiere): mientras no hay ninguna contracción en marcha
+  pero ya existe una anterior, cuenta en vivo el tiempo transcurrido
+  desde su `ended_at` - desaparece en cuanto se inicia una nueva y
+  vuelve a empezar desde cero al detenerla, sin dato nuevo que guardar
+  (es el mismo cálculo que ya hacía `ContractionTimeline.vue` para el
+  chip de intervalo, solo que en vivo en vez de a posteriori). Ese
+  mismo chip de intervalo pasa el umbral de "demasiado largo" de 50 a
+  60 minutos (`LONG_GAP_MINUTES`, también en el PDF exportado). La
+  hoja de edición usa `toLocalInputValueWithSeconds()` (hermana de
+  `toLocalInputValue()`, que se queda igual para el resto de
+  formularios del dashboard) junto con `step="1"` en sus dos campos,
+  para poder ajustar los segundos de inicio/fin, no solo el minuto -
+  sin esto los segundos reales se perdían nada más abrir la hoja.
+  Intensidad en 3
   niveles — Leve/
   Moderada/Intensa — en vez de los 4 del original de referencia (pedido
   explícito). El registro de rotura de bolsa de aguas

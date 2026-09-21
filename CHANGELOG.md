@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Contador de contracciones: la hoja de edición deja ajustar los
+  segundos de inicio/fin, no solo el minuto — importa para
+  contracciones que de verdad duran segundos, no minutos enteros
+  (nueva `toLocalInputValueWithSeconds()` + `step="1"`, solo en estos
+  dos campos; el resto de formularios del dashboard se quedan con
+  precisión de minuto, no tiene sentido ahí). El umbral de "intervalo
+  demasiado largo" sube de 50 a 60 minutos, tanto en la app como en el
+  PDF exportado — una hora es un corte más natural que el 50 heredado
+  tal cual de la app de referencia. "Desde la última: mm:ss" deja la
+  barra flotante inferior (quedaba lejos de la contracción a la que se
+  refiere) y pasa a mostrarse justo encima de la fila más reciente de
+  la línea temporal.
+
 - Contador de contracciones: el tiempo desde la última contracción se
   ve ahora en vivo ("Desde la última: mm:ss", creciendo cada segundo)
   sobre el botón de inicio, en vez de aparecer solo como una etiqueta
@@ -788,6 +801,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- En pantallas estrechas, "Duración promedio" e "Intervalo promedio"
+  envuelven a dos líneas mientras "Veces por hora" se queda en una, así
+  que el valor de cada columna del bloque de estadísticas de
+  contracciones arrancaba a una altura distinta según cuántas líneas
+  ocupara su etiqueta. Cada etiqueta reserva ahora una altura mínima
+  fija, para que los tres valores queden siempre alineados en la misma
+  fila.
 - Antes de que naciera el bebé (sin `birth_date`, o con una
   `birth_date` puesta de antemano que todavía no ha llegado), el
   dashboard seguía mostrando estadísticas de hoy, ritmo, sueño de la

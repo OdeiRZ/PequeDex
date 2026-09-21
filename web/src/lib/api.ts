@@ -53,3 +53,25 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+/**
+ * Every save handler in the app used to catch any failure - a rejected
+ * 422 validation ("la hora de fin debe ser posterior a la hora de
+ * inicio") exactly the same as a dropped connection - and show one fixed
+ * "revisa tu conexión" toast regardless, which actively lied about *why*
+ * the save failed. The backend's FormRequests already return a real,
+ * specific Spanish message per field (see `messages()` on each
+ * Store/Update*Request) - this surfaces it instead of discarding it.
+ * Returns null for anything that isn't a 422 (network failure, 500,
+ * auth), so the caller's own generic fallback still covers those.
+ */
+export function extractValidationMessage(error: unknown): string | null {
+  if (!axios.isAxiosError(error) || error.response?.status !== 422) {
+    return null
+  }
+
+  const errors = error.response.data?.errors as Record<string, string[]> | undefined
+  const firstFieldMessage = errors ? Object.values(errors)[0]?.[0] : undefined
+
+  return firstFieldMessage ?? error.response.data?.message ?? null
+}

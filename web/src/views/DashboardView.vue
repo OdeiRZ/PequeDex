@@ -33,6 +33,7 @@ import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCate
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
 import { addDays, parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
+import { extractValidationMessage } from '@/lib/api'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
@@ -415,8 +416,8 @@ async function onSubmitFeed() {
     // save error - it'll just catch up on the next visit or poll.
     void babies.fetchFeedPrediction().catch(() => {})
     closeSheet()
-  } catch {
-    toast.show(t('dashboard.saveError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   } finally {
     savingFeed.value = false
   }
@@ -456,8 +457,8 @@ async function onSubmitSleep() {
     // shouldn't surface as a save error.
     void babies.fetchSleepPrediction().catch(() => {})
     closeSheet()
-  } catch {
-    toast.show(t('dashboard.saveError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   } finally {
     savingSleep.value = false
   }
@@ -499,8 +500,8 @@ async function onSubmitDiaper() {
       await babies.createDiaperChange(payload)
     }
     closeSheet()
-  } catch {
-    toast.show(t('dashboard.saveError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   } finally {
     savingDiaper.value = false
   }
@@ -934,8 +935,8 @@ async function onSubmitGrowth() {
       await babies.createGrowthMeasurement(payload)
     }
     closeSheet()
-  } catch {
-    growthError.value = t('dashboard.growthForm.error')
+  } catch (error) {
+    growthError.value = extractValidationMessage(error) ?? t('dashboard.growthForm.error')
   } finally {
     savingGrowth.value = false
   }
@@ -1054,8 +1055,8 @@ async function onSubmitMilestone() {
       })
     }
     closeSheet()
-  } catch {
-    toast.show(t('dashboard.saveError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   } finally {
     savingMilestone.value = false
   }

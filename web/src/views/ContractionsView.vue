@@ -13,6 +13,7 @@ import {
   toUtcIso,
 } from '@/lib/datetimeInput'
 import { LONG_GAP_MINUTES, summarizeRecentContractions } from '@/lib/contractionStats'
+import { extractValidationMessage } from '@/lib/api'
 
 const babies = useBabiesStore()
 const toast = useToastStore()
@@ -195,8 +196,8 @@ async function onSaveEdit() {
     })
     toast.show(t('contractions.toastUpdated'))
     closeSheet()
-  } catch {
-    toast.show(t('contractions.toastError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('contractions.toastError'), 'error')
   } finally {
     savingEdit.value = false
   }
@@ -241,8 +242,8 @@ async function onConfirmBreak(confirmed: boolean) {
   try {
     await babies.updateBaby({ water_broke_at: new Date().toISOString() })
     activeSheet.value = 'hospitalAlert'
-  } catch {
-    toast.show(t('contractions.toastError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('contractions.toastError'), 'error')
     closeSheet()
   } finally {
     confirmingBreak.value = false
@@ -268,8 +269,8 @@ async function onSaveBreak() {
     await babies.updateBaby({ water_broke_at: toUtcIso(breakDateInput.value) })
     toast.show(t('contractions.toastUpdated'))
     closeSheet()
-  } catch {
-    toast.show(t('contractions.toastError'), 'error')
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('contractions.toastError'), 'error')
   } finally {
     savingBreak.value = false
   }

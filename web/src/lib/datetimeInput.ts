@@ -11,6 +11,18 @@ export function toLocalInputValue(iso: string): string {
   return date.toISOString().slice(0, 16)
 }
 
+// Same as toLocalInputValue, but keeping seconds (":ss") instead of
+// truncating to whole minutes - for the one field where that precision
+// actually matters, editing a contraction's start/end (many genuinely
+// last under a minute). Pair with `step="1"` on the <input> itself, or
+// the browser's native picker won't expose a seconds field even though
+// the value has one.
+export function toLocalInputValueWithSeconds(iso: string): string {
+  const date = new Date(iso)
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 19)
+}
+
 export function nowForInput(): string {
   return toLocalInputValue(new Date().toISOString())
 }

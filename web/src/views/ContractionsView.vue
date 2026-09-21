@@ -6,7 +6,12 @@ import { useBabiesStore, type Contraction } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import BottomSheet from '@/components/BottomSheet.vue'
 import ContractionTimeline from '@/components/ContractionTimeline.vue'
-import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
+import {
+  nowForInput,
+  toLocalInputValue,
+  toLocalInputValueWithSeconds,
+  toUtcIso,
+} from '@/lib/datetimeInput'
 import { summarizeRecentContractions } from '@/lib/contractionStats'
 
 const babies = useBabiesStore()
@@ -159,8 +164,8 @@ function openEditSheet(id: number) {
   if (!contraction) return
 
   editingId.value = contraction.id
-  editStartedAt.value = toLocalInputValue(contraction.started_at)
-  editEndedAt.value = contraction.ended_at ? toLocalInputValue(contraction.ended_at) : ''
+  editStartedAt.value = toLocalInputValueWithSeconds(contraction.started_at)
+  editEndedAt.value = contraction.ended_at ? toLocalInputValueWithSeconds(contraction.ended_at) : ''
   editIntensity.value = contraction.intensity
   activeSheet.value = 'editContraction'
 }
@@ -504,6 +509,7 @@ async function onExportPdf() {
             id="contraction-started"
             v-model="editStartedAt"
             type="datetime-local"
+            step="1"
             required
             class="field-input"
           />
@@ -514,6 +520,7 @@ async function onExportPdf() {
             id="contraction-ended"
             v-model="editEndedAt"
             type="datetime-local"
+            step="1"
             class="field-input"
           />
         </div>

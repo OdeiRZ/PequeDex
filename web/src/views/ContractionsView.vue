@@ -59,6 +59,30 @@ const activeContraction = computed<Contraction | undefined>(() =>
   babies.contractions.find((c) => c.ended_at === null),
 )
 
+// Live "time since the last contraction ended" - ticks with the same
+// shared `now` as the running-contraction timer, so the mother sees the
+// gap growing in real time instead of only finding out its final value
+// after the next contraction starts and the interval chip appears in
+// the timeline. `babies.contractions` is newest-first, so with no
+// contraction currently running, index 0 (if any) is the last one that
+// finished.
+const lastStoppedContraction = computed<Contraction | undefined>(() =>
+  activeContraction.value ? undefined : babies.contractions[0],
+)
+
+const sinceLastLabel = computed<string | null>(() => {
+  const last = lastStoppedContraction.value
+  if (!last?.ended_at) return null
+
+  const totalSeconds = Math.max(
+    0,
+    Math.round((now.value.getTime() - new Date(last.ended_at).getTime()) / 1000),
+  )
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+})
+
 const stats = computed(() => summarizeRecentContractions(babies.contractions, now.value))
 
 function formatStat(seconds: number | null): string {
@@ -376,84 +400,90 @@ async function onExportPdf() {
          containing block. -->
     <Teleport v-if="!loading && !loadError" to="body">
       <div
-        class="fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-md items-center gap-2.5 border-t border-border bg-bg/95 px-4 pt-3 backdrop-blur"
+        class="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t border-border bg-bg/95 px-4 pt-3 backdrop-blur"
         style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
       >
-        <button
-          type="button"
-          class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 px-4 py-2.5 shadow-sm transition-colors"
-          :class="
-            babies.current?.water_broke_at
-              ? 'border-brand-teal bg-brand-teal text-brand-ink'
-              : 'border-brand-teal bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20'
-          "
-          @click="onDropletClick"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            :fill="babies.current?.water_broke_at ? 'currentColor' : 'none'"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="h-7 w-7"
-          >
-            <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
-          </svg>
-          <span
-            v-if="babies.current?.water_broke_at"
-            class="text-[0.65rem] font-bold leading-tight tabular-nums"
-          >
-            {{
-              new Date(babies.current.water_broke_at).toLocaleTimeString(dateLocale, {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            }}
-          </span>
-          <span
-            v-if="babies.current?.water_broke_at"
-            class="text-[0.65rem] font-bold leading-tight tabular-nums"
-          >
-            {{
-              new Date(babies.current.water_broke_at).toLocaleDateString(dateLocale, {
-                day: '2-digit',
-                month: '2-digit',
-              })
-            }}
-          </span>
-        </button>
+        <p v-if="sinceLastLabel" class="mb-2 text-center text-sm font-semibold text-text-muted">
+          {{ t('contractions.sinceLast', { time: sinceLastLabel }) }}
+        </p>
 
-        <button
-          type="button"
-          :disabled="togglingTimer"
-          class="btn-primary flex flex-1 items-center justify-center gap-2 !rounded-full"
-          :class="activeContraction ? '!bg-danger' : ''"
-          @click="onToggleTimer"
-        >
-          <svg
-            v-if="!activeContraction"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            class="h-4 w-4"
-            aria-hidden="true"
+        <div class="flex items-center gap-2.5">
+          <button
+            type="button"
+            class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 px-4 py-2.5 shadow-sm transition-colors"
+            :class="
+              babies.current?.water_broke_at
+                ? 'border-brand-teal bg-brand-teal text-brand-ink'
+                : 'border-brand-teal bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20'
+            "
+            @click="onDropletClick"
           >
-            <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
-          </svg>
-          <svg
-            v-else
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            class="h-4 w-4"
-            aria-hidden="true"
+            <svg
+              viewBox="0 0 24 24"
+              :fill="babies.current?.water_broke_at ? 'currentColor' : 'none'"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-7 w-7"
+            >
+              <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+            </svg>
+            <span
+              v-if="babies.current?.water_broke_at"
+              class="text-[0.65rem] font-bold leading-tight tabular-nums"
+            >
+              {{
+                new Date(babies.current.water_broke_at).toLocaleTimeString(dateLocale, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              }}
+            </span>
+            <span
+              v-if="babies.current?.water_broke_at"
+              class="text-[0.65rem] font-bold leading-tight tabular-nums"
+            >
+              {{
+                new Date(babies.current.water_broke_at).toLocaleDateString(dateLocale, {
+                  day: '2-digit',
+                  month: '2-digit',
+                })
+              }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            :disabled="togglingTimer"
+            class="btn-primary flex flex-1 items-center justify-center gap-2 !rounded-full"
+            :class="activeContraction ? '!bg-danger' : ''"
+            @click="onToggleTimer"
           >
-            <circle cx="12" cy="12" r="9" />
-            <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
-          </svg>
-          {{ activeContraction ? t('contractions.stop') : t('contractions.start') }}
-        </button>
+            <svg
+              v-if="!activeContraction"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
+            </svg>
+            {{ activeContraction ? t('contractions.stop') : t('contractions.start') }}
+          </button>
+        </div>
       </div>
     </Teleport>
 

@@ -75,6 +75,7 @@ export default {
     linkCardBody: 'Time and track your contractions before labor.',
     start: 'Start contraction',
     stop: 'Stop',
+    sinceLast: 'Since the last one: {time}',
     empty: 'No contractions logged yet.',
     interval: 'Interval: {interval}',
     longGap: '> {min} min',

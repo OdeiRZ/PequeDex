@@ -76,6 +76,7 @@ export default {
     linkCardBody: 'Cronometra y registra tus contracciones antes del parto.',
     start: 'Inicio de contracción',
     stop: 'Detener',
+    sinceLast: 'Desde la última: {time}',
     empty: 'Todavía no hay contracciones registradas.',
     interval: 'Intervalo: {interval}',
     longGap: '> {min} min',

@@ -248,7 +248,38 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   fiable es un `<img src="data:image/svg+xml;base64,...">`, así que
   `boltDataUri()` en el controlador construye esos dos *data URIs*
   (rayo activo/apagado) una sola vez por exportación y se los pasa a
-  la vista, en vez de generar SVG dentro del bucle Blade.
+  la vista, en vez de generar SVG dentro del bucle Blade. Bug real
+  encontrado en vivo: el PDF listaba las contracciones de más antigua a
+  más reciente (`orderBy('started_at')`, #1 = la primera), al revés que
+  `ContractionTimeline.vue` en la app, donde la más reciente se pinta
+  arriba con el número más alto. Cambiado a
+  `orderByDesc('started_at')` con `'number' => $total - $index`, y el
+  intervalo entre filas se recalcula sobre el "vecino más antiguo" (el
+  siguiente índice del array, ya que la lista corre de más reciente a
+  más antigua) en vez de un `$previousEnd` acumulado que solo tenía
+  sentido recorriendo en orden cronológico. La plantilla recibió
+  después una pasada de legibilidad para papel: la escala tipográfica
+  completa sube de tamaño (estaba pensada para pantalla, 10-13px),
+  el separador de día se centra en su barra, las columnas se
+  reequilibran (duración, que solo contiene "mm:ss", se estrecha en
+  favor de inicio/fin/intensidad) y el contenido de la tabla pasa a
+  alinearse a la derecha.
+- `ContractionController@destroyAll` — `DELETE
+  /babies/{baby}/contractions` (sin el segmento `{contraction}` del
+  borrado individual), autorizado igual que `destroy()`. Borra todas
+  las contracciones del bebé de golpe; pensado para una falsa alarma
+  con contracciones de práctica que no vale la pena conservar fila por
+  fila.
+- `TimelineController@index` gana un parámetro `date` (YYYY-MM-DD)
+  opcional que cambia el modo de consulta por completo: en vez de "las
+  `$limit` más recientes por tipo" (el modo que usa el sondeo del
+  dashboard cada 5s), devuelve todo lo que se solape con ese día
+  concreto, sin límite — un solo día nunca acumula demasiadas filas. El
+  rango empieza un día antes del solicitado para no cortar un sueño que
+  empezó la noche anterior; el recorte exacto a `[00:00, 24:00)` ya lo
+  hacía el frontend (`DailyRhythm.vue`), este parámetro solo le da algo
+  más de margen con el que trabajar. Usado por la navegación a días
+  anteriores de "Ritmo de hoy" (ver `web/README.md`).
 
 ## Notas de arquitectura
 

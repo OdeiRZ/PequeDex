@@ -210,7 +210,27 @@ porque la verificación local solo cubría los otros tres.
   dejaron de estar en el flujo normal de la página y pasaron a un pie
   fijo teletransportado a `<body>` (mismo patrón que `BottomSheet.vue`,
   para no depender de que ningún ancestro tenga `transform`), flotando
-  sobre el historial en la parte inferior de la pantalla.
+  sobre el historial en la parte inferior de la pantalla. `sinceLastLabel`
+  pasó luego por dos ajustes: primero a la misma píldora con borde
+  alineada a la derecha que usan los chips de intervalo (antes texto
+  centrado aparte), congelando su texto en "> 60 min" al superar
+  `LONG_GAP_MINUTES` sin dejar de contar por debajo; después de
+  `ContractionsView.vue` a `ContractionTimeline.vue` como prop, porque
+  vivir antes del propio componente la dejaba pegada al separador de
+  día en vez de a la fila de la contracción cuando esta era de un día
+  distinto al de "ahora". El icono de la tarjeta de enlace del
+  dashboard cambió de una gota (ya usada dentro de esta misma vista
+  para la rotura de bolsa de aguas, así que sugería "agua") a un
+  cronómetro. Nuevo botón "Eliminar todas las contracciones" en los
+  ajustes del bebé (`DashboardView.vue`, junto a "Abandonar este
+  bebé", mismo patrón de confirmación en dos pasos), que llama a
+  `babies.deleteAllContractions()` — útil tras una falsa alarma, sin
+  tener que borrar fila por fila. El PDF exportado se ordenó de más
+  reciente a más antigua (igual que en pantalla — antes salía al
+  revés) y recibió una pasada de legibilidad para papel: tipografía
+  más grande, separador de día centrado, columnas reequilibradas
+  (duración más estrecha, el resto más ancho) y contenido alineado a
+  la derecha (ver `api/README.md` para el detalle del lado backend).
 
 ## Idioma
 
@@ -411,7 +431,20 @@ verse bien en una captura:
   la `babies.timeline` que el dashboard ya pedía — ninguna llamada
   nueva a la API. Una siesta sin `ended_at` (en curso) se recorta a
   "ahora" en vez de extenderse hacia el resto del día, que todavía no
-  ha pasado.
+  ha pasado. Gana flechas prev/next (la de avanzar se desactiva en
+  "hoy") para navegar a días anteriores: recibe `day`/`isToday` como
+  props en vez de calcular siempre "hoy" internamente, y
+  `DashboardView.vue` guarda el día mostrado en `rhythmDate`
+  (reseteado a hoy en cada `loadBabyData()`). Mientras se ve "hoy"
+  sigue leyendo de `babies.timeline` (el sondeo de 5s, sin tocarlo); al
+  navegar a otro día pasa a `babies.dayTimeline`, pedido aparte vía
+  `fetchDayTimeline(date)` contra el nuevo parámetro `?date=` de
+  `TimelineController@index` (ver `api/README.md`), que devuelve todo
+  lo que se solape con ese día sin el límite habitual de "las N más
+  recientes". Nuevo `lib/localDate.ts` para esta aritmética de fechas
+  en hora local, no UTC — la ventana `[00:00, 24:00)` que ya usaba
+  `DailyRhythm.vue` es local, así que la fecha que se compara y se
+  manda al backend tiene que estarlo también.
 - **`EntryCard.vue`** cambia el borde de color fino por un lavado de
   fondo del color de categoría (`categoryBg`, ya existente) en toda la
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para

@@ -9,6 +9,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Navegación por día en "Ritmo de hoy": flechas para ver el ritmo y las
+  tomas de días anteriores (la de avanzar se desactiva en "hoy" — nunca
+  se navega al futuro). Antes `DailyRhythm.vue` estaba fijo al día
+  actual y el propio endpoint de línea temporal solo sabía devolver "las
+  N entradas más recientes en total", sin forma de pedir un día
+  concreto. `TimelineController@index` gana un parámetro `date`
+  opcional que cambia a ese modo (sin el límite habitual, con el rango
+  empezando un día antes para no cortar un sueño que empezó la noche
+  anterior); mientras se ve "hoy" el dashboard sigue leyendo del sondeo
+  normal, sin tocarlo. Nuevo `lib/localDate.ts` para aritmética de
+  fechas en hora local, no UTC — necesario para que la fecha "hoy"/"día
+  siguiente" no se desincronice cerca de medianoche según la zona
+  horaria del navegador.
+- Contador de contracciones: nuevo botón "Eliminar todas las
+  contracciones" en los ajustes del bebé (junto a "Abandonar este
+  bebé", mismo patrón de confirmación de dos pasos), útil tras una
+  falsa alarma para borrar contracciones de práctica sin conservarlas
+  fila por fila. Solo visible antes de que nazca el bebé, como el resto
+  de esta funcionalidad.
 - Contador de contracciones: la hoja de edición deja ajustar los
   segundos de inicio/fin, no solo el minuto — importa para
   contracciones que de verdad duran segundos, no minutos enteros
@@ -20,7 +39,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   tal cual de la app de referencia. "Desde la última: mm:ss" deja la
   barra flotante inferior (quedaba lejos de la contracción a la que se
   refiere) y pasa a mostrarse justo encima de la fila más reciente de
-  la línea temporal.
+  la línea temporal — en la misma píldora con borde, alineada a la
+  derecha, que ya usan los chips de intervalo entre contracciones, en
+  vez de texto centrado aparte. Al superar el umbral de 60 minutos deja
+  de mostrar el contador creciendo y fija el texto en "> 60 min" (el
+  tiempo transcurrido sigue calculándose por debajo, solo deja de
+  cambiar lo que se ve). Ajuste posterior: quedaba pegada al separador
+  de día en vez de a la fila de la contracción cuando esta era de un
+  día anterior a "ahora" — se traslada de `ContractionsView.vue` a
+  `ContractionTimeline.vue` para que quede siempre sobre el bloque
+  correcto, sin depender de dónde caiga el separador.
 
 - Contador de contracciones: el tiempo desde la última contracción se
   ve ahora en vivo ("Desde la última: mm:ss", creciendo cada segundo)
@@ -801,6 +829,22 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- El icono de gota de la tarjeta "Contador de contracciones" en el
+  dashboard sugería "agua" en vez de "cronómetro/contador" — se
+  reutiliza dentro de la propia pantalla de contracciones para la
+  rotura de bolsa de aguas específicamente. Sustituido por un icono de
+  cronómetro, representativo de la función real.
+- El PDF exportado listaba las contracciones de más antigua a más
+  reciente, al revés que `ContractionTimeline.vue` en la app (donde la
+  más reciente aparece arriba con el número más alto). Se invierte el
+  orden y la numeración para que coincida con lo que se ve en pantalla.
+  De paso, mejoras de legibilidad para el papel impreso: la escala
+  tipográfica completa (título, cabeceras, filas, intervalos) sube de
+  tamaño, pensada originalmente para pantalla; el separador de día
+  queda centrado en su barra en vez de a la izquierda; las columnas se
+  reequilibran (duración, que solo contiene "mm:ss", se estrecha en
+  favor de inicio/fin/intensidad); y todo el contenido de la tabla pasa
+  a alinearse a la derecha.
 - En pantallas estrechas, "Duración promedio" e "Intervalo promedio"
   envuelven a dos líneas mientras "Veces por hora" se queda en una, así
   que el valor de cada columna del bloque de estadísticas de

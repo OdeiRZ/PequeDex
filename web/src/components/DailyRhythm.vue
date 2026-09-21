@@ -165,14 +165,14 @@ const rhythm = computed<RhythmData>(() => {
           v-for="(tick, i) in rhythm.feedTicks"
           :key="`feed-${i}`"
           :title="`${t('dashboard.rhythm.feed')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] cursor-default rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125"
+          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 cursor-default rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125"
           :style="{ left: `${tick.left}%` }"
         ></span>
         <span
           v-for="(tick, i) in rhythm.diaperTicks"
           :key="`diaper-${i}`"
           :title="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] cursor-default rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125"
+          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 cursor-default rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125"
           :style="{ left: `${tick.left}%` }"
         ></span>
       </div>

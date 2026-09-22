@@ -595,17 +595,24 @@ function entryColorSwatch(entry: (typeof babies.timeline)[number]): string | und
   return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color]
 }
 
-// Same reasoning, applied to a breastfeed's milk type - a droplet
-// colored like the real thing (golden calostro, white leche) next to
-// the row's title. Only ever set for a `pecho` feed (see
-// StoreFeedRequest's `prohibited_unless`), so anything else - a
-// bottle, a solid, or an old row from before this field existed -
-// renders no droplet at all.
+// Same reasoning, applied to a feed's milk - a droplet colored like
+// the real thing next to the row's title. A bottle carries milk too
+// (formula or expressed, both read as white - `milk_type` itself is
+// only ever set for a `pecho` feed, see StoreFeedRequest's
+// `prohibited_unless`, so a bottle has no field to read and just gets
+// `leche`'s color directly). A `pecho` row logged before this field
+// existed has `milk_type: null` in the database forever (nothing
+// backfills old rows) - reported live as some breastfeeds missing
+// their droplet while newer ones had it, an inconsistent-looking gap
+// rather than a real absence of milk. Defaults to `leche` there too,
+// same as a bottle and same as what a new breastfeed already
+// defaults to in the "+ Toma" form. Only a solid feed - not milk at
+// all - renders no droplet.
 function entryMilkDroplet(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'feed' || entry.data.type !== 'pecho' || !entry.data.milk_type) {
-    return undefined
-  }
-  return MILK_TYPE_DROPLET_FILL[entry.data.milk_type]
+  if (entry.type !== 'feed') return undefined
+  if (entry.data.type === 'biberon') return MILK_TYPE_DROPLET_FILL.leche
+  if (entry.data.type === 'pecho') return MILK_TYPE_DROPLET_FILL[entry.data.milk_type ?? 'leche']
+  return undefined
 }
 
 function entryTitle(entry: (typeof babies.timeline)[number]): string {

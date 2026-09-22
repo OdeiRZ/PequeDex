@@ -640,7 +640,17 @@ verse bien en una captura:
   (`stroke="currentColor"` con `text-text-muted`, el relleno real solo
   en `fill`) para seguir siendo visible sobre el fondo claro de la
   propia fila - un relleno blanco puro sin contorno se perdía contra
-  `bg-feed/15` en tema claro.
+  `bg-feed/15` en tema claro. Ampliado tras un reporte en vivo: solo
+  cubría el pecho, dejando el biberón y cualquier toma de pecho
+  registrada antes de que `milk_type` existiera (esas filas tienen
+  `null` para siempre, nada las rellena solo) sin gota - un hueco que
+  se leía como inconsistente en una línea temporal real con historial
+  mixto. `entryMilkDroplet()` da a un biberón la misma gota blanca que
+  "Leche" directamente (no tiene el campo, pero sigue siendo leche -
+  fórmula o extraída, ambas blancas) y a una toma de pecho con
+  `milk_type: null` el mismo blanco por defecto, igual que ya asume el
+  propio formulario "+ Toma" al crear una nueva. Solo una toma sólida
+  se queda sin gota, al no ser leche en absoluto.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

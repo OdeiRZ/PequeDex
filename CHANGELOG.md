@@ -9,6 +9,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **La gota de leche/calostro cubre también el biberón, y las tomas de
+  pecho antiguas sin dato.** Reportado en vivo: la gota solo aparecía
+  en tomas de pecho recientes, dejando el resto de la línea temporal
+  (biberón, y cualquier toma de pecho registrada antes de que este
+  campo existiera) sin ella — un hueco inconsistente, no una ausencia
+  real de leche. El biberón lleva ahora la misma gota blanca que
+  "Leche" (fórmula o leche extraída, ambas blancas), y una toma de
+  pecho sin `milk_type` guardado (dato antiguo, nunca se rellena solo)
+  cae al mismo blanco por defecto, igual que ya hace el propio
+  formulario "+ Toma" al crear una nueva. Solo una toma sólida se
+  queda sin gota, al no ser leche en absoluto.
+
 - **Gota de color junto a una toma de pecho en la línea temporal**,
   mismo criterio que el punto de color de un pañal sucio: dorada para
   calostro (su color real), blanca para leche — no un texto que haya

@@ -1105,6 +1105,35 @@ const feedPredictionLabel = computed(() => {
 
   return t('dashboard.feedPrediction.nextFeed', { at })
 })
+
+// A predicted time that's already arrived (or passed) reads the same as
+// one still hours away today - a gentle pulse on the card once `now`
+// catches up to `prediction.at` turns it into an actual cue instead of
+// just another line of text. `predictionNow` only needs to be "close
+// enough", not per-second accurate, so it ticks far more slowly than
+// ContractionsView.vue's own live clock.
+const predictionNow = ref(new Date())
+let predictionNowTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  predictionNowTimer = setInterval(() => {
+    predictionNow.value = new Date()
+  }, 30_000)
+})
+
+onUnmounted(() => {
+  clearInterval(predictionNowTimer)
+})
+
+const feedPredictionDue = computed(() => {
+  const at = babies.feedPrediction?.prediction?.at
+  return at !== undefined && new Date(at).getTime() <= predictionNow.value.getTime()
+})
+
+const sleepPredictionDue = computed(() => {
+  const at = babies.sleepPrediction?.prediction?.at
+  return at !== undefined && new Date(at).getTime() <= predictionNow.value.getTime()
+})
 </script>
 
 <template>
@@ -1177,7 +1206,10 @@ const feedPredictionLabel = computed(() => {
 
     <template v-else>
       <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-28">
-        <div v-if="babies.babies.length > 1" class="-mb-2 flex gap-2 overflow-x-auto pb-1">
+        <div
+          v-if="babies.babies.length > 1"
+          class="dash-enter -mb-2 flex gap-2 overflow-x-auto pb-1"
+        >
           <button
             v-for="baby in babies.babies"
             :key="baby.id"
@@ -1195,7 +1227,7 @@ const feedPredictionLabel = computed(() => {
         </div>
 
         <div
-          class="relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
+          class="dash-enter relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
           style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
         >
           <span
@@ -1331,7 +1363,11 @@ const feedPredictionLabel = computed(() => {
         </RouterLink>
 
         <template v-if="isBorn">
-          <TodaySummary :timeline="babies.timeline" :enabled-categories="enabledCategories" />
+          <TodaySummary
+            class="dash-enter"
+            :timeline="babies.timeline"
+            :enabled-categories="enabledCategories"
+          />
 
           <ul
             v-if="
@@ -1339,7 +1375,7 @@ const feedPredictionLabel = computed(() => {
               isRhythmToday &&
               (enabledCategories.includes('feed') || enabledCategories.includes('sleep'))
             "
-            class="flex flex-col gap-2"
+            class="dash-enter flex flex-col gap-2"
           >
             <EntryCard
               v-if="enabledCategories.includes('feed')"
@@ -1347,6 +1383,7 @@ const feedPredictionLabel = computed(() => {
               :title="t('dashboard.feedPrediction.title')"
               :meta="feedPredictionLabel"
               :interactive="false"
+              :pulsing="feedPredictionDue"
             />
             <EntryCard
               v-if="enabledCategories.includes('sleep')"
@@ -1354,10 +1391,14 @@ const feedPredictionLabel = computed(() => {
               :title="t('dashboard.sleepPrediction.title')"
               :meta="sleepPredictionLabel"
               :interactive="false"
+              :pulsing="sleepPredictionDue"
             />
           </ul>
 
-          <section v-if="enabledCategories.includes('milestone')" class="flex flex-col gap-2">
+          <section
+            v-if="enabledCategories.includes('milestone')"
+            class="dash-enter flex flex-col gap-2"
+          >
             <h2 class="flex items-center gap-2 font-display text-base font-bold">
               <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
               {{ t('dashboard.milestones.title') }}
@@ -1370,6 +1411,7 @@ const feedPredictionLabel = computed(() => {
           </section>
 
           <DailyRhythm
+            class="dash-enter"
             :timeline="rhythmTimeline"
             :date-locale="dateLocale"
             :enabled-categories="enabledCategories"
@@ -1380,11 +1422,12 @@ const feedPredictionLabel = computed(() => {
           />
           <WeeklySleep
             v-if="enabledCategories.includes('sleep')"
+            class="dash-enter"
             :sleeps="babies.recentSleeps"
             :date-locale="dateLocale"
           />
 
-          <section class="flex flex-col gap-2">
+          <section class="dash-enter flex flex-col gap-2">
             <h2 class="flex items-center gap-2 font-display text-base font-bold">
               <span
                 class="h-4 w-1.5 shrink-0 rounded-full"

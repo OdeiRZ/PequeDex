@@ -16,8 +16,12 @@ withDefaults(
      * and no `open` click, so it doesn't invite a tap that does
      * nothing. */
     interactive?: boolean
+    /** A soft, slow glow around the card - a predicted time that's
+     * already arrived, say. Independent of `interactive`: a card can
+     * be both non-interactive and pulsing at once. */
+    pulsing?: boolean
   }>(),
-  { interactive: true },
+  { interactive: true, pulsing: false },
 )
 
 defineEmits<{ open: [] }>()
@@ -26,7 +30,11 @@ defineEmits<{ open: [] }>()
 <template>
   <li
     class="flex items-center gap-3 rounded-2xl p-3 shadow-sm ring-1 ring-transparent"
-    :class="[categoryBg[category], interactive && ['card-interactive', categoryRing[category]]]"
+    :class="[
+      categoryBg[category],
+      interactive && ['card-interactive', categoryRing[category]],
+      pulsing && 'entry-card-pulsing',
+    ]"
   >
     <component
       :is="interactive ? 'button' : 'div'"
@@ -67,3 +75,25 @@ defineEmits<{ open: [] }>()
     <slot name="actions" />
   </li>
 </template>
+
+<style scoped>
+.entry-card-pulsing {
+  animation: entry-card-glow 2s ease-in-out infinite;
+}
+
+@keyframes entry-card-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(255 255 255 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-card-pulsing {
+    animation: none;
+  }
+}
+</style>

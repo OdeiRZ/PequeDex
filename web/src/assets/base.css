@@ -459,6 +459,80 @@ body {
   }
 }
 
+/* Route changes (Dashboard <-> Contracciones, etc.) cross-fading with a
+   small lift instead of hard-cutting from one view to the next - global
+   because App.vue's <RouterView> renders the target view through a
+   dynamic <component :is>, not a tag this file could otherwise scope
+   normal CSS to. `mode="out-in"` on that <Transition> (not just this
+   CSS) is what keeps the old and new view from ever being mounted at
+   the same time - both DashboardView.vue and ContractionsView.vue run
+   their own onMounted() polling/intervals, so a brief double-mount
+   would start two of those at once. */
+.route-enter-active,
+.route-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.route-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* Dashboard's own top-level blocks (baby switcher, baby card,
+   TodaySummary, predictions, milestones, DailyRhythm, WeeklySleep,
+   línea temporal) fading/sliding up one after another instead of
+   popping in all at once - global because 3 of these 8 are separate
+   components (TodaySummary.vue/DailyRhythm.vue/WeeklySleep.vue), and a
+   class passed down to a child component's root only actually applies
+   through global CSS, not a style scoped to DashboardView.vue itself.
+   `nth-child` (not an explicit index) is enough since every one of
+   `<main>`'s direct children in this branch carries the class, in the
+   same order they're declared - `backwards` fill means each one stays
+   invisible for its own delay instead of flashing at full opacity
+   first. */
+.dash-enter {
+  animation: dash-enter-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.dash-enter:nth-child(1) {
+  animation-delay: 0ms;
+}
+.dash-enter:nth-child(2) {
+  animation-delay: 60ms;
+}
+.dash-enter:nth-child(3) {
+  animation-delay: 120ms;
+}
+.dash-enter:nth-child(4) {
+  animation-delay: 180ms;
+}
+.dash-enter:nth-child(5) {
+  animation-delay: 240ms;
+}
+.dash-enter:nth-child(6) {
+  animation-delay: 300ms;
+}
+.dash-enter:nth-child(7) {
+  animation-delay: 360ms;
+}
+.dash-enter:nth-child(8) {
+  animation-delay: 420ms;
+}
+
+@keyframes dash-enter-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn-primary,
   .btn-primary::after,
@@ -469,7 +543,10 @@ body {
   .entry-list-move,
   .confirm-warn-enter-active,
   .confirm-warn-leave-active,
-  .baby-pill-active {
+  .baby-pill-active,
+  .dash-enter,
+  .route-enter-active,
+  .route-leave-active {
     transition: none !important;
     animation: none !important;
   }
@@ -481,7 +558,11 @@ body {
   .card-interactive:active,
   .entry-list-enter-from,
   .entry-list-leave-to,
-  .confirm-warn-leave-to {
+  .confirm-warn-leave-to,
+  .dash-enter,
+  .route-enter-from,
+  .route-leave-to {
     transform: none !important;
+    opacity: 1 !important;
   }
 }

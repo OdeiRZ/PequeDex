@@ -17,7 +17,7 @@ const props = defineProps<{
   isToday: boolean
 }>()
 
-defineEmits<{ prev: []; next: [] }>()
+const emit = defineEmits<{ prev: []; next: [] }>()
 
 const { t } = useI18n()
 
@@ -26,12 +26,17 @@ const DAY_MS = 86_400_000
 interface RhythmTick {
   left: number
   time: string
+  /** Position in chronological order among every mark on the bar (not
+   * just its own category) - drives the stagger delay so marks pop in
+   * left-to-right regardless of which of the 3 v-for loops they're in. */
+  order: number
 }
 
 interface RhythmSegment {
   left: number
   width: number
   time: string
+  order: number
 }
 
 interface RhythmData {
@@ -49,6 +54,24 @@ const dayLabel = computed(() =>
 )
 
 const title = computed(() => (props.isToday ? t('dashboard.rhythm.title') : dayLabel.value))
+
+// Tracks which way the caregiver just navigated, purely to pick which
+// direction the day label slides - set synchronously on click, read by
+// the <Transition> below. `props.day` itself changes a moment later
+// (DashboardView.vue updates it before/without waiting on the refetch
+// for a non-today day), which is what actually triggers the
+// transition via the `:key` on the label.
+const direction = ref<1 | -1>(1)
+
+function onPrev() {
+  direction.value = -1
+  emit('prev')
+}
+
+function onNext() {
+  direction.value = 1
+  emit('next')
+}
 
 // The shown day, not always today - browsing to a previous day (see
 // DashboardView.vue's day navigator) reuses this exact same clamping
@@ -70,9 +93,9 @@ const rhythm = computed<RhythmData>(() => {
   const toTime = (date: Date): string =>
     date.toLocaleTimeString(props.dateLocale, { hour: '2-digit', minute: '2-digit' })
 
-  const feedTicks: RhythmTick[] = []
-  const diaperTicks: RhythmTick[] = []
-  const sleepSegments: RhythmSegment[] = []
+  const feedTicks: Omit<RhythmTick, 'order'>[] = []
+  const diaperTicks: Omit<RhythmTick, 'order'>[] = []
+  const sleepSegments: Omit<RhythmSegment, 'order'>[] = []
 
   for (const entry of props.timeline) {
     if (entry.type === 'feed') {
@@ -98,10 +121,18 @@ const rhythm = computed<RhythmData>(() => {
     }
   }
 
+  // Every mark's `left`, across all 3 categories, ranked together so
+  // the stagger below reads left-to-right on the bar itself rather than
+  // "all feeds, then all diapers, then all naps".
+  const allLefts = [...feedTicks, ...diaperTicks, ...sleepSegments]
+    .map((m) => m.left)
+    .sort((a, b) => a - b)
+  const orderOf = (left: number) => allLefts.indexOf(left)
+
   return {
-    feedTicks,
-    diaperTicks,
-    sleepSegments,
+    feedTicks: feedTicks.map((m) => ({ ...m, order: orderOf(m.left) })),
+    diaperTicks: diaperTicks.map((m) => ({ ...m, order: orderOf(m.left) })),
+    sleepSegments: sleepSegments.map((m) => ({ ...m, order: orderOf(m.left) })),
     hasData: feedTicks.length > 0 || diaperTicks.length > 0 || sleepSegments.length > 0,
   }
 })
@@ -143,7 +174,7 @@ watch(
         type="button"
         class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text"
         :aria-label="t('dashboard.rhythm.prevDay')"
-        @click="$emit('prev')"
+        @click="onPrev"
       >
         <svg
           viewBox="0 0 24 24"
@@ -157,15 +188,22 @@ watch(
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
-      <h2 class="min-w-0 flex-1 truncate text-center font-display text-sm font-bold">
-        {{ title }}
+      <h2 class="relative h-5 min-w-0 flex-1 overflow-hidden font-display text-sm font-bold">
+        <Transition :name="direction === 1 ? 'day-forward' : 'day-back'">
+          <span
+            :key="title"
+            class="absolute inset-0 flex items-center justify-center truncate px-1"
+          >
+            {{ title }}
+          </span>
+        </Transition>
       </h2>
       <button
         type="button"
         :disabled="isToday"
         class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-30"
         :aria-label="t('dashboard.rhythm.nextDay')"
-        @click="$emit('next')"
+        @click="onNext"
       >
         <svg
           viewBox="0 0 24 24"
@@ -182,15 +220,23 @@ watch(
     </div>
 
     <template v-if="rhythm.hasData">
-      <div class="relative my-3.5 h-7 rounded-full bg-surface-sunken" @click="activeTick = null">
+      <div
+        :key="day"
+        class="relative my-3.5 h-7 rounded-full bg-surface-sunken"
+        @click="activeTick = null"
+      >
         <button
           v-for="(seg, i) in rhythm.sleepSegments"
           :key="`sleep-${i}`"
           type="button"
           :title="`${t('dashboard.rhythm.sleep')} ${seg.time}`"
           :aria-label="`${t('dashboard.rhythm.sleep')} ${seg.time}`"
-          class="absolute top-[3px] bottom-[3px] rounded-full bg-sleep opacity-90 transition-[opacity,transform] duration-150 hover:z-10 hover:scale-y-125 hover:opacity-100 active:z-10 active:scale-y-125 active:opacity-100"
-          :style="{ left: `${seg.left}%`, width: `${seg.width}%` }"
+          class="mark-pop absolute top-[3px] bottom-[3px] rounded-full bg-sleep opacity-90 transition-[opacity,transform] duration-150 hover:z-10 hover:scale-y-125 hover:opacity-100 active:z-10 active:scale-y-125 active:opacity-100"
+          :style="{
+            left: `${seg.left}%`,
+            width: `${seg.width}%`,
+            animationDelay: `${seg.order * 45}ms`,
+          }"
           @click.stop="
             toggleTick({ label: t('dashboard.rhythm.sleep'), time: seg.time, left: seg.left })
           "
@@ -201,8 +247,8 @@ watch(
           type="button"
           :title="`${t('dashboard.rhythm.feed')} ${tick.time}`"
           :aria-label="`${t('dashboard.rhythm.feed')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
-          :style="{ left: `${tick.left}%` }"
+          class="mark-pop absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
+          :style="{ left: `${tick.left}%`, animationDelay: `${tick.order * 45}ms` }"
           @click.stop="
             toggleTick({ label: t('dashboard.rhythm.feed'), time: tick.time, left: tick.left })
           "
@@ -213,8 +259,8 @@ watch(
           type="button"
           :title="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
           :aria-label="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
-          :style="{ left: `${tick.left}%` }"
+          class="mark-pop absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
+          :style="{ left: `${tick.left}%`, animationDelay: `${tick.order * 45}ms` }"
           @click.stop="
             toggleTick({ label: t('dashboard.rhythm.diaper'), time: tick.time, left: tick.left })
           "
@@ -254,3 +300,70 @@ watch(
     </p>
   </section>
 </template>
+
+<style scoped>
+/* Marks pop in left-to-right (see `order` in the script) instead of
+   all appearing at once - both on the very first load and again each
+   time the day changes, since the track's own `:key="day"` remounts
+   every mark and restarts this `animation` (a `transition` wouldn't
+   replay on remount the same way; an animation naturally does). */
+.mark-pop {
+  animation: mark-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes mark-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+.day-forward-enter-active,
+.day-forward-leave-active,
+.day-back-enter-active,
+.day-back-leave-active {
+  transition:
+    transform 0.28s ease,
+    opacity 0.28s ease;
+}
+
+.day-forward-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.day-forward-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.day-back-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.day-back-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark-pop {
+    animation: none;
+  }
+
+  .day-forward-enter-active,
+  .day-forward-leave-active,
+  .day-back-enter-active,
+  .day-back-leave-active {
+    transition: opacity 0.15s ease;
+  }
+
+  .day-forward-enter-from,
+  .day-forward-leave-to,
+  .day-back-enter-from,
+  .day-back-leave-to {
+    transform: none;
+  }
+}
+</style>

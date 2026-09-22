@@ -23,7 +23,11 @@ onMounted(() => {
 <template>
   <div class="mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-bg text-text">
     <AppHeader />
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <Transition name="route" mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
     <ToastNotification />
     <!-- Mounted here, not inside any one view, so the "Tu cuenta" link
          in AppHeader (also global) works from every route - it used to

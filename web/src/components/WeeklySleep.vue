@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import type { Sleep } from '@/stores/babies'
@@ -7,6 +7,23 @@ import type { Sleep } from '@/stores/babies'
 const props = defineProps<{ sleeps: Sleep[]; dateLocale: string }>()
 
 const { t } = useI18n()
+
+// Bars start pinned at the floor height and only grow to their real
+// height one animation frame after mount - setting the real height
+// straight away on the very first render would leave nothing for the
+// `transition: height` below to actually animate from, so the week
+// would just appear already-drawn instead of growing in. A later
+// change to `sleeps` (a new nap logged while the dashboard is open)
+// still animates on its own, since `grown` stays true and the
+// transition is always active - this ref is only about the very first
+// paint.
+const grown = ref(false)
+
+onMounted(() => {
+  requestAnimationFrame(() => {
+    grown.value = true
+  })
+})
 
 const DAYS = 7
 
@@ -54,7 +71,7 @@ function hoursLabel(hours: number): string {
     <template v-if="hasData">
       <div class="flex h-24 items-end justify-between gap-2">
         <div
-          v-for="day in days"
+          v-for="(day, index) in days"
           :key="day.date"
           class="group flex h-full flex-1 flex-col items-center justify-end gap-1"
         >
@@ -65,11 +82,14 @@ function hoursLabel(hours: number): string {
           </span>
           <div class="flex w-full flex-1 items-end">
             <div
-              class="w-full origin-bottom rounded-md bg-sleep transition-transform duration-150 ease-out group-hover:scale-x-110 group-hover:brightness-110"
+              class="bar-grow w-full origin-bottom rounded-md bg-sleep group-hover:scale-x-110 group-hover:brightness-110"
               :class="
                 isToday(day.date) ? 'ring-2 ring-sleep/50 ring-offset-1 ring-offset-surface' : ''
               "
-              :style="{ height: `${barHeightPercent(day.hours)}%` }"
+              :style="{
+                height: `${grown ? barHeightPercent(day.hours) : 4}%`,
+                transitionDelay: `${index * 70}ms`,
+              }"
             ></div>
           </div>
           <span
@@ -88,3 +108,18 @@ function hoursLabel(hours: number): string {
     </p>
   </section>
 </template>
+
+<style scoped>
+.bar-grow {
+  transition:
+    height 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.15s ease-out,
+    filter 0.15s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-grow {
+    transition: none;
+  }
+}
+</style>

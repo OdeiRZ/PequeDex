@@ -32,6 +32,7 @@ import TodaySummary from '@/components/TodaySummary.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
+import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
@@ -592,6 +593,19 @@ function entryCategory(entry: (typeof babies.timeline)[number]): Category {
 function entryColorSwatch(entry: (typeof babies.timeline)[number]): string | undefined {
   if (entry.type !== 'diaper_change' || !entry.data.residue_color) return undefined
   return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color]
+}
+
+// Same reasoning, applied to a breastfeed's milk type - a droplet
+// colored like the real thing (golden calostro, white leche) next to
+// the row's title. Only ever set for a `pecho` feed (see
+// StoreFeedRequest's `prohibited_unless`), so anything else - a
+// bottle, a solid, or an old row from before this field existed -
+// renders no droplet at all.
+function entryMilkDroplet(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'feed' || entry.data.type !== 'pecho' || !entry.data.milk_type) {
+    return undefined
+  }
+  return MILK_TYPE_DROPLET_FILL[entry.data.milk_type]
 }
 
 function entryTitle(entry: (typeof babies.timeline)[number]): string {
@@ -1548,6 +1562,7 @@ const sleepPredictionDue = computed(() => {
                     :title="entryTitle(item.entry)"
                     :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
                     :swatch-color="entryColorSwatch(item.entry)"
+                    :droplet-color="entryMilkDroplet(item.entry)"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>

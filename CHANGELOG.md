@@ -9,6 +9,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Gota de color junto a una toma de pecho en la línea temporal**,
+  mismo criterio que el punto de color de un pañal sucio: dorada para
+  calostro (su color real), blanca para leche — no un texto que haya
+  que leer. A diferencia del punto de pañal (que solo aparece si hay
+  color indicado), aquí se muestra siempre para una toma de pecho, ya
+  que el tipo de leche es un campo obligatorio en ese caso (nunca
+  "sin indicar"); un biberón o una toma sólida no llevan gota, al no
+  tener tipo de leche. Nuevo `lib/milkType.ts` con el mapa tipo→hex,
+  mismo patrón que `lib/diaperResidueColor.ts`. Nueva prop
+  `dropletColor` en `EntryCard.vue` (un icono de gota, no el punto
+  plano de `swatchColor` — está ilustrando un líquido).
+
 - **Punto de color junto a un pañal sucio en la línea temporal.** El
   color de las heces solo se veía al abrir la fila para editarla — se
   añade un pequeño círculo con el color real justo junto al texto

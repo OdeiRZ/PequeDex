@@ -13,6 +13,12 @@ withDefaults(
      * residue color, say (see `lib/diaperResidueColor.ts`). Undefined
      * renders nothing, same as every other optional prop here. */
     swatchColor?: string | null
+    /** A small milk-drop icon next to the title, filled with this
+     * color - a breastfeed's noted milk type, say (see
+     * `lib/milkType.ts`). Undefined renders nothing. A droplet, not
+     * `swatchColor`'s plain dot, because it's illustrating a liquid,
+     * not a flat color swatch. */
+    dropletColor?: string | null
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -70,6 +76,17 @@ defineEmits<{ open: [] }>()
             :style="{ backgroundColor: swatchColor }"
             aria-hidden="true"
           ></span>
+          <svg
+            v-if="dropletColor"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+            class="h-3 w-3 shrink-0 text-text-muted"
+            :style="{ fill: dropletColor }"
+            aria-hidden="true"
+          >
+            <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+          </svg>
         </div>
         <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
         <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>

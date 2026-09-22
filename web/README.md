@@ -628,7 +628,19 @@ verse bien en una captura:
   cualquier otro caso (pañal mojado, o color sin indicar) no renderiza
   nada, no un punto vacío. `lib/diaperResidueColor.ts` extrae el mapa
   color→hex que ya usaba el selector de "+ Pañal" a un módulo propio,
-  compartido ahora por ambos sitios.
+  compartido ahora por ambos sitios. Segunda prop opcional,
+  `dropletColor` — un icono de gota (mismo `<path>` que ya usaba el
+  botón de rotura de bolsa de aguas en `ContractionsView.vue`), no el
+  círculo plano de `swatchColor`, porque está ilustrando un líquido: la
+  fila de una toma de pecho la lleva siempre, dorada para calostro
+  (color real) o blanca para leche (`lib/milkType.ts`, mismo patrón que
+  el mapa de pañales) - a diferencia del punto de pañal, aquí no hay
+  "sin indicar" que ocultar, el tipo de leche es obligatorio en una
+  toma de pecho. La gota blanca lleva contorno propio
+  (`stroke="currentColor"` con `text-text-muted`, el relleno real solo
+  en `fill`) para seguir siendo visible sobre el fondo claro de la
+  propia fila - un relleno blanco puro sin contorno se perdía contra
+  `bg-feed/15` en tema claro.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

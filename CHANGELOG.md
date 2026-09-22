@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Tipo de leche en las tomas de pecho, color de las heces en pañales
+  sucios.** El formulario de "+ Toma" solo distinguía biberón/pecho/
+  sólido y, para pecho, el lado — ahora, al elegir pecho, aparece también
+  "Tipo de leche" (Calostro / Leche, con Leche preseleccionada por
+  defecto). El formulario de "+ Pañal" gana un selector de color de las
+  heces (Verde / Amarillo / Marrón / Meconio, con "Sin indicar" como
+  opción explícita) que solo aparece cuando el tipo es Sucio o Ambos — un
+  pañal solo mojado no tiene heces que describir, así que ahí ni se
+  muestra ni el backend lo acepta. Ambos campos son opcionales incluso
+  cuando son relevantes (nadie está obligado a rellenarlos cada vez).
+
 - **Selector de sexo al crear el primer bebé, eliminación de bebé para el
   cuidador único.** El formulario de onboarding ("Empieza con tu bebé")
   solo pedía nombre y fecha prevista de parto — el sexo (opcional, ya

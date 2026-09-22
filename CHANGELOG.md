@@ -9,6 +9,32 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Selector de sexo al crear el primer bebé, eliminación de bebé para el
+  cuidador único.** El formulario de onboarding ("Empieza con tu bebé")
+  solo pedía nombre y fecha prevista de parto — el sexo (opcional, ya
+  aceptado por el backend desde antes) solo se podía fijar después desde
+  "Sexo / fecha de nacimiento"; ahora aparece también al crear el bebé
+  (y al añadir un segundo bebé), reutilizando el mismo `SegmentedControl`.
+  Además, un cuidador único no tenía forma de eliminar un bebé del todo —
+  "Dejar de cuidar al bebé" lo rechaza explícitamente en ese caso (dejaría
+  el bebé sin ningún cuidador), así que la única salida real era compartir
+  el código de invitación con alguien más primero. Nuevo endpoint
+  `DELETE /babies/{baby}` (solo permitido con un único cuidador vinculado,
+  mismo bloqueo con `lockForUpdate()` que ya usaba "dejar de cuidar" contra
+  una carrera entre dos peticiones simultáneas) borra el bebé y cuanto
+  cuelga de él (`cascadeOnDelete` ya cubría feeds/sueños/pañales/medidas/
+  hitos/contracciones; las fotos de hitos viven en disco, no en la BD, así
+  que se limpian a mano antes del borrado). En el frontend, cuando "Dejar
+  de cuidar" falla por ser el único cuidador, la propia hoja de ajustes
+  ofrece "Eliminar este bebé" como alternativa justo debajo del error.
+
+- **El enlace "eliminar todas las contracciones" se mueve al final del
+  contador de contracciones.** Vivía en la hoja de ajustes del bebé
+  (Sexo/fecha de nacimiento), siempre visible mientras el bebé no hubiera
+  nacido, incluso sin ninguna contracción guardada — no había nada que
+  borrar. Ahora vive al final de `/contracciones`, la página que de hecho
+  sabe si hay contracciones cargadas, y solo aparece cuando las hay.
+
 - **Tercera ronda de movimiento — transiciones en crecimiento, contracciones
   e hitos, mismo criterio que LudoDex y MIRA_MarketLens (proyectos
   hermanos).** La lista de "Crecimiento" del dashboard, que estaba al lado

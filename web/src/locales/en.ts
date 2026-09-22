@@ -173,7 +173,7 @@ export default {
       deletingContractions: 'Deleting...',
       deleteAllContractionsError: 'Could not delete the contractions.',
       toastContractionsDeleted: 'Contractions deleted.',
-      leaveBaby: 'Leave this baby',
+      leaveBaby: 'Leave the baby',
       leaveConfirm:
         "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",
       leaveConfirmYes: 'Yes, leave',

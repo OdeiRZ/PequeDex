@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/babies/{baby}', [BabyController::class, 'show']);
     Route::put('/babies/{baby}', [BabyController::class, 'update']);
     Route::delete('/babies/{baby}/leave', [BabyController::class, 'leave']);
+    Route::delete('/babies/{baby}', [BabyController::class, 'destroy']);
     Route::post('/babies/{baby}/invite-code', [BabyController::class, 'regenerateInviteCode']);
     Route::get('/babies/{baby}/timeline', [TimelineController::class, 'index']);
 

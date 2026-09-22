@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BabyController extends Controller
 {
@@ -120,6 +121,40 @@ class BabyController extends Controller
             }
 
             $baby->users()->detach($request->user());
+
+            return response()->json(status: 204);
+        });
+    }
+
+    /**
+     * Permanently deletes the baby and everything under it (feeds, sleeps,
+     * diaper changes, growth measurements, milestones, contractions - all
+     * cascadeOnDelete at the DB level). Blocked unless the requester is the
+     * last remaining caregiver: with more than one, this baby's data isn't
+     * only theirs to destroy, so leave() (unlink this user, keep the baby
+     * for the rest) is the right action instead. Milestone photos live on
+     * disk, not in the DB, so cascadeOnDelete alone would leak them -
+     * cleaned up here first, same disk MilestoneController::destroy() uses.
+     */
+    public function destroy(Request $request, Baby $baby): JsonResponse
+    {
+        $this->authorize('update', $baby);
+
+        return DB::transaction(function () use ($baby) {
+            Baby::whereKey($baby->id)->lockForUpdate()->firstOrFail();
+
+            if ($baby->users()->count() > 1) {
+                return response()->json([
+                    'message' => 'Este bebé tiene más de un cuidador. Solo se puede eliminar cuando eres el único cuidador - si no, usa "Dejar de cuidar al bebé".',
+                ], 422);
+            }
+
+            $photoPaths = $baby->milestones()->whereNotNull('photo_path')->pluck('photo_path');
+            if ($photoPaths->isNotEmpty()) {
+                Storage::disk(config('filesystems.milestones_disk'))->delete($photoPaths->all());
+            }
+
+            $baby->delete();
 
             return response()->json(status: 204);
         });

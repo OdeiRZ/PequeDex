@@ -2,7 +2,10 @@
 
 use App\Enums\BabySex;
 use App\Models\Baby;
+use App\Models\Milestone;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 it('creates a baby, attaching the creator as its first caregiver', function () {
     $user = actingAsUser();
@@ -17,6 +20,14 @@ it('creates a baby, attaching the creator as its first caregiver', function () {
     $baby = Baby::firstOrFail();
     expect($baby->users->pluck('id'))->toEqual(collect([$user->id]));
     expect($baby->invite_code)->not->toBeEmpty();
+});
+
+it('creates a baby with a sex', function () {
+    actingAsUser();
+
+    $this->postJson('/api/babies', ['sex' => 'nina'])
+        ->assertCreated()
+        ->assertJsonPath('data.sex', 'nina');
 });
 
 it('allows creating a baby with no name or due date yet', function () {
@@ -224,4 +235,50 @@ it('invalidates the old invite code immediately once regenerated', function () {
     $this->postJson('/api/babies/join', ['invite_code' => $originalCode])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('invite_code');
+});
+
+it('deletes a baby as its only remaining caregiver', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+
+    $this->deleteJson("/api/babies/{$baby->id}")->assertNoContent();
+
+    expect(Baby::find($baby->id))->toBeNull();
+});
+
+it('deletes the milestone photo files when the baby that owns them is deleted', function () {
+    Storage::fake('public');
+
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach($user);
+    $path = UploadedFile::fake()->image('photo.jpg')->store("milestones/{$baby->id}", 'public');
+    Milestone::factory()->for($baby)->for($user, 'loggedBy')->create(['photo_path' => $path]);
+
+    $this->deleteJson("/api/babies/{$baby->id}")->assertNoContent();
+
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('blocks deleting a baby that has more than one caregiver', function () {
+    $user = actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach([$user->id, User::factory()->create()->id]);
+
+    $this->deleteJson("/api/babies/{$baby->id}")
+        ->assertUnprocessable()
+        ->assertJsonPath('message', 'Este bebé tiene más de un cuidador. Solo se puede eliminar cuando eres el único cuidador - si no, usa "Dejar de cuidar al bebé".');
+
+    expect(Baby::find($baby->id))->not->toBeNull();
+});
+
+it('rejects deleting a baby the user is not linked to', function () {
+    actingAsUser();
+    $baby = Baby::factory()->create();
+    $baby->users()->attach(User::factory()->create());
+
+    $this->deleteJson("/api/babies/{$baby->id}")->assertForbidden();
+
+    expect(Baby::find($baby->id))->not->toBeNull();
 });

@@ -395,9 +395,21 @@ const feedSideOptions = computed(() => [
   { value: 'ambos' as const, label: t('dashboard.feedForm.both') },
 ])
 
+// `color` reused from `MILK_TYPE_DROPLET_FILL` (the same droplet shown
+// next to a feed entry in the timeline) - this picker gets its own
+// small droplet per option too, not just the text label, so a
+// caregiver already knows what each choice will look like there.
 const feedMilkTypeOptions = computed(() => [
-  { value: 'calostro' as const, label: t('dashboard.feedForm.colostrum') },
-  { value: 'leche' as const, label: t('dashboard.feedForm.milk') },
+  {
+    value: 'calostro' as const,
+    label: t('dashboard.feedForm.colostrum'),
+    color: MILK_TYPE_DROPLET_FILL.calostro,
+  },
+  {
+    value: 'leche' as const,
+    label: t('dashboard.feedForm.milk'),
+    color: MILK_TYPE_DROPLET_FILL.leche,
+  },
 ])
 
 function openFeedEdit(feed: Feed) {
@@ -1636,7 +1648,33 @@ const sleepPredictionDue = computed(() => {
             />
             <div v-if="feedType === 'pecho'">
               <span class="field-label">{{ t('dashboard.feedForm.milkTypeLabel') }}</span>
-              <SegmentedControl v-model="feedMilkType" :options="feedMilkTypeOptions" />
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  v-for="option in feedMilkTypeOptions"
+                  :key="option.value"
+                  type="button"
+                  class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-semibold transition-colors"
+                  :class="
+                    feedMilkType === option.value
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-pressed="feedMilkType === option.value"
+                  @click="feedMilkType = option.value"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    class="h-3.5 w-3.5 shrink-0"
+                    :style="{ fill: option.color }"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+                  </svg>
+                  {{ option.label }}
+                </button>
+              </div>
             </div>
             <div v-if="feedType === 'biberon'">
               <label for="feed-amount" class="field-label">{{

@@ -650,7 +650,13 @@ verse bien en una captura:
   fórmula o extraída, ambas blancas) y a una toma de pecho con
   `milk_type: null` el mismo blanco por defecto, igual que ya asume el
   propio formulario "+ Toma" al crear una nueva. Solo una toma sólida
-  se queda sin gota, al no ser leche en absoluto.
+  se queda sin gota, al no ser leche en absoluto. El propio selector de
+  "Calostro"/"Leche" en "+ Toma" ganó luego la misma gota, no solo el
+  texto: deja de ser un `SegmentedControl` genérico (texto plano) y
+  pasa a un control a medida con la gota + etiqueta por botón (mismo
+  `<path>`/colores que la de la línea temporal, vía
+  `feedMilkTypeOptions`), para que el cuidador ya sepa qué aspecto va a
+  tener antes de guardar.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

@@ -9,6 +9,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **El propio selector de "Calostro"/"Leche" en "+ Toma" lleva ahora la
+  misma gota que luego se ve en la línea temporal**, no solo el texto —
+  dorada junto a "Calostro", blanca junto a "Leche", para que el
+  cuidador ya sepa qué aspecto va a tener antes de guardar. Deja de ser
+  un `SegmentedControl` genérico (solo texto) y pasa a un control
+  propio con la gota + etiqueta en cada botón, mismo color que ya
+  define `lib/milkType.ts`.
+
 - **La gota de leche/calostro cubre también el biberón, y las tomas de
   pecho antiguas sin dato.** Reportado en vivo: la gota solo aparecía
   en tomas de pecho recientes, dejando el resto de la línea temporal

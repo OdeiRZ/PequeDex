@@ -174,7 +174,7 @@ export default {
       deletingContractions: 'Eliminando...',
       deleteAllContractionsError: 'No se han podido eliminar las contracciones.',
       toastContractionsDeleted: 'Contracciones eliminadas.',
-      leaveBaby: 'Dejar de cuidar a este bebé',
+      leaveBaby: 'Dejar de cuidar al bebé',
       leaveConfirm:
         '¿Seguro que quieres dejar de ser cuidador de este bebé? Necesitarás el código de invitación para volver a unirte.',
       leaveConfirmYes: 'Sí, dejar de cuidarlo',

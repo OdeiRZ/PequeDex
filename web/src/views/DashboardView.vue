@@ -31,7 +31,7 @@ import SegmentedControl from '@/components/SegmentedControl.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
-import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
+import { DIAPER_PEE_COLOR, DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
@@ -502,11 +502,15 @@ const diaperChangedAt = ref('')
 const savingDiaper = ref(false)
 const editingDiaperId = ref<number | null>(null)
 
-const diaperTypeOptions = computed(() => [
-  { value: 'mojado' as const, label: t('dashboard.diaperForm.wet') },
-  { value: 'sucio' as const, label: t('dashboard.diaperForm.dirty') },
-  { value: 'ambos' as const, label: t('dashboard.diaperForm.both') },
-])
+// Falls back to marrón (the single most common real color) when
+// nothing is picked yet, so the "Sucio"/"Ambos" type buttons below -
+// and the matching timeline entry, see entryPoopColor() - always show
+// an actually-colored poop icon rather than a blank/neutral one, same
+// "default rather than absent" reasoning as the milk droplet
+// defaulting to leche.
+const diaperPoopIconColor = computed(
+  () => DIAPER_RESIDUE_COLOR_HEX[diaperResidueColor.value || 'marron'],
+)
 
 // Only meaningful once there's actually something to look at - hidden
 // entirely for 'mojado' (the backend rejects it there too), same
@@ -596,15 +600,27 @@ function entryCategory(entry: (typeof babies.timeline)[number]): Category {
   return entry.type === 'diaper_change' ? 'diaper' : entry.type
 }
 
-// A caregiver recognizes a diaper by its color, not by reading its
-// name (same reasoning as the color-swatch picker in "+ Pañal") - this
-// small dot next to the row's own title lets them tell a green one
-// from a brown one without opening it. `undefined` (not rendered at
-// all) for anything that isn't a diaper change, or a diaper change
-// with no color noted.
-function entryColorSwatch(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'diaper_change' || !entry.data.residue_color) return undefined
-  return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color]
+// A caregiver recognizes a diaper by its icons, not by reading its
+// name (same reasoning as the type/color pickers in "+ Pañal", which
+// these two functions mirror exactly): a pee droplet for
+// "mojado"/"ambos", a poop swirl for "sucio"/"ambos" - a "both" entry
+// gets one of each. `undefined` (not rendered at all) for anything
+// that isn't a diaper change, or the icon that entry's type doesn't
+// call for.
+function entryPeeDroplet(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'diaper_change') return undefined
+  return entry.data.type === 'mojado' || entry.data.type === 'ambos' ? DIAPER_PEE_COLOR : undefined
+}
+
+// Falls back to marrón when no color was noted, same reasoning as
+// `diaperPoopIconColor` in the picker above and `entryMilkDroplet`'s
+// own `leche` fallback below - an inconsistent-looking gap (colored
+// poop on some rows, none on others) reads as more confusing than a
+// sensible default color everywhere.
+function entryPoopColor(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'diaper_change') return undefined
+  if (entry.data.type !== 'sucio' && entry.data.type !== 'ambos') return undefined
+  return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color || 'marron']
 }
 
 // Same reasoning, applied to a feed's milk - a droplet colored like
@@ -1580,8 +1596,8 @@ const sleepPredictionDue = computed(() => {
                     :category="entryCategory(item.entry)"
                     :title="entryTitle(item.entry)"
                     :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
-                    :swatch-color="entryColorSwatch(item.entry)"
-                    :droplet-color="entryMilkDroplet(item.entry)"
+                    :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
+                    :poop-color="entryPoopColor(item.entry)"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>
@@ -1775,7 +1791,93 @@ const sleepPredictionDue = computed(() => {
             }}
           </h3>
           <form class="flex flex-col gap-4" @submit.prevent="onSubmitDiaper">
-            <SegmentedControl v-model="diaperType" :options="diaperTypeOptions" />
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
+                :class="
+                  diaperType === 'mojado'
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-border text-text-muted'
+                "
+                :aria-pressed="diaperType === 'mojado'"
+                @click="diaperType = 'mojado'"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ fill: DIAPER_PEE_COLOR }"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+                </svg>
+                {{ t('dashboard.diaperForm.wet') }}
+              </button>
+              <button
+                type="button"
+                class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
+                :class="
+                  diaperType === 'sucio'
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-border text-text-muted'
+                "
+                :aria-pressed="diaperType === 'sucio'"
+                @click="diaperType = 'sucio'"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ fill: diaperPoopIconColor }"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="18" r="5.5" />
+                  <circle cx="12" cy="13" r="4.3" />
+                  <circle cx="12" cy="9" r="3.2" />
+                  <circle cx="12" cy="6" r="2" />
+                </svg>
+                {{ t('dashboard.diaperForm.dirty') }}
+              </button>
+              <button
+                type="button"
+                class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
+                :class="
+                  diaperType === 'ambos'
+                    ? 'border-brand bg-brand/10 text-brand'
+                    : 'border-border text-text-muted'
+                "
+                :aria-label="t('dashboard.diaperForm.both')"
+                :aria-pressed="diaperType === 'ambos'"
+                @click="diaperType = 'ambos'"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ fill: DIAPER_PEE_COLOR }"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+                </svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ fill: diaperPoopIconColor }"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="18" r="5.5" />
+                  <circle cx="12" cy="13" r="4.3" />
+                  <circle cx="12" cy="9" r="3.2" />
+                  <circle cx="12" cy="6" r="2" />
+                </svg>
+              </button>
+            </div>
             <div v-if="diaperType !== 'mojado'">
               <span class="field-label">{{ t('dashboard.diaperForm.colorLabel') }}</span>
               <div class="flex flex-wrap items-center gap-2.5">

@@ -622,14 +622,16 @@ verse bien en una captura:
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para
   no perderse contra ese mismo fondo. `categoryBorder` se retira de
   `category.ts` al quedarse sin ningún uso. Nueva prop opcional
-  `swatchColor` — un círculo pequeño junto al título, usado por la fila
-  de un pañal sucio con color indicado ("Pañal (Sucio) ●", vía nueva
-  función `entryColorSwatch()` en `DashboardView.vue`); `undefined` en
-  cualquier otro caso (pañal mojado, o color sin indicar) no renderiza
-  nada, no un punto vacío. `lib/diaperResidueColor.ts` extrae el mapa
-  color→hex que ya usaba el selector de "+ Pañal" a un módulo propio,
-  compartido ahora por ambos sitios. Segunda prop opcional,
-  `dropletColor` — un icono de gota (mismo `<path>` que ya usaba el
+  `swatchColor` (más tarde retirada, ver el párrafo del icono de caca
+  al final de esta misma entrada) — un círculo pequeño junto al título,
+  usado por la fila de un pañal sucio con color indicado ("Pañal
+  (Sucio) ●", vía nueva función `entryColorSwatch()` en
+  `DashboardView.vue`); `undefined` en cualquier otro caso (pañal
+  mojado, o color sin indicar) no renderiza nada, no un punto vacío.
+  `lib/diaperResidueColor.ts` extrae el mapa color→hex que ya usaba el
+  selector de "+ Pañal" a un módulo propio, compartido ahora por ambos
+  sitios. Segunda prop opcional, `dropletColor` — un icono de gota
+  (mismo `<path>` que ya usaba el
   botón de rotura de bolsa de aguas en `ContractionsView.vue`), no el
   círculo plano de `swatchColor`, porque está ilustrando un líquido: la
   fila de una toma de pecho la lleva siempre, dorada para calostro
@@ -656,7 +658,26 @@ verse bien en una captura:
   pasa a un control a medida con la gota + etiqueta por botón (mismo
   `<path>`/colores que la de la línea temporal, vía
   `feedMilkTypeOptions`), para que el cuidador ya sepa qué aspecto va a
-  tener antes de guardar.
+  tener antes de guardar. El propio selector de tipo de pañal
+  (Mojado/Sucio/Ambos) ganó el mismo tratamiento: deja de ser un
+  `SegmentedControl` de texto y pasa a tres botones a medida con
+  iconos - una gota amarilla de pipi fija (`DIAPER_PEE_COLOR`, nuevo en
+  `lib/diaperResidueColor.ts`) para "Mojado", un icono de caca teñido
+  con `diaperPoopIconColor` (el color de heces ya elegido debajo, o
+  marrón mientras no se haya elegido ninguno) para "Sucio", y los dos a
+  la vez sin texto para "Ambos" (con `aria-label` propio, ya que el
+  texto se retira ahí). Esto reemplazó por completo el punto plano de
+  `swatchColor` en `EntryCard.vue`: la prop se retira y en su lugar
+  llega `poopColor`, un icono nuevo - un remolino de cuatro círculos
+  apilados de radio decreciente, no un `<path>` dibujado a mano (según
+  la propia guía de diagramado del proyecto, una forma decorativa
+  compleja pide simplificarse a primitivas) ni el emoji 💩 literal (no
+  se puede teñir de un color arbitrario de forma fiable entre
+  navegadores). `entryPeeDroplet()`/`entryPoopColor()` en
+  `DashboardView.vue` calculan qué icono(s) lleva cada fila de pañal en
+  la línea temporal, mismo criterio que el propio formulario: gota para
+  mojado/ambos, caca (con el mismo *fallback* a marrón) para
+  sucio/ambos.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

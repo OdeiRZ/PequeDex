@@ -11,3 +11,9 @@ export const DIAPER_RESIDUE_COLOR_HEX: Record<DiaperResidueColor, string> = {
   marron: '#8B5A2B',
   meconio: '#1C1C1C',
 }
+
+// Pee is always this same pale, bright yellow - it isn't one of the
+// four residue colors above (those describe what's actually there,
+// not what's normally there) and is never picked, just shown as a
+// fixed-color droplet for "mojado"/"ambos".
+export const DIAPER_PEE_COLOR = '#F5C518'

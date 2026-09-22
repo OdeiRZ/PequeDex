@@ -9,16 +9,18 @@ withDefaults(
     meta: string
     description?: string | null
     badge?: string | null
-    /** A small color dot next to the title - a diaper entry's noted
-     * residue color, say (see `lib/diaperResidueColor.ts`). Undefined
-     * renders nothing, same as every other optional prop here. */
-    swatchColor?: string | null
-    /** A small milk-drop icon next to the title, filled with this
-     * color - a breastfeed's noted milk type, say (see
-     * `lib/milkType.ts`). Undefined renders nothing. A droplet, not
-     * `swatchColor`'s plain dot, because it's illustrating a liquid,
-     * not a flat color swatch. */
+    /** A small droplet icon next to the title, filled with this color -
+     * a breastfeed's milk type (`lib/milkType.ts`) or a wet/both diaper
+     * change's fixed pee yellow (`lib/diaperResidueColor.ts`'s
+     * `DIAPER_PEE_COLOR`). Undefined renders nothing. */
     dropletColor?: string | null
+    /** A small poop-swirl icon next to the title, filled with this
+     * color - a dirty/both diaper change's noted residue color, or the
+     * generic brown default when none was noted (see
+     * `lib/diaperResidueColor.ts`). Undefined renders nothing. Can
+     * appear alongside `dropletColor` at once (a "both" diaper change
+     * has pee and poop both). */
+    poopColor?: string | null
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -70,12 +72,6 @@ defineEmits<{ open: [] }>()
       <div class="min-w-0 flex-1">
         <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
           <span class="truncate">{{ title }}</span>
-          <span
-            v-if="swatchColor"
-            class="h-2 w-2 shrink-0 rounded-full"
-            :style="{ backgroundColor: swatchColor }"
-            aria-hidden="true"
-          ></span>
           <svg
             v-if="dropletColor"
             viewBox="0 0 24 24"
@@ -86,6 +82,20 @@ defineEmits<{ open: [] }>()
             aria-hidden="true"
           >
             <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+          </svg>
+          <svg
+            v-if="poopColor"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1"
+            class="h-3 w-3 shrink-0 text-text-muted"
+            :style="{ fill: poopColor }"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="18" r="5.5" />
+            <circle cx="12" cy="13" r="4.3" />
+            <circle cx="12" cy="9" r="3.2" />
+            <circle cx="12" cy="6" r="2" />
           </svg>
         </div>
         <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>

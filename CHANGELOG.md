@@ -9,6 +9,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **El selector de tipo de pañal (Mojado/Sucio/Ambos) gana sus propios
+  iconos de pipi/caca**, mismo criterio que ya se aplicó a tomas y al
+  color de heces: reconocer de un vistazo, no leyendo texto. "Mojado"
+  lleva una gota amarilla de pipi (color fijo, no elegible — el pis
+  siempre es de ese color); "Sucio" lleva un icono de caca teñido con
+  el color de heces ya seleccionado (marrón por defecto mientras no se
+  haya elegido ninguno, o si se deja "Sin indicar" — nunca un icono sin
+  color); "Ambos" lleva los dos a la vez, sin texto (los dos iconos ya
+  lo dicen). El icono de "Sucio"/"Ambos" se actualiza en vivo al elegir
+  un color en el selector de debajo. Trasladado también a la línea
+  temporal: cada pañal muestra ahora los mismos iconos que llevó al
+  guardarse (gota de pipi, caca del color guardado, o ambos), en vez
+  del punto de color plano que había antes — nuevo
+  `DIAPER_PEE_COLOR` en `lib/diaperResidueColor.ts` y nueva prop
+  `poopColor` en `EntryCard.vue` (un icono nuevo, remolino de círculos
+  apilados, no un emoji — así se puede teñir con el color real).
+
 - **El propio selector de "Calostro"/"Leche" en "+ Toma" lleva ahora la
   misma gota que luego se ve en la línea temporal**, no solo el texto —
   dorada junto a "Calostro", blanca junto a "Leche", para que el

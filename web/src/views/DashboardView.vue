@@ -31,6 +31,7 @@ import SegmentedControl from '@/components/SegmentedControl.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
+import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
@@ -504,12 +505,31 @@ const diaperTypeOptions = computed(() => [
 // Real, muted tones instead of pure CSS named colors (real meconium
 // reads closer to near-black than to a flat "green" or "black" swatch
 // would suggest) - deliberately not theme tokens, a color swatch means
-// the same thing in light or dark mode.
+// the same thing in light or dark mode. `DIAPER_RESIDUE_COLOR_HEX`
+// (`lib/diaperResidueColor.ts`) is the single source for these hexes,
+// shared with the small color dot next to a diaper entry in the
+// timeline below.
 const diaperResidueColorSwatches = computed(() => [
-  { value: 'verde' as const, label: t('dashboard.diaperForm.green'), color: '#5C8A3A' },
-  { value: 'amarillo' as const, label: t('dashboard.diaperForm.yellow'), color: '#E8B93F' },
-  { value: 'marron' as const, label: t('dashboard.diaperForm.brown'), color: '#8B5A2B' },
-  { value: 'meconio' as const, label: t('dashboard.diaperForm.meconium'), color: '#1C1C1C' },
+  {
+    value: 'verde' as const,
+    label: t('dashboard.diaperForm.green'),
+    color: DIAPER_RESIDUE_COLOR_HEX.verde,
+  },
+  {
+    value: 'amarillo' as const,
+    label: t('dashboard.diaperForm.yellow'),
+    color: DIAPER_RESIDUE_COLOR_HEX.amarillo,
+  },
+  {
+    value: 'marron' as const,
+    label: t('dashboard.diaperForm.brown'),
+    color: DIAPER_RESIDUE_COLOR_HEX.marron,
+  },
+  {
+    value: 'meconio' as const,
+    label: t('dashboard.diaperForm.meconium'),
+    color: DIAPER_RESIDUE_COLOR_HEX.meconio,
+  },
 ])
 
 function openDiaperEdit(diaperChange: DiaperChange) {
@@ -561,6 +581,17 @@ const diaperTypeLabels = computed<Record<string, string>>(() => ({
 
 function entryCategory(entry: (typeof babies.timeline)[number]): Category {
   return entry.type === 'diaper_change' ? 'diaper' : entry.type
+}
+
+// A caregiver recognizes a diaper by its color, not by reading its
+// name (same reasoning as the color-swatch picker in "+ Pañal") - this
+// small dot next to the row's own title lets them tell a green one
+// from a brown one without opening it. `undefined` (not rendered at
+// all) for anything that isn't a diaper change, or a diaper change
+// with no color noted.
+function entryColorSwatch(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'diaper_change' || !entry.data.residue_color) return undefined
+  return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color]
 }
 
 function entryTitle(entry: (typeof babies.timeline)[number]): string {
@@ -1516,6 +1547,7 @@ const sleepPredictionDue = computed(() => {
                     :category="entryCategory(item.entry)"
                     :title="entryTitle(item.entry)"
                     :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
+                    :swatch-color="entryColorSwatch(item.entry)"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>

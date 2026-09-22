@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Punto de color junto a un pañal sucio en la línea temporal.** El
+  color de las heces solo se veía al abrir la fila para editarla — se
+  añade un pequeño círculo con el color real justo junto al texto
+  ("Pañal (Sucio) ●"), mismo criterio que el propio selector: un
+  vistazo basta para distinguirlo, sin necesidad de leer nada. No
+  aparece en absoluto para un pañal solo mojado o sin color indicado,
+  no un punto gris de "nada que ver". Nuevo `lib/diaperResidueColor.ts`
+  con el mapa color→hex, compartido entre el selector (`DashboardView.vue`)
+  y este punto, para que ambos sitios estén de acuerdo en qué aspecto
+  tiene cada color.
+
 - **Orden del dashboard: Hitos sube por encima de las predicciones.**
   Antes iba tarjetas resumen → predicción de próxima toma/sueño →
   Hitos → Ritmo; ahora es tarjetas resumen → Hitos → predicción →

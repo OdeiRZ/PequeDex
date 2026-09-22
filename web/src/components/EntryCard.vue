@@ -9,6 +9,10 @@ withDefaults(
     meta: string
     description?: string | null
     badge?: string | null
+    /** A small color dot next to the title - a diaper entry's noted
+     * residue color, say (see `lib/diaperResidueColor.ts`). Undefined
+     * renders nothing, same as every other optional prop here. */
+    swatchColor?: string | null
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -58,7 +62,15 @@ defineEmits<{ open: [] }>()
       </span>
 
       <div class="min-w-0 flex-1">
-        <div class="text-sm font-semibold">{{ title }}</div>
+        <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+          <span class="truncate">{{ title }}</span>
+          <span
+            v-if="swatchColor"
+            class="h-2 w-2 shrink-0 rounded-full"
+            :style="{ backgroundColor: swatchColor }"
+            aria-hidden="true"
+          ></span>
+        </div>
         <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
         <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
       </div>

@@ -621,7 +621,14 @@ verse bien en una captura:
   fondo del color de categoría (`categoryBg`, ya existente) en toda la
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para
   no perderse contra ese mismo fondo. `categoryBorder` se retira de
-  `category.ts` al quedarse sin ningún uso.
+  `category.ts` al quedarse sin ningún uso. Nueva prop opcional
+  `swatchColor` — un círculo pequeño junto al título, usado por la fila
+  de un pañal sucio con color indicado ("Pañal (Sucio) ●", vía nueva
+  función `entryColorSwatch()` en `DashboardView.vue`); `undefined` en
+  cualquier otro caso (pañal mojado, o color sin indicar) no renderiza
+  nada, no un punto vacío. `lib/diaperResidueColor.ts` extrae el mapa
+  color→hex que ya usaba el selector de "+ Pañal" a un módulo propio,
+  compartido ahora por ambos sitios.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

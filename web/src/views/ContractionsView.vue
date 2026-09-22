@@ -502,6 +502,7 @@ async function onExportPdf() {
           </button>
 
           <button
+            v-press
             type="button"
             :disabled="togglingTimer"
             class="timer-btn btn-primary relative flex flex-1 items-center justify-center gap-2 !rounded-full"
@@ -614,7 +615,7 @@ async function onExportPdf() {
           </div>
         </div>
 
-        <button type="submit" :disabled="savingEdit" class="btn-primary">
+        <button v-press type="submit" :disabled="savingEdit" class="btn-primary">
           {{ t('common.save') }}
         </button>
       </form>
@@ -640,6 +641,7 @@ async function onExportPdf() {
             {{ t('common.no') }}
           </button>
           <button
+            v-press
             type="button"
             :disabled="confirmingBreak"
             class="btn-primary flex-1"
@@ -679,6 +681,7 @@ async function onExportPdf() {
         </div>
         <div class="flex gap-3">
           <button
+            v-press
             type="button"
             :disabled="savingBreak"
             class="btn-ghost flex-1"
@@ -686,7 +689,7 @@ async function onExportPdf() {
           >
             {{ t('contractions.breakReset') }}
           </button>
-          <button type="submit" :disabled="savingBreak" class="btn-primary flex-1">
+          <button v-press type="submit" :disabled="savingBreak" class="btn-primary flex-1">
             {{ t('common.save') }}
           </button>
         </div>

@@ -107,9 +107,9 @@ const rows = computed<Row[]>(() => {
 </script>
 
 <template>
-  <ul class="flex flex-col">
-    <template v-for="(row, index) in rows" :key="row.contraction.id">
-      <li v-if="row.showDaySeparator" class="my-4 flex items-center gap-3">
+  <TransitionGroup tag="ul" name="entry-list" class="flex flex-col">
+    <li v-for="(row, index) in rows" :key="row.contraction.id" class="flex flex-col">
+      <div v-if="row.showDaySeparator" class="my-4 flex items-center gap-3">
         <span class="h-px flex-1 bg-border"></span>
         <span
           class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
@@ -117,18 +117,18 @@ const rows = computed<Row[]>(() => {
           {{ row.dayLabel }}
         </span>
         <span class="h-px flex-1 bg-border"></span>
-      </li>
+      </div>
 
-      <li v-if="index === 0 && sinceLastLabel" class="mb-2 flex justify-end">
+      <div v-if="index === 0 && sinceLastLabel" class="mb-2 flex justify-end">
         <span
           class="rounded-full border border-border px-4 py-1.5 text-base font-bold tabular-nums text-text-muted"
           :aria-label="sinceLastAriaLabel"
         >
           {{ sinceLastLabel }}
         </span>
-      </li>
+      </div>
 
-      <li class="flex gap-2.5">
+      <div class="flex gap-2.5">
         <div class="flex h-14 w-12 shrink-0 items-center justify-end pr-0.5">
           <span class="text-right text-base font-bold tabular-nums text-text-muted">
             {{ row.timeLabel }}
@@ -199,7 +199,7 @@ const rows = computed<Row[]>(() => {
             </span>
           </div>
         </div>
-      </li>
-    </template>
-  </ul>
+      </div>
+    </li>
+  </TransitionGroup>
 </template>

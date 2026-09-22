@@ -57,7 +57,7 @@ async function onSubmit() {
 
       <p v-if="error" role="alert" class="text-sm font-medium text-danger">{{ error }}</p>
 
-      <button type="submit" :disabled="submitting" class="btn-primary">
+      <button v-press type="submit" :disabled="submitting" class="btn-primary">
         {{ submitting ? t('auth.forgotPassword.submitting') : t('auth.forgotPassword.submit') }}
       </button>
     </form>

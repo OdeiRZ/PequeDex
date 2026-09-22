@@ -319,7 +319,13 @@ body {
     transform: translateY(-1px);
   }
 
-  .btn-primary:active:not(:disabled) {
+  /* .is-pressed (v-press, directives/press.ts) covers the same look for a
+  button whose own click handler synchronously disables it (every submit/
+  action button) - :active never gets a frame to render there, since a
+  disabled element can't match :active at all. Same fix as LudoDex's and
+  MIRA_MarketLens's own base.css/directives/press.ts. */
+  .btn-primary:active:not(:disabled),
+  .btn-primary.is-pressed {
     transform: translateY(0) scale(0.97);
     box-shadow: none;
   }
@@ -342,7 +348,8 @@ body {
     color: var(--brand);
   }
 
-  .btn-ghost:active:not(:disabled) {
+  .btn-ghost:active:not(:disabled),
+  .btn-ghost.is-pressed {
     transform: scale(0.96);
   }
 
@@ -553,7 +560,9 @@ body {
 
   .btn-primary:hover:not(:disabled),
   .btn-primary:active:not(:disabled),
+  .btn-primary.is-pressed,
   .btn-ghost:active:not(:disabled),
+  .btn-ghost.is-pressed,
   .card-interactive:hover,
   .card-interactive:active,
   .entry-list-enter-from,

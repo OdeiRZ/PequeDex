@@ -267,6 +267,7 @@ watch(
           @change="onAvatarSelected"
         />
         <button
+          v-press
           type="button"
           :disabled="uploadingAvatar"
           class="btn-ghost px-3 py-1.5 text-sm"
@@ -310,6 +311,7 @@ watch(
         />
       </div>
       <button
+        v-press
         type="submit"
         :disabled="savingProfile"
         class="btn-primary save-btn"
@@ -446,6 +448,7 @@ watch(
         />
       </div>
       <button
+        v-press
         type="submit"
         :disabled="savingPassword"
         class="btn-primary save-btn"

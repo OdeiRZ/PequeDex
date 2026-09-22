@@ -7,6 +7,7 @@ import App from './App.vue'
 import router from './router'
 import { i18n } from './i18n'
 import { applyTheme, getStoredTheme } from './theme'
+import { vPress } from './directives/press'
 
 // Applied before mount, not inside a component's onMounted, so the correct
 // theme is already on <html> for the very first paint - otherwise a stored
@@ -18,5 +19,6 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(i18n)
+app.directive('press', vPress)
 
 app.mount('#app')

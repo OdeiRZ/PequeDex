@@ -1173,7 +1173,7 @@ const sleepPredictionDue = computed(() => {
           <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
             {{ createError }}
           </p>
-          <button type="submit" :disabled="creatingBaby" class="btn-primary">
+          <button v-press type="submit" :disabled="creatingBaby" class="btn-primary">
             {{ t('dashboard.onboarding.create') }}
           </button>
         </form>
@@ -1197,7 +1197,7 @@ const sleepPredictionDue = computed(() => {
           <p v-if="joinError" role="alert" class="text-sm font-medium text-danger">
             {{ joinError }}
           </p>
-          <button type="submit" :disabled="joiningBaby" class="btn-primary">
+          <button v-press type="submit" :disabled="joiningBaby" class="btn-primary">
             {{ t('dashboard.onboarding.join') }}
           </button>
         </form>
@@ -1472,7 +1472,7 @@ const sleepPredictionDue = computed(() => {
               <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
               {{ t('dashboard.growth.title') }}
             </h2>
-            <ul class="flex flex-col gap-2">
+            <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
               <EntryCard
                 v-for="measurement in babies.growthMeasurements"
                 :key="measurement.id"
@@ -1485,7 +1485,7 @@ const sleepPredictionDue = computed(() => {
                   <DeleteButton @click="onDeleteGrowthMeasurement(measurement.id)" />
                 </template>
               </EntryCard>
-            </ul>
+            </TransitionGroup>
             <p
               v-if="babies.growthMeasurements.length === 0"
               class="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-text-muted"
@@ -1545,7 +1545,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingFeed" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingFeed" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1592,7 +1592,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingSleep" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingSleep" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1630,7 +1630,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingDiaper" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingDiaper" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1709,7 +1709,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingGrowth" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingGrowth" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1821,7 +1821,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingMilestone" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingMilestone" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1864,7 +1864,7 @@ const sleepPredictionDue = computed(() => {
             <button type="button" class="btn-ghost flex-1" @click="closeSheet">
               {{ t('common.cancel') }}
             </button>
-            <button type="submit" :disabled="savingBabySettings" class="btn-primary flex-1">
+            <button v-press type="submit" :disabled="savingBabySettings" class="btn-primary flex-1">
               {{ t('common.save') }}
             </button>
           </div>
@@ -1909,6 +1909,7 @@ const sleepPredictionDue = computed(() => {
                     {{ t('common.cancel') }}
                   </button>
                   <button
+                    v-press
                     type="button"
                     :disabled="deletingContractions"
                     class="btn-primary flex-1 !bg-danger !text-white"
@@ -1944,6 +1945,7 @@ const sleepPredictionDue = computed(() => {
                   {{ t('common.cancel') }}
                 </button>
                 <button
+                  v-press
                   type="button"
                   :disabled="leaving"
                   class="btn-primary flex-1 !bg-danger !text-white"
@@ -1986,7 +1988,7 @@ const sleepPredictionDue = computed(() => {
             <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
               {{ createError }}
             </p>
-            <button type="submit" :disabled="creatingBaby" class="btn-primary">
+            <button v-press type="submit" :disabled="creatingBaby" class="btn-primary">
               {{ t('dashboard.onboarding.create') }}
             </button>
           </form>
@@ -2010,7 +2012,7 @@ const sleepPredictionDue = computed(() => {
             <p v-if="joinError" role="alert" class="text-sm font-medium text-danger">
               {{ joinError }}
             </p>
-            <button type="submit" :disabled="joiningBaby" class="btn-primary">
+            <button v-press type="submit" :disabled="joiningBaby" class="btn-primary">
               {{ t('dashboard.onboarding.join') }}
             </button>
           </form>

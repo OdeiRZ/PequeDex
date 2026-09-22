@@ -28,7 +28,21 @@ it('creates a bottle feed', function () {
         ->assertJsonPath('data.user_id', $user->id);
 });
 
-it('creates a breastfeed with a side', function () {
+it('creates a breastfeed with a side and milk type', function () {
+    $user = actingAsUser();
+    $baby = babyFor($user);
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'pecho',
+        'side' => 'izquierdo',
+        'milk_type' => 'calostro',
+        'started_at' => '2026-08-30 10:00:00',
+    ])->assertCreated()
+        ->assertJsonPath('data.side', 'izquierdo')
+        ->assertJsonPath('data.milk_type', 'calostro');
+});
+
+it('rejects a breastfeed with a milk_type, and a bottle feed with a milk_type', function () {
     $user = actingAsUser();
     $baby = babyFor($user);
 
@@ -36,7 +50,14 @@ it('creates a breastfeed with a side', function () {
         'type' => 'pecho',
         'side' => 'izquierdo',
         'started_at' => '2026-08-30 10:00:00',
-    ])->assertCreated()->assertJsonPath('data.side', 'izquierdo');
+    ])->assertUnprocessable()->assertJsonValidationErrors('milk_type');
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'biberon',
+        'amount_ml' => 100,
+        'milk_type' => 'leche',
+        'started_at' => '2026-08-30 10:00:00',
+    ])->assertUnprocessable()->assertJsonValidationErrors('milk_type');
 });
 
 it('rejects a breastfeed with an amount_ml, and a bottle feed with a side', function () {

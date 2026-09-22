@@ -213,6 +213,9 @@ export default {
       both: 'Ambos',
       amount: 'Cantidad (ml)',
       when: 'Cuándo',
+      milkTypeLabel: 'Tipo de leche',
+      colostrum: 'Calostro',
+      milk: 'Leche',
       toastUpdated: 'Toma actualizada.',
     },
     sleepForm: {
@@ -228,6 +231,12 @@ export default {
       dirty: 'Sucio',
       both: 'Ambos',
       when: 'Cuándo',
+      colorLabel: 'Color de las heces',
+      colorUnspecified: 'Sin indicar',
+      green: 'Verde',
+      yellow: 'Amarillo',
+      brown: 'Marrón',
+      meconium: 'Meconio',
       toastUpdated: 'Pañal actualizado.',
     },
     growthForm: {

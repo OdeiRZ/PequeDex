@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FeedSide;
 use App\Enums\FeedType;
+use App\Enums\MilkType;
 use Database\Factories\FeedFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ class Feed extends Model
     /** @use HasFactory<FeedFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'type', 'side', 'amount_ml', 'started_at', 'ended_at', 'notes'];
+    protected $fillable = ['baby_id', 'user_id', 'type', 'side', 'milk_type', 'amount_ml', 'started_at', 'ended_at', 'notes'];
 
     /**
      * @return array<string, string>
@@ -24,6 +25,7 @@ class Feed extends Model
         return [
             'type' => FeedType::class,
             'side' => FeedSide::class,
+            'milk_type' => MilkType::class,
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
         ];

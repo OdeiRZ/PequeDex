@@ -22,6 +22,38 @@ it('creates a diaper change', function () {
     ])->assertCreated()->assertJsonPath('data.type', 'sucio')->assertJsonPath('data.user_id', $user->id);
 });
 
+it('creates a dirty diaper change with a residue color', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'sucio',
+        'residue_color' => 'meconio',
+    ])->assertCreated()->assertJsonPath('data.residue_color', 'meconio');
+});
+
+it('allows a dirty diaper change with no residue color at all', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'sucio',
+    ])->assertCreated()->assertJsonPath('data.residue_color', null);
+});
+
+it('rejects a residue color on a purely wet diaper change', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'mojado',
+        'residue_color' => 'amarillo',
+    ])->assertUnprocessable()->assertJsonValidationErrors('residue_color');
+});
+
 it('rejects an invalid diaper type', function () {
     $user = actingAsUser();
     $baby = babyForDiaperTest($user);

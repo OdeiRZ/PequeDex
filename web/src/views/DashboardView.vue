@@ -7,11 +7,13 @@ import {
   useBabiesStore,
   type BabySex,
   type DiaperChange,
+  type DiaperResidueColor,
   type DiaperType,
   type Feed,
   type FeedType,
   type GrowthMeasurement,
   type MilestoneCategory,
+  type MilkType,
   type Sleep,
   type TimelineEntry,
 } from '@/stores/babies'
@@ -298,6 +300,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   if (sheet === 'feed') {
     feedType.value = 'pecho'
     feedSide.value = 'izquierdo'
+    feedMilkType.value = 'leche'
     feedAmountMl.value = ''
     feedStartedAt.value = nowForInput()
     editingFeedId.value = null
@@ -307,6 +310,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     editingSleepId.value = null
   } else if (sheet === 'diaper') {
     diaperType.value = 'mojado'
+    diaperResidueColor.value = ''
     diaperChangedAt.value = nowForInput()
     editingDiaperId.value = null
   } else if (sheet === 'growth') {
@@ -368,6 +372,7 @@ const actionBarItems = computed(() => {
 
 const feedType = ref<FeedType>('pecho')
 const feedSide = ref<'izquierdo' | 'derecho' | 'ambos'>('izquierdo')
+const feedMilkType = ref<MilkType>('leche')
 const feedAmountMl = ref('')
 const feedStartedAt = ref('')
 const savingFeed = ref(false)
@@ -388,10 +393,16 @@ const feedSideOptions = computed(() => [
   { value: 'ambos' as const, label: t('dashboard.feedForm.both') },
 ])
 
+const feedMilkTypeOptions = computed(() => [
+  { value: 'calostro' as const, label: t('dashboard.feedForm.colostrum') },
+  { value: 'leche' as const, label: t('dashboard.feedForm.milk') },
+])
+
 function openFeedEdit(feed: Feed) {
   editingFeedId.value = feed.id
   feedType.value = feed.type
   feedSide.value = feed.side ?? 'izquierdo'
+  feedMilkType.value = feed.milk_type ?? 'leche'
   feedAmountMl.value = feed.amount_ml?.toString() ?? ''
   feedStartedAt.value = toLocalInputValue(feed.started_at)
   activeSheet.value = 'feed'
@@ -404,6 +415,7 @@ async function onSubmitFeed() {
     const payload = {
       type: feedType.value,
       side: feedType.value === 'pecho' ? feedSide.value : undefined,
+      milk_type: feedType.value === 'pecho' ? feedMilkType.value : undefined,
       amount_ml: feedType.value === 'biberon' ? Number(feedAmountMl.value) : undefined,
       started_at: toUtcIso(feedStartedAt.value),
     }
@@ -471,6 +483,7 @@ async function onSubmitSleep() {
 // --- Registro rápido: pañal ---
 
 const diaperType = ref<DiaperType>('mojado')
+const diaperResidueColor = ref<DiaperResidueColor | ''>('')
 const diaperChangedAt = ref('')
 const savingDiaper = ref(false)
 const editingDiaperId = ref<number | null>(null)
@@ -481,9 +494,24 @@ const diaperTypeOptions = computed(() => [
   { value: 'ambos' as const, label: t('dashboard.diaperForm.both') },
 ])
 
+// Only meaningful once there's actually something to look at - hidden
+// entirely for 'mojado' (the backend rejects it there too), same
+// reasoning as feedSideOptions only showing for a breastfeed. Optional
+// even then (not every caregiver wants to note it every time), so
+// there's an explicit "no indicar" option rather than forcing a pick -
+// same pattern as babySexOptions.
+const diaperResidueColorOptions = computed(() => [
+  { value: '' as const, label: t('dashboard.diaperForm.colorUnspecified') },
+  { value: 'verde' as const, label: t('dashboard.diaperForm.green') },
+  { value: 'amarillo' as const, label: t('dashboard.diaperForm.yellow') },
+  { value: 'marron' as const, label: t('dashboard.diaperForm.brown') },
+  { value: 'meconio' as const, label: t('dashboard.diaperForm.meconium') },
+])
+
 function openDiaperEdit(diaperChange: DiaperChange) {
   editingDiaperId.value = diaperChange.id
   diaperType.value = diaperChange.type
+  diaperResidueColor.value = diaperChange.residue_color ?? ''
   diaperChangedAt.value = toLocalInputValue(diaperChange.changed_at)
   activeSheet.value = 'diaper'
 }
@@ -495,6 +523,7 @@ async function onSubmitDiaper() {
     const payload = {
       changed_at: toUtcIso(diaperChangedAt.value),
       type: diaperType.value,
+      residue_color: diaperType.value === 'mojado' ? null : diaperResidueColor.value || null,
     }
 
     if (editingDiaperId.value) {
@@ -1546,6 +1575,10 @@ const sleepPredictionDue = computed(() => {
               v-model="feedSide"
               :options="feedSideOptions"
             />
+            <div v-if="feedType === 'pecho'">
+              <span class="field-label">{{ t('dashboard.feedForm.milkTypeLabel') }}</span>
+              <SegmentedControl v-model="feedMilkType" :options="feedMilkTypeOptions" />
+            </div>
             <div v-if="feedType === 'biberon'">
               <label for="feed-amount" class="field-label">{{
                 t('dashboard.feedForm.amount')
@@ -1646,6 +1679,10 @@ const sleepPredictionDue = computed(() => {
           </h3>
           <form class="flex flex-col gap-4" @submit.prevent="onSubmitDiaper">
             <SegmentedControl v-model="diaperType" :options="diaperTypeOptions" />
+            <div v-if="diaperType !== 'mojado'">
+              <span class="field-label">{{ t('dashboard.diaperForm.colorLabel') }}</span>
+              <SegmentedControl v-model="diaperResidueColor" :options="diaperResidueColorOptions" />
+            </div>
             <div>
               <label for="diaper-changed-at" class="field-label">{{
                 t('dashboard.diaperForm.when')

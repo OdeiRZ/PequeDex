@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DiaperResidueColor;
 use App\Enums\DiaperType;
 use Database\Factories\DiaperChangeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ class DiaperChange extends Model
     /** @use HasFactory<DiaperChangeFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'changed_at', 'type', 'notes'];
+    protected $fillable = ['baby_id', 'user_id', 'changed_at', 'type', 'residue_color', 'notes'];
 
     /**
      * @return array<string, string>
@@ -22,6 +23,7 @@ class DiaperChange extends Model
     {
         return [
             'type' => DiaperType::class,
+            'residue_color' => DiaperResidueColor::class,
             'changed_at' => 'datetime',
         ];
     }

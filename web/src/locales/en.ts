@@ -211,6 +211,9 @@ export default {
       both: 'Both',
       amount: 'Amount (ml)',
       when: 'When',
+      milkTypeLabel: 'Milk type',
+      colostrum: 'Colostrum',
+      milk: 'Milk',
       toastUpdated: 'Feed updated.',
     },
     sleepForm: {
@@ -226,6 +229,12 @@ export default {
       dirty: 'Dirty',
       both: 'Both',
       when: 'When',
+      colorLabel: 'Stool color',
+      colorUnspecified: 'Unspecified',
+      green: 'Green',
+      yellow: 'Yellow',
+      brown: 'Brown',
+      meconium: 'Meconium',
       toastUpdated: 'Diaper updated.',
     },
     growthForm: {

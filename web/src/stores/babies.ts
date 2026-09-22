@@ -16,7 +16,9 @@ export interface Baby {
 
 export type FeedType = 'pecho' | 'biberon' | 'solido'
 export type FeedSide = 'izquierdo' | 'derecho' | 'ambos'
+export type MilkType = 'calostro' | 'leche'
 export type DiaperType = 'mojado' | 'sucio' | 'ambos'
+export type DiaperResidueColor = 'verde' | 'amarillo' | 'marron' | 'meconio'
 
 export interface Feed {
   id: number
@@ -24,6 +26,7 @@ export interface Feed {
   user_id: number
   type: FeedType
   side: FeedSide | null
+  milk_type: MilkType | null
   amount_ml: number | null
   started_at: string
   ended_at: string | null
@@ -45,6 +48,7 @@ export interface DiaperChange {
   user_id: number
   changed_at: string
   type: DiaperType
+  residue_color: DiaperResidueColor | null
   notes: string | null
 }
 
@@ -117,6 +121,7 @@ export type TimelineEntry =
 interface CreateFeedPayload {
   type: FeedType
   side?: FeedSide
+  milk_type?: MilkType
   amount_ml?: number
   started_at: string
   ended_at?: string | null
@@ -132,6 +137,7 @@ interface CreateSleepPayload {
 interface CreateDiaperChangePayload {
   changed_at: string
   type: DiaperType
+  residue_color?: DiaperResidueColor | null
   notes?: string | null
 }
 

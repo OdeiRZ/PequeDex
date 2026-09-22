@@ -220,6 +220,12 @@ function onTouchEnd(event: TouchEvent) {
             :aria-label="t(isLiked ? 'dashboard.milestones.liked' : 'dashboard.milestones.like')"
             @click="emit('toggleLike')"
           >
+            <!-- #ef4444 fijo, no un token (--danger/--brand): igual que
+                 ToastNotification.vue, este visor flota a pantalla
+                 completa sobre la foto del hito en sí, con colores
+                 fijos en toda la cabecera (ver text-white/70 arriba) -
+                 un rojo que cambiara con el tema no se leería mejor
+                 sobre una foto arbitraria que uno fijo. -->
             <svg
               viewBox="0 0 24 24"
               :fill="isLiked ? '#ef4444' : 'none'"

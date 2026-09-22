@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { onUnmounted, ref, useId, watch } from 'vue'
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/bodyScrollLock'
 
 const props = defineProps<{ open: boolean }>()
@@ -51,6 +51,39 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+// Falls back to this generated id for whichever sheet's heading doesn't
+// already have one of its own - `useId()` (Vue 3.5+) is SSR-safe and
+// stable across re-renders, unlike a plain module-scope counter shared
+// by every BottomSheet instance on the page.
+const generatedTitleId = useId()
+const labelledBy = ref<string | undefined>(undefined)
+
+// Finds each sheet's own heading instead of requiring every call site
+// to thread an id through a scoped slot (12 sheets across 3 files) -
+// without an `aria-labelledby`, a screen reader just announces
+// "dialog" on open, with no hint of which one until it reads on into
+// the content. Every sheet in practice leads with exactly one heading
+// (`<h3>`, sometimes preceded by a decorative icon/emoji), so the
+// first `h1`-`h4`/`[role="heading"]` found is safe to treat as the
+// title. Runs on open, not just on mount, since every sheet is always
+// mounted and only toggled via `open` - content for the sheet that's
+// opening is already in the DOM by then.
+function updateLabelledBy() {
+  const heading = panelRef.value?.querySelector<HTMLElement>('h1, h2, h3, h4, [role="heading"]')
+
+  if (!heading) {
+    labelledBy.value = undefined
+
+    return
+  }
+
+  if (!heading.id) {
+    heading.id = generatedTitleId
+  }
+
+  labelledBy.value = heading.id
+}
+
 // Without this, a finger-scroll starting anywhere over the backdrop (or
 // a mouse wheel over it) also scrolls the dashboard underneath - a fixed
 // full-viewport backdrop doesn't stop that on its own, only body's own
@@ -75,6 +108,7 @@ watch(
       previouslyFocusedElement = document.activeElement as HTMLElement | null
       window.addEventListener('keydown', onKeydown)
       panelRef.value?.focus()
+      updateLabelledBy()
     } else {
       unlockBodyScroll()
       window.removeEventListener('keydown', onKeydown)
@@ -104,6 +138,7 @@ onUnmounted(() => {
         ref="panelRef"
         role="dialog"
         aria-modal="true"
+        :aria-labelledby="labelledBy"
         tabindex="-1"
         class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         :class="open ? 'translate-y-0' : 'translate-y-full'"

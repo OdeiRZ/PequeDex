@@ -109,6 +109,13 @@ export default {
     toastDeleted: 'Contracción eliminada.',
     toastReset: 'Restablecido.',
     toastError: 'No se ha podido guardar. Inténtalo de nuevo.',
+    deleteAll: 'Eliminar todas las contracciones',
+    deleteAllConfirm:
+      '¿Seguro que quieres eliminar todas las contracciones registradas? No se puede deshacer - útil tras una falsa alarma, para empezar de cero.',
+    deleteAllConfirmYes: 'Sí, eliminar todas',
+    deletingAll: 'Eliminando...',
+    deleteAllError: 'No se han podido eliminar las contracciones.',
+    toastAllDeleted: 'Contracciones eliminadas.',
   },
   dashboard: {
     onboarding: {
@@ -167,13 +174,6 @@ export default {
       birthDate: 'Fecha de nacimiento (opcional)',
       toastSaved: 'Guardado.',
       addAnotherBaby: 'Añadir bebé',
-      deleteAllContractions: 'Eliminar todas las contracciones',
-      deleteAllContractionsConfirm:
-        '¿Seguro que quieres eliminar todas las contracciones registradas? No se puede deshacer - útil tras una falsa alarma, para empezar de cero.',
-      deleteAllContractionsConfirmYes: 'Sí, eliminar todas',
-      deletingContractions: 'Eliminando...',
-      deleteAllContractionsError: 'No se han podido eliminar las contracciones.',
-      toastContractionsDeleted: 'Contracciones eliminadas.',
       leaveBaby: 'Dejar de cuidar al bebé',
       leaveConfirm:
         '¿Seguro que quieres dejar de ser cuidador de este bebé? Necesitarás el código de invitación para volver a unirte.',
@@ -182,6 +182,12 @@ export default {
       leaveError:
         'Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.',
       toastLeft: 'Has dejado de ser cuidador de este bebé.',
+      deleteBabyPrompt:
+        'Si no quieres compartir el código, puedes eliminar este bebé y todos sus datos en su lugar. No se puede deshacer.',
+      deleteBabyConfirmYes: 'Sí, eliminar este bebé',
+      deletingBaby: 'Eliminando...',
+      deleteBabyError: 'No se ha podido eliminar el bebé.',
+      toastDeleted: 'Bebé eliminado.',
     },
     quickLog: {
       feed: '+ Toma',

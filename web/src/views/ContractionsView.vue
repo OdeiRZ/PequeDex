@@ -289,6 +289,36 @@ async function onResetBreak() {
   }
 }
 
+// --- Eliminar todas las contracciones: reinicio tras una falsa alarma,
+// no una acción por fila. Vive al final de esta página (no en los
+// ajustes del bebé, donde estaba antes) - es la página que ya conoce
+// si hay contracciones guardadas (`babies.contractions` solo se carga
+// aquí), así que solo aparece cuando de verdad hay algo que borrar. ---
+
+const confirmingDeleteAll = ref(false)
+const deletingAll = ref(false)
+const deleteAllError = ref<string | null>(null)
+
+async function onDeleteAllContractions() {
+  deletingAll.value = true
+  deleteAllError.value = null
+
+  try {
+    await babies.deleteAllContractions()
+    confirmingDeleteAll.value = false
+    toast.show(t('contractions.toastAllDeleted'))
+  } catch {
+    deleteAllError.value = t('contractions.deleteAllError')
+  } finally {
+    deletingAll.value = false
+  }
+}
+
+function cancelDeleteAllContractions() {
+  confirmingDeleteAll.value = false
+  deleteAllError.value = null
+}
+
 // --- Exportar PDF ---
 
 const exporting = ref(false)
@@ -442,6 +472,43 @@ async function onExportPdf() {
       >
         {{ t('contractions.empty') }}
       </p>
+
+      <div v-if="babies.contractions.length > 0" class="mt-2 flex flex-col gap-3">
+        <button
+          v-if="!confirmingDeleteAll"
+          type="button"
+          class="text-center text-sm font-semibold text-danger"
+          @click="confirmingDeleteAll = true"
+        >
+          {{ t('contractions.deleteAll') }}
+        </button>
+        <Transition name="confirm-warn">
+          <div v-if="confirmingDeleteAll" class="flex flex-col gap-3">
+            <p class="text-sm text-text-muted">{{ t('contractions.deleteAllConfirm') }}</p>
+            <p v-if="deleteAllError" role="alert" class="text-sm font-medium text-danger">
+              {{ deleteAllError }}
+            </p>
+            <div class="flex gap-3">
+              <button type="button" class="btn-ghost flex-1" @click="cancelDeleteAllContractions">
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                v-press
+                type="button"
+                :disabled="deletingAll"
+                class="btn-primary flex-1 !bg-danger !text-white"
+                @click="onDeleteAllContractions"
+              >
+                {{
+                  deletingAll
+                    ? t('contractions.deletingAll')
+                    : t('contractions.deleteAllConfirmYes')
+                }}
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
     </template>
 
     <!-- Floating over the timeline, pinned to the bottom of the screen -

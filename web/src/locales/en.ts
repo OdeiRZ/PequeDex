@@ -108,6 +108,13 @@ export default {
     toastDeleted: 'Contraction deleted.',
     toastReset: 'Reset.',
     toastError: 'Could not save. Please try again.',
+    deleteAll: 'Delete all contractions',
+    deleteAllConfirm:
+      "Are you sure you want to delete every logged contraction? This can't be undone - useful after a false alarm, to start fresh.",
+    deleteAllConfirmYes: 'Yes, delete all',
+    deletingAll: 'Deleting...',
+    deleteAllError: 'Could not delete the contractions.',
+    toastAllDeleted: 'Contractions deleted.',
   },
   dashboard: {
     onboarding: {
@@ -166,13 +173,6 @@ export default {
       birthDate: 'Date of birth (optional)',
       toastSaved: 'Saved.',
       addAnotherBaby: 'Add a baby',
-      deleteAllContractions: 'Delete all contractions',
-      deleteAllContractionsConfirm:
-        "Are you sure you want to delete every logged contraction? This can't be undone - useful after a false alarm, to start fresh.",
-      deleteAllContractionsConfirmYes: 'Yes, delete all',
-      deletingContractions: 'Deleting...',
-      deleteAllContractionsError: 'Could not delete the contractions.',
-      toastContractionsDeleted: 'Contractions deleted.',
       leaveBaby: 'Leave the baby',
       leaveConfirm:
         "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",
@@ -180,6 +180,12 @@ export default {
       leaving: 'Leaving...',
       leaveError: "You're the only caregiver for this baby. Invite someone else before leaving.",
       toastLeft: "You're no longer a caregiver for this baby.",
+      deleteBabyPrompt:
+        "If you'd rather not share the invite code, you can delete this baby and all its data instead. This can't be undone.",
+      deleteBabyConfirmYes: 'Yes, delete this baby',
+      deletingBaby: 'Deleting...',
+      deleteBabyError: 'Could not delete the baby.',
+      toastDeleted: 'Baby deleted.',
     },
     quickLog: {
       feed: '+ Feed',

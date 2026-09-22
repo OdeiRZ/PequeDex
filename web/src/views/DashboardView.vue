@@ -212,6 +212,7 @@ onMounted(initDashboard)
 
 const babyName = ref('')
 const dueDate = ref('')
+const onboardingSex = ref<BabySex | ''>('')
 const creatingBaby = ref(false)
 const createError = ref<string | null>(null)
 
@@ -220,7 +221,11 @@ async function onCreateBaby() {
   creatingBaby.value = true
 
   try {
-    await babies.create({ name: babyName.value || undefined, due_date: dueDate.value || undefined })
+    await babies.create({
+      name: babyName.value || undefined,
+      due_date: dueDate.value || undefined,
+      sex: onboardingSex.value || undefined,
+    })
     toast.show(t('dashboard.onboarding.toastCreated'))
     closeSheet()
     await loadBabyData()
@@ -326,11 +331,10 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     babyBirthDate.value = babies.current?.birth_date ?? ''
     confirmingLeave.value = false
     leaveError.value = null
-    confirmingDeleteContractions.value = false
-    deleteContractionsError.value = null
   } else if (sheet === 'addBaby') {
     babyName.value = ''
     dueDate.value = ''
+    onboardingSex.value = ''
     createError.value = null
     inviteCodeInput.value = ''
     joinError.value = null
@@ -670,6 +674,8 @@ const savingBabySettings = ref(false)
 const confirmingLeave = ref(false)
 const leaving = ref(false)
 const leaveError = ref<string | null>(null)
+const deletingBaby = ref(false)
+const deleteBabyError = ref<string | null>(null)
 
 const babySexOptions = computed(() => [
   { value: '' as const, label: t('dashboard.babySettings.sexUnknown') },
@@ -837,7 +843,9 @@ async function onLeaveBaby() {
   } catch {
     // The only real-world reason this fails is being the sole remaining
     // caregiver (422) - one fixed message covers it, same "no per-field
-    // backend errors" convention as the rest of this app.
+    // backend errors" convention as the rest of this app. The template
+    // offers onDeleteBaby right below this error as the way out for
+    // exactly this case.
     leaveError.value = t('dashboard.babySettings.leaveError')
   } finally {
     leaving.value = false
@@ -847,36 +855,27 @@ async function onLeaveBaby() {
 function cancelLeaveBaby() {
   confirmingLeave.value = false
   leaveError.value = null
+  deleteBabyError.value = null
 }
 
-// --- Eliminar todas las contracciones: reinicio tras una falsa alarma,
-// no una acción por fila. Mismo patrón de confirmación que abandonar
-// el bebé, con su propio estado - no tiene sentido compartirlo, son
-// dos confirmaciones independientes que podrían coexistir en la misma
-// hoja. ---
-
-const confirmingDeleteContractions = ref(false)
-const deletingContractions = ref(false)
-const deleteContractionsError = ref<string | null>(null)
-
-async function onDeleteAllContractions() {
-  deletingContractions.value = true
-  deleteContractionsError.value = null
+// Only reachable once onLeaveBaby has already failed with "sole
+// caregiver" above - a caregiver who shares this baby with someone
+// else uses leave() instead, which keeps the baby (and its data) for
+// the rest of them.
+async function onDeleteBaby() {
+  deletingBaby.value = true
+  deleteBabyError.value = null
 
   try {
-    await babies.deleteAllContractions()
-    confirmingDeleteContractions.value = false
-    toast.show(t('dashboard.babySettings.toastContractionsDeleted'))
+    await babies.remove()
+    closeSheet()
+    confirmingLeave.value = false
+    toast.show(t('dashboard.babySettings.toastDeleted'))
   } catch {
-    deleteContractionsError.value = t('dashboard.babySettings.deleteAllContractionsError')
+    deleteBabyError.value = t('dashboard.babySettings.deleteBabyError')
   } finally {
-    deletingContractions.value = false
+    deletingBaby.value = false
   }
-}
-
-function cancelDeleteAllContractions() {
-  confirmingDeleteContractions.value = false
-  deleteContractionsError.value = null
 }
 
 async function onRegenerateInviteCode() {
@@ -1197,6 +1196,10 @@ const sleepPredictionDue = computed(() => {
                 t('dashboard.onboarding.dueDate')
               }}</label>
               <input id="due-date" v-model="dueDate" type="date" class="field-input" />
+            </div>
+            <div>
+              <span class="field-label">{{ t('dashboard.babySettings.sexLabel') }}</span>
+              <SegmentedControl v-model="onboardingSex" :options="babySexOptions" />
             </div>
             <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
               {{ createError }}
@@ -1914,53 +1917,6 @@ const sleepPredictionDue = computed(() => {
               {{ t('dashboard.babySettings.addAnotherBaby') }}
             </button>
 
-            <template v-if="!isBorn">
-              <button
-                v-if="!confirmingDeleteContractions"
-                type="button"
-                class="text-center text-sm font-semibold text-danger"
-                @click="confirmingDeleteContractions = true"
-              >
-                {{ t('dashboard.babySettings.deleteAllContractions') }}
-              </button>
-              <Transition name="confirm-warn">
-                <div v-if="confirmingDeleteContractions" class="flex flex-col gap-3">
-                  <p class="text-sm text-text-muted">
-                    {{ t('dashboard.babySettings.deleteAllContractionsConfirm') }}
-                  </p>
-                  <p
-                    v-if="deleteContractionsError"
-                    role="alert"
-                    class="text-sm font-medium text-danger"
-                  >
-                    {{ deleteContractionsError }}
-                  </p>
-                  <div class="flex gap-3">
-                    <button
-                      type="button"
-                      class="btn-ghost flex-1"
-                      @click="cancelDeleteAllContractions"
-                    >
-                      {{ t('common.cancel') }}
-                    </button>
-                    <button
-                      v-press
-                      type="button"
-                      :disabled="deletingContractions"
-                      class="btn-primary flex-1 !bg-danger !text-white"
-                      @click="onDeleteAllContractions"
-                    >
-                      {{
-                        deletingContractions
-                          ? t('dashboard.babySettings.deletingContractions')
-                          : t('dashboard.babySettings.deleteAllContractionsConfirmYes')
-                      }}
-                    </button>
-                  </div>
-                </div>
-              </Transition>
-            </template>
-
             <button
               v-if="!confirmingLeave"
               type="button"
@@ -1995,6 +1951,27 @@ const sleepPredictionDue = computed(() => {
                     }}
                   </button>
                 </div>
+                <template v-if="leaveError">
+                  <p class="text-sm text-text-muted">
+                    {{ t('dashboard.babySettings.deleteBabyPrompt') }}
+                  </p>
+                  <p v-if="deleteBabyError" role="alert" class="text-sm font-medium text-danger">
+                    {{ deleteBabyError }}
+                  </p>
+                  <button
+                    v-press
+                    type="button"
+                    :disabled="deletingBaby"
+                    class="btn-primary !bg-danger !text-white"
+                    @click="onDeleteBaby"
+                  >
+                    {{
+                      deletingBaby
+                        ? t('dashboard.babySettings.deletingBaby')
+                        : t('dashboard.babySettings.deleteBabyConfirmYes')
+                    }}
+                  </button>
+                </template>
               </div>
             </Transition>
           </div>
@@ -2021,6 +1998,10 @@ const sleepPredictionDue = computed(() => {
                   t('dashboard.onboarding.dueDate')
                 }}</label>
                 <input id="add-due-date" v-model="dueDate" type="date" class="field-input" />
+              </div>
+              <div>
+                <span class="field-label">{{ t('dashboard.babySettings.sexLabel') }}</span>
+                <SegmentedControl v-model="onboardingSex" :options="babySexOptions" />
               </div>
               <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
                 {{ createError }}

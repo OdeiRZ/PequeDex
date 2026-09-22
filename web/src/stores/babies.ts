@@ -236,7 +236,7 @@ export const useBabiesStore = defineStore('babies', {
       storeActiveBabyId(baby.id)
     },
 
-    async create(payload: { name?: string; due_date?: string }) {
+    async create(payload: { name?: string; due_date?: string; sex?: BabySex }) {
       const { data } = await apiClient.post('/babies', payload)
       this.babies.push(data.data)
       this.current = data.data
@@ -268,6 +268,24 @@ export const useBabiesStore = defineStore('babies', {
       await apiClient.delete(`/babies/${leftId}/leave`)
 
       this.babies = this.babies.filter((baby) => baby.id !== leftId)
+      this.current = this.babies[0] ?? null
+      if (this.current) {
+        storeActiveBabyId(this.current.id)
+      }
+    },
+
+    /** Permanently deletes the current baby and all its data - the
+     * backend only allows this for the last remaining caregiver (422
+     * otherwise), since deleting a baby someone else still cares for
+     * would destroy their data without their consent - `leave()` is the
+     * right action to share custody. Falls back to another already-
+     * loaded baby, same as leave(), since a caregiver can have more than
+     * one. */
+    async remove() {
+      const removedId = this.current!.id
+      await apiClient.delete(`/babies/${removedId}`)
+
+      this.babies = this.babies.filter((baby) => baby.id !== removedId)
       this.current = this.babies[0] ?? null
       if (this.current) {
         storeActiveBabyId(this.current.id)

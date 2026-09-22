@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Segunda fase del catálogo de movimiento, esta vez sobre cómo entran y
+  cambian los bloques del dashboard en vez de cómo responde un botón al
+  pulsarlo: las tarjetas de "hoy" cuentan hasta el nuevo valor y se
+  destellan al cambiar en vez de saltar de golpe; las barras de "Sueño
+  esta semana" crecen desde el suelo en cascada; las marcas de
+  "Ritmo de hoy" aparecen en cascada ordenadas por su posición real en
+  la barra (en la primera carga y cada vez que se cambia de día), y el
+  título del día desliza en la dirección navegada en vez de cortar de
+  golpe; cambiar entre Dashboard y Contracciones cruza con un fundido
+  breve en vez de un corte seco; y las tarjetas de predicción de
+  toma/sueño ganan un halo suave que se activa en cuanto la hora
+  estimada llega o pasa. Deliberadamente sin tocar: el `AppMark`
+  animado de la pantalla de carga, que ya es un diseño de marca a
+  propósito y no un spinner genérico a sustituir.
 - Micro-animaciones disparadas al tocar/hacer clic (no al `:hover`, explorado
   antes en un artefacto con 10 propuestas comparadas en contexto) en varias
   interacciones reales: "Guardar" en "Tu cuenta" se convierte un instante en

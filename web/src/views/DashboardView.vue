@@ -497,15 +497,19 @@ const diaperTypeOptions = computed(() => [
 // Only meaningful once there's actually something to look at - hidden
 // entirely for 'mojado' (the backend rejects it there too), same
 // reasoning as feedSideOptions only showing for a breastfeed. Optional
-// even then (not every caregiver wants to note it every time), so
-// there's an explicit "no indicar" option rather than forcing a pick -
-// same pattern as babySexOptions.
-const diaperResidueColorOptions = computed(() => [
-  { value: '' as const, label: t('dashboard.diaperForm.colorUnspecified') },
-  { value: 'verde' as const, label: t('dashboard.diaperForm.green') },
-  { value: 'amarillo' as const, label: t('dashboard.diaperForm.yellow') },
-  { value: 'marron' as const, label: t('dashboard.diaperForm.brown') },
-  { value: 'meconio' as const, label: t('dashboard.diaperForm.meconium') },
+// even then (not every caregiver wants to note it every time) - "Sin
+// indicar" stays a text button (there's no color for "nothing"), but
+// the four real options show as actual color swatches, not words: a
+// caregiver recognizes a diaper by its color, not by reading "Marrón".
+// Real, muted tones instead of pure CSS named colors (real meconium
+// reads closer to near-black than to a flat "green" or "black" swatch
+// would suggest) - deliberately not theme tokens, a color swatch means
+// the same thing in light or dark mode.
+const diaperResidueColorSwatches = computed(() => [
+  { value: 'verde' as const, label: t('dashboard.diaperForm.green'), color: '#5C8A3A' },
+  { value: 'amarillo' as const, label: t('dashboard.diaperForm.yellow'), color: '#E8B93F' },
+  { value: 'marron' as const, label: t('dashboard.diaperForm.brown'), color: '#8B5A2B' },
+  { value: 'meconio' as const, label: t('dashboard.diaperForm.meconium'), color: '#1C1C1C' },
 ])
 
 function openDiaperEdit(diaperChange: DiaperChange) {
@@ -1681,7 +1685,50 @@ const sleepPredictionDue = computed(() => {
             <SegmentedControl v-model="diaperType" :options="diaperTypeOptions" />
             <div v-if="diaperType !== 'mojado'">
               <span class="field-label">{{ t('dashboard.diaperForm.colorLabel') }}</span>
-              <SegmentedControl v-model="diaperResidueColor" :options="diaperResidueColorOptions" />
+              <div class="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    diaperResidueColor === ''
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-pressed="diaperResidueColor === ''"
+                  @click="diaperResidueColor = ''"
+                >
+                  {{ t('dashboard.diaperForm.colorUnspecified') }}
+                </button>
+                <button
+                  v-for="swatch in diaperResidueColorSwatches"
+                  :key="swatch.value"
+                  type="button"
+                  class="grid h-9 w-9 shrink-0 place-items-center rounded-full transition-shadow"
+                  :class="
+                    diaperResidueColor === swatch.value
+                      ? 'ring-2 ring-brand ring-offset-2 ring-offset-surface'
+                      : ''
+                  "
+                  :style="{ backgroundColor: swatch.color }"
+                  :aria-label="swatch.label"
+                  :aria-pressed="diaperResidueColor === swatch.value"
+                  @click="diaperResidueColor = swatch.value"
+                >
+                  <svg
+                    v-if="diaperResidueColor === swatch.value"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div>
               <label for="diaper-changed-at" class="field-label">{{

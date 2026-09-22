@@ -9,6 +9,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **El selector de color de las heces pasa de texto a círculos de
+  color real.** "Verde/Amarillo/Marrón/Meconio" como opciones de texto
+  obligaba a leer la palabra para reconocer el pañal — un cuidador
+  reconoce el color de un vistazo, no leyendo su nombre. Ahora cada
+  opción es un círculo con el color real (el meconio, deliberadamente
+  casi negro, no un "negro" plano), con una marca de verificación
+  blanca sobre la opción elegida; "Sin indicar" se queda como texto,
+  al no representar ningún color.
+
 - **Tipo de leche en las tomas de pecho, color de las heces en pañales
   sucios.** El formulario de "+ Toma" solo distinguía biberón/pecho/
   sólido y, para pecho, el lado — ahora, al elegir pecho, aparece también

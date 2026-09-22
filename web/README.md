@@ -272,13 +272,22 @@ porque la verificación local solo cubría los otros tres.
   "+ Toma" aparece un segundo `SegmentedControl` ("Calostro"/"Leche",
   con "Leche" preseleccionada por defecto, mismo sitio que ya ocupaba el
   selector de lado). El formulario de "+ Pañal" gana un selector de
-  color (Verde/Amarillo/Marrón/Meconio, con "Sin indicar" como opción
-  explícita en vez de forzar una elección) que solo se muestra con
+  color (Verde/Amarillo/Marrón/Meconio) que solo se muestra con
   "Sucio"/"Ambos" — un pañal solo mojado no tiene heces que describir, y
-  el backend lo rechaza si se manda ahí (ver `api/README.md`). Ambos
-  campos viajan como `undefined`/`null` fuera de su contexto (toma no-
-  pecho, pañal mojado) para no depender de que el backend ignore un
-  valor que no debería haberse mandado.
+  el backend lo rechaza si se manda ahí (ver `api/README.md`). No es un
+  `SegmentedControl` de texto como el resto de selectores de la app:
+  cada opción es un círculo con el color real (tonos apagados, no CSS
+  named colors — el meconio, deliberadamente casi negro en vez de un
+  "negro" plano, es el motivo real del cambio: un cuidador reconoce un
+  pañal por su color, no leyendo la palabra "Marrón"), con una marca de
+  verificación blanca sobre la opción elegida (`ring-2 ring-brand
+  ring-offset-2`, mismo patrón ya usado en `WeeklySleep.vue` para
+  marcar "hoy"). "Sin indicar" es la excepción y sigue siendo un botón
+  de texto — no representa ningún color, forzarlo a un círculo gris no
+  comunicaría nada. Ambos campos (tipo de leche y color) viajan como
+  `undefined`/`null` fuera de su contexto (toma no-pecho, pañal mojado)
+  para no depender de que el backend ignore un valor que no debería
+  haberse mandado.
 
 ## Idioma
 

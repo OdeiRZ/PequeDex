@@ -932,6 +932,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- Ir a "Contador de contracciones" desde el dashboard, justo después de
+  crear el primer bebé y sin recargar la página, dejaba la app en blanco
+  (solo el nav superior visible) — reportado en vivo. `DashboardView.vue`
+  tiene tres ramas (cargando / error / contenido); la rama "hay bebé"
+  renderizaba `<main>` + `<ActionBar>` + cada `<BottomSheet>` +
+  `<MilestoneStoryViewer>` como hermanos sueltos en la raíz de la
+  plantilla — un Fragment, no un único elemento — y App.vue envuelve la
+  vista activa en `<Transition name="route" mode="out-in">`, que exige
+  una raíz de elemento único para poder animar la salida: con un
+  Fragment, esa transición nunca llegaba a resolverse y la siguiente
+  vista no llegaba a montarse. Solo aparecía a partir de tener un bebé
+  (la rama de onboarding, con un único `<main>`, nunca tuvo el problema).
+  Arreglado envolviendo toda la plantilla en un único `<div>` — con
+  `display: contents` el aviso de Vue desaparecía pero el bloqueo
+  seguía (esa propiedad retira la caja pintable del elemento, y sin
+  caja no hay `transitionend` que disparar), así que la caja real es
+  `flex flex-1 flex-col`, mismo rol que cada rama ya usaba por su
+  cuenta.
+
 - La app está pensada mayoritariamente para uso en móvil, pero varias
   micro-animaciones y la única forma de ver la hora exacta de una marca
   en "Ritmo de hoy" dependían de `:hover` - inexistente al tocar en vez

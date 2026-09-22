@@ -677,7 +677,15 @@ verse bien en una captura:
   `DashboardView.vue` calculan qué icono(s) lleva cada fila de pañal en
   la línea temporal, mismo criterio que el propio formulario: gota para
   mojado/ambos, caca (con el mismo *fallback* a marrón) para
-  sucio/ambos.
+  sucio/ambos. Tercera prop opcional, `emoji` (más `emojiPulsing`) -
+  genérica, no específica de sueño, a diferencia de `dropletColor`/
+  `poopColor`: aquí sí es literalmente el emoji 💤 (`entrySleepEmoji()`
+  en `DashboardView.vue`), porque no hay ningún color que comunicar,
+  mismo criterio que ya usa `lib/milestoneCategory.ts` para los hitos -
+  "emoji, no un set de iconos". `emojiPulsing` (una animación de
+  opacidad + `translateY` suave, `prefers-reduced-motion` respetado)
+  distingue un sueño en curso (`ended_at` aún `null`) de uno ya
+  terminado sin cambiar el propio emoji.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

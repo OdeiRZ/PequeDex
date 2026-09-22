@@ -21,6 +21,17 @@ withDefaults(
      * appear alongside `dropletColor` at once (a "both" diaper change
      * has pee and poop both). */
     poopColor?: string | null
+    /** A small emoji next to the title - 💤 for a sleep entry (see
+     * `entrySleepEmoji()` in `DashboardView.vue`). Emoji, not an SVG
+     * icon, same "matches this app's existing convention, no new
+     * assets" reasoning as `lib/milestoneCategory.ts`'s own emoji map.
+     * Undefined renders nothing. */
+    emoji?: string | null
+    /** Gently breathes the emoji above instead of leaving it static -
+     * an ongoing sleep (no `ended_at` yet), so "still asleep right
+     * now" reads differently at a glance from "was asleep, already
+     * woke up". */
+    emojiPulsing?: boolean
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -33,7 +44,7 @@ withDefaults(
      * be both non-interactive and pulsing at once. */
     pulsing?: boolean
   }>(),
-  { interactive: true, pulsing: false },
+  { interactive: true, pulsing: false, emojiPulsing: false },
 )
 
 defineEmits<{ open: [] }>()
@@ -97,6 +108,14 @@ defineEmits<{ open: [] }>()
             <circle cx="12" cy="9" r="3.2" />
             <circle cx="12" cy="6" r="2" />
           </svg>
+          <span
+            v-if="emoji"
+            class="shrink-0 text-xs leading-none"
+            :class="emojiPulsing && 'entry-emoji-pulsing'"
+            aria-hidden="true"
+          >
+            {{ emoji }}
+          </span>
         </div>
         <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
         <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
@@ -132,6 +151,31 @@ defineEmits<{ open: [] }>()
 
 @media (prefers-reduced-motion: reduce) {
   .entry-card-pulsing {
+    animation: none;
+  }
+}
+
+/* A gentle rise-and-fade, not a hard blink - reads as "still
+   happening" without competing for attention with the flash/glow
+   animations elsewhere on this same card. */
+.entry-emoji-pulsing {
+  animation: entry-emoji-breathe 2s ease-in-out infinite;
+}
+
+@keyframes entry-emoji-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-emoji-pulsing {
     animation: none;
   }
 }

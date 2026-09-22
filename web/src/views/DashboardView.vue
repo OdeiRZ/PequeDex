@@ -623,6 +623,20 @@ function entryPoopColor(entry: (typeof babies.timeline)[number]): string | undef
   return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color || 'marron']
 }
 
+// 💤 next to a sleep row, same "recognize at a glance" reasoning as
+// the diaper/feed icons above - but a plain emoji here, not a colored
+// SVG, since there's no color to communicate (see EntryCard.vue's own
+// docblock on `emoji`). `entrySleepPulsing()` is what actually tells
+// "still asleep right now" (no `ended_at` yet) apart from "was
+// asleep, already woke up" - the emoji itself is identical either way.
+function entrySleepEmoji(entry: (typeof babies.timeline)[number]): string | undefined {
+  return entry.type === 'sleep' ? '💤' : undefined
+}
+
+function entrySleepPulsing(entry: (typeof babies.timeline)[number]): boolean {
+  return entry.type === 'sleep' && entry.data.ended_at === null
+}
+
 // Same reasoning, applied to a feed's milk - a droplet colored like
 // the real thing next to the row's title. A bottle carries milk too
 // (formula or expressed, both read as white - `milk_type` itself is
@@ -1598,6 +1612,8 @@ const sleepPredictionDue = computed(() => {
                     :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
+                    :emoji="entrySleepEmoji(item.entry)"
+                    :emoji-pulsing="entrySleepPulsing(item.entry)"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>

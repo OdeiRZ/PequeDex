@@ -9,6 +9,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Emoji 💤 junto a una fila de sueño en la línea temporal**, con dos
+  variantes según el estado: estático para un sueño ya terminado, con
+  una respiración suave (opacidad + desplazamiento, `prefers-reduced-
+  motion` respetado) para uno todavía en curso — "sigue durmiendo ahora
+  mismo" se lee distinto de un vistazo que "durmió, ya se despertó".
+  Emoji, no un icono SVG — mismo criterio ya usado en
+  `lib/milestoneCategory.ts` para los hitos, no una convención nueva.
+  Nuevas props genéricas `emoji`/`emojiPulsing` en `EntryCard.vue` (no
+  específicas de sueño, reutilizables si hiciera falta en otro sitio).
+
 - **El selector de tipo de pañal (Mojado/Sucio/Ambos) gana sus propios
   iconos de pipi/caca**, mismo criterio que ya se aplicó a tomas y al
   color de heces: reconocer de un vistazo, no leyendo texto. "Mojado"

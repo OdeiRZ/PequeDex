@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- Micro-animaciones disparadas al tocar/hacer clic (no al `:hover`, explorado
+  antes en un artefacto con 10 propuestas comparadas en contexto) en varias
+  interacciones reales: "Guardar" en "Tu cuenta" se convierte un instante en
+  un check dibujado a trazo, el interruptor de predicciones gana una curva de
+  rebote, el botón de eliminar de la línea temporal sacude el icono al
+  tocarlo, el corazón de "me gusta" de un hito suelta un puñado de partículas
+  al confirmarse, la barra de accesos rápidos gana un ripple desde el punto
+  exacto del toque, los 3 rayos de intensidad de una contracción se rellenan
+  en cascada, el botón de inicio/detener de contracciones gana un anillo que
+  respira mientras está en marcha, exportar el PDF muestra un anillo de
+  progreso alrededor del propio icono, y las confirmaciones peligrosas
+  ("Dejar de cuidar al bebé", "Eliminar todas las contracciones") se expanden
+  con una sacudida de aviso en vez de aparecer de golpe. Todas respetan
+  `prefers-reduced-motion`.
 - Micro-animaciones nuevas en tres botones que antes solo cambiaban de
   color: el de eliminar de la línea temporal (la tapa del icono de
   cubo se abre al pasar el ratón, como aviso pasivo antes de pulsar,

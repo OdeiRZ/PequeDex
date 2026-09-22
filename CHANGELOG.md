@@ -1029,6 +1029,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   propio): el bucket `pequedex-milestones` no tiene "Public Development URL" habilitada
   ni ningún Custom Domain asignado — confirmado en el panel de R2, solo accesible ya vía
   la API S3 firmada.
+- Hallazgos de una auditoría API/código/documentación/estilos/diseño/seguridad completa
+  del proyecto: `README.md` y `api/README.md` seguían mencionando Cloudflare Pages como
+  frontend en un punto, pese a que la nota de migración a GitHub Pages ya estaba
+  documentada más arriba en el mismo fichero; el mensaje de error de
+  `BabyController@leave` seguía diciendo "abandonarlo" tras el cambio de wording ya
+  aplicado en el resto de la UI ("dejar de cuidar"); `BottomSheet.vue` no anunciaba a
+  qué hoja correspondía el diálogo para un lector de pantalla (solo "dialog", sin
+  ningún título hasta leer el contenido) — ahora referencia el primer encabezado de la
+  hoja que se abre vía `aria-labelledby`, generándole un id con `useId()` si no tenía
+  uno. Un quinto hallazgo (`#ef4444` fijo en el corazón de "me gusta" de
+  `MilestoneStoryViewer.vue`) resultó ser intencional y no un descuido: este visor
+  flota a pantalla completa sobre la foto del hito con el resto de la cabecera también
+  en colores fijos, así que se documenta con un comentario en vez de "corregirlo". Un
+  sexto hallazgo (`web/src/stores/babies.ts`, un cast a `Contraction` marcado como
+  "redundante") también se descartó tras revisarlo: `apiClient` no está tipado
+  (`axios.create()` sin genéricos), así que quitar el cast cambiaría silenciosamente el
+  tipo de retorno de `startContraction()` de `Contraction` a `any` — sería una
+  regresión de tipado, no una limpieza.
 - Hallazgos de una auditoría de código: `POST /babies` era el único endpoint de
   escritura sin ningún límite de peticiones (ahora `throttle:10,1`, igual que el resto),
   y `BabyController::store()` creaba el `Baby` y vinculaba al cuidador en dos pasos sin

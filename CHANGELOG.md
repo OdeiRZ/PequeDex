@@ -9,6 +9,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Tercera ronda de movimiento — transiciones en crecimiento, contracciones
+  e hitos, mismo criterio que LudoDex y MIRA_MarketLens (proyectos
+  hermanos).** La lista de "Crecimiento" del dashboard, que estaba al lado
+  de la línea temporal principal sin compartir su `TransitionGroup`, ahora
+  lo usa igual (mismo `EntryCard`, mismas transiciones `entry-list-*` ya
+  definidas). `ContractionTimeline.vue` se reestructuró — cada contracción
+  pintaba hasta 3 `<li>` sueltos por iteración (separador de día, chip de
+  intervalo, fila), agrupados ahora en un único `<li>` por contracción sin
+  cambiar el layout visual — para poder animar entrada/salida/renumerado al
+  añadir, borrar o iniciar una contracción. `MilestoneStories.vue` (la fila
+  de "stories" de hitos) gana un pop de entrada (escala+rotación) al añadir
+  un hito nuevo — antes aparecía ya puesto, sin celebrar su llegada como sí
+  hace el resto de la app. De paso, el mismo bug de `.btn-primary:active`
+  enmascarado por `disabled` síncrono ya arreglado en LudoDex/MIRA
+  (`v-press`, `directives/press.ts`) se portó tal cual a ~19 botones reales
+  (formularios de auth, hojas de registro rápido, AccountSheet,
+  ContractionsView).
+
 - Segunda fase del catálogo de movimiento, esta vez sobre cómo entran y
   cambian los bloques del dashboard en vez de cómo responde un botón al
   pulsarlo: las tarjetas de "hoy" cuentan hasta el nuevo valor y se

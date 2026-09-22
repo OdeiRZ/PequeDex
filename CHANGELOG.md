@@ -886,6 +886,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- La app está pensada mayoritariamente para uso en móvil, pero varias
+  micro-animaciones y la única forma de ver la hora exacta de una marca
+  en "Ritmo de hoy" dependían de `:hover` - inexistente al tocar en vez
+  de pasar el ratón. La hora de cada marca (toma/sueño/pañal) vivía solo
+  en un atributo `title`, un tooltip nativo que solo aparece con ratón:
+  en móvil esa información era directamente inalcanzable. Las marcas
+  pasan de `<span>` a `<button>` y tocarlas abre esa misma hora en una
+  burbuja propia (se cierra al tocar la misma marca, otra, o fuera de la
+  barra; también al cambiar de día, para no dejarla apuntando al día
+  equivocado). Aparte, varios botones reales (flechas de día, volver y
+  exportar de "Contracciones", el botón de gota de agua, la fila de
+  edición de una contracción) solo tenían `hover:` y ninguna respuesta
+  visual al tocar - ganan su `active:`/`group-active:` equivalente.
 - "Añadir otro bebé" pasa a "Añadir bebé" — la hoja detrás del botón no
   solo crea uno nuevo, también deja unirse a uno existente vía código
   de invitación, y "otro" daba a entender que solo servía para crear.

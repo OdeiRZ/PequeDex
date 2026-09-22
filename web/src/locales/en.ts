@@ -195,9 +195,9 @@ export default {
       milestone: '+ Milestone',
     },
     todaySummary: {
-      feed: 'feeds today',
-      sleep: 'asleep today',
-      diaper: 'diapers today',
+      feed: 'feeds',
+      sleep: 'asleep',
+      diaper: 'diapers',
     },
     feedForm: {
       editTitle: 'Edit feed',

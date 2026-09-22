@@ -197,9 +197,9 @@ export default {
       milestone: '+ Hito',
     },
     todaySummary: {
-      feed: 'tomas hoy',
-      sleep: 'de sueño hoy',
-      diaper: 'pañales hoy',
+      feed: 'tomas',
+      sleep: 'de sueño',
+      diaper: 'pañales',
     },
     feedForm: {
       editTitle: 'Editar toma',

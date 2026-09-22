@@ -1429,9 +1429,25 @@ const sleepPredictionDue = computed(() => {
           <template v-if="isBorn">
             <TodaySummary
               class="dash-enter"
-              :timeline="babies.timeline"
+              :timeline="rhythmTimeline"
               :enabled-categories="enabledCategories"
+              :day="rhythmDate"
             />
+
+            <section
+              v-if="enabledCategories.includes('milestone')"
+              class="dash-enter flex flex-col gap-2"
+            >
+              <h2 class="flex items-center gap-2 font-display text-base font-bold">
+                <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
+                {{ t('dashboard.milestones.title') }}
+              </h2>
+              <MilestoneStories
+                :milestones="babies.milestones"
+                @open="viewingMilestoneId = $event"
+                @create="openSheet('milestone')"
+              />
+            </section>
 
             <ul
               v-if="
@@ -1458,21 +1474,6 @@ const sleepPredictionDue = computed(() => {
                 :pulsing="sleepPredictionDue"
               />
             </ul>
-
-            <section
-              v-if="enabledCategories.includes('milestone')"
-              class="dash-enter flex flex-col gap-2"
-            >
-              <h2 class="flex items-center gap-2 font-display text-base font-bold">
-                <span class="h-4 w-1.5 shrink-0 rounded-full bg-milestone"></span>
-                {{ t('dashboard.milestones.title') }}
-              </h2>
-              <MilestoneStories
-                :milestones="babies.milestones"
-                @open="viewingMilestoneId = $event"
-                @create="openSheet('milestone')"
-              />
-            </section>
 
             <DailyRhythm
               class="dash-enter"

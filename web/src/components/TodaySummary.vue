@@ -2,10 +2,19 @@
 import { computed, onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { categorySolidBg, type Category } from '@/lib/category'
+import { parseDateOnly } from '@/lib/localDate'
 import CategoryIcon from './CategoryIcon.vue'
 import type { TimelineEntry } from '@/stores/babies'
 
-const props = defineProps<{ timeline: TimelineEntry[]; enabledCategories: Category[] }>()
+const props = defineProps<{
+  timeline: TimelineEntry[]
+  enabledCategories: Category[]
+  /** "YYYY-MM-DD", local calendar day to summarize - same day navigator
+   * DailyRhythm.vue already reads from DashboardView.vue, so browsing to
+   * a previous day recalculates these cards too instead of always
+   * showing today's counts regardless of which day is on screen. */
+  day: string
+}>()
 
 const { t } = useI18n()
 
@@ -20,15 +29,18 @@ interface Stat {
   label: string
 }
 
-// Same "today" boundary as DailyRhythm (calendar day so far, not a
-// rolling 24h window) - deliberately only feed/sleep/diaper have a
-// meaningful daily count; growth/milestones are occasional events, not
-// something a caregiver tracks "how many today".
+// Same calendar-day boundary as DailyRhythm (not a rolling 24h window),
+// against whichever day `props.day` names - deliberately only
+// feed/sleep/diaper have a meaningful daily count; growth/milestones
+// are occasional events, not something a caregiver tracks "how many
+// today". `now` still stands in for an ongoing sleep's missing
+// `ended_at` (same as DailyRhythm) - the surrounding clip against
+// `[start, end]` naturally caps it at the shown day's own end when
+// that's a past day.
 const stats = computed<Stat[]>(() => {
   const now = new Date()
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(now)
+  const start = parseDateOnly(props.day)
+  const end = new Date(start)
   end.setHours(23, 59, 59, 999)
   const within = (date: Date) => date >= start && date <= end
 

@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Orden del dashboard: Hitos sube por encima de las predicciones.**
+  Antes iba tarjetas resumen → predicción de próxima toma/sueño →
+  Hitos → Ritmo; ahora es tarjetas resumen → Hitos → predicción →
+  Ritmo, a petición de Odei tras usar la app a diario.
+
+- **Las tarjetas resumen del dashboard (tomas/sueño/pañales) se
+  recalculan al navegar por días anteriores en "Ritmo", y pierden la
+  coletilla "hoy".** Antes mostraban siempre el recuento de hoy ("2
+  tomas hoy") aunque "Ritmo" estuviera mostrando un día anterior —
+  ahora reutilizan el mismo día que ya conoce el propio navegador de
+  "Ritmo" (`rhythmDate`/`rhythmTimeline`, ya existentes) y muestran el
+  recuento de ese día concreto, con "hoy" retirado de la etiqueta
+  porque ya no es siempre cierto.
+
 - **El selector de color de las heces pasa de texto a círculos de
   color real.** "Verde/Amarillo/Marrón/Meconio" como opciones de texto
   obligaba a leer la palabra para reconocer el pañal — un cuidador

@@ -600,6 +600,23 @@ verse bien en una captura:
   cual. Nuevo `visibleTimeline`: en un día pasado, filtra
   `rhythmTimeline` a los límites locales exactos del día antes de
   agrupar - mismo recorte que `DailyRhythm.vue`, aplicado también aquí.
+  `TodaySummary.vue` (la fila de tarjetas tomas/sueño/pañales bajo la
+  cabecera del bebé) reutiliza igual `rhythmDate`/`rhythmTimeline` —
+  antes recalculaba siempre contra "ahora" internamente, así que
+  navegar a un día anterior movía "Ritmo"/"Línea temporal" pero dejaba
+  estas tarjetas ancladas al recuento de hoy. Recibe `day` como prop
+  (mismo patrón que `DailyRhythm.vue`) y calcula su ventana
+  `[00:00, 24:00)` contra ese día en vez de contra `new Date()`; el
+  recorte de un sueño en curso sigue usando `now` como su `ended_at`
+  implícito (no hay otro dato), pero ya no necesita distinguir
+  hoy/no-hoy explícitamente: el propio recorte contra `[start, end]`
+  del día lo deja dentro de sus límites igual en cualquier caso. Las
+  etiquetas pierden la coletilla "hoy" ("tomas hoy" → "tomas") al dejar
+  de ser cierta siempre. El orden de las secciones del dashboard también
+  cambió: "Hitos" pasó a ir justo debajo de las tarjetas resumen, con la
+  predicción de próxima toma/sueño ahora por debajo de "Hitos" en vez de
+  por encima (mismo bloque `template v-if="isBorn"`, sin ningún cambio
+  de lógica en las condiciones `v-if` de cada sección, solo su orden).
 - **`EntryCard.vue`** cambia el borde de color fino por un lavado de
   fondo del color de categoría (`categoryBg`, ya existente) en toda la
   fila; el icono pasa a un chip semitransparente (`bg-surface/70`) para

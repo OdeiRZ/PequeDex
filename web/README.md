@@ -267,6 +267,14 @@ alguna vez desde "Tu cuenta". Los mensajes viven en
 `src/locales/{es,en}.ts`; los valores de los enums del backend
 (`izquierdo`/`derecho`/`ambos`, `mojado`/`sucio`/`ambos`) se traducen en
 el punto de uso — son valores internos en español, no texto de interfaz.
+El español es la fuente de verdad al tocar copy: un cambio de texto se
+hace primero ahí y el inglés se ajusta para seguirlo, no al revés.
+Comprobación estructural rápida de que ambos ficheros tienen las mismas
+claves (útil tras un cambio grande, no algo que haga falta correr
+siempre) — un script de Node de una vez, sin dependencia nueva:
+convierte cada `export default` a `module.exports` al vuelo, hace
+`require()` del resultado y compara las claves aplanadas de los dos
+objetos.
 
 ## Barra de accesos personalizable
 

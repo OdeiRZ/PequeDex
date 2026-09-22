@@ -886,6 +886,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- "Añadir otro bebé" pasa a "Añadir bebé" — la hoja detrás del botón no
+  solo crea uno nuevo, también deja unirse a uno existente vía código
+  de invitación, y "otro" daba a entender que solo servía para crear.
+  "Abandonar este bebé" pasa a "Dejar de cuidar al bebé" — lo que la
+  acción hace de verdad es dejar de ser cuidador, no "abandonar" al
+  bebé, coherente con el propio texto de confirmación que ya lo decía
+  así ("dejar de ser cuidador"); se actualizan también el botón de
+  confirmar, el estado de carga y el mensaje de error para no dejar
+  "abandonar" a medias en el resto del flujo. Auditoría completa de
+  `es.ts` contra `en.ts` tras el cambio (273 claves en cada fichero,
+  estructura idéntica): una sola discrepancia real de significado,
+  `leaveConfirmYes` en inglés seguía con el "Yes, leave" antiguo en vez
+  de reflejar el nuevo matiz español — corregido a "Yes, stop caring
+  for the baby".
 - Las tarjetas de predicción (reubicadas arriba con el aspecto de un
   evento registrado, ver más arriba) heredaban también la elevación al
   hover, el icono que escala y el `<button>` de `EntryCard` — pero no

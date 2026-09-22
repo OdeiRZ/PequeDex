@@ -93,9 +93,9 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 9. ✅ Despliegue real: API en [Render](https://render.com) (Docker,
    Frankfurt) + Postgres en [Neon](https://neon.tech) (Londres) + fotos de
    hitos en [Cloudflare R2](https://developers.cloudflare.com/r2/) +
-   frontend en [Cloudflare Pages](https://pages.cloudflare.com). Verificado
-   de punta a punta contra los servicios reales (registro, crear un bebé,
-   subir la foto de un hito) tras el despliegue.
+   frontend en GitHub Pages (antes en Cloudflare Pages, ver nota arriba).
+   Verificado de punta a punta contra los servicios reales (registro,
+   crear un bebé, subir la foto de un hito) tras el despliegue.
 10. ✅ Barra de accesos rápidos personalizable por cuidador (mínimo 3 de
     las 5 categorías), con los bloques del dashboard ligados a cada una
     apareciendo o no según la elección — ver `web/README.md`.

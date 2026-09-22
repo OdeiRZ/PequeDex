@@ -64,7 +64,7 @@ it('blocks leaving a baby as its only remaining caregiver', function () {
 
     $this->deleteJson("/api/babies/{$baby->id}/leave")
         ->assertUnprocessable()
-        ->assertJsonPath('message', 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.');
+        ->assertJsonPath('message', 'Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.');
 
     expect($baby->users()->count())->toBe(1);
 });

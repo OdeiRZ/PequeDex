@@ -115,7 +115,7 @@ class BabyController extends Controller
 
             if ($baby->users()->count() <= 1) {
                 return response()->json([
-                    'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de abandonarlo.',
+                    'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.',
                 ], 422);
             }
 

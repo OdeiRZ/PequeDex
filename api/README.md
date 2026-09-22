@@ -373,7 +373,7 @@ Variables de entorno necesarias en Render:
   patrón ya en marcha en MIRA_MarketLens y LudoDex. `traces_sample_rate`
   se deja sin definir a propósito (`config/sentry.php` cae a `null`, sin
   tracing de rendimiento) — solo interesan los errores.
-- `FRONTEND_URL` (la URL pública de la SPA en Cloudflare Pages): a dónde
+- `FRONTEND_URL` (la URL pública de la SPA en GitHub Pages): a dónde
   apunta el enlace del correo de restablecer contraseña — esta API no
   tiene ninguna ruta web renderizada donde llevarlo.
 - `MAIL_MAILER=resend`, `RESEND_API_KEY` y `MAIL_FROM_ADDRESS` (remitente

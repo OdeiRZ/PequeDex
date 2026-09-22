@@ -316,7 +316,7 @@ async function onExportPdf() {
     <div class="flex items-center justify-between">
       <RouterLink
         :to="{ name: 'dashboard' }"
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text"
         :aria-label="t('common.back')"
       >
         <svg
@@ -334,7 +334,7 @@ async function onExportPdf() {
       <h1 class="font-display text-lg font-bold">{{ t('contractions.title') }}</h1>
       <button
         type="button"
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text disabled:opacity-50"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
         :disabled="exporting || babies.contractions.length === 0"
         :aria-label="t('contractions.export')"
         @click="onExportPdf"
@@ -437,7 +437,7 @@ async function onExportPdf() {
             :class="
               babies.current?.water_broke_at
                 ? 'border-brand-teal bg-brand-teal text-brand-ink'
-                : 'border-brand-teal bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20'
+                : 'border-brand-teal bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20 active:bg-brand-teal/20'
             "
             @click="onDropletClick"
           >

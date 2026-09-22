@@ -151,7 +151,7 @@ const rows = computed<Row[]>(() => {
             :class="
               row.isRunning
                 ? 'border-brand bg-transparent'
-                : 'border-transparent bg-surface-sunken hover:bg-surface'
+                : 'border-transparent bg-surface-sunken hover:bg-surface active:bg-surface'
             "
             @click="$emit('edit', row.contraction.id)"
           >

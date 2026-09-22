@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
@@ -105,6 +105,35 @@ const rhythm = computed<RhythmData>(() => {
     hasData: feedTicks.length > 0 || diaperTicks.length > 0 || sleepSegments.length > 0,
   }
 })
+
+// The exact time behind each mark used to live only in a `title`
+// attribute - a hover-only native tooltip, unreachable by touch on the
+// mobile-first majority of use. Marks are real `<button>`s now, and
+// tapping one opens this same info in a small bubble instead; tapping
+// the same mark again, a different mark, or anywhere else on the bar
+// closes it. `left` is clamped away from the bar's own edges so the
+// bubble never renders clipped by the card.
+interface ActiveTick {
+  label: string
+  time: string
+  left: number
+}
+
+const activeTick = ref<ActiveTick | null>(null)
+
+function toggleTick(next: ActiveTick) {
+  activeTick.value =
+    activeTick.value?.label === next.label && activeTick.value.time === next.time
+      ? null
+      : { ...next, left: Math.min(92, Math.max(8, next.left)) }
+}
+
+watch(
+  () => props.day,
+  () => {
+    activeTick.value = null
+  },
+)
 </script>
 
 <template>
@@ -112,7 +141,7 @@ const rhythm = computed<RhythmData>(() => {
     <div class="mb-1 flex items-center justify-between gap-2">
       <button
         type="button"
-        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text"
+        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text"
         :aria-label="t('dashboard.rhythm.prevDay')"
         @click="$emit('prev')"
       >
@@ -134,7 +163,7 @@ const rhythm = computed<RhythmData>(() => {
       <button
         type="button"
         :disabled="isToday"
-        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text disabled:opacity-30"
+        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-30"
         :aria-label="t('dashboard.rhythm.nextDay')"
         @click="$emit('next')"
       >
@@ -153,28 +182,51 @@ const rhythm = computed<RhythmData>(() => {
     </div>
 
     <template v-if="rhythm.hasData">
-      <div class="relative my-3.5 h-7 rounded-full bg-surface-sunken">
-        <span
+      <div class="relative my-3.5 h-7 rounded-full bg-surface-sunken" @click="activeTick = null">
+        <button
           v-for="(seg, i) in rhythm.sleepSegments"
           :key="`sleep-${i}`"
+          type="button"
           :title="`${t('dashboard.rhythm.sleep')} ${seg.time}`"
-          class="absolute top-[3px] bottom-[3px] cursor-default rounded-full bg-sleep opacity-90 transition-[opacity,transform] duration-150 hover:z-10 hover:scale-y-125 hover:opacity-100"
+          :aria-label="`${t('dashboard.rhythm.sleep')} ${seg.time}`"
+          class="absolute top-[3px] bottom-[3px] rounded-full bg-sleep opacity-90 transition-[opacity,transform] duration-150 hover:z-10 hover:scale-y-125 hover:opacity-100 active:z-10 active:scale-y-125 active:opacity-100"
           :style="{ left: `${seg.left}%`, width: `${seg.width}%` }"
-        ></span>
-        <span
+          @click.stop="
+            toggleTick({ label: t('dashboard.rhythm.sleep'), time: seg.time, left: seg.left })
+          "
+        ></button>
+        <button
           v-for="(tick, i) in rhythm.feedTicks"
           :key="`feed-${i}`"
+          type="button"
           :title="`${t('dashboard.rhythm.feed')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 cursor-default rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125"
+          :aria-label="`${t('dashboard.rhythm.feed')} ${tick.time}`"
+          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
           :style="{ left: `${tick.left}%` }"
-        ></span>
-        <span
+          @click.stop="
+            toggleTick({ label: t('dashboard.rhythm.feed'), time: tick.time, left: tick.left })
+          "
+        ></button>
+        <button
           v-for="(tick, i) in rhythm.diaperTicks"
           :key="`diaper-${i}`"
+          type="button"
           :title="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
-          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 cursor-default rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125"
+          :aria-label="`${t('dashboard.rhythm.diaper')} ${tick.time}`"
+          class="absolute top-[3px] bottom-[3px] w-[5px] -translate-x-1/2 rounded-full bg-diaper transition-transform duration-150 hover:z-10 hover:scale-125 active:z-10 active:scale-125"
           :style="{ left: `${tick.left}%` }"
-        ></span>
+          @click.stop="
+            toggleTick({ label: t('dashboard.rhythm.diaper'), time: tick.time, left: tick.left })
+          "
+        ></button>
+
+        <div
+          v-if="activeTick"
+          class="pointer-events-none absolute -top-8 -translate-x-1/2 rounded-full bg-text px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-bg shadow-md"
+          :style="{ left: `${activeTick.left}%` }"
+        >
+          {{ activeTick.label }} {{ activeTick.time }}
+        </div>
       </div>
       <div class="relative mb-2.5 h-4 text-xs tabular-nums text-text-muted">
         <span class="absolute left-0">0h</span>

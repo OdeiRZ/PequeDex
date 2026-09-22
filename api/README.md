@@ -81,6 +81,23 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   fila que se está editando — el campo `user_id` en `feeds`/`sleeps`/
   `diaper_changes` es solo trazabilidad de quién lo registró, nunca se
   usa para decidir quién puede verlo o editarlo.
+- `BabyController@destroy` — `DELETE /babies/{baby}`, borrado
+  permanente del bebé y cuanto cuelga de él. `leave()` (desvincular al
+  usuario actual, dejando el bebé para el resto) ya rechazaba salir
+  como único cuidador con un 422 — dejaría el bebé sin nadie vinculado
+  — pero no había ninguna forma real de eliminarlo del todo en ese
+  caso; la única salida era compartir el código de invitación con
+  alguien más solo para poder desvincularse después. `destroy()` cubre
+  justo ese hueco: mismo `lockForUpdate()` que `leave()` para que dos
+  peticiones simultáneas no dejen pasar un `count() > 1` obsoleto,
+  rechazado con 422 si hay más de un cuidador (borrar los datos de un
+  bebé que otro cuidador sigue usando no es una decisión unilateral).
+  `cascadeOnDelete()` ya cubre feeds/sueños/pañales/medidas/hitos/
+  contracciones a nivel de base de datos, pero eso no dispara eventos
+  de Eloquent — las fotos de hitos viven en disco, no en la BD (ver
+  `Milestone.php` más abajo), así que se limpian a mano antes del
+  `delete()`, mismo `Storage::disk(...)->delete()` que ya usa
+  `MilestoneController::destroy()` para una sola foto.
 - `UpdateFeedRequest`/`UpdateSleepRequest`/`UpdateDiaperChangeRequest` —
   mismas reglas que su `Store*Request`, no un `sometimes` parcial: en
   `Feed`, por ejemplo, `side`/`amount_ml` dependen de `type` (uno de los
@@ -88,6 +105,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   una edición manda la fila completa de vuelta en vez de un parche —
   reutilizado por el frontend, cuyo formulario de edición es el mismo
   de "+ Toma"/"+ Sueño"/"+ Pañal" precargado (ver `web/README.md`).
+- `Feed::milk_type` (`App\Enums\MilkType`, calostro/leche) /
+  `DiaperChange::residue_color` (`App\Enums\DiaperResidueColor`, verde/
+  amarillo/marrón/meconio) — mismo patrón `required_if`/
+  `prohibited_unless` que `Feed::side` (solo válido en una toma de
+  pecho): `milk_type` solo tiene sentido con `type = pecho`.
+  `residue_color` sigue una variante más laxa, `prohibited_if` en vez
+  de `required_if`/`prohibited_unless`: es opcional incluso cuando
+  tiene sentido (`type = sucio`/`ambos`, nadie está obligado a anotarlo
+  cada vez), pero prohibido explícitamente para `type = mojado` — un
+  pañal solo mojado no tiene heces que describir.
 - `SleepController::index` admite un parámetro opcional `?since=` para
   acotar a una ventana reciente en vez de traer el historial completo
   del bebé — lo usa el gráfico semanal de sueño del frontend (ver

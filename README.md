@@ -106,6 +106,11 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     estadísticas de la última hora, línea temporal con intensidad y
     registro de rotura de bolsa de aguas, exportable a PDF — ver
     `web/README.md`/`api/README.md`.
+13. ✅ Ajustes reportados en vivo tras usar la app a diario: sexo del
+    bebé elegible ya al crearlo, eliminar un bebé del todo si eres su
+    único cuidador (no solo "dejar de cuidarlo"), tipo de leche en
+    tomas de pecho y color de las heces en pañales sucios — ver
+    `web/README.md`/`api/README.md`.
 
 ## Licencia
 

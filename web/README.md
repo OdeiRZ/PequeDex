@@ -233,11 +233,15 @@ porque la verificación local solo cubría los otros tres.
   distinto al de "ahora". El icono de la tarjeta de enlace del
   dashboard cambió de una gota (ya usada dentro de esta misma vista
   para la rotura de bolsa de aguas, así que sugería "agua") a un
-  cronómetro. Nuevo botón "Eliminar todas las contracciones" en los
-  ajustes del bebé (`DashboardView.vue`, junto a "Abandonar este
-  bebé", mismo patrón de confirmación en dos pasos), que llama a
+  cronómetro. Botón "Eliminar todas las contracciones" (mismo patrón de
+  confirmación en dos pasos que "Dejar de cuidar al bebé") que llama a
   `babies.deleteAllContractions()` — útil tras una falsa alarma, sin
-  tener que borrar fila por fila. El PDF exportado se ordenó de más
+  tener que borrar fila por fila. Vivió primero en los ajustes del bebé
+  (`DashboardView.vue`, junto a "Dejar de cuidar"), siempre visible
+  aunque no hubiera ninguna contracción que borrar; se movió al final
+  de la propia `ContractionsView.vue` — la página que de hecho sabe si
+  hay contracciones cargadas — y ahora solo aparece cuando las hay. El
+  PDF exportado se ordenó de más
   reciente a más antigua (igual que en pantalla — antes salía al
   revés) y recibió una pasada de legibilidad para papel: tipografía
   más grande, separador de día centrado, columnas reequilibradas
@@ -248,6 +252,33 @@ porque la verificación local solo cubría los otros tres.
   dentro de la propia línea temporal, en azul para distinguirse como
   evento aparte (ver `api/README.md` para el detalle del lado
   backend).
+- **Sexo al crear el bebé, eliminar bebé para el cuidador único**
+  (`DashboardView.vue`) — el formulario de onboarding ("Empieza con tu
+  bebé") solo pedía nombre y fecha prevista de parto; el sexo (opcional,
+  ya aceptado por el backend desde antes) quedaba relegado a fijarse
+  después desde "Sexo / fecha de nacimiento". Ahora el mismo
+  `SegmentedControl` de esos ajustes aparece también al crear el primer
+  bebé y al añadir uno adicional. Por otro lado, "Dejar de cuidar al
+  bebé" ya rechazaba salir como único cuidador (dejaría el bebé sin
+  nadie vinculado — ver `api/README.md`), pero no ofrecía alternativa:
+  la única salida real era compartir antes el código de invitación con
+  alguien más. Cuando ese intento falla, la propia hoja de ajustes
+  muestra ahora "Eliminar este bebé" justo debajo del error —
+  `babies.remove()` → `DELETE /babies/{baby}`, mismo patrón de
+  "detectar el 422 concreto y ofrecer la salida real" que ya usa
+  `leaveError`.
+- **Tipo de leche en tomas de pecho, color de las heces en pañales
+  sucios** (`DashboardView.vue`) — al elegir "Pecho" en el formulario de
+  "+ Toma" aparece un segundo `SegmentedControl` ("Calostro"/"Leche",
+  con "Leche" preseleccionada por defecto, mismo sitio que ya ocupaba el
+  selector de lado). El formulario de "+ Pañal" gana un selector de
+  color (Verde/Amarillo/Marrón/Meconio, con "Sin indicar" como opción
+  explícita en vez de forzar una elección) que solo se muestra con
+  "Sucio"/"Ambos" — un pañal solo mojado no tiene heces que describir, y
+  el backend lo rechaza si se manda ahí (ver `api/README.md`). Ambos
+  campos viajan como `undefined`/`null` fuera de su contexto (toma no-
+  pecho, pañal mojado) para no depender de que el backend ignore un
+  valor que no debería haberse mandado.
 
 ## Idioma
 

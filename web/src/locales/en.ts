@@ -176,7 +176,7 @@ export default {
       leaveBaby: 'Leave the baby',
       leaveConfirm:
         "Are you sure you want to stop being a caregiver for this baby? You'll need the invite code to join again.",
-      leaveConfirmYes: 'Yes, leave',
+      leaveConfirmYes: 'Yes, stop caring for the baby',
       leaving: 'Leaving...',
       leaveError: "You're the only caregiver for this baby. Invite someone else before leaving.",
       toastLeft: "You're no longer a caregiver for this baby.",

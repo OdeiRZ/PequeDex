@@ -4,7 +4,32 @@ import CategoryIcon from './CategoryIcon.vue'
 import { categoryText, categoryBg, type Category } from '@/lib/category'
 
 const props = defineProps<{ items: { category: Category; label: string }[] }>()
-defineEmits<{ select: [category: Category] }>()
+const emit = defineEmits<{ select: [category: Category] }>()
+
+// A ripple from the exact point touched, not the button's center - same
+// idea as Android's own ripple, done here in plain CSS/JS since nothing
+// else in the app pulls in a UI library for a single effect. Cleans
+// itself up after the animation instead of accumulating spans.
+function onTap(event: MouseEvent, category: Category) {
+  const button = event.currentTarget as HTMLElement
+  const rect = button.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height) * 1.6
+  // event.detail === 0 means this click came from the keyboard (Enter/
+  // Space), not a pointer - clientX/Y would be 0 then, which would
+  // otherwise pin the ripple to the button's top-left corner instead of
+  // its center.
+  const originX = event.detail === 0 ? rect.left + rect.width / 2 : event.clientX
+  const originY = event.detail === 0 ? rect.top + rect.height / 2 : event.clientY
+  const ripple = document.createElement('span')
+  ripple.className = 'action-ripple'
+  ripple.style.width = ripple.style.height = `${size}px`
+  ripple.style.left = `${originX - rect.left - size / 2}px`
+  ripple.style.top = `${originY - rect.top - size / 2}px`
+  button.appendChild(ripple)
+  ripple.addEventListener('animationend', () => ripple.remove())
+
+  emit('select', category)
+}
 
 // Tailwind can't interpolate an arbitrary count into `grid-cols-{n}` at
 // build time, and with fewer items the freed-up space goes into visibly
@@ -83,10 +108,10 @@ const sizes = computed(() => {
           type="button"
           class="group flex flex-col items-center rounded-full px-1 py-1.5 font-semibold text-text-muted transition-colors"
           :class="[sizes.gap, sizes.text]"
-          @click="$emit('select', item.category)"
+          @click="onTap($event, item.category)"
         >
           <span
-            class="grid place-items-center rounded-full transition-[height,width,transform] duration-150 group-hover:-translate-y-0.5 group-active:scale-90 motion-reduce:transition-[height,width]"
+            class="relative grid place-items-center overflow-hidden rounded-full transition-[height,width,transform] duration-150 group-hover:-translate-y-0.5 group-active:scale-90 motion-reduce:transition-[height,width]"
             :class="[categoryText[item.category], categoryBg[item.category], sizes.wrapper]"
           >
             <CategoryIcon
@@ -101,3 +126,31 @@ const sizes = computed(() => {
     </div>
   </Teleport>
 </template>
+
+<style>
+/* Not scoped: the ripple <span> is appended straight into the DOM via
+   plain JS (onTap above), so it never gets this component's scoped
+   data-v-* attribute the way template-authored elements do. */
+.action-ripple {
+  position: absolute;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.45);
+  transform: scale(0);
+  pointer-events: none;
+  animation: action-ripple-out 0.5s ease-out forwards;
+}
+
+@keyframes action-ripple-out {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-ripple {
+    animation: none;
+    display: none;
+  }
+}
+</style>

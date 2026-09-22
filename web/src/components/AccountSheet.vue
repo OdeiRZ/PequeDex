@@ -63,12 +63,31 @@ const savingPassword = ref(false)
 const avatarInput = ref<HTMLInputElement | null>(null)
 const uploadingAvatar = ref(false)
 
+// Briefly morphs the button itself into a checkmark instead of relying
+// on the toast alone - both these forms stay open after saving (unlike
+// the quick-log sheets, which close immediately), so there's actually
+// time for the confirmation to be seen right where the tap happened.
+// The timeout that hides it again is tracked and cleared before each
+// new one is scheduled - without that, saving twice in quick succession
+// (the button re-enables the moment the first request resolves, well
+// before its own 1300ms is up) let the *first* save's timeout hide the
+// *second* save's confirmation early, cutting it down to under 200ms.
+const justSavedProfile = ref(false)
+const justSavedPassword = ref(false)
+let justSavedProfileTimer: ReturnType<typeof setTimeout> | undefined
+let justSavedPasswordTimer: ReturnType<typeof setTimeout> | undefined
+
 async function onSubmitProfile() {
   savingProfile.value = true
 
   try {
     await auth.updateProfile({ name: profileName.value, email: profileEmail.value })
     toast.show(t('profile.toastSaved'))
+    justSavedProfile.value = true
+    clearTimeout(justSavedProfileTimer)
+    justSavedProfileTimer = setTimeout(() => {
+      justSavedProfile.value = false
+    }, 1300)
   } catch {
     toast.show(t('profile.saveError'), 'error')
   } finally {
@@ -89,6 +108,11 @@ async function onSubmitPassword() {
     newPassword.value = ''
     newPasswordConfirmation.value = ''
     toast.show(t('profile.toastPasswordSaved'))
+    justSavedPassword.value = true
+    clearTimeout(justSavedPasswordTimer)
+    justSavedPasswordTimer = setTimeout(() => {
+      justSavedPassword.value = false
+    }, 1300)
   } catch {
     toast.show(t('profile.passwordError'), 'error')
   } finally {
@@ -285,8 +309,24 @@ watch(
           class="field-input"
         />
       </div>
-      <button type="submit" :disabled="savingProfile" class="btn-primary">
-        {{ t('common.save') }}
+      <button
+        type="submit"
+        :disabled="savingProfile"
+        class="btn-primary save-btn"
+        :class="justSavedProfile && 'is-saved'"
+      >
+        <span class="save-btn-label">{{ t('common.save') }}</span>
+        <svg
+          class="save-btn-check"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 13l4 4L19 7" />
+        </svg>
       </button>
     </form>
 
@@ -365,7 +405,7 @@ watch(
         @click="onTogglePredictions"
       >
         <span
-          class="absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm transition-[left] duration-150 ease-out"
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: predictionsEnabled ? '22px' : '2px' }"
         ></span>
       </button>
@@ -405,9 +445,107 @@ watch(
           autocomplete="new-password"
         />
       </div>
-      <button type="submit" :disabled="savingPassword" class="btn-primary">
-        {{ t('profile.changePassword') }}
+      <button
+        type="submit"
+        :disabled="savingPassword"
+        class="btn-primary save-btn"
+        :class="justSavedPassword && 'is-saved'"
+      >
+        <span class="save-btn-label">{{ t('profile.changePassword') }}</span>
+        <svg
+          class="save-btn-check"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 13l4 4L19 7" />
+        </svg>
       </button>
     </form>
   </BottomSheet>
 </template>
+
+<style scoped>
+.switch-thumb {
+  transition: left 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.save-btn {
+  position: relative;
+}
+
+.save-btn-label,
+.save-btn-check {
+  transition: opacity 0.15s ease;
+}
+
+.save-btn-check {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0;
+}
+
+.save-btn-check path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+
+.save-btn.is-saved {
+  background: var(--diaper);
+  animation: save-btn-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.save-btn.is-saved .save-btn-label {
+  opacity: 0;
+}
+
+.save-btn.is-saved .save-btn-check {
+  opacity: 1;
+}
+
+.save-btn.is-saved .save-btn-check path {
+  animation: save-btn-draw-check 0.35s ease 0.1s forwards;
+}
+
+@keyframes save-btn-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.92);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes save-btn-draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-thumb {
+    transition: left 0.15s ease;
+  }
+
+  .save-btn.is-saved {
+    animation: none;
+  }
+
+  .save-btn.is-saved .save-btn-check path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+</style>

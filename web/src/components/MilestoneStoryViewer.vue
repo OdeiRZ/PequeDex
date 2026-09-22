@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UserAvatar from './UserAvatar.vue'
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/bodyScrollLock'
@@ -26,6 +26,36 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// A small burst of particles the moment a like actually lands - watching
+// the prop itself (not the click) means it fires once the store's
+// `toggleMilestoneLike()` round-trip really confirms it, not before, and
+// never fires on the initial mount even if the milestone was already
+// liked from a previous visit.
+interface HeartParticle {
+  id: number
+  angle: number
+}
+
+const heartParticles = ref<HeartParticle[]>([])
+let particleSeq = 0
+
+watch(
+  () => props.isLiked,
+  (liked, wasLiked) => {
+    if (!liked || wasLiked) return
+
+    const created = Array.from({ length: 6 }, (_, i) => ({
+      id: particleSeq++,
+      angle: (360 / 6) * i + Math.random() * 20 - 10,
+    }))
+    heartParticles.value.push(...created)
+    setTimeout(() => {
+      const createdIds = new Set(created.map((p) => p.id))
+      heartParticles.value = heartParticles.value.filter((p) => !createdIds.has(p.id))
+    }, 600)
+  },
+)
 
 // Full-bleed photo without cropping - unlike the small story-ring
 // thumbnail (MilestoneStories.vue, which can afford to crop), this is
@@ -216,7 +246,7 @@ function onTouchEnd(event: TouchEvent) {
           </div>
           <button
             type="button"
-            class="flex shrink-0 flex-col items-center gap-0.5"
+            class="like-btn relative flex shrink-0 flex-col items-center gap-0.5"
             :aria-label="t(isLiked ? 'dashboard.milestones.liked' : 'dashboard.milestones.like')"
             @click="emit('toggleLike')"
           >
@@ -232,6 +262,7 @@ function onTouchEnd(event: TouchEvent) {
               :stroke="isLiked ? '#ef4444' : 'currentColor'"
               stroke-width="2"
               class="h-7 w-7"
+              :class="isLiked && 'heart-pop'"
             >
               <path
                 stroke-linecap="round"
@@ -239,6 +270,12 @@ function onTouchEnd(event: TouchEvent) {
                 d="M12 20.5s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 5.5c-2.5 4.5-9.5 9-9.5 9Z"
               />
             </svg>
+            <span
+              v-for="particle in heartParticles"
+              :key="particle.id"
+              class="heart-particle"
+              :style="{ '--angle': `${particle.angle}deg` }"
+            ></span>
           </button>
         </div>
 
@@ -291,3 +328,55 @@ function onTouchEnd(event: TouchEvent) {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.heart-pop {
+  animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.heart-particle {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  pointer-events: none;
+  animation: heart-particle-fly 0.55s ease-out forwards;
+}
+
+@keyframes heart-particle-fly {
+  from {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-28px) scale(0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-pop {
+    animation: none;
+  }
+
+  .heart-particle {
+    animation: none;
+    display: none;
+  }
+}
+</style>

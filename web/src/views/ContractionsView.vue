@@ -292,6 +292,8 @@ async function onResetBreak() {
 // --- Exportar PDF ---
 
 const exporting = ref(false)
+const justExported = ref(false)
+let justExportedTimer: ReturnType<typeof setTimeout> | undefined
 
 async function onExportPdf() {
   exporting.value = true
@@ -303,6 +305,14 @@ async function onExportPdf() {
     link.download = 'contracciones.pdf'
     link.click()
     URL.revokeObjectURL(url)
+    justExported.value = true
+    // Cleared and rescheduled rather than left to fire unconditionally -
+    // exporting twice in quick succession would otherwise let the first
+    // export's timeout hide the second export's checkmark early.
+    clearTimeout(justExportedTimer)
+    justExportedTimer = setTimeout(() => {
+      justExported.value = false
+    }, 1400)
   } catch {
     toast.show(t('contractions.exportError'), 'error')
   } finally {
@@ -334,12 +344,15 @@ async function onExportPdf() {
       <h1 class="font-display text-lg font-bold">{{ t('contractions.title') }}</h1>
       <button
         type="button"
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
+        class="export-btn relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
+        :class="[exporting && 'is-exporting', justExported && 'is-done']"
         :disabled="exporting || babies.contractions.length === 0"
         :aria-label="t('contractions.export')"
         @click="onExportPdf"
       >
+        <span class="export-ring" aria-hidden="true"></span>
         <svg
+          v-if="!justExported"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -350,6 +363,18 @@ async function onExportPdf() {
         >
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <path d="M7 10l5 5 5-5M12 15V3" />
+        </svg>
+        <svg
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="export-check h-5 w-5"
+        >
+          <path d="M5 13l4 4L19 7" />
         </svg>
       </button>
     </div>
@@ -479,10 +504,11 @@ async function onExportPdf() {
           <button
             type="button"
             :disabled="togglingTimer"
-            class="btn-primary flex flex-1 items-center justify-center gap-2 !rounded-full"
-            :class="activeContraction ? '!bg-danger' : ''"
+            class="timer-btn btn-primary relative flex flex-1 items-center justify-center gap-2 !rounded-full"
+            :class="[activeContraction ? '!bg-danger' : '', activeContraction && 'is-running']"
             @click="onToggleTimer"
           >
+            <span class="timer-ring" aria-hidden="true"></span>
             <svg
               v-if="!activeContraction"
               viewBox="0 0 24 24"
@@ -560,7 +586,7 @@ async function onExportPdf() {
               @click="editIntensity = option.value"
             >
               {{ option.label }}
-              <span class="flex gap-0.5">
+              <span class="flex gap-0.5" :key="`bolts-${option.value}-${editIntensity}`">
                 <svg
                   v-for="bolt in 3"
                   :key="bolt"
@@ -571,7 +597,15 @@ async function onExportPdf() {
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   class="h-4 w-4"
-                  :class="bolt <= option.value + 1 ? 'text-milestone' : 'text-text-muted'"
+                  :class="[
+                    bolt <= option.value + 1 ? 'text-milestone' : 'text-text-muted',
+                    editIntensity === option.value && bolt <= option.value + 1 && 'bolt-pop',
+                  ]"
+                  :style="
+                    editIntensity === option.value && bolt <= option.value + 1
+                      ? { animationDelay: `${(bolt - 1) * 70}ms` }
+                      : undefined
+                  "
                 >
                   <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
                 </svg>
@@ -660,3 +694,106 @@ async function onExportPdf() {
     </BottomSheet>
   </main>
 </template>
+
+<style scoped>
+.bolt-pop {
+  animation: bolt-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes bolt-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* A ring that breathes outward while a contraction is running - a
+   pulse metaphor that fits this one screen specifically. */
+.timer-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 999px;
+  border: 2px solid var(--danger);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.timer-btn.is-running .timer-ring {
+  opacity: 1;
+  animation: timer-ring-breathe 1.6s ease-out infinite;
+}
+
+@keyframes timer-ring-breathe {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+.export-ring {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  border-top-color: var(--brand-teal);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.export-btn.is-exporting .export-ring {
+  opacity: 1;
+  animation: export-ring-spin 0.7s linear infinite;
+}
+
+@keyframes export-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.export-btn.is-done {
+  color: var(--diaper);
+}
+
+.export-check {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: export-check-draw 0.35s ease forwards;
+}
+
+@keyframes export-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bolt-pop {
+    animation: none;
+  }
+
+  .timer-btn.is-running .timer-ring {
+    animation: none;
+    opacity: 0;
+  }
+
+  .export-btn.is-exporting .export-ring {
+    animation: none;
+    opacity: 0;
+  }
+
+  .export-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+</style>

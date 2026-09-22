@@ -1,16 +1,32 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-defineEmits<{ click: [] }>()
+const emit = defineEmits<{ click: [] }>()
+
+// A quick shake + red flash on tap, purely local to this button - the
+// actual delete (and the row's own fade/slide-out, see .entry-list-leave
+// in base.css) is never delayed for it, it just plays out during the
+// network round-trip that's already happening before the row leaves.
+const confirming = ref(false)
+
+function onClick() {
+  confirming.value = false
+  void requestAnimationFrame(() => {
+    confirming.value = true
+  })
+  emit('click')
+}
 </script>
 
 <template>
   <button
     type="button"
     class="del-btn grid h-7 w-7 shrink-0 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-sunken hover:text-danger active:scale-[0.88]"
+    :class="confirming && 'is-confirming'"
     :aria-label="t('common.delete')"
-    @click="$emit('click')"
+    @click="onClick"
   >
     <svg
       viewBox="0 0 24 24"
@@ -42,6 +58,40 @@ defineEmits<{ click: [] }>()
   transform: rotate(-22deg) translateY(-1px);
 }
 
+.del-btn.is-confirming {
+  color: var(--danger);
+  animation: del-shake 0.32s ease;
+}
+
+.del-btn.is-confirming .lid {
+  animation: del-lid-snap 0.32s ease;
+}
+
+@keyframes del-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes del-lid-snap {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lid {
     transition: none;
@@ -50,6 +100,11 @@ defineEmits<{ click: [] }>()
   .del-btn:hover .lid,
   .del-btn:focus-visible .lid {
     transform: none;
+  }
+
+  .del-btn.is-confirming,
+  .del-btn.is-confirming .lid {
+    animation: none;
   }
 }
 </style>

@@ -1185,7 +1185,7 @@ const feedPredictionLabel = computed(() => {
             class="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-[transform,background-color,color] duration-150 active:scale-95"
             :class="
               baby.id === babies.current?.id
-                ? 'bg-brand text-brand-ink shadow-sm'
+                ? 'baby-pill-active bg-brand text-brand-ink shadow-sm'
                 : 'bg-surface text-text-muted hover:text-text'
             "
             @click="onSwitchBaby(baby.id)"
@@ -1845,35 +1845,41 @@ const feedPredictionLabel = computed(() => {
             >
               {{ t('dashboard.babySettings.deleteAllContractions') }}
             </button>
-            <template v-else>
-              <p class="text-sm text-text-muted">
-                {{ t('dashboard.babySettings.deleteAllContractionsConfirm') }}
-              </p>
-              <p
-                v-if="deleteContractionsError"
-                role="alert"
-                class="text-sm font-medium text-danger"
-              >
-                {{ deleteContractionsError }}
-              </p>
-              <div class="flex gap-3">
-                <button type="button" class="btn-ghost flex-1" @click="cancelDeleteAllContractions">
-                  {{ t('common.cancel') }}
-                </button>
-                <button
-                  type="button"
-                  :disabled="deletingContractions"
-                  class="btn-primary flex-1 !bg-danger !text-white"
-                  @click="onDeleteAllContractions"
+            <Transition name="confirm-warn">
+              <div v-if="confirmingDeleteContractions" class="flex flex-col gap-3">
+                <p class="text-sm text-text-muted">
+                  {{ t('dashboard.babySettings.deleteAllContractionsConfirm') }}
+                </p>
+                <p
+                  v-if="deleteContractionsError"
+                  role="alert"
+                  class="text-sm font-medium text-danger"
                 >
-                  {{
-                    deletingContractions
-                      ? t('dashboard.babySettings.deletingContractions')
-                      : t('dashboard.babySettings.deleteAllContractionsConfirmYes')
-                  }}
-                </button>
+                  {{ deleteContractionsError }}
+                </p>
+                <div class="flex gap-3">
+                  <button
+                    type="button"
+                    class="btn-ghost flex-1"
+                    @click="cancelDeleteAllContractions"
+                  >
+                    {{ t('common.cancel') }}
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="deletingContractions"
+                    class="btn-primary flex-1 !bg-danger !text-white"
+                    @click="onDeleteAllContractions"
+                  >
+                    {{
+                      deletingContractions
+                        ? t('dashboard.babySettings.deletingContractions')
+                        : t('dashboard.babySettings.deleteAllContractionsConfirmYes')
+                    }}
+                  </button>
+                </div>
               </div>
-            </template>
+            </Transition>
           </template>
 
           <button
@@ -1884,29 +1890,31 @@ const feedPredictionLabel = computed(() => {
           >
             {{ t('dashboard.babySettings.leaveBaby') }}
           </button>
-          <template v-else>
-            <p class="text-sm text-text-muted">{{ t('dashboard.babySettings.leaveConfirm') }}</p>
-            <p v-if="leaveError" role="alert" class="text-sm font-medium text-danger">
-              {{ leaveError }}
-            </p>
-            <div class="flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="cancelLeaveBaby">
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                type="button"
-                :disabled="leaving"
-                class="btn-primary flex-1 !bg-danger !text-white"
-                @click="onLeaveBaby"
-              >
-                {{
-                  leaving
-                    ? t('dashboard.babySettings.leaving')
-                    : t('dashboard.babySettings.leaveConfirmYes')
-                }}
-              </button>
+          <Transition name="confirm-warn">
+            <div v-if="confirmingLeave" class="flex flex-col gap-3">
+              <p class="text-sm text-text-muted">{{ t('dashboard.babySettings.leaveConfirm') }}</p>
+              <p v-if="leaveError" role="alert" class="text-sm font-medium text-danger">
+                {{ leaveError }}
+              </p>
+              <div class="flex gap-3">
+                <button type="button" class="btn-ghost flex-1" @click="cancelLeaveBaby">
+                  {{ t('common.cancel') }}
+                </button>
+                <button
+                  type="button"
+                  :disabled="leaving"
+                  class="btn-primary flex-1 !bg-danger !text-white"
+                  @click="onLeaveBaby"
+                >
+                  {{
+                    leaving
+                      ? t('dashboard.babySettings.leaving')
+                      : t('dashboard.babySettings.leaveConfirmYes')
+                  }}
+                </button>
+              </div>
             </div>
-          </template>
+          </Transition>
         </div>
       </BottomSheet>
 

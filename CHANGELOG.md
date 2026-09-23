@@ -1081,6 +1081,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Borrado con sensación de lentitud** — no era el gesto ni la
+  animación: `deleteFeed`/`deleteSleep`/`deleteDiaperChange`/
+  `deleteGrowthMeasurement`/`deleteMilestone` esperaban dos peticiones
+  seguidas (el `DELETE` y luego un `GET` completo de toda la lista)
+  antes de que nada cambiara en pantalla. Pasado a borrado optimista:
+  la fila desaparece del array local de forma síncrona antes de la
+  petición, con el array anterior guardado para restaurarlo si el
+  `DELETE` falla - mismo patrón guardado-al-vuelo-con-rollback que ya
+  usan los toggles de Perfil.
 - **Tercera pasada sobre la interactividad táctil.** La reescritura a
   scroll-snap nativo (ver entrada anterior) arrastró una regresión
   real al modo clásico sin swipe: el fondo/padding se quedó solo en el

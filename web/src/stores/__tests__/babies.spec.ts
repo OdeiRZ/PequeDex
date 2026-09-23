@@ -127,12 +127,14 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
   })
 
-  it('creates a feed and refetches the timeline', async () => {
+  it('creates a feed, folding the response into the timeline without refetching it', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: { id: 1 } } })
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 1, started_at: '2026-08-30T10:00:00Z' } },
+    })
     const store = useBabiesStore()
     await store.create({})
+    vi.mocked(apiClient.get).mockClear()
 
     await store.createFeed({ type: 'biberon', amount_ml: 120, started_at: '2026-08-30T10:00' })
 
@@ -141,7 +143,14 @@ describe('useBabiesStore', () => {
       amount_ml: 120,
       started_at: '2026-08-30T10:00',
     })
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
+    expect(apiClient.get).not.toHaveBeenCalled()
+    expect(store.timeline).toEqual([
+      {
+        type: 'feed',
+        at: '2026-08-30T10:00:00Z',
+        data: { id: 1, started_at: '2026-08-30T10:00:00Z' },
+      },
+    ])
   })
 
   it('deletes a feed optimistically, without refetching the whole timeline', async () => {
@@ -248,12 +257,14 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/growth-measurements')
   })
 
-  it('creates a growth measurement and refetches the list', async () => {
+  it('creates a growth measurement, folding the response into the list without refetching it', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: { id: 1 } } })
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 1, measured_at: '2026-08-30', weight_grams: 4200 } },
+    })
     const store = useBabiesStore()
     await store.create({})
+    vi.mocked(apiClient.get).mockClear()
 
     await store.createGrowthMeasurement({ measured_at: '2026-08-30', weight_grams: 4200 })
 
@@ -261,7 +272,10 @@ describe('useBabiesStore', () => {
       measured_at: '2026-08-30',
       weight_grams: 4200,
     })
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/growth-measurements')
+    expect(apiClient.get).not.toHaveBeenCalled()
+    expect(store.growthMeasurements).toEqual([
+      { id: 1, measured_at: '2026-08-30', weight_grams: 4200 },
+    ])
   })
 
   it('deletes a growth measurement optimistically, without refetching the list', async () => {
@@ -296,19 +310,22 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/milestones')
   })
 
-  it('creates a milestone as multipart form data and refetches the list', async () => {
+  it('creates a milestone as multipart form data, folding the response in without refetching', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: { id: 1 } } })
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 1, achieved_at: '2026-08-30', title: 'Primer diente' } },
+    })
     const store = useBabiesStore()
     await store.create({})
+    vi.mocked(apiClient.get).mockClear()
 
     await store.createMilestone({ achieved_at: '2026-08-30', title: 'Primer diente' })
 
     expect(apiClient.post).toHaveBeenLastCalledWith('/babies/1/milestones', expect.any(FormData), {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/milestones')
+    expect(apiClient.get).not.toHaveBeenCalled()
+    expect(store.milestones).toEqual([{ id: 1, achieved_at: '2026-08-30', title: 'Primer diente' }])
   })
 
   it('deletes a milestone optimistically, without refetching the list', async () => {

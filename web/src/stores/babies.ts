@@ -200,6 +200,50 @@ interface BabiesState {
   contractions: Contraction[]
 }
 
+// Inserts (or, if one with the same type+id already exists, replaces
+// and repositions) a single entry into an already-sorted-desc-by-`at`
+// timeline array, returning a new array - used by create*/update* below
+// to fold the POST/PUT response straight into `timeline` instead of a
+// second round-trip re-fetching the whole thing just to learn what the
+// first response already said. Correctly repositions on update too
+// (editing a feed's `started_at` backwards, say), not just a same-slot
+// overwrite - a plain `findIndex` + splice-in-place would leave it
+// sorted wrong until the dashboard's own 5s poll caught up.
+function upsertTimelineEntry(timeline: TimelineEntry[], entry: TimelineEntry): TimelineEntry[] {
+  const withoutExisting = timeline.filter(
+    (existing) => !(existing.type === entry.type && existing.data.id === entry.data.id),
+  )
+  const insertAt = withoutExisting.findIndex(
+    (existing) => new Date(existing.at).getTime() < new Date(entry.at).getTime(),
+  )
+
+  if (insertAt === -1) {
+    return [...withoutExisting, entry]
+  }
+
+  return [...withoutExisting.slice(0, insertAt), entry, ...withoutExisting.slice(insertAt)]
+}
+
+// Same idea as upsertTimelineEntry above, generalized for the two flat
+// (single-type) lists - growthMeasurements and milestones - each sorted
+// desc by their own date field.
+function upsertByDate<T extends { id: number }>(
+  list: T[],
+  item: T,
+  dateOf: (item: T) => string,
+): T[] {
+  const withoutExisting = list.filter((existing) => existing.id !== item.id)
+  const insertAt = withoutExisting.findIndex(
+    (existing) => new Date(dateOf(existing)).getTime() < new Date(dateOf(item)).getTime(),
+  )
+
+  if (insertAt === -1) {
+    return [...withoutExisting, item]
+  }
+
+  return [...withoutExisting.slice(0, insertAt), item, ...withoutExisting.slice(insertAt)]
+}
+
 export const useBabiesStore = defineStore('babies', {
   state: (): BabiesState => ({
     current: null,
@@ -331,34 +375,67 @@ export const useBabiesStore = defineStore('babies', {
       this.dayTimeline = data.data
     },
 
+    // The POST/PUT response is already the full created/updated record -
+    // the second round-trip a plain fetchTimeline() would add exists only
+    // to learn what that response just said, and was reported live as
+    // making creating something feel as slow as the old (pre-optimistic)
+    // delete did. Folded straight into `timeline` via upsertTimelineEntry
+    // instead.
     async createFeed(payload: CreateFeedPayload) {
-      await apiClient.post(`/babies/${this.current!.id}/feeds`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/feeds`, payload)
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'feed',
+        at: data.data.started_at,
+        data: data.data,
+      })
     },
 
     async updateFeed(id: number, payload: CreateFeedPayload) {
-      await apiClient.put(`/babies/${this.current!.id}/feeds/${id}`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.put(`/babies/${this.current!.id}/feeds/${id}`, payload)
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'feed',
+        at: data.data.started_at,
+        data: data.data,
+      })
     },
 
     async createSleep(payload: CreateSleepPayload) {
-      await apiClient.post(`/babies/${this.current!.id}/sleeps`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/sleeps`, payload)
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'sleep',
+        at: data.data.started_at,
+        data: data.data,
+      })
     },
 
     async updateSleep(id: number, payload: CreateSleepPayload) {
-      await apiClient.put(`/babies/${this.current!.id}/sleeps/${id}`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.put(`/babies/${this.current!.id}/sleeps/${id}`, payload)
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'sleep',
+        at: data.data.started_at,
+        data: data.data,
+      })
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
-      await apiClient.post(`/babies/${this.current!.id}/diaper-changes`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/diaper-changes`, payload)
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'diaper_change',
+        at: data.data.changed_at,
+        data: data.data,
+      })
     },
 
     async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
-      await apiClient.put(`/babies/${this.current!.id}/diaper-changes/${id}`, payload)
-      await this.fetchTimeline()
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/diaper-changes/${id}`,
+        payload,
+      )
+      this.timeline = upsertTimelineEntry(this.timeline, {
+        type: 'diaper_change',
+        at: data.data.changed_at,
+        data: data.data,
+      })
     },
 
     // Optimistic: removed from `timeline` synchronously, before the
@@ -423,13 +500,27 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async createGrowthMeasurement(payload: CreateGrowthMeasurementPayload) {
-      await apiClient.post(`/babies/${this.current!.id}/growth-measurements`, payload)
-      await this.fetchGrowthMeasurements()
+      const { data } = await apiClient.post(
+        `/babies/${this.current!.id}/growth-measurements`,
+        payload,
+      )
+      this.growthMeasurements = upsertByDate(
+        this.growthMeasurements,
+        data.data,
+        (m) => m.measured_at,
+      )
     },
 
     async updateGrowthMeasurement(id: number, payload: CreateGrowthMeasurementPayload) {
-      await apiClient.put(`/babies/${this.current!.id}/growth-measurements/${id}`, payload)
-      await this.fetchGrowthMeasurements()
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/growth-measurements/${id}`,
+        payload,
+      )
+      this.growthMeasurements = upsertByDate(
+        this.growthMeasurements,
+        data.data,
+        (m) => m.measured_at,
+      )
     },
 
     async deleteGrowthMeasurement(id: number) {
@@ -467,10 +558,10 @@ export const useBabiesStore = defineStore('babies', {
         form.append('photo', payload.photo)
       }
 
-      await apiClient.post(`/babies/${this.current!.id}/milestones`, form, {
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/milestones`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      await this.fetchMilestones()
+      this.milestones = upsertByDate(this.milestones, data.data, (m) => m.achieved_at)
     },
 
     // POST, not PUT - a multipart request carrying a replacement photo
@@ -493,10 +584,10 @@ export const useBabiesStore = defineStore('babies', {
         form.append('remove_photo', '1')
       }
 
-      await apiClient.post(`/babies/${this.current!.id}/milestones/${id}`, form, {
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/milestones/${id}`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      await this.fetchMilestones()
+      this.milestones = upsertByDate(this.milestones, data.data, (m) => m.achieved_at)
     },
 
     // A single toggle endpoint, not separate like/unlike actions - the

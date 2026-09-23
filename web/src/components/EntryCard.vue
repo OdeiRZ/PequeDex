@@ -103,15 +103,25 @@ function onRowClick() {
       pulsing && 'entry-card-pulsing',
     ]"
   >
-    <div ref="scrollerRef" class="flex rounded-2xl" :class="swipeMode && 'swipe-scroller'">
+    <!-- The category-tinted background/padding lives here (not on the
+         button below) in the classic layout, since the actions slot sits
+         as its sibling and needs to share the same card surface - the
+         tira reaching the delete icon, not stopping at the button's own
+         edge. In swipe mode it moves onto the button instead: that's the
+         only panel visible at rest, and the actions panel behind it
+         should read as a plain reveal zone, not another tinted card. -->
+    <div
+      ref="scrollerRef"
+      class="flex rounded-2xl"
+      :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3', categoryBg[category]]"
+    >
       <component
         :is="interactive ? 'button' : 'div'"
         :type="interactive ? 'button' : undefined"
-        class="flex min-w-0 items-center gap-3 rounded-2xl p-3 text-left"
+        class="flex min-w-0 items-center gap-3 rounded-2xl text-left"
         :class="[
-          categoryBg[category],
           interactive && 'group',
-          swipeMode ? 'w-full shrink-0 snap-start' : 'flex-1',
+          swipeMode ? [categoryBg[category], 'w-full shrink-0 snap-start p-3'] : 'flex-1',
         ]"
         @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
       >
@@ -177,6 +187,25 @@ function onRowClick() {
         >
           {{ badge }}
         </span>
+
+        <!-- The actions panel now sits fully outside the visible viewport
+             at rest (real overflow, not just covered by color) - without
+             this, nothing on screen hints that there's anything to swipe
+             to at all. Lives inside the always-visible first panel, not
+             the drawer itself, so it's never scrolled away with it. -->
+        <svg
+          v-if="swipeMode"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="swipe-hint h-3.5 w-3.5 shrink-0 text-text-muted/50"
+          aria-hidden="true"
+        >
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
       </component>
 
       <div
@@ -254,5 +283,30 @@ function onRowClick() {
 
 .swipe-scroller::-webkit-scrollbar {
   display: none;
+}
+
+/* A slow, small nudge left - just enough to read as "this points
+   somewhere", not an urgent blinking arrow competing with the rest of
+   the row. Runs continuously rather than once-then-stop: there's no
+   per-row "already seen this" state to track, and a caregiver who
+   hasn't used this entry yet should still see it whenever they look. */
+.swipe-hint {
+  animation: swipe-hint-nudge 2.2s ease-in-out infinite;
+}
+
+@keyframes swipe-hint-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-hint {
+    animation: none;
+  }
 }
 </style>

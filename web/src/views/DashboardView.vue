@@ -1634,7 +1634,12 @@ const sleepPredictionDue = computed(() => {
                 ></span>
                 {{ t('dashboard.timeline.title') }}
               </h2>
-              <TransitionGroup tag="ul" name="entry-list" appear class="flex flex-col gap-2">
+              <TransitionGroup
+                tag="ul"
+                name="entry-list"
+                appear
+                class="relative flex flex-col gap-2"
+              >
                 <template v-for="(item, index) in groupedTimeline" :key="item.key">
                   <li
                     v-if="item.kind === 'separator'"
@@ -1681,7 +1686,12 @@ const sleepPredictionDue = computed(() => {
                 <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
                 {{ t('dashboard.growth.title') }}
               </h2>
-              <TransitionGroup tag="ul" name="entry-list" appear class="flex flex-col gap-2">
+              <TransitionGroup
+                tag="ul"
+                name="entry-list"
+                appear
+                class="relative flex flex-col gap-2"
+              >
                 <EntryCard
                   v-for="(measurement, index) in babies.growthMeasurements"
                   :key="measurement.id"

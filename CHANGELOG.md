@@ -1081,6 +1081,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Crear/editar toma, sueño, pañal, medida e hito con la misma
+  sensación de lentitud que tenía el borrado** — mismo motivo: dos
+  peticiones seguidas (el `POST`/`PUT` y luego un `GET` completo
+  recargando toda la lista) antes de que la fila apareciera. La
+  respuesta del propio `POST`/`PUT` ya es el registro completo
+  (percentiles calculados, likedBy cargado...) - `upsertTimelineEntry`/
+  `upsertByDate` la insertan o reposicionan en el array local ya
+  ordenado en vez de sustituirlo por una recarga entera.
 - **Borrado con sensación de lentitud** — no era el gesto ni la
   animación: `deleteFeed`/`deleteSleep`/`deleteDiaperChange`/
   `deleteGrowthMeasurement`/`deleteMilestone` esperaban dos peticiones

@@ -1081,6 +1081,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Segunda pasada sobre la interactividad táctil, tras probarla de
+  verdad en un dispositivo real** — reporte contundente: "el borrado
+  por swipe es una basura". Reescrito por completo, de matemáticas de
+  `pointermove` manuales a `overflow-x:auto` + `scroll-snap-x` nativo
+  (el navegador aporta la física de momentum/rebote; el panel de
+  acciones queda geométricamente fuera del viewport en reposo, no solo
+  tapado por color); un bug real encontrado en la reconstrucción
+  (`flex-1` fijo ganaba a `w-full` en flexbox, el contenedor nunca
+  desbordaba) también corregido. `DeleteButton.vue` gana `:active`
+  junto a `:hover` (estaba estático al tacto). Añadido, además:
+  `appear` + retardo escalonado (`--stagger-index`) en la carga inicial
+  de la línea temporal (antes aparecía todo de golpe); toast
+  "Toma/Sueño/Pañal/Medida/Hito guardado(a)" al crear (nunca existió,
+  solo al editar/borrar); cantidad de ml precargada a 10 en vez de
+  vacía en el formulario de biberón. Dos puntos del reporte inicial no
+  eran regresiones: la "píldora" Hoy/Semana/Crecimiento y los toasts al
+  crear eran solo demos del artefacto de propuesta, nunca implementados
+  de verdad hasta ahora.
 - Ir a "Contador de contracciones" desde el dashboard, justo después de
   crear el primer bebé y sin recargar la página, dejaba la app en blanco
   (solo el nav superior visible) — reportado en vivo. `DashboardView.vue`

@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Primera pasada de interactividad táctil** (propuesta completa en un
+  artefacto, "adelante con todas"): el brillo de `.btn-primary`, el
+  anillo de color de `EntryCard` y el giro de icono en `ActionBar`
+  solo se disparaban en `:hover` - invisibles en móvil, sin cursor que
+  los active. Añadido `:active`/`.is-pressed`/`group-active` junto a
+  cada `:hover`/`group-hover` existente. `BottomSheet.vue` gana
+  arrastre real del tirador para cerrar (resistencia tipo goma desde
+  60px, cierra por encima de 110px). `toast.ts` añade un pulso de
+  `navigator.vibrate()` al mostrarse (feature-detected, silencioso
+  donde no existe). Queda pendiente, deliberadamente fuera de esta
+  pasada por requerir más decisiones de diseño: swipe-to-delete en
+  `EntryCard` (hoy ya tiene un botón de borrar siempre visible, no
+  oculto), rediseño de formularios (etiqueta flotante, stepper) y
+  pull-to-refresh en el dashboard.
 - **Emoji 💤 junto a una fila de sueño en la línea temporal**, con dos
   variantes según el estado: estático para un sueño ya terminado, con
   una respiración suave (opacidad + desplazamiento, `prefers-reduced-

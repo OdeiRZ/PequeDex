@@ -28,6 +28,7 @@ class User extends Authenticatable
         'avatar',
         'action_bar_categories',
         'predictions_enabled',
+        'swipe_to_delete_enabled',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'action_bar_categories' => 'array',
             'predictions_enabled' => 'boolean',
+            'swipe_to_delete_enabled' => 'boolean',
         ];
     }
 

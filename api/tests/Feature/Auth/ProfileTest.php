@@ -145,6 +145,24 @@ it('turns predictions off and back on', function () {
     expect($user->refresh()->predictions_enabled)->toBeTrue();
 });
 
+it('turns swipe-to-delete on and back off, defaulting to disabled', function () {
+    $user = actingAsUser();
+
+    // Same reason as the predictions_enabled test above - the DB default
+    // (false here) only lands on a fresh read, not the in-memory model.
+    expect($user->refresh()->swipe_to_delete_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/swipe-to-delete', ['swipe_to_delete_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('swipe_to_delete_enabled', true);
+    expect($user->refresh()->swipe_to_delete_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/swipe-to-delete', ['swipe_to_delete_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('swipe_to_delete_enabled', false);
+    expect($user->refresh()->swipe_to_delete_enabled)->toBeFalse();
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
@@ -152,4 +170,5 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->deleteJson('/api/user/avatar')->assertUnauthorized();
     $this->putJson('/api/user/action-bar', ['action_bar_categories' => ['feed', 'sleep', 'diaper']])->assertUnauthorized();
     $this->putJson('/api/user/predictions', ['predictions_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/swipe-to-delete', ['swipe_to_delete_enabled' => true])->assertUnauthorized();
 });

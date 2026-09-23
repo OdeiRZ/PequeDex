@@ -188,7 +188,10 @@ function onGrabPointerUp(event: PointerEvent) {
         :aria-labelledby="labelledBy"
         tabindex="-1"
         class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] ease-[cubic-bezier(0.32,0.72,0,1)]"
-        :class="[open ? 'translate-y-0' : 'translate-y-full', dragging ? '' : 'transition-transform duration-300']"
+        :class="[
+          open ? 'translate-y-0' : 'translate-y-full',
+          dragging ? '' : 'transition-transform duration-300',
+        ]"
         :style="{
           paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
           transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,

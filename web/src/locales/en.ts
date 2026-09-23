@@ -369,5 +369,10 @@ export default {
       description: 'Show estimates for the next feed and next sleep on the dashboard.',
       saveError: 'Could not save the change. Please try again.',
     },
+    swipeToDelete: {
+      title: 'Swipe to delete',
+      description: 'Swipe an entry left to delete it, instead of the always-visible trash icon.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

@@ -224,6 +224,31 @@ async function onTogglePredictions() {
   }
 }
 
+// --- Ajustes: borrar con swipe ---
+
+// Mismo patrón guardado-al-vuelo que predicciones/barra de accesos -
+// desactivado por defecto (ver migración): la papelera siempre visible
+// sigue siendo el comportamiento conocido hasta que alguien elige
+// activamente sustituirla por el gesto.
+const swipeToDeleteEnabled = ref(false)
+let swipeToDeleteSaveToken = 0
+
+async function onToggleSwipeToDelete() {
+  const previous = swipeToDeleteEnabled.value
+  const next = !previous
+  swipeToDeleteEnabled.value = next
+
+  const token = ++swipeToDeleteSaveToken
+  try {
+    await auth.updateSwipeToDeleteEnabled(next)
+  } catch {
+    if (token === swipeToDeleteSaveToken) {
+      swipeToDeleteEnabled.value = previous
+      toast.show(t('profile.swipeToDelete.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -239,6 +264,7 @@ watch(
     newPasswordConfirmation.value = ''
     actionBarSelection.value = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
     predictionsEnabled.value = auth.user?.predictions_enabled ?? true
+    swipeToDeleteEnabled.value = auth.user?.swipe_to_delete_enabled ?? false
   },
 )
 </script>
@@ -409,6 +435,27 @@ watch(
         <span
           class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: predictionsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.swipeToDelete.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.swipeToDelete.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="swipeToDeleteEnabled"
+        :aria-label="t('profile.swipeToDelete.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="swipeToDeleteEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleSwipeToDelete"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: swipeToDeleteEnabled ? '22px' : '2px' }"
         ></span>
       </button>
     </div>

@@ -11,6 +11,7 @@ export interface User {
   // null = las 5 categorias visibles (valor por defecto, sin personalizar).
   action_bar_categories: Category[] | null
   predictions_enabled: boolean
+  swipe_to_delete_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -100,6 +101,13 @@ export const useAuthStore = defineStore('auth', {
     async updatePredictionsEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/predictions', {
         predictions_enabled: enabled,
+      })
+      this.user = data
+    },
+
+    async updateSwipeToDeleteEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/swipe-to-delete', {
+        swipe_to_delete_enabled: enabled,
       })
       this.user = data
     },

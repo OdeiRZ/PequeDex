@@ -373,5 +373,11 @@ export default {
       description: 'Muestra estimaciones de la próxima toma y el próximo sueño en el panel.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    swipeToDelete: {
+      title: 'Borrar con swipe',
+      description:
+        'Desliza una entrada hacia la izquierda para borrarla, en vez del icono de papelera siempre visible.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

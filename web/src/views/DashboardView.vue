@@ -1646,6 +1646,7 @@ const sleepPredictionDue = computed(() => {
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
+                    :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>
@@ -1674,6 +1675,7 @@ const sleepPredictionDue = computed(() => {
                   category="growth"
                   :title="growthTitle(measurement)"
                   :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
+                  :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                   @open="openGrowthEdit(measurement)"
                 >
                   <template #actions>

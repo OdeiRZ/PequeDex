@@ -23,7 +23,7 @@ function onClick() {
 <template>
   <button
     type="button"
-    class="del-btn grid h-7 w-7 shrink-0 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-sunken hover:text-danger active:scale-[0.88]"
+    class="del-btn grid h-7 w-7 shrink-0 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-sunken hover:text-danger active:scale-[0.88] active:bg-surface-sunken active:text-danger"
     :class="confirming && 'is-confirming'"
     :aria-label="t('common.delete')"
     @click="onClick"
@@ -54,7 +54,8 @@ function onClick() {
 }
 
 .del-btn:hover .lid,
-.del-btn:focus-visible .lid {
+.del-btn:focus-visible .lid,
+.del-btn:active .lid {
   transform: rotate(-22deg) translateY(-1px);
 }
 
@@ -98,7 +99,8 @@ function onClick() {
   }
 
   .del-btn:hover .lid,
-  .del-btn:focus-visible .lid {
+  .del-btn:focus-visible .lid,
+  .del-btn:active .lid {
     transform: none;
   }
 

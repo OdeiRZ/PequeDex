@@ -61,74 +61,32 @@ const slots = useSlots()
 
 const swipeMode = computed(() => props.swipeToDelete && props.interactive && !!slots.actions)
 
-// Reveals the actions drawer sitting underneath (not an instant delete
-// on swipe - the drawer still requires an explicit tap on the real
-// button inside it, same as iOS Mail's own swipe-to-reveal, so a stray
-// drag never deletes anything by itself). REVEAL_PX matches the
-// drawer's own width (DeleteButton at h-7/w-7 plus its padding).
+// Second attempt at this, after the first (manual pointermove math)
+// shipped with real problems found live: a translucent categoryBg let
+// the drawer bleed through even at rest, and the hand-rolled drag felt
+// janky next to native scrolling. Native horizontal scroll-snap fixes
+// both at the root instead of patching around them: the actions panel
+// is genuinely outside the scrollable viewport at scrollLeft 0 (not
+// just visually covered), and the browser's own scroll physics
+// (momentum, rubber-banding) replace every line of manual resistance/
+// axis-lock math that used to live here. REVEAL_PX is the actions
+// panel's own width (DeleteButton at h-7/w-7 plus padding) - scrolling
+// to the container's max scrollLeft (panel width, since the row itself
+// is 100% width) reveals exactly it, no more.
 const REVEAL_PX = 64
-const RESISTANCE_START_PX = 56
+const CLOSE_THRESHOLD_PX = 4
 
-const dragX = ref(0)
-const dragging = ref(false)
-const revealed = ref(false)
-let dragStartX = 0
-let dragStartY = 0
-let axisLocked: 'x' | 'y' | null = null
-
-function resistedDrag(rawDx: number): number {
-  // Only resist past the reveal point - dragging back toward 0 (closing)
-  // should always track 1:1, or closing would feel sticky right when
-  // the user is trying to dismiss it.
-  const magnitude = Math.abs(rawDx)
-  if (magnitude <= RESISTANCE_START_PX) return rawDx
-
-  const over = magnitude - RESISTANCE_START_PX
-  const resistedMagnitude = RESISTANCE_START_PX + over * 0.35
-  return rawDx < 0 ? -resistedMagnitude : resistedMagnitude
-}
-
-function onRowPointerDown(event: PointerEvent) {
-  if (!swipeMode.value) return
-
-  dragging.value = true
-  axisLocked = null
-  dragStartX = event.clientX
-  dragStartY = event.clientY
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-}
-
-function onRowPointerMove(event: PointerEvent) {
-  if (!dragging.value) return
-
-  const dx = event.clientX - dragStartX
-  const dy = event.clientY - dragStartY
-
-  if (axisLocked === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-    axisLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-  }
-  if (axisLocked !== 'x') return
-
-  const base = revealed.value ? -REVEAL_PX : 0
-  dragX.value = Math.min(0, resistedDrag(base + dx))
-}
-
-function onRowPointerUp() {
-  if (!dragging.value) return
-
-  dragging.value = false
-
-  if (axisLocked === 'x') {
-    revealed.value = dragX.value < -REVEAL_PX / 2
-  }
-  dragX.value = revealed.value ? -REVEAL_PX : 0
-  axisLocked = null
-}
+const scrollerRef = ref<HTMLElement | null>(null)
 
 function onRowClick() {
-  if (revealed.value) {
-    revealed.value = false
-    dragX.value = 0
+  const scroller = scrollerRef.value
+
+  // A revealed drawer closes on tapping the row again, same as tapping
+  // anywhere outside an opened iOS Mail swipe action - a tap here is
+  // clearly "dismiss this", not "open the entry", while it's showing.
+  if (scroller && scroller.scrollLeft > CLOSE_THRESHOLD_PX) {
+    scroller.scrollTo({ left: 0, behavior: 'smooth' })
+
     return
   }
 
@@ -145,35 +103,16 @@ function onRowClick() {
       pulsing && 'entry-card-pulsing',
     ]"
   >
-    <!-- Swipe mode only: the real #actions content sits here, revealed
-         from under the row as it slides left - same slot content the
-         non-swipe layout renders inline below, just repositioned. -->
-    <div
-      v-if="swipeMode"
-      class="absolute inset-y-0 right-0 flex items-center justify-end rounded-2xl pr-3"
-      :style="{ width: `${REVEAL_PX}px` }"
-    >
-      <slot name="actions" />
-    </div>
-
-    <div
-      class="flex items-center gap-3 rounded-2xl p-3"
-      :class="[
-        categoryBg[category],
-        swipeMode && 'relative',
-        swipeMode && !dragging && 'transition-transform duration-200 ease-out',
-      ]"
-      :style="swipeMode ? { transform: `translateX(${dragX}px)`, touchAction: 'pan-y' } : undefined"
-      @pointerdown="onRowPointerDown"
-      @pointermove="onRowPointerMove"
-      @pointerup="onRowPointerUp"
-      @pointercancel="onRowPointerUp"
-    >
+    <div ref="scrollerRef" class="flex rounded-2xl" :class="swipeMode && 'swipe-scroller'">
       <component
         :is="interactive ? 'button' : 'div'"
         :type="interactive ? 'button' : undefined"
-        class="flex min-w-0 flex-1 items-center gap-3 text-left"
-        :class="interactive && 'group'"
+        class="flex min-w-0 items-center gap-3 rounded-2xl p-3 text-left"
+        :class="[
+          categoryBg[category],
+          interactive && 'group',
+          swipeMode ? 'w-full shrink-0 snap-start' : 'flex-1',
+        ]"
         @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
       >
         <img
@@ -240,7 +179,14 @@ function onRowClick() {
         </span>
       </component>
 
-      <slot v-if="!swipeMode" name="actions" />
+      <div
+        v-if="swipeMode"
+        class="flex shrink-0 snap-end items-center justify-end pr-3"
+        :style="{ width: `${REVEAL_PX}px` }"
+      >
+        <slot name="actions" />
+      </div>
+      <slot v-else name="actions" />
     </div>
   </li>
 </template>
@@ -289,5 +235,24 @@ function onRowClick() {
   .entry-emoji-pulsing {
     animation: none;
   }
+}
+
+/* Native horizontal scroll instead of hand-rolled pointermove math -
+   the browser's own scroll-snap physics (momentum, rubber-banding)
+   replace what used to be manual resistance/axis-lock code, and the
+   actions panel is genuinely outside the scrollable viewport at rest
+   (not just visually covered), so there's nothing to bleed through.
+   Scrollbar hidden - this reads as a swipe gesture, not a text panel
+   with a horizontal scrollbar. */
+.swipe-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.swipe-scroller::-webkit-scrollbar {
+  display: none;
 }
 </style>

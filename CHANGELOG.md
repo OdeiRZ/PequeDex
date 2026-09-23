@@ -9,6 +9,22 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **PWA instalable de verdad**: en Chrome Android, "Instalar app" ofrecía
+  solo "Crear acceso directo" (una pestaña de Chrome con un icono, no una
+  app independiente) porque faltaban `manifest.webmanifest` y un service
+  worker - los dos requisitos mínimos de Chrome para el criterio de
+  instalabilidad, más allá de qué haga ese service worker. Añadidos
+  ambos, calcados del mismo patrón ya usado en LudoDex/MIRA_MarketLens:
+  `public/manifest.webmanifest` (iconos 192/512/maskable-512, generados
+  a partir de `favicon.svg`, `start_url`/`scope` en `/PequeDex/` porque
+  GitHub Pages sirve esto como project page, no en la raíz del dominio) y
+  `public/sw.js` (sin caché real - la app habla con una API en vivo y no
+  tiene historia offline -, solo existe porque Chrome exige un fetch
+  handler registrado para ofrecer la instalación completa). También
+  `favicon.ico`/`favicon-32.png`/`apple-touch-icon.png` y las meta
+  `apple-mobile-web-app-*`/`theme-color` en `index.html`, mismo criterio
+  que los otros dos proyectos.
+
 - **Interactividad táctil** (propuesta completa en un artefacto,
   "adelante con todas"): el brillo de `.btn-primary`, el anillo de
   color de `EntryCard` y el giro de icono en `ActionBar` solo se

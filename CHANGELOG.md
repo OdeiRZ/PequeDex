@@ -1081,6 +1081,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Tercera pasada sobre la interactividad táctil.** La reescritura a
+  scroll-snap nativo (ver entrada anterior) arrastró una regresión
+  real al modo clásico sin swipe: el fondo/padding se quedó solo en el
+  botón principal, así que la tira de color no llegaba hasta el icono
+  de borrar y este quedaba sin centrar ni padding - corregido
+  devolviendo el fondo/padding al contenedor en ese modo. Añadido
+  también: la fila que se borra ahora se saca del flujo
+  (`position: absolute`) en cuanto empieza a desaparecer, para que el
+  hueco se cierre a la vez que se desvanece (encogimiento + fade en
+  vez de desplazamiento lateral) y no como un salto tras su propia
+  transición; y un pequeño chevron atenuado, con balanceo sutil
+  continuo, dentro de la fila (no en el cajón) para señalar que hay
+  swipe disponible cuando está activado - sin él no había ninguna
+  pista de que la entrada fuera deslizable.
 - **Segunda pasada sobre la interactividad táctil, tras probarla de
   verdad en un dispositivo real** — reporte contundente: "el borrado
   por swipe es una basura". Reescrito por completo, de matemáticas de

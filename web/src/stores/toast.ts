@@ -14,6 +14,23 @@ interface ToastState {
   timeoutId: ReturnType<typeof setTimeout> | null
 }
 
+// A short buzz alongside the toast's own pop-in - the one bit of
+// confirmation a phone can give that doesn't depend on the screen being
+// looked at right that instant. Feature-detected (desktop browsers, and
+// iOS Safari entirely, have no navigator.vibrate) and wrapped in try/catch
+// since some embedded/permission-restricted contexts throw instead of
+// just no-op'ing. Two short pulses for an error reads as distinct from
+// a single success buzz without needing to look at the toast's color.
+function hapticBuzz(type: ToastType) {
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return
+
+  try {
+    navigator.vibrate(type === 'error' ? [12, 40, 12] : 10)
+  } catch {
+    // Ignored - haptics are a nice-to-have, never worth surfacing an error for.
+  }
+}
+
 export const useToastStore = defineStore('toast', {
   state: (): ToastState => ({
     message: null,
@@ -40,6 +57,8 @@ export const useToastStore = defineStore('toast', {
         this.message = null
         this.timeoutId = null
       }, DISPLAY_MS)
+
+      hapticBuzz(type)
     },
   },
 })

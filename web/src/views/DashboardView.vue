@@ -303,7 +303,10 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     feedType.value = 'pecho'
     feedSide.value = 'izquierdo'
     feedMilkType.value = 'leche'
-    feedAmountMl.value = ''
+    // '10' (not '') - matches the field's own min="1" and the
+    // stepper's +/-10 unit. An empty field next to a stepper read as
+    // broken/incomplete rather than "not filled in yet".
+    feedAmountMl.value = '10'
     feedStartedAt.value = nowForInput()
     editingFeedId.value = null
   } else if (sheet === 'sleep') {
@@ -471,6 +474,7 @@ async function onSubmitFeed() {
       toast.show(t('dashboard.feedForm.toastUpdated'))
     } else {
       await babies.createFeed(payload)
+      toast.show(t('dashboard.feedForm.toastCreated'))
     }
     // Fire-and-forget: the prediction is a nice-to-have next to the
     // save that already succeeded (the timeline entry is there
@@ -513,6 +517,7 @@ async function onSubmitSleep() {
       toast.show(t('dashboard.sleepForm.toastUpdated'))
     } else {
       await babies.createSleep(payload)
+      toast.show(t('dashboard.sleepForm.toastCreated'))
     }
     // Fire-and-forget, same reasoning as onSubmitFeed's prediction
     // refresh: the save already succeeded, a failed refresh here
@@ -604,6 +609,7 @@ async function onSubmitDiaper() {
       toast.show(t('dashboard.diaperForm.toastUpdated'))
     } else {
       await babies.createDiaperChange(payload)
+      toast.show(t('dashboard.diaperForm.toastCreated'))
     }
     closeSheet()
   } catch (error) {
@@ -1091,6 +1097,7 @@ async function onSubmitGrowth() {
       toast.show(t('dashboard.growthForm.toastUpdated'))
     } else {
       await babies.createGrowthMeasurement(payload)
+      toast.show(t('dashboard.growthForm.toastCreated'))
     }
     closeSheet()
   } catch (error) {
@@ -1211,6 +1218,7 @@ async function onSubmitMilestone() {
         description: milestoneDescription.value || undefined,
         photo: milestonePhoto.value,
       })
+      toast.show(t('dashboard.milestoneForm.toastCreated'))
     }
     closeSheet()
   } catch (error) {
@@ -1626,9 +1634,13 @@ const sleepPredictionDue = computed(() => {
                 ></span>
                 {{ t('dashboard.timeline.title') }}
               </h2>
-              <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
-                <template v-for="item in groupedTimeline" :key="item.key">
-                  <li v-if="item.kind === 'separator'" class="my-1 flex items-center gap-3">
+              <TransitionGroup tag="ul" name="entry-list" appear class="flex flex-col gap-2">
+                <template v-for="(item, index) in groupedTimeline" :key="item.key">
+                  <li
+                    v-if="item.kind === 'separator'"
+                    class="my-1 flex items-center gap-3"
+                    :style="{ '--stagger-index': index }"
+                  >
                     <span class="h-px flex-1 bg-border"></span>
                     <span
                       class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
@@ -1647,6 +1659,7 @@ const sleepPredictionDue = computed(() => {
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
+                    :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>
@@ -1668,14 +1681,15 @@ const sleepPredictionDue = computed(() => {
                 <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
                 {{ t('dashboard.growth.title') }}
               </h2>
-              <TransitionGroup tag="ul" name="entry-list" class="flex flex-col gap-2">
+              <TransitionGroup tag="ul" name="entry-list" appear class="flex flex-col gap-2">
                 <EntryCard
-                  v-for="measurement in babies.growthMeasurements"
+                  v-for="(measurement, index) in babies.growthMeasurements"
                   :key="measurement.id"
                   category="growth"
                   :title="growthTitle(measurement)"
                   :meta="new Date(measurement.measured_at).toLocaleDateString(dateLocale)"
                   :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
+                  :style="{ '--stagger-index': index }"
                   @open="openGrowthEdit(measurement)"
                 >
                   <template #actions>

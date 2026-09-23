@@ -219,12 +219,14 @@ export default {
       colostrum: 'Calostro',
       milk: 'Leche',
       toastUpdated: 'Toma actualizada.',
+      toastCreated: 'Toma guardada.',
     },
     sleepForm: {
       editTitle: 'Editar sueño',
       start: 'Empieza',
       end: 'Termina (déjalo vacío si sigue durmiendo)',
       toastUpdated: 'Sueño actualizado.',
+      toastCreated: 'Sueño guardado.',
     },
     diaperForm: {
       editTitle: 'Editar pañal',
@@ -240,6 +242,7 @@ export default {
       brown: 'Marrón',
       meconium: 'Meconio',
       toastUpdated: 'Pañal actualizado.',
+      toastCreated: 'Pañal guardado.',
     },
     growthForm: {
       editTitle: 'Editar medida',
@@ -249,6 +252,7 @@ export default {
       headCircumference: 'Perímetro craneal (cm)',
       error: 'Indica al menos peso, talla o perímetro craneal.',
       toastUpdated: 'Medida actualizada.',
+      toastCreated: 'Medida guardada.',
     },
     milestoneForm: {
       editTitle: 'Editar hito',
@@ -259,6 +263,7 @@ export default {
       photo: 'Foto (opcional)',
       removePhoto: 'Quitar foto',
       toastUpdated: 'Hito actualizado.',
+      toastCreated: 'Hito guardado.',
       categories: {
         sonrisa: 'Primera sonrisa',
         diente: 'Primer diente',

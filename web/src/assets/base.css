@@ -390,8 +390,22 @@ body {
 /* Timeline entries (EntryCard) popping in/out - global, not scoped,
    since TransitionGroup applies these class names straight onto each
    child component's root element. A gentle spring on enter/move, a
-   quick fade+slide-away on leave (deleting something shouldn't linger). */
-.entry-list-enter-active,
+   quick fade+slide-away on leave (deleting something shouldn't linger).
+   `appear` on the TransitionGroup (DashboardView.vue) means this also
+   runs for the very first render, not just later insertions - without
+   it every entry already in the initial payload skipped the enter
+   transition entirely and just appeared all at once. The stagger
+   itself is `--stagger-index` (each item's own loop index, set inline
+   from DashboardView.vue) fed through `calc()`, capped via `min()` so
+   a long list's last few items don't wait seconds to appear - only on
+   `-enter-active`, never `-move`, so reordering an existing list
+   (density toggle, a new entry pushing others down) doesn't restart a
+   staggered delay on rows that were already visible. */
+.entry-list-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: min(calc(var(--stagger-index, 0) * 35ms), 350ms);
+}
+
 .entry-list-move {
   transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

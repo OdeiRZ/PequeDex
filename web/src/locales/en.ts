@@ -217,12 +217,14 @@ export default {
       colostrum: 'Colostrum',
       milk: 'Milk',
       toastUpdated: 'Feed updated.',
+      toastCreated: 'Feed saved.',
     },
     sleepForm: {
       editTitle: 'Edit sleep',
       start: 'Starts',
       end: 'Ends (leave empty if still sleeping)',
       toastUpdated: 'Sleep updated.',
+      toastCreated: 'Sleep saved.',
     },
     diaperForm: {
       editTitle: 'Edit diaper',
@@ -238,6 +240,7 @@ export default {
       brown: 'Brown',
       meconium: 'Meconium',
       toastUpdated: 'Diaper updated.',
+      toastCreated: 'Diaper saved.',
     },
     growthForm: {
       editTitle: 'Edit measurement',
@@ -247,6 +250,7 @@ export default {
       headCircumference: 'Head circumference (cm)',
       error: 'Enter at least weight, height or head circumference.',
       toastUpdated: 'Measurement updated.',
+      toastCreated: 'Measurement saved.',
     },
     milestoneForm: {
       editTitle: 'Edit milestone',
@@ -257,6 +261,7 @@ export default {
       photo: 'Photo (optional)',
       removePhoto: 'Remove photo',
       toastUpdated: 'Milestone updated.',
+      toastCreated: 'Milestone saved.',
       categories: {
         sonrisa: 'First smile',
         diente: 'First tooth',

@@ -125,6 +125,53 @@ onUnmounted(() => {
     unlockBodyScroll()
   }
 })
+
+// Dragging the handle down to dismiss - the grey bar used to be purely
+// decorative (a visual "this is a sheet" cue with nothing behind it).
+// Past DISMISS_THRESHOLD_PX it closes on release; short of that it
+// springs back, with rubber-band resistance past RESISTANCE_START_PX so
+// the drag still tracks the finger but stops feeling 1:1 the further
+// past the threshold it goes (same idea as iOS's own sheet/scroll
+// overscroll). Only the handle is a drag target, not the whole panel -
+// sheet content (inputs, selects) needs its own pointerdown to behave
+// normally, not fight this for pointer capture.
+const DISMISS_THRESHOLD_PX = 110
+const RESISTANCE_START_PX = 60
+
+const dragOffset = ref(0)
+const dragging = ref(false)
+let dragStartY = 0
+
+function resistedOffset(rawDy: number): number {
+  if (rawDy <= RESISTANCE_START_PX) return rawDy
+
+  return RESISTANCE_START_PX + (rawDy - RESISTANCE_START_PX) * 0.4
+}
+
+function onGrabPointerDown(event: PointerEvent) {
+  dragging.value = true
+  dragStartY = event.clientY
+  ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
+}
+
+function onGrabPointerMove(event: PointerEvent) {
+  if (!dragging.value) return
+
+  const rawDy = Math.max(0, event.clientY - dragStartY)
+  dragOffset.value = resistedOffset(rawDy)
+}
+
+function onGrabPointerUp(event: PointerEvent) {
+  if (!dragging.value) return
+
+  dragging.value = false
+  const rawDy = Math.max(0, event.clientY - dragStartY)
+  dragOffset.value = 0
+
+  if (rawDy > DISMISS_THRESHOLD_PX) {
+    close()
+  }
+}
 </script>
 
 <template>
@@ -140,11 +187,21 @@ onUnmounted(() => {
         aria-modal="true"
         :aria-labelledby="labelledBy"
         tabindex="-1"
-        class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        :class="open ? 'translate-y-0' : 'translate-y-full'"
-        style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom))"
+        class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-5 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)] ease-[cubic-bezier(0.32,0.72,0,1)]"
+        :class="[open ? 'translate-y-0' : 'translate-y-full', dragging ? '' : 'transition-transform duration-300']"
+        :style="{
+          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+          transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+        }"
       >
-        <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-border"></div>
+        <div
+          class="mx-auto mb-4 h-1.5 w-10 touch-none rounded-full bg-border transition-[background-color,width] active:bg-text-muted"
+          :class="dragging && 'w-12'"
+          @pointerdown="onGrabPointerDown"
+          @pointermove="onGrabPointerMove"
+          @pointerup="onGrabPointerUp"
+          @pointercancel="onGrabPointerUp"
+        ></div>
         <slot />
       </div>
     </div>

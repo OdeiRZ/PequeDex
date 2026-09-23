@@ -210,6 +210,8 @@ export default {
       right: 'Right',
       both: 'Both',
       amount: 'Amount (ml)',
+      amountDecrease: 'Decrease by 10 ml',
+      amountIncrease: 'Increase by 10 ml',
       when: 'When',
       milkTypeLabel: 'Milk type',
       colostrum: 'Colostrum',

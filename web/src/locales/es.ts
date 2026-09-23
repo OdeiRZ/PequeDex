@@ -212,6 +212,8 @@ export default {
       right: 'Derecho',
       both: 'Ambos',
       amount: 'Cantidad (ml)',
+      amountDecrease: 'Restar 10 ml',
+      amountIncrease: 'Sumar 10 ml',
       when: 'Cuándo',
       milkTypeLabel: 'Tipo de leche',
       colostrum: 'Calostro',

@@ -379,6 +379,38 @@ const feedAmountMl = ref('')
 const feedStartedAt = ref('')
 const savingFeed = ref(false)
 
+// Stepper flanking the plain number input, not replacing it - a round
+// +/-10ml nudge covers the common case (topping up a bottle amount
+// mid-registro) without losing the ability to type an exact odd
+// number (87ml, say) that a stepper alone could never reach in one tap.
+function adjustFeedAmount(deltaMl: number) {
+  const current = Number(feedAmountMl.value) || 0
+  feedAmountMl.value = String(Math.max(0, current + deltaMl))
+}
+
+// Holding a stepper button repeats the nudge instead of requiring one
+// tap per 10ml - a short delay before the first repeat (so a normal
+// quick tap never double-fires), then a steady interval. Cleared on
+// every release path (pointerup/cancel/leave) since a stray held
+// pointer that never fires "up" over the button would otherwise keep
+// nudging forever.
+let feedAmountRepeatTimeout: ReturnType<typeof setTimeout> | undefined
+let feedAmountRepeatInterval: ReturnType<typeof setInterval> | undefined
+
+function startFeedAmountRepeat(deltaMl: number) {
+  adjustFeedAmount(deltaMl)
+  feedAmountRepeatTimeout = setTimeout(() => {
+    feedAmountRepeatInterval = setInterval(() => adjustFeedAmount(deltaMl), 90)
+  }, 420)
+}
+
+function stopFeedAmountRepeat() {
+  clearTimeout(feedAmountRepeatTimeout)
+  clearInterval(feedAmountRepeatInterval)
+}
+
+onUnmounted(stopFeedAmountRepeat)
+
 // null while creating a new feed; the id of the one being edited
 // otherwise - same convention as editingMilestoneId.
 const editingFeedId = ref<number | null>(null)
@@ -1712,14 +1744,38 @@ const sleepPredictionDue = computed(() => {
               <label for="feed-amount" class="field-label">{{
                 t('dashboard.feedForm.amount')
               }}</label>
-              <input
-                id="feed-amount"
-                v-model="feedAmountMl"
-                type="number"
-                min="1"
-                required
-                class="field-input"
-              />
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  :aria-label="t('dashboard.feedForm.amountDecrease')"
+                  @pointerdown="startFeedAmountRepeat(-10)"
+                  @pointerup="stopFeedAmountRepeat"
+                  @pointercancel="stopFeedAmountRepeat"
+                  @pointerleave="stopFeedAmountRepeat"
+                >
+                  −
+                </button>
+                <input
+                  id="feed-amount"
+                  v-model="feedAmountMl"
+                  type="number"
+                  min="1"
+                  required
+                  class="field-input text-center"
+                />
+                <button
+                  type="button"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  :aria-label="t('dashboard.feedForm.amountIncrease')"
+                  @pointerdown="startFeedAmountRepeat(10)"
+                  @pointerup="stopFeedAmountRepeat"
+                  @pointercancel="stopFeedAmountRepeat"
+                  @pointerleave="stopFeedAmountRepeat"
+                >
+                  +
+                </button>
+              </div>
             </div>
             <div>
               <label for="feed-started-at" class="field-label">{{

@@ -144,17 +144,43 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
   })
 
-  it('deletes a feed and refetches the timeline', async () => {
+  it('deletes a feed optimistically, without refetching the whole timeline', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
     vi.mocked(apiClient.delete).mockResolvedValue({})
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
     const store = useBabiesStore()
     await store.create({})
+    store.timeline = [
+      { type: 'feed', at: '2026-08-30T10:00:00Z', data: { id: 5 } as never },
+      { type: 'feed', at: '2026-08-30T09:00:00Z', data: { id: 6 } as never },
+    ]
+    vi.mocked(apiClient.get).mockClear()
 
-    await store.deleteFeed(5)
+    const pending = store.deleteFeed(5)
+
+    // Removed from `timeline` synchronously, before the request even
+    // resolves - the whole point of doing this optimistically instead
+    // of waiting on a round-trip plus a full re-fetch.
+    expect(store.timeline.map((e) => e.data.id)).toEqual([6])
+
+    await pending
 
     expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5')
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
+    expect(apiClient.get).not.toHaveBeenCalled()
+  })
+
+  it('restores the timeline if deleting a feed fails', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
+    vi.mocked(apiClient.delete).mockRejectedValue(new Error('network error'))
+    const store = useBabiesStore()
+    await store.create({})
+    const original = [
+      { type: 'feed' as const, at: '2026-08-30T10:00:00Z', data: { id: 5 } as never },
+    ]
+    store.timeline = original
+
+    await expect(store.deleteFeed(5)).rejects.toThrow('network error')
+
+    expect(store.timeline).toEqual(original)
   })
 
   it('regenerates the invite code', async () => {
@@ -238,17 +264,22 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/growth-measurements')
   })
 
-  it('deletes a growth measurement and refetches the list', async () => {
+  it('deletes a growth measurement optimistically, without refetching the list', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
     vi.mocked(apiClient.delete).mockResolvedValue({})
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
     const store = useBabiesStore()
     await store.create({})
+    store.growthMeasurements = [{ id: 5 } as never, { id: 6 } as never]
+    vi.mocked(apiClient.get).mockClear()
 
-    await store.deleteGrowthMeasurement(5)
+    const pending = store.deleteGrowthMeasurement(5)
+
+    expect(store.growthMeasurements.map((m) => m.id)).toEqual([6])
+
+    await pending
 
     expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/growth-measurements/5')
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/growth-measurements')
+    expect(apiClient.get).not.toHaveBeenCalled()
   })
 
   it('fetches milestones for the current baby', async () => {
@@ -280,17 +311,22 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/milestones')
   })
 
-  it('deletes a milestone and refetches the list', async () => {
+  it('deletes a milestone optimistically, without refetching the list', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
     vi.mocked(apiClient.delete).mockResolvedValue({})
-    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
     const store = useBabiesStore()
     await store.create({})
+    store.milestones = [{ id: 5 } as never, { id: 6 } as never]
+    vi.mocked(apiClient.get).mockClear()
 
-    await store.deleteMilestone(5)
+    const pending = store.deleteMilestone(5)
+
+    expect(store.milestones.map((m) => m.id)).toEqual([6])
+
+    await pending
 
     expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/milestones/5')
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/milestones')
+    expect(apiClient.get).not.toHaveBeenCalled()
   })
 
   it('fetches the sleep prediction for the current baby', async () => {

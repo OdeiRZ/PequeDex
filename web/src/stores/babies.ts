@@ -361,19 +361,56 @@ export const useBabiesStore = defineStore('babies', {
       await this.fetchTimeline()
     },
 
+    // Optimistic: removed from `timeline` synchronously, before the
+    // request even fires - a caregiver tapping delete on a phone with a
+    // slow connection used to wait through TWO round-trips in sequence
+    // (the DELETE itself, then a full re-fetch of the whole timeline)
+    // before anything moved on screen, reported live as "se siente
+    // lento". The DELETE response already tells us the row is gone;
+    // nothing here needs the extra GET just to confirm what we already
+    // know. `previous` is the exact prior array (not just the removed
+    // row) so a failed request restores original ordering perfectly,
+    // not a best-guess re-insertion.
     async deleteFeed(id: number) {
-      await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`)
-      await this.fetchTimeline()
+      const previous = this.timeline
+      this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'feed' && entry.data.id === id),
+      )
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`)
+      } catch (error) {
+        this.timeline = previous
+        throw error
+      }
     },
 
     async deleteSleep(id: number) {
-      await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
-      await this.fetchTimeline()
+      const previous = this.timeline
+      this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'sleep' && entry.data.id === id),
+      )
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
+      } catch (error) {
+        this.timeline = previous
+        throw error
+      }
     },
 
     async deleteDiaperChange(id: number) {
-      await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
-      await this.fetchTimeline()
+      const previous = this.timeline
+      this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'diaper_change' && entry.data.id === id),
+      )
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
+      } catch (error) {
+        this.timeline = previous
+        throw error
+      }
     },
 
     async fetchGrowthMeasurements() {
@@ -396,8 +433,15 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async deleteGrowthMeasurement(id: number) {
-      await apiClient.delete(`/babies/${this.current!.id}/growth-measurements/${id}`)
-      await this.fetchGrowthMeasurements()
+      const previous = this.growthMeasurements
+      this.growthMeasurements = this.growthMeasurements.filter((m) => m.id !== id)
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/growth-measurements/${id}`)
+      } catch (error) {
+        this.growthMeasurements = previous
+        throw error
+      }
     },
 
     async fetchMilestones() {
@@ -463,8 +507,15 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async deleteMilestone(id: number) {
-      await apiClient.delete(`/babies/${this.current!.id}/milestones/${id}`)
-      await this.fetchMilestones()
+      const previous = this.milestones
+      this.milestones = this.milestones.filter((m) => m.id !== id)
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/milestones/${id}`)
+      } catch (error) {
+        this.milestones = previous
+        throw error
+      }
     },
 
     async fetchSleepPrediction() {

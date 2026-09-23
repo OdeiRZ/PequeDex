@@ -310,7 +310,11 @@ body {
     pointer-events: none;
   }
 
-  .btn-primary:hover:not(:disabled)::after {
+  /* :active/.is-pressed alongside :hover - a touch tap never triggers
+     :hover, so without this the shine only ever swept for a mouse. */
+  .btn-primary:hover:not(:disabled)::after,
+  .btn-primary:active:not(:disabled)::after,
+  .btn-primary.is-pressed::after {
     transform: translateX(120%);
   }
 

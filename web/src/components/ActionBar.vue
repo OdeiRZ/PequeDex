@@ -116,7 +116,7 @@ const sizes = computed(() => {
           >
             <CategoryIcon
               :category="item.category"
-              class="transition-[height,width,transform] duration-150 group-hover:-rotate-[8deg] motion-reduce:transition-[height,width] motion-reduce:group-hover:rotate-0"
+              class="transition-[height,width,transform] duration-150 group-hover:-rotate-[8deg] group-active:-rotate-[8deg] motion-reduce:transition-[height,width] motion-reduce:group-hover:rotate-0 motion-reduce:group-active:rotate-0"
               :class="sizes.icon"
             />
           </span>

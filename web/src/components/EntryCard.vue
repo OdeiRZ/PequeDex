@@ -70,11 +70,11 @@ defineEmits<{ open: [] }>()
         v-if="photoSrc"
         :src="photoSrc"
         :alt="photoAlt ?? ''"
-        class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110"
+        class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
       />
       <span
         v-else
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
         :class="categoryText[category]"
       >
         <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />

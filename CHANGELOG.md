@@ -9,6 +9,29 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Pantalla de bienvenida fusionada** (`WelcomeView.vue`, ruta
+  `/bienvenida`), inspirada en la app Napper pero con la identidad visual
+  propia de PequeDex: fondo de 3 esferas difuminadas en el degradado de
+  marca (mismo que `AppMark`/`favicon.svg`), oscilando lento
+  (`prefers-reduced-motion` respetado), con tres puntos de entrada -
+  "Iniciar sesión", "Crear un nuevo perfil de bebé" y "Tengo una
+  invitación" - en vez de un formulario. Sustituye a `/login` como
+  destino por defecto sin sesión (`router.beforeEach`); Login y Registro
+  siguen existiendo como rutas propias, alcanzables desde aquí.
+  `AppHeader` no se muestra en esta ruta (lleva su propia marca/pill de
+  login sobre el fondo animado).
+  **"Tengo una invitación" ya no requiere cuenta previa**: hasta ahora
+  unirte a un bebé compartido (`POST /babies/join`) solo existía tras
+  iniciar sesión, así que ese botón no tenía a dónde ir sin antes crear
+  cuenta por separado. `RegisterView.vue` gana un campo opcional "Código
+  de invitación" (precargado si llegas con `?invite_code=` en la URL, un
+  deep link que ya puede compartir cualquier cuidador desde "Tu cuenta");
+  `AuthController::register()` valida el código
+  (`exists:babies,invite_code`, misma regla que ya usa `JoinBabyRequest`)
+  y une al usuario al bebé en el mismo paso, envuelto en una transacción
+  (mismo motivo que `BabyController::store()`) para que un fallo a medias
+  nunca deje una cuenta creada pero sin el bebé de la invitación.
+
 - **PWA instalable de verdad**: en Chrome Android, "Instalar app" ofrecía
   solo "Crear acceso directo" (una pestaña de Chrome con un icono, no una
   app independiente) porque faltaban `manifest.webmanifest` y un service

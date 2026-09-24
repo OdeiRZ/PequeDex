@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Baby;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,6 +24,50 @@ it('registers a new user and returns a usable token', function () {
         ->getJson('/api/user')
         ->assertOk()
         ->assertJsonPath('email', 'odei@example.com');
+});
+
+it('registers and joins the baby in the same step when given a valid invite_code', function () {
+    $baby = Baby::factory()->create();
+
+    $response = $this->postJson('/api/register', [
+        'name' => 'Odei',
+        'email' => 'odei@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'invite_code' => $baby->invite_code,
+    ]);
+
+    $response->assertCreated();
+
+    $user = User::where('email', 'odei@example.com')->firstOrFail();
+    expect($baby->users()->whereKey($user->id)->exists())->toBeTrue();
+});
+
+it('rejects registration with an invite_code that belongs to no baby', function () {
+    $response = $this->postJson('/api/register', [
+        'name' => 'Odei',
+        'email' => 'odei@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'invite_code' => 'no-existe',
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors('invite_code');
+    $this->assertDatabaseMissing('users', ['email' => 'odei@example.com']);
+});
+
+it('registers without joining any baby when invite_code is omitted', function () {
+    $response = $this->postJson('/api/register', [
+        'name' => 'Odei',
+        'email' => 'odei@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertCreated();
+
+    $user = User::where('email', 'odei@example.com')->firstOrFail();
+    expect($user->babies()->count())->toBe(0);
 });
 
 it('accepts a 6-character password but rejects a 5-character one', function () {

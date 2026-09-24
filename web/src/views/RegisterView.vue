@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import PasswordField from '@/components/PasswordField.vue'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const { t } = useI18n()
 
@@ -13,6 +15,11 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
+// Prefilled from WelcomeView's "Tengo una invitación" when it carried an
+// invite_code query param (a deep link shared by another caregiver) -
+// still just a normal, editable field either way, since a code can also
+// be typed by hand.
+const inviteCode = ref(typeof route.query.invite_code === 'string' ? route.query.invite_code : '')
 const error = ref<string | null>(null)
 const submitting = ref(false)
 
@@ -26,10 +33,17 @@ async function onSubmit() {
       email: email.value,
       password: password.value,
       password_confirmation: passwordConfirmation.value,
+      invite_code: inviteCode.value.trim() || undefined,
     })
     router.push({ name: 'dashboard' })
-  } catch {
-    error.value = t('auth.register.error')
+  } catch (err) {
+    // Surfaces the specific "código no válido" message when that's the
+    // actual cause (RegisterRequest's exists:babies,invite_code rule) -
+    // the generic error otherwise, same as before this field existed.
+    error.value =
+      axios.isAxiosError(err) && err.response?.data?.errors?.invite_code
+        ? t('auth.register.inviteCodeError')
+        : t('auth.register.error')
   } finally {
     submitting.value = false
   }
@@ -80,6 +94,18 @@ async function onSubmit() {
           required
           autocomplete="new-password"
         />
+      </div>
+
+      <div>
+        <label for="invite_code" class="field-label">{{ t('auth.register.inviteCode') }}</label>
+        <input
+          id="invite_code"
+          v-model="inviteCode"
+          type="text"
+          autocomplete="off"
+          class="field-input"
+        />
+        <p class="mt-1 text-xs text-text-muted">{{ t('auth.register.inviteCodeHint') }}</p>
       </div>
 
       <p v-if="error" role="alert" class="text-sm font-medium text-danger">{{ error }}</p>

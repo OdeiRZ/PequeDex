@@ -21,6 +21,12 @@ export default {
     ok: 'OK',
   },
   auth: {
+    welcome: {
+      loginPill: 'Log in',
+      tagline: "Your baby's diary, shared with whoever cares for them",
+      createAccount: 'Create a new baby profile',
+      haveInvite: 'I have an invitation',
+    },
     login: {
       title: 'Log in',
       email: 'Email',
@@ -38,9 +44,12 @@ export default {
       email: 'Email',
       password: 'Password',
       passwordConfirmation: 'Confirm password',
+      inviteCode: 'Invitation code (optional)',
+      inviteCodeHint: 'If someone invited you to care for their baby, enter the code here.',
       submit: 'Create account',
       submitting: 'Creating account...',
       error: 'Could not create the account.',
+      inviteCodeError: 'That invitation code is not valid.',
       hasAccount: 'Already have an account?',
       loginLink: 'Log in',
     },

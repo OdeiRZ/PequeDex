@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
@@ -50,7 +50,10 @@ watch(
   <header
     class="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
   >
-    <span class="flex items-center gap-1.5 font-display text-xl font-bold">
+    <RouterLink
+      :to="{ name: auth.user ? 'dashboard' : 'welcome' }"
+      class="flex items-center gap-1.5 font-display text-xl font-bold"
+    >
       <span
         class="origin-center [transform-box:fill-box]"
         :class="{ 'motion-safe:animate-mark-pop': celebrating }"
@@ -59,7 +62,7 @@ watch(
         <AppMark full :size="24" />
       </span>
       PequeDex
-    </span>
+    </RouterLink>
 
     <div class="flex shrink-0 items-center gap-2">
       <ThemeToggle />

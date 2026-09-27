@@ -31,22 +31,23 @@ const inviteCode = computed(() =>
       class="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-bg)_15%,transparent)_0%,color-mix(in_srgb,var(--color-bg)_55%,transparent)_62%,var(--color-bg)_100%)]"
     />
 
-    <div class="relative z-10 flex flex-1 flex-col px-5 pt-4 pb-10">
-      <div class="flex justify-end">
+    <div class="relative z-10 flex flex-1 flex-col px-5 pt-6 pb-10">
+      <div class="mr-1 flex justify-end">
         <RouterLink
+          v-press
           :to="{ name: 'login' }"
-          class="rounded-full border border-border bg-surface/60 px-4 py-2 text-sm font-semibold backdrop-blur-sm"
+          class="rounded-full border-2 border-brand bg-surface/60 px-4 py-2 text-sm font-display font-bold text-brand backdrop-blur-sm transition-transform active:scale-[0.98]"
         >
           {{ t('auth.welcome.loginPill') }}
         </RouterLink>
       </div>
 
-      <div class="mt-10 flex items-center justify-center gap-2">
-        <AppMark full :size="30" />
-        <span class="font-display text-2xl font-bold">{{ t('app.name') }}</span>
+      <div class="mt-52 flex items-center justify-center gap-3">
+        <AppMark full wiggle-toes beat-heart :size="40" />
+        <span class="font-display text-4xl font-bold">{{ t('app.name') }}</span>
       </div>
 
-      <p class="mt-auto mb-9 max-w-[15ch] font-display text-[1.65rem] leading-tight font-semibold">
+      <p class="mt-auto mb-9 max-w-[13ch] font-display text-[1.65rem] leading-tight font-semibold">
         {{ t('auth.welcome.tagline') }}
       </p>
 

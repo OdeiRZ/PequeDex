@@ -5,12 +5,14 @@ withDefaults(
   defineProps<{
     /** Full mark (with toes) for headers/splash; reduced (no toes) for tight spots like tab icons. */
     full?: boolean
-    /** Heartbeat + step-bob, used only on the loading screen. */
-    animated?: boolean
+    /** Each toe bobs up and down on its own offset rhythm, like a little step - splash + loading screen. */
+    wiggleToes?: boolean
+    /** Heartbeat on its own - splash + loading screen. */
+    beatHeart?: boolean
     /** Rendered width in px; height follows from the viewBox aspect ratio. */
     size?: number
   }>(),
-  { full: false, animated: false, size: 28 },
+  { full: false, wiggleToes: false, beatHeart: false, size: 28 },
 )
 
 // Unique per instance so multiple marks on the same page don't collide on
@@ -26,7 +28,6 @@ const gradientId = `pequedex-mark-${useId()}`
     :style="{ width: `${size}px`, height: 'auto' }"
     viewBox="0 0 84 100"
     aria-hidden="true"
-    :class="{ 'motion-safe:animate-footprint-bob': animated }"
   >
     <defs>
       <linearGradient
@@ -49,6 +50,10 @@ const gradientId = `pequedex-mark-${useId()}`
       ry="9"
       :fill="`url(#${gradientId})`"
       transform="rotate(-10 16 24)"
+      :class="{
+        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
+      }"
+      :style="wiggleToes ? { animationDelay: '0s' } : undefined"
     />
     <ellipse
       cx="32"
@@ -57,8 +62,22 @@ const gradientId = `pequedex-mark-${useId()}`
       ry="10"
       :fill="`url(#${gradientId})`"
       transform="rotate(-4 32 14)"
+      :class="{
+        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
+      }"
+      :style="wiggleToes ? { animationDelay: '0.18s' } : undefined"
     />
-    <ellipse cx="50" cy="12" rx="7.5" ry="10" :fill="`url(#${gradientId})`" />
+    <ellipse
+      cx="50"
+      cy="12"
+      rx="7.5"
+      ry="10"
+      :fill="`url(#${gradientId})`"
+      :class="{
+        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
+      }"
+      :style="wiggleToes ? { animationDelay: '0.36s' } : undefined"
+    />
     <ellipse
       cx="66"
       cy="16"
@@ -66,12 +85,16 @@ const gradientId = `pequedex-mark-${useId()}`
       ry="9.5"
       :fill="`url(#${gradientId})`"
       transform="rotate(8 66 16)"
+      :class="{
+        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
+      }"
+      :style="wiggleToes ? { animationDelay: '0.54s' } : undefined"
     />
     <path
       d="M42 54 c-4 -6 -13 -4 -13 3 c0 6 8 11 13 15 c5 -4 13 -9 13 -15 c0 -7 -9 -9 -13 -3 Z"
       fill="var(--brand-ink)"
       class="origin-center [transform-box:fill-box]"
-      :class="{ 'motion-safe:animate-heartbeat': animated }"
+      :class="{ 'motion-safe:animate-heartbeat-slow': beatHeart }"
     />
   </svg>
 
@@ -80,7 +103,6 @@ const gradientId = `pequedex-mark-${useId()}`
     :style="{ width: `${size}px`, height: 'auto' }"
     viewBox="0 0 84 84"
     aria-hidden="true"
-    :class="{ 'motion-safe:animate-footprint-bob': animated }"
   >
     <defs>
       <linearGradient :id="gradientId" x1="0" y1="0" x2="84" y2="84" gradientUnits="userSpaceOnUse">
@@ -93,7 +115,7 @@ const gradientId = `pequedex-mark-${useId()}`
       d="M42 32 c-4.4 -6.6 -14.3 -4.4 -14.3 3.3 c0 6.6 8.8 12.1 14.3 16.5 c5.5 -4.4 14.3 -9.9 14.3 -16.5 c0 -7.7 -9.9 -9.9 -14.3 -3.3 Z"
       fill="var(--brand-ink)"
       class="origin-center [transform-box:fill-box]"
-      :class="{ 'motion-safe:animate-heartbeat': animated }"
+      :class="{ 'motion-safe:animate-heartbeat-slow': beatHeart }"
     />
   </svg>
 </template>

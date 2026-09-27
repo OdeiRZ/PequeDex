@@ -31,6 +31,32 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   y une al usuario al bebé en el mismo paso, envuelto en una transacción
   (mismo motivo que `BabyController::store()`) para que un fallo a medias
   nunca deje una cuenta creada pero sin el bebé de la invitación.
+  Sin un `invite_code` ya en la URL, "Tengo una invitación" y "Crear un
+  nuevo perfil de bebé" llevaban al mismo `RegisterView` sin ninguna
+  diferencia visible - el enlace añade `?intent=invite`, y
+  `RegisterView` hace scroll y foco automáticos al campo del código al
+  detectarlo. Varios ajustes visuales tras revisión: el logo/nombre
+  centrado, bajado de posición y agrandado, con dedos y corazón
+  animados (`AppMark`, ver más abajo); la píldora "Iniciar sesión" con
+  más separación del borde (misma distancia arriba que a la derecha) y
+  un borde en color de marca en vez de uno neutro; el tagline
+  reescrito ("Todo el cuidado de tu bebé, en un solo diario") para
+  dejar claro que registra datos concretos, no un diario de texto
+  libre.
+
+- **Logo del header enlazado a inicio**: "PequeDex" en `AppHeader` era
+  un `<span>` estático, sin salida desde Login o Registro salvo el
+  botón atrás del navegador. Ahora es un `RouterLink` a `welcome` (sin
+  sesión) o `dashboard` (con sesión).
+
+- **`AppMark` con animación propia de dedos y corazón**: sustituye al
+  único modo `animated` que tenía antes (bob de todo el pie + latido
+  rápido, solo en la pantalla de carga del Dashboard) por dos props
+  independientes, `wiggleToes` y `beatHeart` - cada uno de los 4 dedos
+  bobea con su propio retardo, el corazón late a un ritmo más lento y
+  separado. El mismo movimiento se usa ahora tanto en el splash como en
+  la carga del Dashboard, en vez de dos animaciones distintas para el
+  mismo logo.
 
 - **PWA instalable de verdad**: en Chrome Android, "Instalar app" ofrecía
   solo "Crear acceso directo" (una pestaña de Chrome con un icono, no una
@@ -1120,6 +1146,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Pantalla en blanco al cerrar sesión** — `router.push` tras
+  `auth.logout()` nunca se ejecutaba si la propia petición
+  `POST /logout` fallaba (token ya caducado, red...), aunque
+  `auth.logout()` ya limpia la sesión local en su propio `finally`. Se
+  quedaba montado el Dashboard, ahora sin `auth.user`, con pantalla en
+  blanco como resultado. Un `try/finally` en `AppHeader.onLogout`
+  garantiza la redirección (a `welcome`) pase lo que pase con la
+  petición.
 - **Crear/editar toma, sueño, pañal, medida e hito con la misma
   sensación de lentitud que tenía el borrado** — mismo motivo: dos
   peticiones seguidas (el `POST`/`PUT` y luego un `GET` completo

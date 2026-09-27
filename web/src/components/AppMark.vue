@@ -43,53 +43,48 @@ const gradientId = `pequedex-mark-${useId()}`
       </linearGradient>
     </defs>
     <ellipse cx="42" cy="62" rx="26" ry="34" :fill="`url(#${gradientId})`" />
-    <ellipse
-      cx="16"
-      cy="24"
-      rx="7"
-      ry="9"
-      :fill="`url(#${gradientId})`"
-      transform="rotate(-10 16 24)"
-      :class="{
-        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
-      }"
-      :style="wiggleToes ? { animationDelay: '0s' } : undefined"
-    />
-    <ellipse
-      cx="32"
-      cy="14"
-      rx="7.5"
-      ry="10"
-      :fill="`url(#${gradientId})`"
-      transform="rotate(-4 32 14)"
-      :class="{
-        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
-      }"
-      :style="wiggleToes ? { animationDelay: '0.18s' } : undefined"
-    />
+    <g transform="rotate(-10 16 24)">
+      <ellipse
+        cx="16"
+        cy="24"
+        rx="7"
+        ry="9"
+        :fill="`url(#${gradientId})`"
+        :class="{ 'motion-safe:animate-toe-wiggle': wiggleToes }"
+        :style="wiggleToes ? { animationDelay: '0s' } : undefined"
+      />
+    </g>
+    <g transform="rotate(-4 32 14)">
+      <ellipse
+        cx="32"
+        cy="14"
+        rx="7.5"
+        ry="10"
+        :fill="`url(#${gradientId})`"
+        :class="{ 'motion-safe:animate-toe-wiggle': wiggleToes }"
+        :style="wiggleToes ? { animationDelay: '0.18s' } : undefined"
+      />
+    </g>
     <ellipse
       cx="50"
       cy="12"
       rx="7.5"
       ry="10"
       :fill="`url(#${gradientId})`"
-      :class="{
-        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
-      }"
+      :class="{ 'motion-safe:animate-toe-wiggle': wiggleToes }"
       :style="wiggleToes ? { animationDelay: '0.36s' } : undefined"
     />
-    <ellipse
-      cx="66"
-      cy="16"
-      rx="7"
-      ry="9.5"
-      :fill="`url(#${gradientId})`"
-      transform="rotate(8 66 16)"
-      :class="{
-        'origin-center [transform-box:fill-box] motion-safe:animate-toe-wiggle': wiggleToes,
-      }"
-      :style="wiggleToes ? { animationDelay: '0.54s' } : undefined"
-    />
+    <g transform="rotate(8 66 16)">
+      <ellipse
+        cx="66"
+        cy="16"
+        rx="7"
+        ry="9.5"
+        :fill="`url(#${gradientId})`"
+        :class="{ 'motion-safe:animate-toe-wiggle': wiggleToes }"
+        :style="wiggleToes ? { animationDelay: '0.54s' } : undefined"
+      />
+    </g>
     <path
       d="M42 54 c-4 -6 -13 -4 -13 3 c0 6 8 11 13 15 c5 -4 13 -9 13 -15 c0 -7 -9 -9 -13 -3 Z"
       fill="var(--brand-ink)"

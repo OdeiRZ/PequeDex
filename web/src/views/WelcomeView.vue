@@ -41,7 +41,7 @@ const inviteCode = computed(() =>
         </RouterLink>
       </div>
 
-      <div class="mt-10 flex items-center gap-2">
+      <div class="mt-10 flex items-center justify-center gap-2">
         <AppMark full :size="30" />
         <span class="font-display text-2xl font-bold">{{ t('app.name') }}</span>
       </div>

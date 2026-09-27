@@ -23,7 +23,7 @@ export default {
   auth: {
     welcome: {
       loginPill: 'Log in',
-      tagline: "Your baby's diary, shared with whoever cares for them",
+      tagline: "All your baby's care, in one diary",
       createAccount: 'Create a new baby profile',
       haveInvite: 'I have an invitation',
     },

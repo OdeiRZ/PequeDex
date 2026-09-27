@@ -166,6 +166,7 @@ return [
         'changed_at' => 'fecha',
         'measured_at' => 'fecha',
         'achieved_at' => 'fecha',
+        'invite_code' => 'código de invitación',
     ],
 
 ];

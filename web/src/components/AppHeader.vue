@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
@@ -16,8 +16,16 @@ const toast = useToastStore()
 const { t } = useI18n()
 
 async function onLogout() {
-  await auth.logout()
-  router.push({ name: 'login' })
+  // auth.logout() rethrows when the /logout request itself fails (expired
+  // token, dropped connection...) even though it already cleared the local
+  // session in its own `finally` - without this try/finally too, that throw
+  // skipped the redirect below and left the still-mounted, now-userless
+  // Dashboard to render against a null auth.user instead.
+  try {
+    await auth.logout()
+  } finally {
+    router.push({ name: 'welcome' })
+  }
 }
 
 // A little celebration on the header mark whenever something is saved
@@ -42,7 +50,10 @@ watch(
   <header
     class="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
   >
-    <span class="flex items-center gap-1.5 font-display text-xl font-bold">
+    <RouterLink
+      :to="{ name: auth.user ? 'dashboard' : 'welcome' }"
+      class="flex items-center gap-1.5 font-display text-xl font-bold"
+    >
       <span
         class="origin-center [transform-box:fill-box]"
         :class="{ 'motion-safe:animate-mark-pop': celebrating }"
@@ -51,7 +62,7 @@ watch(
         <AppMark full :size="24" />
       </span>
       PequeDex
-    </span>
+    </RouterLink>
 
     <div class="flex shrink-0 items-center gap-2">
       <ThemeToggle />

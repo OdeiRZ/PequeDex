@@ -62,6 +62,24 @@ describe('useAuthStore', () => {
     expect(store.isAuthenticated).toBe(true)
   })
 
+  it('forwards an invite_code to the register endpoint when given one', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+
+    await store.register({
+      name: user.name,
+      email: user.email,
+      password: 'secret',
+      password_confirmation: 'secret',
+      invite_code: 'ABC123',
+    })
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/register',
+      expect.objectContaining({ invite_code: 'ABC123' }),
+    )
+  })
+
   it('requests a password reset link', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { message: 'sent' } })
     const store = useAuthStore()

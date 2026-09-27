@@ -21,6 +21,12 @@ export default {
     ok: 'Vale',
   },
   auth: {
+    welcome: {
+      loginPill: 'Iniciar sesión',
+      tagline: 'Todo el cuidado de tu bebé, en un solo diario',
+      createAccount: 'Crear un nuevo perfil de bebé',
+      haveInvite: 'Tengo una invitación',
+    },
     login: {
       title: 'Iniciar sesión',
       email: 'Email',
@@ -38,9 +44,12 @@ export default {
       email: 'Email',
       password: 'Contraseña',
       passwordConfirmation: 'Repite la contraseña',
+      inviteCode: 'Código de invitación (opcional)',
+      inviteCodeHint: 'Si alguien te ha invitado a cuidar de su bebé, escribe aquí el código.',
       submit: 'Crear cuenta',
       submitting: 'Creando cuenta...',
       error: 'No se ha podido crear la cuenta.',
+      inviteCodeError: 'Ese código de invitación no es válido.',
       hasAccount: '¿Ya tienes cuenta?',
       loginLink: 'Inicia sesión',
     },

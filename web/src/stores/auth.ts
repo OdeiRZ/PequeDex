@@ -19,6 +19,10 @@ interface RegisterPayload {
   email: string
   password: string
   password_confirmation: string
+  // Quien llega desde "Tengo una invitación" en la bienvenida se une al
+  // bebé en el mismo paso (ver AuthController::register() en el backend) -
+  // un registro normal, sin invitación, no manda este campo.
+  invite_code?: string
 }
 
 interface LoginPayload {

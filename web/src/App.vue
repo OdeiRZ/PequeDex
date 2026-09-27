@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AccountSheet from '@/components/AccountSheet.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
 
 // A stored token survives a reload, but the user object it belongs to
 // doesn't - without this, the header's name only ever appears if the
@@ -22,7 +23,11 @@ onMounted(() => {
 
 <template>
   <div class="mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-bg text-text">
-    <AppHeader />
+    <!-- Not shown on WelcomeView - it carries its own "Iniciar sesión"
+         pill and brand mark over the animated hero, and the sticky
+         header's own bg-bg bar would clip that background at the top of
+         the screen. -->
+    <AppHeader v-if="route.name !== 'welcome'" />
     <RouterView v-slot="{ Component }">
       <Transition name="route" mode="out-in">
         <component :is="Component" />

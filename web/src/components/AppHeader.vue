@@ -16,8 +16,16 @@ const toast = useToastStore()
 const { t } = useI18n()
 
 async function onLogout() {
-  await auth.logout()
-  router.push({ name: 'login' })
+  // auth.logout() rethrows when the /logout request itself fails (expired
+  // token, dropped connection...) even though it already cleared the local
+  // session in its own `finally` - without this try/finally too, that throw
+  // skipped the redirect below and left the still-mounted, now-userless
+  // Dashboard to render against a null auth.user instead.
+  try {
+    await auth.logout()
+  } finally {
+    router.push({ name: 'welcome' })
+  }
 }
 
 // A little celebration on the header mark whenever something is saved

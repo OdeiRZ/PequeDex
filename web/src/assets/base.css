@@ -166,14 +166,20 @@
 
 /* Each of the 4 toes on AppMark bobs on its own offset delay (see
    AppMark's wiggleToes prop), so they read as a little independent
-   wiggle rather than the whole paw bobbing as one block. */
+   wiggle rather than the whole paw bobbing as one block. Animates the
+   standalone `translate` property, not `transform` - three of the four
+   toes already carry their own `transform="rotate(...)"` SVG
+   presentation attribute, and a CSS `transform` (even just a
+   translateY from this animation) replaces that attribute outright
+   instead of combining with it, snapping the toe out of its rotated
+   position and making it look cut off against the paw beneath it. */
 @keyframes toe-wiggle {
   0%,
   100% {
-    transform: translateY(0);
+    translate: 0 0;
   }
   50% {
-    transform: translateY(-2.1px);
+    translate: 0 -2.1px;
   }
 }
 

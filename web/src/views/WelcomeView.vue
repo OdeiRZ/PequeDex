@@ -59,7 +59,10 @@ const inviteCode = computed(() =>
           {{ t('auth.welcome.createAccount') }}
         </RouterLink>
         <RouterLink
-          :to="{ name: 'register', query: inviteCode ? { invite_code: inviteCode } : {} }"
+          :to="{
+            name: 'register',
+            query: { ...(inviteCode ? { invite_code: inviteCode } : {}), intent: 'invite' },
+          }"
           class="text-sm font-semibold text-text-muted"
         >
           {{ t('auth.welcome.haveInvite') }}

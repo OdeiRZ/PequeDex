@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
@@ -22,6 +22,18 @@ const passwordConfirmation = ref('')
 const inviteCode = ref(typeof route.query.invite_code === 'string' ? route.query.invite_code : '')
 const error = ref<string | null>(null)
 const submitting = ref(false)
+const inviteCodeInput = ref<HTMLInputElement | null>(null)
+
+// WelcomeView's "Tengo una invitación" marks its link with ?intent=invite
+// even without a deep-linked code, so someone who wants to type one by
+// hand lands with the eye already on that field instead of a form
+// indistinguishable from "Crear un nuevo perfil de bebé".
+onMounted(() => {
+  if (route.query.intent === 'invite') {
+    inviteCodeInput.value?.scrollIntoView({ block: 'center' })
+    inviteCodeInput.value?.focus()
+  }
+})
 
 async function onSubmit() {
   error.value = null
@@ -100,6 +112,7 @@ async function onSubmit() {
         <label for="invite_code" class="field-label">{{ t('auth.register.inviteCode') }}</label>
         <input
           id="invite_code"
+          ref="inviteCodeInput"
           v-model="inviteCode"
           type="text"
           autocomplete="off"

@@ -1146,6 +1146,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Iconos de instalación de la PWA sin contraste** — `icon-192`/`icon-512`/
+  `icon-maskable-512`/`apple-touch-icon` tenían fondo transparente (las
+  variantes "any") o rosa sólido (la maskable) — el mismo rosa con el
+  que empieza el degradado del pie, así que la parte de arriba de la
+  huella se fundía con el fondo y no se distinguía bien al instalar la
+  app en el móvil. Fondo crema sólido (`#fbf7f2`, el mismo `--bg`/
+  `background_color` del resto de la app) en las 4 variantes, huella
+  recentrada y reescalada; en la maskable, dentro de la zona segura del
+  80% que recortan los distintos launchers (círculo, squircle, cuadrado
+  redondeado).
+- **Dedo cortado en la animación de `AppMark`** — tres de los cuatro
+  dedos llevan su propio atributo SVG `transform="rotate(...)"`; al
+  animar con `transform: translateY(...)` vía CSS, ese transform
+  sustituía por completo al atributo en vez de combinarse con él, así
+  que el dedo perdía su rotación en cuanto arrancaba la animación y
+  aparecía desplazado/cortado contra la almohadilla. Cambiado a la
+  propiedad CSS `translate` (independiente de `transform`), que no
+  tiene ese conflicto.
 - **Pantalla en blanco al cerrar sesión** — `router.push` tras
   `auth.logout()` nunca se ejecutaba si la propia petición
   `POST /logout` fallaba (token ya caducado, red...), aunque

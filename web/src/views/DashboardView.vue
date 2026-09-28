@@ -242,7 +242,11 @@ async function onJoinBaby() {
 
   try {
     await babies.join(inviteCodeInput.value)
-    toast.show(t('dashboard.onboarding.toastJoined'))
+    toast.show(
+      t('dashboard.onboarding.toastJoined', {
+        name: babies.current?.name ?? t('dashboard.defaultBabyName'),
+      }),
+    )
     closeSheet()
     await loadBabyData()
   } catch {

@@ -135,7 +135,7 @@ export default {
       joinError: 'Invalid code.',
       join: 'Join',
       toastCreated: 'Baby created.',
-      toastJoined: "You've joined.",
+      toastJoined: "You've joined {name}'s diary.",
       wizardNext: 'Next',
       wizardSkip: 'Skip',
       wizardNameTitle: "What's your baby's name?",

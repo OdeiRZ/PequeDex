@@ -136,7 +136,7 @@ export default {
       joinError: 'Código no válido.',
       join: 'Unirme',
       toastCreated: 'Bebé creado.',
-      toastJoined: 'Te has unido.',
+      toastJoined: 'Te has unido al diario de {name}.',
       wizardNext: 'Siguiente',
       wizardSkip: 'Saltar',
       wizardNameTitle: '¿Cómo se llama tu bebé?',

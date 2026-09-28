@@ -82,11 +82,28 @@ export const useAuthStore = defineStore('auth', {
       await apiClient.post('/reset-password', payload)
     },
 
-    async logout() {
-      try {
-        await apiClient.post('/logout')
-      } finally {
-        this.clearSession()
+    // Clears the local session synchronously, before the /logout request
+    // even goes out - the caller (AppHeader) navigates away right after
+    // calling this, in the same tick, so Vue batches both reactive
+    // changes into one render instead of painting a still-mounted
+    // Dashboard against newly-null auth.user/babies.current for a frame
+    // while router.push was still in flight (a real, visible flicker on
+    // the way out). Revoking the token server-side is still worth doing,
+    // just not something the UI should wait on - captures the token
+    // before clearing it locally and sends it explicitly, since the
+    // request interceptor's own lookup (getStoredToken()) runs on a
+    // later microtask, after clearStoredToken() below has already run.
+    logout() {
+      const token = getStoredToken()
+
+      this.clearSession()
+
+      if (token) {
+        apiClient
+          .post('/logout', undefined, { headers: { Authorization: `Bearer ${token}` } })
+          .catch(() => {
+            // best-effort - the local session is already gone either way.
+          })
       }
     },
 

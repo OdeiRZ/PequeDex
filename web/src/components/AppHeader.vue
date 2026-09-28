@@ -15,17 +15,16 @@ const ui = useUiStore()
 const toast = useToastStore()
 const { t } = useI18n()
 
-async function onLogout() {
-  // auth.logout() rethrows when the /logout request itself fails (expired
-  // token, dropped connection...) even though it already cleared the local
-  // session in its own `finally` - without this try/finally too, that throw
-  // skipped the redirect below and left the still-mounted, now-userless
-  // Dashboard to render against a null auth.user instead.
-  try {
-    await auth.logout()
-  } finally {
-    router.push({ name: 'welcome' })
-  }
+function onLogout() {
+  // auth.logout() clears the local session synchronously and only fires
+  // the actual /logout request in the background - calling it and pushing
+  // the route back to back, in the same tick, lets Vue batch both
+  // reactive changes into one render instead of painting the
+  // still-mounted Dashboard against newly-null auth.user/babies.current
+  // for a frame while the navigation was still in flight (a real, visible
+  // flicker on the way out).
+  auth.logout()
+  router.push({ name: 'welcome' })
 }
 
 // A little celebration on the header mark whenever something is saved

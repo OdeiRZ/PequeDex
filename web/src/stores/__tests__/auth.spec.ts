@@ -104,18 +104,40 @@ describe('useAuthStore', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/reset-password', payload)
   })
 
-  it('clears the session on logout, even if the request fails', async () => {
+  it('clears the session on logout synchronously, without waiting on the request', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
     const store = useAuthStore()
     await store.login({ email: user.email, password: 'secret' })
 
-    vi.mocked(apiClient.post).mockRejectedValueOnce(new Error('network error'))
+    // Never resolves - proves logout() doesn't await it either way.
+    vi.mocked(apiClient.post).mockReturnValueOnce(new Promise(() => {}))
 
-    await expect(store.logout()).rejects.toThrow()
+    store.logout()
 
     expect(store.user).toBeNull()
     expect(store.token).toBeNull()
     expect(localStorage.getItem('pequedex_token')).toBeNull()
+  })
+
+  it('still sends /logout with the token that was just cleared locally', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+    const store = useAuthStore()
+    await store.login({ email: user.email, password: 'secret' })
+
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
+    store.logout()
+
+    expect(apiClient.post).toHaveBeenCalledWith('/logout', undefined, {
+      headers: { Authorization: 'Bearer abc123' },
+    })
+  })
+
+  it('skips the /logout request entirely when there was no token to begin with', () => {
+    const store = useAuthStore()
+
+    store.logout()
+
+    expect(apiClient.post).not.toHaveBeenCalled()
   })
 
   it('fetches the current user when a token is already stored', async () => {

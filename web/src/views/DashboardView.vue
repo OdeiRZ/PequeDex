@@ -20,6 +20,7 @@ import {
 import { useToastStore } from '@/stores/toast'
 import ActionBar from '@/components/ActionBar.vue'
 import AppMark from '@/components/AppMark.vue'
+import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
 import DailyRhythm from '@/components/DailyRhythm.vue'
@@ -193,8 +194,9 @@ async function initDashboard() {
 
   if (babies.current) {
     // loadBabyData() itself only has a `finally` (its two other callers,
-    // onCreateBaby/onJoinBaby, already catch its rejection themselves to
-    // show their own createError/joinError instead) - uncaught here, a
+    // onBabyWizardCreated/onJoinBaby, already catch its rejection
+    // themselves - the wizard's own babies.create() only emits `created`
+    // on success, and onJoinBaby shows its own joinError) - uncaught here, a
     // failed Promise.all (any of timeline/growth/milestones/prediction/
     // sleeps) left `loading` false again via that `finally` but with no
     // error shown, rendering the dashboard shell over silently empty
@@ -213,32 +215,22 @@ async function initDashboard() {
 onMounted(initDashboard)
 
 // --- Onboarding: crear o unirse a un bebé ---
+// Creating one is BabyOnboardingWizard's own job now (step-by-step,
+// Napper-style, calls babies.create() itself) - this just reacts once
+// it's done. Joining with an invite code stays a plain one-field form
+// here, unchanged.
 
-const babyName = ref('')
-const dueDate = ref('')
-const onboardingSex = ref<BabySex | ''>('')
-const creatingBaby = ref(false)
-const createError = ref<string | null>(null)
-
-async function onCreateBaby() {
-  createError.value = null
-  creatingBaby.value = true
-
-  try {
-    await babies.create({
-      name: babyName.value || undefined,
-      due_date: dueDate.value || undefined,
-      sex: onboardingSex.value || undefined,
-    })
-    toast.show(t('dashboard.onboarding.toastCreated'))
-    closeSheet()
-    await loadBabyData()
-  } catch {
-    createError.value = t('dashboard.onboarding.createError')
-  } finally {
-    creatingBaby.value = false
-  }
+async function onBabyWizardCreated() {
+  toast.show(t('dashboard.onboarding.toastCreated'))
+  closeSheet()
+  await loadBabyData()
 }
+
+// Only the "Añadir otro bebé" sheet's instance needs a ref - it's reset
+// on open (see openSheet below) since it stays mounted across opens like
+// every other sheet's fields; the full-screen onboarding one unmounts for
+// good the moment a baby exists, so it never needs resetting.
+const addBabyWizardRef = ref<InstanceType<typeof BabyOnboardingWizard> | null>(null)
 
 const inviteCodeInput = ref('')
 const joiningBaby = ref(false)
@@ -341,10 +333,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     confirmingLeave.value = false
     leaveError.value = null
   } else if (sheet === 'addBaby') {
-    babyName.value = ''
-    dueDate.value = ''
-    onboardingSex.value = ''
-    createError.value = null
+    addBabyWizardRef.value?.reset()
     inviteCodeInput.value = ''
     joinError.value = null
   }
@@ -1347,34 +1336,8 @@ const sleepPredictionDue = computed(() => {
 
     <template v-else>
       <main v-if="!babies.current" class="flex flex-1 flex-col gap-6 px-4 py-6">
-        <section class="card flex flex-col gap-4 p-5">
-          <h2 class="font-display text-lg font-bold">
-            {{ t('dashboard.onboarding.createTitle') }}
-          </h2>
-          <form class="flex flex-col gap-4" @submit.prevent="onCreateBaby">
-            <div>
-              <label for="baby-name" class="field-label">{{
-                t('dashboard.onboarding.name')
-              }}</label>
-              <input id="baby-name" v-model="babyName" type="text" class="field-input" />
-            </div>
-            <div>
-              <label for="due-date" class="field-label">{{
-                t('dashboard.onboarding.dueDate')
-              }}</label>
-              <input id="due-date" v-model="dueDate" type="date" class="field-input" />
-            </div>
-            <div>
-              <span class="field-label">{{ t('dashboard.babySettings.sexLabel') }}</span>
-              <SegmentedControl v-model="onboardingSex" :options="babySexOptions" />
-            </div>
-            <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
-              {{ createError }}
-            </p>
-            <button v-press type="submit" :disabled="creatingBaby" class="btn-primary">
-              {{ t('dashboard.onboarding.create') }}
-            </button>
-          </form>
+        <section class="card flex flex-1 flex-col p-5">
+          <BabyOnboardingWizard :date-locale="dateLocale" @created="onBabyWizardCreated" />
         </section>
 
         <section class="card flex flex-col gap-4 p-5">
@@ -2359,34 +2322,12 @@ const sleepPredictionDue = computed(() => {
             {{ t('dashboard.babySettings.addAnotherBaby') }}
           </h3>
 
-          <section class="flex flex-col gap-4">
-            <h4 class="font-display text-sm font-bold">
-              {{ t('dashboard.onboarding.createTitle') }}
-            </h4>
-            <form class="flex flex-col gap-4" @submit.prevent="onCreateBaby">
-              <div>
-                <label for="add-baby-name" class="field-label">{{
-                  t('dashboard.onboarding.name')
-                }}</label>
-                <input id="add-baby-name" v-model="babyName" type="text" class="field-input" />
-              </div>
-              <div>
-                <label for="add-due-date" class="field-label">{{
-                  t('dashboard.onboarding.dueDate')
-                }}</label>
-                <input id="add-due-date" v-model="dueDate" type="date" class="field-input" />
-              </div>
-              <div>
-                <span class="field-label">{{ t('dashboard.babySettings.sexLabel') }}</span>
-                <SegmentedControl v-model="onboardingSex" :options="babySexOptions" />
-              </div>
-              <p v-if="createError" role="alert" class="text-sm font-medium text-danger">
-                {{ createError }}
-              </p>
-              <button v-press type="submit" :disabled="creatingBaby" class="btn-primary">
-                {{ t('dashboard.onboarding.create') }}
-              </button>
-            </form>
+          <section>
+            <BabyOnboardingWizard
+              ref="addBabyWizardRef"
+              :date-locale="dateLocale"
+              @created="onBabyWizardCreated"
+            />
           </section>
 
           <section class="mt-6 flex flex-col gap-4 border-t border-border pt-5">

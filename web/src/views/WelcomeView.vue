@@ -9,8 +9,12 @@ const { t } = useI18n()
 
 // Deep link a caregiver already on a baby's profile can share ("Tu
 // cuenta" > código de invitación) - if it's already in the URL when
-// someone lands here, "Tengo una invitación" carries it straight into
-// RegisterView's own field instead of making them retype it.
+// someone lands here, it carries straight into RegisterView's own
+// field instead of making them retype it. Used to be a second,
+// separate "Tengo una invitación" entry point next to this one, but
+// both led to the exact same RegisterView either way (it always has
+// the invite-code field, deep link or not) - one real destination,
+// one button.
 const inviteCode = computed(() =>
   typeof route.query.invite_code === 'string' ? route.query.invite_code : undefined,
 )
@@ -54,19 +58,13 @@ const inviteCode = computed(() =>
       <div class="flex flex-col items-center gap-4">
         <RouterLink
           v-press
-          :to="{ name: 'register' }"
+          :to="{
+            name: 'register',
+            query: inviteCode ? { invite_code: inviteCode, intent: 'invite' } : {},
+          }"
           class="w-full rounded-full bg-gradient-to-br from-brand to-brand-teal py-4 text-center font-display font-bold text-brand-ink shadow-[0_14px_26px_-12px_color-mix(in_srgb,var(--brand)_60%,transparent)] transition-transform active:scale-[0.98]"
         >
           {{ t('auth.welcome.createAccount') }}
-        </RouterLink>
-        <RouterLink
-          :to="{
-            name: 'register',
-            query: { ...(inviteCode ? { invite_code: inviteCode } : {}), intent: 'invite' },
-          }"
-          class="text-sm font-semibold text-text-muted"
-        >
-          {{ t('auth.welcome.haveInvite') }}
         </RouterLink>
       </div>
     </div>

@@ -24,8 +24,7 @@ export default {
     welcome: {
       loginPill: 'Log in',
       tagline: "All your baby's care, in one diary",
-      createAccount: 'Create a new baby profile',
-      haveInvite: 'I have an invitation',
+      createAccount: 'Create account',
     },
     login: {
       title: 'Log in',

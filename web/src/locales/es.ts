@@ -24,8 +24,7 @@ export default {
     welcome: {
       loginPill: 'Iniciar sesión',
       tagline: 'Todo el cuidado de tu bebé, en un solo diario',
-      createAccount: 'Crear un nuevo perfil de bebé',
-      haveInvite: 'Tengo una invitación',
+      createAccount: 'Crear cuenta',
     },
     login: {
       title: 'Iniciar sesión',

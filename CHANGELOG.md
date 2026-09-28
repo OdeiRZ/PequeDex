@@ -44,6 +44,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   dejar claro que registra datos concretos, no un diario de texto
   libre.
 
+- **Asistente paso a paso para crear el perfil del bebé**
+  (`BabyOnboardingWizard.vue`), al estilo Napper, en vez del formulario
+  plano de siempre (nombre, fecha prevista y sexo todos juntos): una
+  pregunta por pantalla, con puntos de progreso, un "Saltar" que salta
+  directo a la confirmación desde cualquier paso (todo sigue siendo
+  opcional), la fecha prevista con un selector de rueda por
+  día/mes/año (`WheelColumn.vue`, nuevo componente genérico con
+  scroll-snap - también clicable directamente en un valor, no solo
+  deslizable, para quien usa ratón en vez de dedo) en vez de un
+  `<input type="date">`, el sexo con tarjetas grandes tocables en vez
+  del `SegmentedControl` pequeño, y una pantalla de confirmación final
+  con el `AppMark` animado (`beatHeart`) antes de crear el bebé. Se
+  decidió tras probar dos borradores interactivos en un artefacto
+  (este paso a paso vs. una sola pantalla con controles más táctiles).
+  Sustituye al formulario tanto en el onboarding inicial como en la
+  hoja "Añadir otro bebé"; el flujo de "unirme con un código de
+  invitación" no cambia en ninguno de los dos sitios. El toast al
+  unirte a un bebé compartido pasa de "Te has unido." a "Te has unido
+  al diario de {nombre}.".
+
 - **Logo del header enlazado a inicio**: "PequeDex" en `AppHeader` era
   un `<span>` estático, sin salida desde Login o Registro salvo el
   botón atrás del navegador. Ahora es un `RouterLink` a `welcome` (sin
@@ -1172,6 +1192,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   blanco como resultado. Un `try/finally` en `AppHeader.onLogout`
   garantiza la redirección (a `welcome`) pase lo que pase con la
   petición.
+- **La pantalla seguía en blanco tras el arreglo anterior** — la
+  redirección sí se disparaba, pero cualquier transición de ruta hacia
+  o desde `welcome` bajo `mode="out-in"` (`App.vue`) se quedaba
+  colgada para siempre: el router ya tenía la ruta y el componente
+  correctos, pero el DOM no llegaba a pintar nada, ni la página vieja
+  ni la nueva. Reproducido en vivo en Chrome y descartadas `v-show` en
+  `AppHeader` y un `:duration` explícito antes de encontrar el arreglo
+  real - `mode="out-in"` se desactiva ahora solo para las transiciones
+  que tocan `welcome` (en cualquier dirección), y se mantiene para el
+  resto de rutas (sigue evitando que `DashboardView`/`ContractionsView`
+  monten dos veces sus intervalos de sondeo).
+- **Extensión `gd` ausente en el contenedor de producción** —
+  `AvatarProcessor::process()` usa `imagecreatefromstring()` (ext-gd)
+  para redimensionar avatares; el `Dockerfile` solo instalaba
+  `pdo_pgsql` y `bcmath`, así que subir un avatar en producción
+  fallaba con "Call to undefined function ... imagecreatefromstring()"
+  (nunca fallaba en local, Laragon ya trae la extensión). Los uploads
+  aceptan jpeg/png/webp, así que `gd` se compila con las librerías dev
+  de jpeg y webp, no solo su build por defecto (que solo trae PNG).
 - **Crear/editar toma, sueño, pañal, medida e hito con la misma
   sensación de lentitud que tenía el borrado** — mismo motivo: dos
   peticiones seguidas (el `POST`/`PUT` y luego un `GET` completo

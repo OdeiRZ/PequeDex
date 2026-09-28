@@ -111,6 +111,10 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     único cuidador (no solo "dejar de cuidarlo"), tipo de leche en
     tomas de pecho y color de las heces en pañales sucios — ver
     `web/README.md`/`api/README.md`.
+14. ✅ Rediseño del arranque de la app: pantalla de bienvenida propia
+    (antes redirigía directo a Login), instalable de verdad como PWA
+    en Android/iOS, y un asistente paso a paso para crear el perfil
+    del bebé en vez de un formulario plano — ver CHANGELOG.md.
 
 ## Licencia
 

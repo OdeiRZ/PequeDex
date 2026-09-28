@@ -532,6 +532,38 @@ body {
   transform: translateY(-6px);
 }
 
+/* Transitions into/out of welcome (App.vue's own routeTransitionName/
+   transitionMode) render old and new simultaneously, not sequentially -
+   out-in isn't usable there (see App.vue's comment). A faded-but-still-
+   overlapping leave (what .route-leave-active above does) still reads as
+   a flicker of the old page's content, confirmed live: it's fully opaque
+   for the first part of its own ~0.18s fade out, overlapping the
+   entering page's own still-mostly-transparent fade in. This variant
+   drops the leave transition entirely - the old page is taken out of
+   flow and simply vanishes the instant it stops being the active route,
+   so there's no window where both are visibly blended. The enter side
+   keeps the same fade-in as the regular "route" transition. */
+.route-instant-leave-enter-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.route-instant-leave-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.route-instant-leave-leave-active {
+  position: absolute;
+  width: 100%;
+  transition: none;
+}
+
+.route-instant-leave-leave-to {
+  opacity: 0;
+}
+
 /* Dashboard's own top-level blocks (baby switcher, baby card,
    TodaySummary, predictions, milestones, DailyRhythm, WeeklySleep,
    línea temporal) fading/sliding up one after another instead of
@@ -594,6 +626,8 @@ body {
   .dash-enter,
   .route-enter-active,
   .route-leave-active,
+  .route-instant-leave-enter-active,
+  .route-instant-leave-leave-active,
   .wizard-step {
     transition: none !important;
     animation: none !important;
@@ -611,7 +645,9 @@ body {
   .confirm-warn-leave-to,
   .dash-enter,
   .route-enter-from,
-  .route-leave-to {
+  .route-leave-to,
+  .route-instant-leave-enter-from,
+  .route-instant-leave-leave-to {
     transform: none !important;
     opacity: 1 !important;
   }

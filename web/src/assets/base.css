@@ -593,7 +593,8 @@ body {
   .baby-pill-active,
   .dash-enter,
   .route-enter-active,
-  .route-leave-active {
+  .route-leave-active,
+  .wizard-step {
     transition: none !important;
     animation: none !important;
   }

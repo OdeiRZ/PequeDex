@@ -62,7 +62,7 @@ const inviteCode = computed(() =>
             name: 'register',
             query: inviteCode ? { invite_code: inviteCode, intent: 'invite' } : {},
           }"
-          class="w-full rounded-full bg-gradient-to-br from-brand to-brand-teal py-4 text-center font-display font-bold text-brand-ink shadow-[0_14px_26px_-12px_color-mix(in_srgb,var(--brand)_60%,transparent)] transition-transform active:scale-[0.98]"
+          class="w-4/5 rounded-full bg-gradient-to-br from-brand to-brand-teal py-4 text-center font-display font-bold text-brand-ink shadow-[0_14px_26px_-12px_color-mix(in_srgb,var(--brand)_60%,transparent)] transition-transform active:scale-[0.98]"
         >
           {{ t('auth.welcome.createAccount') }}
         </RouterLink>

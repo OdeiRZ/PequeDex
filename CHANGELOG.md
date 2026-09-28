@@ -44,6 +44,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   dejar claro que registra datos concretos, no un diario de texto
   libre.
 
+- **Un solo botón en el splash, no dos**: "Crear un nuevo perfil de
+  bebé" y "Tengo una invitación" llevaban al mismo `RegisterView` (con
+  el mismo campo opcional de código de invitación), la única
+  diferencia era el foco automático en ese campo cuando venías de un
+  deep link - dos caminos para el mismo destino se sentían como uno de
+  más. Un solo botón "Crear cuenta" (ahora al 80% del ancho de la
+  pantalla, no a todo el ancho) cubre los dos casos: sin `invite_code`
+  en la URL va directo al registro normal, con `invite_code` lleva el
+  mismo query + `intent=invite` que ya activaba el foco automático.
+
 - **Asistente paso a paso para crear el perfil del bebé**
   (`BabyOnboardingWizard.vue`), al estilo Napper, en vez del formulario
   plano de siempre (nombre, fecha prevista y sexo todos juntos): una

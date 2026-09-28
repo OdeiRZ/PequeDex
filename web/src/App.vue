@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AccountSheet from '@/components/AccountSheet.vue'
@@ -19,6 +19,25 @@ onMounted(() => {
     auth.fetchCurrentUser()
   }
 })
+
+// "out-in" is what stops DashboardView/ContractionsView's own onMounted
+// polling intervals from briefly double-firing on a route change (their
+// own comments explain why), but confirmed live: any transition into or
+// out of welcome under "out-in" gets stuck forever - the route and its
+// resolved component are correct, yet nothing paints, neither the old
+// page nor the new one - regardless of AppHeader's v-if (tried v-show)
+// or an explicit :duration override (tried both). Whatever in that
+// specific pairing breaks Vue's leave/enter sequencing, dropping "out-in"
+// only for transitions touching welcome (either direction) sidesteps it
+// without giving up the double-mount protection everywhere else.
+const transitionMode = ref<'out-in' | undefined>('out-in')
+watch(
+  () => route.name,
+  (to, from) => {
+    transitionMode.value = to === 'welcome' || from === 'welcome' ? undefined : 'out-in'
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -29,7 +48,7 @@ onMounted(() => {
          the screen. -->
     <AppHeader v-if="route.name !== 'welcome'" />
     <RouterView v-slot="{ Component }">
-      <Transition name="route" mode="out-in">
+      <Transition name="route" :mode="transitionMode">
         <component :is="Component" />
       </Transition>
     </RouterView>

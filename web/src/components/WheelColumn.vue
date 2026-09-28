@@ -62,6 +62,18 @@ watch(
   },
 )
 
+// Scrolling is the primary gesture (matches a native date wheel), but a
+// mouse has no equivalent flick - without this, a desktop user could only
+// nudge the wheel with the scroll wheel/trackpad and had no way to jump
+// straight to a specific visible value.
+function selectIndex(index: number) {
+  const item = props.items[index]
+  if (!item) return
+
+  scrollToIndex(index, true)
+  if (item.value !== props.modelValue) emit('update:modelValue', item.value)
+}
+
 function onScroll() {
   if (programmaticScroll) return
 
@@ -91,12 +103,13 @@ function onScroll() {
   >
     <div class="wheel-pad" :style="{ height: `${ITEM_HEIGHT * PAD_ROWS}px` }" />
     <div
-      v-for="item in items"
+      v-for="(item, i) in items"
       :key="item.value"
       class="wheel-item"
       role="option"
       :aria-selected="item.value === modelValue"
       :style="{ height: `${ITEM_HEIGHT}px` }"
+      @click="selectIndex(i)"
     >
       {{ item.label }}
     </div>
@@ -124,6 +137,7 @@ function onScroll() {
   align-items: center;
   justify-content: center;
   scroll-snap-align: center;
+  cursor: pointer;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.95rem;

@@ -81,4 +81,13 @@ describe('WheelColumn', () => {
       expect(el.scrollTop).toBe(2 * ITEM_HEIGHT)
     })
   })
+
+  it('emits update:modelValue immediately when an item is clicked, without waiting for the scroll to settle', async () => {
+    const wrapper = mountWheel(1)
+    vi.advanceTimersByTime(0) // clears mount's own programmatic-scroll guard
+
+    await wrapper.findAll('[role="option"]')[2]!.trigger('click') // "Tres"
+
+    expect(wrapper.emitted('update:modelValue')).toEqual([[3]])
+  })
 })

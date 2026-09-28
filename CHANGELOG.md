@@ -1213,6 +1213,36 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   que tocan `welcome` (en cualquier dirección), y se mantiene para el
   resto de rutas (sigue evitando que `DashboardView`/`ContractionsView`
   monten dos veces sus intervalos de sondeo).
+- **Parpadeo al cerrar sesión** — con la pantalla en blanco ya resuelta,
+  quedaba un parpadeo real: `auth.logout()` limpiaba la sesión local
+  (`auth.user`/`babies.current`) en su propio `finally` antes de que el
+  `await` en `AppHeader` terminase de resolver, con el Dashboard
+  todavía montado en ese instante - se re-renderizaba de forma
+  reactiva contra ese estado ya vacío durante uno o varios frames,
+  antes de que el `router.push` a `welcome` siquiera empezara.
+  `auth.logout()` ahora limpia la sesión de forma síncrona (ya no es
+  `async`) y dispara `POST /logout` en segundo plano sin esperarlo
+  (con el token capturado explícito en la cabecera, ya que el
+  interceptor de peticiones lo lee en un microtask posterior, después
+  de que el token ya se habría limpiado); `AppHeader` llama a
+  `logout()` y hace el `push` justo después, en el mismo tick, para
+  que Vue agrupe ambos cambios reactivos en un solo render.
+- **El parpadeo seguía pasando tras el arreglo anterior** — sin
+  `out-in`, la página saliente y la entrante se renderizan a la vez
+  (el modo por defecto de Vue): aunque ya no empuja el layout (ver
+  arreglo anterior), seguía totalmente opaca durante la primera parte
+  de su propio desvanecido, superpuesta con la entrante que a su vez
+  seguía casi transparente al empezar su fundido - eso era el
+  parpadeo, un instante del contenido viejo antes de que el splash
+  terminara de aparecer. Verificado en vivo, en varias repeticiones
+  limpias (servidor de Vite reiniciado, pestaña nueva) con inspección
+  directa del DOM, no solo capturas. La página saliente ahora
+  desaparece al instante (sin transición) en cuanto deja de ser la
+  ruta activa, en vez de quedarse visible mientras se desvanece -
+  nuevo par de clases (`route-instant-leave-*`) seleccionado
+  dinámicamente en `App.vue` solo para las transiciones que tocan
+  `welcome`; el resto de rutas sigue con el fundido secuencial de
+  siempre.
 - **Extensión `gd` ausente en el contenedor de producción** —
   `AvatarProcessor::process()` usa `imagecreatefromstring()` (ext-gd)
   para redimensionar avatares; el `Dockerfile` solo instalaba

@@ -683,7 +683,7 @@ async function onExportPdf() {
         </div>
 
         <button v-press type="submit" :disabled="savingEdit" class="btn-primary">
-          {{ t('common.save') }}
+          {{ savingEdit ? t('common.saving') : t('common.save') }}
         </button>
       </form>
 
@@ -757,7 +757,7 @@ async function onExportPdf() {
             {{ t('contractions.breakReset') }}
           </button>
           <button v-press type="submit" :disabled="savingBreak" class="btn-primary flex-1">
-            {{ t('common.save') }}
+            {{ savingBreak ? t('common.saving') : t('common.save') }}
           </button>
         </div>
       </form>

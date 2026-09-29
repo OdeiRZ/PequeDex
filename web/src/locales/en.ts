@@ -8,6 +8,7 @@ export default {
     retry: 'Retry',
     logout: 'Log out',
     save: 'Save',
+    saving: 'Saving...',
     cancel: 'Cancel',
     close: 'Close',
     delete: 'Delete',

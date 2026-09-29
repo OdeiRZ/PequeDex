@@ -22,8 +22,23 @@ export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY)
 }
 
+// Axios has no default timeout (waits forever) - reported live: leaving a
+// tab open for an hour, then saving a feed/diaper/etc, hung on "Guardando"
+// with no error and no way out short of leaving the section or reloading
+// (both of which abort the pending request, and the save had actually
+// gone through server-side by then). A stale TCP connection revived after
+// long inactivity can go silently dead instead of erroring, so the
+// browser waits on the OS's own multi-minute timeout instead of ever
+// rejecting the promise this app's own try/catch/finally could react to.
+// 45s comfortably covers Render's free-tier cold start (the API waking up
+// after a while asleep, same case common.loadError already names for the
+// initial page load) while still failing a truly dead connection in a
+// bounded time instead of hanging indefinitely.
+const REQUEST_TIMEOUT_MS = 45_000
+
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
+  timeout: REQUEST_TIMEOUT_MS,
 })
 
 apiClient.interceptors.request.use((config) => {

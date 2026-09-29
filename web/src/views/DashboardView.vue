@@ -1788,7 +1788,7 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingFeed" class="btn-primary flex-1">
-                {{ t('common.save') }}
+                {{ savingFeed ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>
@@ -1837,7 +1837,7 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingSleep" class="btn-primary flex-1">
-                {{ t('common.save') }}
+                {{ savingSleep ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>
@@ -2008,7 +2008,7 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingDiaper" class="btn-primary flex-1">
-                {{ t('common.save') }}
+                {{ savingDiaper ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>
@@ -2087,7 +2087,7 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingGrowth" class="btn-primary flex-1">
-                {{ t('common.save') }}
+                {{ savingGrowth ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>
@@ -2199,7 +2199,7 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingMilestone" class="btn-primary flex-1">
-                {{ t('common.save') }}
+                {{ savingMilestone ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>

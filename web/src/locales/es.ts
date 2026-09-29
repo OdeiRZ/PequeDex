@@ -8,6 +8,7 @@ export default {
     retry: 'Reintentar',
     logout: 'Cerrar sesión',
     save: 'Guardar',
+    saving: 'Guardando...',
     cancel: 'Cancelar',
     close: 'Cerrar',
     delete: 'Borrar',

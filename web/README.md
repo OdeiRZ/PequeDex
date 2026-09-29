@@ -763,6 +763,70 @@ solo texto, respetando `prefers-reduced-motion`. Como con la identidad
 visual original, se propuso primero como maqueta con varias direcciones
 y se aprobó antes de tocar código real.
 
+La "suela" de la marca (el óvalo grande) era hasta ahora una elipse
+lisa (`<ellipse>`). Sustituida por un `<path>` que conserva la misma
+curvatura en la parte de arriba pero cierra en un remate más estrecho
+y redondeado en el borde inferior, sugiriendo un tobillo en vez de
+terminar en el punto natural de la elipse — encontrada a base de
+varias vueltas: un primer intento con una cintura simétrica a la
+altura del corazón se leía como una calavera (cuencas de ojos), y un
+segundo intento con estrechamiento continuo desde arriba se leía como
+un cono de helado. La forma final mantiene el óvalo pleno del
+original en los dos tercios de arriba y solo curva hacia dentro en el
+tercio inferior. El mismo `<path>` vive en tres sitios que dibujan la
+marca por separado y hay que mantener sincronizados a mano —
+`AppMark.vue`, `favicon.svg` y el logo del PDF de exportación de
+contracciones (`ContractionsExportController.php`, que no puede
+referenciar el SVG de `web/` porque genera el documento en el
+backend) — no hay un origen único del que se generen los otros tres.
+
+Los iconos PNG derivados (`favicon-32.png`, `favicon.ico`,
+`apple-touch-icon.png`, `icons/icon-192.png`, `icons/icon-512.png`,
+`icons/icon-maskable-512.png`) no se regeneran con ninguna herramienta
+del proyecto — no hay `sharp`/`svgexport` ni Inkscape/ImageMagick entre
+las dependencias — se renderizaron a mano con Edge en modo headless
+(`--screenshot`) contra una página que reproduce el mismo SVG a
+tamaño/padding/fondo variables por icono. `--window-size=32,32` colgó
+el proceso de forma reproducible (el renderer nunca llega a escribir
+el PNG ni el proceso sale solo) mientras que 16/180/192/512 sí
+funcionaron sin problema — se esquivó renderizando a 256px y
+reescalando a 32/16px con `System.Drawing` desde PowerShell, y
+montando `favicon.ico` a mano en Node (cabecera ICO estándar con las
+dos imágenes PNG embebidas tal cual, formato que tanto Windows como
+los navegadores aceptan).
+
+## Barra de estado en la app instalada
+
+Reportado en vivo: al abrir la app ya instalada como PWA en Android, la
+barra de estado (el borde superior, encima de `AppHeader.vue`) se veía
+de un color distinto al fondo real de la cabecera — costura visible en
+vez de una sola superficie continua. Causa: `<meta name="theme-color">`
+en `index.html` estaba fijo en el rosa de marca (`#a65a6b`, el color de
+acento que usan los botones), mientras que la cabecera en sí usa
+`--bg` (crema en claro, casi negro en oscuro) — Android pinta la barra
+de estado de una PWA instalada con `theme-color`, no con el color de
+fondo real de la página, así que el desajuste era constante en los dos
+temas, no solo en uno.
+
+`index.html` pasa de una única etiqueta fija a tres: una
+`#theme-color-override` sin `media`, vacía de partida (un
+`content=""` es inválido y el navegador la ignora, cayendo a la
+siguiente que sí matchee) y dos más con `media="(prefers-color-scheme:
+light/dark)"` reflejando `--bg` de cada tema — mismo patrón de "el
+`data-theme` explícito gana, si no hay ninguno manda el sistema
+operativo" que ya usa `base.css` para el resto de la paleta.
+`theme.ts` → `applyTheme()` rellena esa etiqueta `#theme-color-override`
+con el `--bg` del tema elegido a mano cuando el usuario toca
+`ThemeToggle` (o la vacía de nuevo al volver a "según el sistema"), en
+vez de depender solo de las dos etiquetas con `media` — esas no saben
+nada de un `data-theme` explícito que contradiga la preferencia real
+del sistema operativo. `manifest.webmanifest` también tenía su propio
+`theme_color` fijo en el mismo rosa (usado por Android para la barra de
+estado durante el splash de arranque, antes de que cargue ni CSS ni
+JS) — pasa a `#fbf7f2`, igual que `background_color` (que ya usaba ese
+mismo crema), así que la superficie es consistente también en ese
+primer instante, sin esperar a que `theme.ts` corra.
+
 ## Tema según el sexo del bebé
 
 `DashboardView.vue` calcula `themeSex` y pone `data-sex="nino"/"nina"/

@@ -8,7 +8,17 @@
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#a65a6b" />
+    <!-- theme-color-override is the first matching tag when it has content
+    (set by theme.ts to mirror an explicit light/dark choice - a meta tag
+    with no media attribute always matches, so it wins over the two below
+    regardless of document order in most engines, but keeping it first
+    keeps the intent readable). Left empty at parse time, which browsers
+    treat as invalid and skip, falling through to whichever of the two
+    prefers-color-scheme tags matches - same "system default unless
+    overridden" behavior as data-theme in base.css. -->
+    <meta name="theme-color" id="theme-color-override" content="" />
+    <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1b22" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="Diario y seguimiento de bebé compartido entre cuidadores: tomas, sueño, pañales, hitos y crecimiento."

@@ -545,6 +545,20 @@ verse bien en una captura:
   `toLocaleDateString()`, no la llamada sin opciones): "Nació el 31 de
   agosto de 2026", no "31/8/2026" — `Intl` añade los conectores
   "de...de" en español solo, sin tener que escribirlos a mano.
+  El día que la cuenta atrás llega a 0, el titular numérico se
+  sustituye por el texto especial `t('dashboard.hero.countdownToday')`
+  ("¡Puede ser hoy!") — reportado en vivo a ~355-360px de ancho real
+  (pantallazo de móvil): esa frase, más larga que un simple número +
+  unidad, compartía fila con `heroDateLabel` (que sigue mostrando
+  "Fecha prevista: ..." aunque sea justo hoy) vía `justify-between`
+  sin envolver, así que se veía forzada a partirse en tres líneas
+  dentro del hueco estrecho que quedaba. Bajar el tamaño de letra no lo
+  arreglaba (la fecha en `whitespace-nowrap` seguía comiéndose casi
+  todo el ancho); el fix real fue añadir `flex-wrap` a esa fila —
+  cuando el titular y la fecha no caben en la misma línea, la fecha
+  entera baja como bloque a una segunda línea en vez de partir palabras
+  del titular en una tercera. No cambia nada en el caso numérico
+  normal ("12 días" + fecha), que ya cabía de sobra en una sola línea.
 - **`DailyRhythm.vue`** — franja de 00 a 24h con los tramos de sueño y
   las marcas de toma/pañal de *hoy* (el día de calendario, no las
   últimas 24h en bruto), calculada en el propio componente a partir de

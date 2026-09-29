@@ -42,7 +42,12 @@ const gradientId = `pequedex-mark-${useId()}`
         <stop offset="100%" stop-color="var(--brand-teal)" />
       </linearGradient>
     </defs>
-    <ellipse cx="42" cy="62" rx="26" ry="34" :fill="`url(#${gradientId})`" />
+    <path
+      d="M42 28 C58 28 68 40 68 56 C68 70 64 82 57 90
+         C53 95 48 97.5 42 98 C36 97.5 31 95 27 90 C20 82 16 70 16 56
+         C16 40 26 28 42 28 Z"
+      :fill="`url(#${gradientId})`"
+    />
     <g transform="rotate(-10 16 24)">
       <ellipse
         cx="16"
@@ -105,7 +110,12 @@ const gradientId = `pequedex-mark-${useId()}`
         <stop offset="100%" stop-color="var(--brand-teal)" />
       </linearGradient>
     </defs>
-    <ellipse cx="42" cy="42" rx="28" ry="32" :fill="`url(#${gradientId})`" />
+    <path
+      d="M42 10 C60 10 70 22 70 38 C70 50 66 60 60 67
+         C56 71 50 73.5 42 75 C34 73.5 28 71 24 67 C18 60 14 50 14 38
+         C14 22 24 10 42 10 Z"
+      :fill="`url(#${gradientId})`"
+    />
     <path
       d="M42 32 c-4.4 -6.6 -14.3 -4.4 -14.3 3.3 c0 6.6 8.8 12.1 14.3 16.5 c5.5 -4.4 14.3 -9.9 14.3 -16.5 c0 -7.7 -9.9 -9.9 -14.3 -3.3 Z"
       fill="var(--brand-ink)"

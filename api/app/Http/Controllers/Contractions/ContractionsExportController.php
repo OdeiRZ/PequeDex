@@ -163,7 +163,9 @@ class ContractionsExportController extends Controller
     private function logoDataUri(): string
     {
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 100">'
-            .'<ellipse cx="42" cy="62" rx="26" ry="34" fill="#a65a6b"/>'
+            .'<path d="M42 28 C58 28 68 40 68 56 C68 70 64 82 57 90'
+                .' C53 95 48 97.5 42 98 C36 97.5 31 95 27 90 C20 82 16 70 16 56'
+                .' C16 40 26 28 42 28 Z" fill="#a65a6b"/>'
             .'<ellipse cx="16" cy="24" rx="7" ry="9" transform="rotate(-10 16 24)" fill="#a65a6b"/>'
             .'<ellipse cx="32" cy="14" rx="7.5" ry="10" transform="rotate(-4 32 14)" fill="#a65a6b"/>'
             .'<ellipse cx="50" cy="12" rx="7.5" ry="10" fill="#a65a6b"/>'

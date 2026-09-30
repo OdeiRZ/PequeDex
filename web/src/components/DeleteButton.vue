@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useFeedback } from '@/composables/useFeedback'
 
 const { t } = useI18n()
 const emit = defineEmits<{ click: [] }>()
+const feedback = useFeedback()
 
 // A quick shake + red flash on tap, purely local to this button - the
 // actual delete (and the row's own fade/slide-out, see .entry-list-leave
@@ -16,6 +18,7 @@ function onClick() {
   void requestAnimationFrame(() => {
     confirming.value = true
   })
+  feedback.tap()
   emit('click')
 }
 </script>

@@ -6,8 +6,10 @@ import SegmentedControl from '@/components/SegmentedControl.vue'
 import SoundCategoryIcon from '@/components/SoundCategoryIcon.vue'
 import { SOUND_CATEGORIES, soundBg, soundText, type SoundCategory } from '@/lib/soundCategory'
 import { useSoundPlayer, type DurationOption } from '@/composables/useSoundPlayer'
+import { useFeedback } from '@/composables/useFeedback'
 
 const { t } = useI18n()
+const feedback = useFeedback()
 
 const {
   playing,
@@ -57,6 +59,7 @@ function onCardClick(cat: SoundCategory) {
   lastTapTime = isDoubleTap ? 0 : now
 
   if (isDoubleTap && !unavailable.value.has(cat)) {
+    feedback.tap()
     if (playing.value && category.value === cat) {
       stop()
     } else {
@@ -71,6 +74,7 @@ function onCardClick(cat: SoundCategory) {
 
 function onToggle() {
   if (!selected.value) return
+  feedback.tap()
   if (playing.value && category.value === selected.value) {
     stop()
   } else {

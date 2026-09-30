@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import CategoryIcon from './CategoryIcon.vue'
 import { categoryText, categoryBg, type Category } from '@/lib/category'
+import { useFeedback } from '@/composables/useFeedback'
 
 const props = defineProps<{ items: { category: Category; label: string }[] }>()
 const emit = defineEmits<{ select: [category: Category] }>()
+const feedback = useFeedback()
 
 // A ripple from the exact point touched, not the button's center - same
 // idea as Android's own ripple, done here in plain CSS/JS since nothing
@@ -28,6 +30,7 @@ function onTap(event: MouseEvent, category: Category) {
   button.appendChild(ripple)
   ripple.addEventListener('animationend', () => ripple.remove())
 
+  feedback.tap()
   emit('select', category)
 }
 

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useFeedback } from '@/composables/useFeedback'
 
 const DISPLAY_MS = 3000
 
@@ -12,23 +13,6 @@ interface ToastState {
   // wouldn't otherwise see the prop change and would skip the transition).
   key: number
   timeoutId: ReturnType<typeof setTimeout> | null
-}
-
-// A short buzz alongside the toast's own pop-in - the one bit of
-// confirmation a phone can give that doesn't depend on the screen being
-// looked at right that instant. Feature-detected (desktop browsers, and
-// iOS Safari entirely, have no navigator.vibrate) and wrapped in try/catch
-// since some embedded/permission-restricted contexts throw instead of
-// just no-op'ing. Two short pulses for an error reads as distinct from
-// a single success buzz without needing to look at the toast's color.
-function hapticBuzz(type: ToastType) {
-  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return
-
-  try {
-    navigator.vibrate(type === 'error' ? [12, 40, 12] : 10)
-  } catch {
-    // Ignored - haptics are a nice-to-have, never worth surfacing an error for.
-  }
 }
 
 export const useToastStore = defineStore('toast', {
@@ -58,7 +42,18 @@ export const useToastStore = defineStore('toast', {
         this.timeoutId = null
       }, DISPLAY_MS)
 
-      hapticBuzz(type)
+      // El sonido/vibración de confirmación alargan la pop-in del propio
+      // toast - la única confirmación que un móvil puede dar sin depender
+      // de que la pantalla se esté mirando justo en ese instante. Antes
+      // vibraba siempre y sin pasar por ningún ajuste; ahora queda gateado
+      // por "Sonido y vibración al interactuar" como el resto de la app,
+      // vía useFeedback() en vez de un navigator.vibrate() local aquí.
+      const feedback = useFeedback()
+      if (type === 'error') {
+        feedback.error()
+      } else {
+        feedback.success()
+      }
     },
   },
 })

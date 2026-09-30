@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore, type User } from '@/stores/auth'
 
 describe('toast store', () => {
   beforeEach(() => {
@@ -10,6 +11,7 @@ describe('toast store', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('shows a message and clears it automatically after a few seconds', () => {
@@ -56,5 +58,33 @@ describe('toast store', () => {
 
     toast.show('No se ha podido guardar.', 'error')
     expect(toast.type).toBe('error')
+  })
+
+  it('vibrates on show by default (no user yet, or the setting left on)', () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+
+    useToastStore().show('Guardado.')
+
+    expect(vibrate).toHaveBeenCalledWith(10)
+  })
+
+  it('does not vibrate when interaction_feedback_enabled is off', () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+    useAuthStore().user = { interaction_feedback_enabled: false } as unknown as User
+
+    useToastStore().show('Guardado.')
+
+    expect(vibrate).not.toHaveBeenCalled()
+  })
+
+  it('uses the error vibration pattern for an error toast', () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+
+    useToastStore().show('No se ha podido guardar.', 'error')
+
+    expect(vibrate).toHaveBeenCalledWith([12, 40, 12])
   })
 })

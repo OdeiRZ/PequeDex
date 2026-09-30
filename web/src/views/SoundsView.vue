@@ -40,6 +40,35 @@ function selectCategory(cat: SoundCategory) {
   selected.value = cat
 }
 
+// Detección manual de doble toque/doble click por diferencia de tiempo
+// entre clicks, en vez de depender del `dblclick` nativo del navegador -
+// más fiable en móvil, donde un PWA normalmente desactiva el zoom por
+// doble toque y con ello el comportamiento nativo de `dblclick` varía
+// según el navegador. Funciona igual para ratón y táctil porque ambos
+// disparan `click`.
+const DOUBLE_TAP_MS = 400
+let lastTapCategory: SoundCategory | null = null
+let lastTapTime = 0
+
+function onCardClick(cat: SoundCategory) {
+  const now = Date.now()
+  const isDoubleTap = lastTapCategory === cat && now - lastTapTime < DOUBLE_TAP_MS
+  lastTapCategory = isDoubleTap ? null : cat
+  lastTapTime = isDoubleTap ? 0 : now
+
+  if (isDoubleTap && !unavailable.value.has(cat)) {
+    if (playing.value && category.value === cat) {
+      stop()
+    } else {
+      selected.value = cat
+      play(cat, durationOption.value)
+    }
+    return
+  }
+
+  selectCategory(cat)
+}
+
 function onToggle() {
   if (!selected.value) return
   if (playing.value && category.value === selected.value) {
@@ -112,7 +141,7 @@ const statusText = computed(() => {
             ? 'border-brand-teal bg-brand-teal/8'
             : 'border-border bg-surface hover:border-brand-teal/50'
         "
-        @click="selectCategory(cat.id)"
+        @click="onCardClick(cat.id)"
       >
         <span
           class="relative grid h-12 w-12 place-items-center rounded-full"

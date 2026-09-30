@@ -11,17 +11,17 @@ export const SOUND_CATEGORIES: { id: SoundCategory; labelKey: string }[] = [
 
 // Se espera public/sounds/<file>.mp3, ~128kbps, en bucle sin costura -
 // 'white-noise' no tiene entrada aquí porque no usa ningún fichero, se
-// genera en el momento con Web Audio (ver useSoundPlayer.ts). rain/
-// heartbeat/waves ya son ficheros reales (~15 min cada uno, no la
-// grabación original de ~1h): el <audio loop> del navegador repite el
-// fichero cuantas veces haga falta para cubrir la duración elegida en
-// el temporizador (nada en useSoundPlayer.ts depende de la duración
-// real del fichero), así que 15 min de textura continua (sin melodía)
-// ya cubre de sobra incluso "60 min"/"Sin límite" sin que se note la
-// repetición. Preparados con un crossfade real de unos segundos entre
-// el final y el propio principio del clip (filtro `acrossfade` de
-// ffmpeg) en vez de solo recortar a tijeretazo, para que el punto
-// donde el bucle empalma consigo mismo no suene como un salto brusco.
+// genera en el momento con Web Audio (ver useSoundPlayer.ts). El resto
+// ya son ficheros reales (~15 min cada uno, no la grabación original de
+// ~20min-1h): el <audio loop> del navegador repite el fichero cuantas
+// veces haga falta para cubrir la duración elegida en el temporizador
+// (nada en useSoundPlayer.ts depende de la duración real del fichero),
+// así que 15 min de textura continua (sin melodía) ya cubre de sobra
+// incluso "60 min"/"Sin límite" sin que se note la repetición.
+// Preparados con un crossfade real de unos segundos entre el final y el
+// propio principio del clip (filtro `acrossfade` de ffmpeg) en vez de
+// solo recortar a tijeretazo, para que el punto donde el bucle empalma
+// consigo mismo no suene como un salto brusco.
 export const SOUND_FILES: Record<Exclude<SoundCategory, 'white-noise'>, string> = {
   rain: 'rain.mp3',
   heartbeat: 'heartbeat.mp3',

@@ -134,7 +134,7 @@ export default {
       whiteNoise: 'Ruido blanco',
       rain: 'Tormenta',
       heartbeat: 'Latido',
-      lullaby: 'Nana',
+      lullaby: 'Grillos',
       waves: 'Olas',
       fan: 'Ventilador',
     },

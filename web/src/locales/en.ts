@@ -133,7 +133,7 @@ export default {
       whiteNoise: 'White noise',
       rain: 'Storm',
       heartbeat: 'Heartbeat',
-      lullaby: 'Lullaby',
+      lullaby: 'Crickets',
       waves: 'Waves',
       fan: 'Fan',
     },

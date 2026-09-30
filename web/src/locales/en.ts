@@ -125,6 +125,33 @@ export default {
     deleteAllError: 'Could not delete the contractions.',
     toastAllDeleted: 'Contractions deleted.',
   },
+  sounds: {
+    title: 'Sleep sounds',
+    linkCardTitle: 'Sleep sounds',
+    linkCardBody: 'White noise, rain and more to help your baby fall asleep.',
+    categories: {
+      whiteNoise: 'White noise',
+      rain: 'Rain',
+      heartbeat: 'Heartbeat',
+      lullaby: 'Lullaby',
+      waves: 'Waves',
+      fan: 'Fan',
+    },
+    durations: {
+      m15: '15 min',
+      m30: '30 min',
+      m45: '45 min',
+      m60: '60 min',
+      unlimited: 'No limit',
+    },
+    play: 'Play',
+    stop: 'Stop',
+    playing: 'Playing…',
+    fadingOut: 'Fading out…',
+    remaining: '{time} left',
+    unavailable: 'Audio coming soon',
+    unavailableHint: 'This sound will be available soon.',
+  },
   dashboard: {
     onboarding: {
       name: 'Name (optional)',

@@ -126,6 +126,33 @@ export default {
     deleteAllError: 'No se han podido eliminar las contracciones.',
     toastAllDeleted: 'Contracciones eliminadas.',
   },
+  sounds: {
+    title: 'Sonidos para dormir',
+    linkCardTitle: 'Sonidos para dormir',
+    linkCardBody: 'Ruido blanco, lluvia y más para ayudar a conciliar el sueño.',
+    categories: {
+      whiteNoise: 'Ruido blanco',
+      rain: 'Lluvia',
+      heartbeat: 'Latido',
+      lullaby: 'Nana',
+      waves: 'Olas',
+      fan: 'Ventilador',
+    },
+    durations: {
+      m15: '15 min',
+      m30: '30 min',
+      m45: '45 min',
+      m60: '60 min',
+      unlimited: 'Sin límite',
+    },
+    play: 'Reproducir',
+    stop: 'Detener',
+    playing: 'Reproduciendo…',
+    fadingOut: 'Bajando el volumen…',
+    remaining: 'Quedan {time}',
+    unavailable: 'Audio pendiente',
+    unavailableHint: 'Este sonido estará disponible próximamente.',
+  },
   dashboard: {
     onboarding: {
       name: 'Nombre (opcional)',

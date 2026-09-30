@@ -44,21 +44,9 @@ defineProps<{ category: SoundCategory }>()
     />
     <template v-else-if="category === 'fan'">
       <circle stroke-width="2" cx="12" cy="12" r="1.6" />
-      <path stroke-width="2" d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z" />
       <path
         stroke-width="2"
-        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
-        transform="rotate(90 12 12)"
-      />
-      <path
-        stroke-width="2"
-        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
-        transform="rotate(180 12 12)"
-      />
-      <path
-        stroke-width="2"
-        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
-        transform="rotate(270 12 12)"
+        d="M12 10.4C10.5 8 10.5 5 12 3c1.8 1 2.5 3.6 1.5 6M13.6 12c2.4-1.5 5.4-1.5 7.4 0-1 1.8-3.6 2.5-6 1.5M10.4 12c-2.4 1.5-5.4 1.5-7.4 0 1-1.8 3.6-2.5 6-1.5M12 13.6C10.5 16 10.5 19 12 21c1.8-1 2.5-3.6 1.5-6"
       />
     </template>
   </svg>

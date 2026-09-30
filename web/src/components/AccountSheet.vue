@@ -9,6 +9,7 @@ import CategoryIcon from '@/components/CategoryIcon.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { useFeedback } from '@/composables/useFeedback'
 import {
   ALL_CATEGORIES,
   categorySolidBg,
@@ -28,6 +29,7 @@ import { storeLocale } from '@/i18n'
 const auth = useAuthStore()
 const toast = useToastStore()
 const ui = useUiStore()
+const feedback = useFeedback()
 const { t, locale } = useI18n()
 
 const profileName = ref('')
@@ -212,6 +214,7 @@ async function onTogglePredictions() {
   const previous = predictionsEnabled.value
   const next = !previous
   predictionsEnabled.value = next
+  feedback.tap()
 
   const token = ++predictionsSaveToken
   try {
@@ -237,6 +240,7 @@ async function onToggleSwipeToDelete() {
   const previous = swipeToDeleteEnabled.value
   const next = !previous
   swipeToDeleteEnabled.value = next
+  feedback.tap()
 
   const token = ++swipeToDeleteSaveToken
   try {
@@ -261,6 +265,7 @@ async function onToggleTodaySummary() {
   const previous = todaySummaryEnabled.value
   const next = !previous
   todaySummaryEnabled.value = next
+  feedback.tap()
 
   const token = ++todaySummarySaveToken
   try {
@@ -269,6 +274,34 @@ async function onToggleTodaySummary() {
     if (token === todaySummarySaveToken) {
       todaySummaryEnabled.value = previous
       toast.show(t('profile.todaySummary.saveError'), 'error')
+    }
+  }
+}
+
+// --- Ajustes: sonido y vibración al interactuar ---
+
+// Mismo patrón guardado-al-vuelo que los tres anteriores - activado por
+// defecto (ver migración). feedback.tap() en los otros tres onToggleX
+// de este fichero lee este mismo ajuste en el momento de sonar/vibrar,
+// así que apagarlo aquí silencia también la pulsación con la que se
+// apaga (última confirmación antes del silencio, como un interruptor
+// físico) sin necesitar ningún caso especial.
+const interactionFeedbackEnabled = ref(true)
+let interactionFeedbackSaveToken = 0
+
+async function onToggleInteractionFeedback() {
+  const previous = interactionFeedbackEnabled.value
+  const next = !previous
+  interactionFeedbackEnabled.value = next
+  feedback.tap()
+
+  const token = ++interactionFeedbackSaveToken
+  try {
+    await auth.updateInteractionFeedbackEnabled(next)
+  } catch {
+    if (token === interactionFeedbackSaveToken) {
+      interactionFeedbackEnabled.value = previous
+      toast.show(t('profile.interactionFeedback.saveError'), 'error')
     }
   }
 }
@@ -290,6 +323,7 @@ watch(
     predictionsEnabled.value = auth.user?.predictions_enabled ?? true
     swipeToDeleteEnabled.value = auth.user?.swipe_to_delete_enabled ?? false
     todaySummaryEnabled.value = auth.user?.today_summary_enabled ?? true
+    interactionFeedbackEnabled.value = auth.user?.interaction_feedback_enabled ?? true
   },
 )
 </script>
@@ -502,6 +536,27 @@ watch(
         <span
           class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: todaySummaryEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.interactionFeedback.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.interactionFeedback.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="interactionFeedbackEnabled"
+        :aria-label="t('profile.interactionFeedback.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="interactionFeedbackEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleInteractionFeedback"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: interactionFeedbackEnabled ? '22px' : '2px' }"
         ></span>
       </button>
     </div>

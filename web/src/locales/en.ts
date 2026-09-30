@@ -432,5 +432,10 @@ export default {
       description: 'Show the feed, sleep and diaper count cards under the baby card.',
       saveError: 'Could not save the change. Please try again.',
     },
+    interactionFeedback: {
+      title: 'Sound & vibration on interaction',
+      description: 'A short sound and vibration (where supported) when tapping key buttons.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

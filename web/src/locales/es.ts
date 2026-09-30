@@ -437,5 +437,11 @@ export default {
       description: 'Muestra las tarjetas de tomas, sueño y pañales bajo la tarjeta del bebé.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    interactionFeedback: {
+      title: 'Sonido y vibración al interactuar',
+      description:
+        'Un sonido breve y una vibración (si el dispositivo lo permite) al pulsar botones importantes.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

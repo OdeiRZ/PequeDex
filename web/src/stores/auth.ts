@@ -13,6 +13,7 @@ export interface User {
   predictions_enabled: boolean
   swipe_to_delete_enabled: boolean
   today_summary_enabled: boolean
+  interaction_feedback_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -137,6 +138,13 @@ export const useAuthStore = defineStore('auth', {
     async updateTodaySummaryEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/today-summary', {
         today_summary_enabled: enabled,
+      })
+      this.user = data
+    },
+
+    async updateInteractionFeedbackEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/interaction-feedback', {
+        interaction_feedback_enabled: enabled,
       })
       this.user = data
     },

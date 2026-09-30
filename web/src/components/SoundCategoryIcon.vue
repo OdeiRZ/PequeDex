@@ -42,19 +42,24 @@ defineProps<{ category: SoundCategory }>()
       stroke-width="2"
       d="M2 16c1.6 1.6 3.3 1.6 5 0s3.4-1.6 5 0 3.3 1.6 5 0 3.4-1.6 5 0M2 11c1.6 1.6 3.3 1.6 5 0s3.4-1.6 5 0 3.3 1.6 5 0 3.4-1.6 5 0"
     />
-    <g v-else-if="category === 'fan'" fill="currentColor" stroke="none">
+    <template v-else-if="category === 'fan'">
+      <circle stroke-width="2" cx="12" cy="12" r="1.6" />
+      <path stroke-width="2" d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z" />
       <path
-        d="M12 3c1.8 1.2 2.8 3.4 2.2 5.6-.4 1.4-1.3 2.1-2.2 2.1s-1.8-.7-2.2-2.1C9.2 6.4 10.2 4.2 12 3Z"
+        stroke-width="2"
+        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
+        transform="rotate(90 12 12)"
       />
       <path
-        d="M12 3c1.8 1.2 2.8 3.4 2.2 5.6-.4 1.4-1.3 2.1-2.2 2.1s-1.8-.7-2.2-2.1C9.2 6.4 10.2 4.2 12 3Z"
-        transform="rotate(120 12 12)"
+        stroke-width="2"
+        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
+        transform="rotate(180 12 12)"
       />
       <path
-        d="M12 3c1.8 1.2 2.8 3.4 2.2 5.6-.4 1.4-1.3 2.1-2.2 2.1s-1.8-.7-2.2-2.1C9.2 6.4 10.2 4.2 12 3Z"
-        transform="rotate(240 12 12)"
+        stroke-width="2"
+        d="M12 10.6C10.6 9 10.4 5.6 12 3c1.6 2.6 1.4 6 0 7.6Z"
+        transform="rotate(270 12 12)"
       />
-      <circle cx="12" cy="12" r="1.8" />
-    </g>
+    </template>
   </svg>
 </template>

@@ -181,6 +181,24 @@ it('turns the today-summary cards off and back on, defaulting to enabled', funct
     expect($user->refresh()->today_summary_enabled)->toBeTrue();
 });
 
+it('turns interaction feedback (sound/haptics) off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    // Same reason as the predictions_enabled test above - the DB default
+    // (true here) only lands on a fresh read, not the in-memory model.
+    expect($user->refresh()->interaction_feedback_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/interaction-feedback', ['interaction_feedback_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('interaction_feedback_enabled', false);
+    expect($user->refresh()->interaction_feedback_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/interaction-feedback', ['interaction_feedback_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('interaction_feedback_enabled', true);
+    expect($user->refresh()->interaction_feedback_enabled)->toBeTrue();
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
@@ -190,4 +208,5 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user/predictions', ['predictions_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/swipe-to-delete', ['swipe_to_delete_enabled' => true])->assertUnauthorized();
     $this->putJson('/api/user/today-summary', ['today_summary_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/interaction-feedback', ['interaction_feedback_enabled' => false])->assertUnauthorized();
 });

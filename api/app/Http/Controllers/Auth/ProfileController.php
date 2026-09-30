@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
+use App\Http\Requests\Auth\UpdateInteractionFeedbackEnabledRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
@@ -69,6 +70,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['today_summary_enabled' => $request->validated('today_summary_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateInteractionFeedbackEnabled(UpdateInteractionFeedbackEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['interaction_feedback_enabled' => $request->validated('interaction_feedback_enabled')]);
 
         return response()->json($user);
     }

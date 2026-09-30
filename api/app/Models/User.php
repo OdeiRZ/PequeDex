@@ -30,6 +30,7 @@ class User extends Authenticatable
         'predictions_enabled',
         'swipe_to_delete_enabled',
         'today_summary_enabled',
+        'interaction_feedback_enabled',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable
             'predictions_enabled' => 'boolean',
             'swipe_to_delete_enabled' => 'boolean',
             'today_summary_enabled' => 'boolean',
+            'interaction_feedback_enabled' => 'boolean',
         ];
     }
 

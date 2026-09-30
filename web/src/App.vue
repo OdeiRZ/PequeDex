@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AccountSheet from '@/components/AccountSheet.vue'
@@ -20,38 +20,42 @@ onMounted(() => {
   }
 })
 
-// "out-in" is what stops DashboardView/ContractionsView's own onMounted
-// polling intervals from briefly double-firing on a route change (their
-// own comments explain why), but confirmed live: any transition into or
-// out of welcome under "out-in" gets stuck forever - the route and its
-// resolved component are correct, yet nothing paints, neither the old
-// page nor the new one - regardless of AppHeader's v-if (tried v-show)
-// or an explicit :duration override (tried both). Whatever in that
-// specific pairing breaks Vue's leave/enter sequencing, dropping "out-in"
-// only for transitions touching welcome (either direction) sidesteps it
-// without giving up the double-mount protection everywhere else.
+// mode="out-in" (wait for the leaving page to finish before mounting the
+// next one) was here originally to stop DashboardView/ContractionsView's
+// own onMounted polling intervals from briefly double-firing on a route
+// change. It was later found to get permanently stuck on transitions
+// touching welcome - the route and its resolved component are correct,
+// yet nothing ever paints, neither the old page nor the new one - and
+// the fix at the time was a narrow bypass for just that one route.
+//
+// Turns out that was the wrong scope: reproduced live now on the
+// Dashboard <-> Contracciones pair too (no welcome involved at all,
+// on a router with only two route-level Transitions in the whole app -
+// this is the *other* one) - a plain client-side RouterLink navigation
+// leaves the old <main> permanently stuck mid-leave (both its
+// route-enter-from and route-leave-from/route-leave-active classes
+// present at once, forever), even though a hard reload straight to the
+// same URL renders that exact same view correctly every time. So the
+// bug was never welcome-specific - out-in itself is what's unreliable
+// here, and it had simply never been re-tested against any other route
+// pair since the original fix. Dropped globally instead of growing a
+// route-by-route allowlist that would only mask the same bug on the
+// next new route (confirmed live it originally broke sounds too, the
+// same way, the moment that route was added).
 //
 // Without "out-in", old and new render simultaneously (Vue's default) -
 // confirmed live this still reads as a flicker of the old page's content
 // even with the leaving page taken out of flow (position: absolute in
 // base.css): it's still fully opaque for the first part of its own fade
 // out, overlapping the entering page's own still-mostly-transparent fade
-// in. `routeTransitionName` switches to "route-instant-leave" for these
-// transitions - same fade-in on enter, but the leave has no transition
-// at all (base.css), so the old page just vanishes the instant it stops
-// being the active route instead of lingering, fully visible, through
-// part of a crossfade.
-const transitionMode = ref<'out-in' | undefined>('out-in')
-const routeTransitionName = ref<'route' | 'route-instant-leave'>('route')
-watch(
-  () => route.name,
-  (to, from) => {
-    const touchesWelcome = to === 'welcome' || from === 'welcome'
-    transitionMode.value = touchesWelcome ? undefined : 'out-in'
-    routeTransitionName.value = touchesWelcome ? 'route-instant-leave' : 'route'
-  },
-  { immediate: true },
-)
+// in. The "route" transition below drops the leave transition entirely
+// instead - the old page is taken out of flow and simply vanishes the
+// instant it stops being the active route, so there's no window where
+// both are visibly blended. The enter side keeps its fade-in. A brief
+// double-mount (both views' onMounted firing once) is the accepted
+// trade-off - every polling interval in both views already has a
+// matching onUnmounted cleanup, so the overlap is at most one extra
+// poll, not a leak.
 </script>
 
 <template>
@@ -64,7 +68,7 @@ watch(
          the screen. -->
     <AppHeader v-if="route.name !== 'welcome'" />
     <RouterView v-slot="{ Component }">
-      <Transition :name="routeTransitionName" :mode="transitionMode">
+      <Transition name="route">
         <component :is="Component" />
       </Transition>
     </RouterView>

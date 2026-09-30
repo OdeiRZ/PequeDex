@@ -506,17 +506,25 @@ body {
   }
 }
 
-/* Route changes (Dashboard <-> Contracciones, etc.) cross-fading with a
-   small lift instead of hard-cutting from one view to the next - global
-   because App.vue's <RouterView> renders the target view through a
-   dynamic <component :is>, not a tag this file could otherwise scope
-   normal CSS to. `mode="out-in"` on that <Transition> (not just this
-   CSS) is what keeps the old and new view from ever being mounted at
-   the same time - both DashboardView.vue and ContractionsView.vue run
-   their own onMounted() polling/intervals, so a brief double-mount
-   would start two of those at once. */
-.route-enter-active,
-.route-leave-active {
+/* Route changes (Dashboard <-> Contracciones, etc.) fading the new view
+   in with a small lift instead of hard-cutting from one view to the
+   next - global because App.vue's <RouterView> renders the target view
+   through a dynamic <component :is>, not a tag this file could
+   otherwise scope normal CSS to.
+   Deliberately NOT mode="out-in" (App.vue doesn't set one) - that mode
+   waits for the leaving view to fully finish before mounting the next
+   one, and was found, live, to get permanently stuck on more than one
+   route pair (see App.vue's comment) - the route and resolved component
+   were correct, yet nothing ever painted again, neither the old page
+   nor the new one. Old and new mount simultaneously instead (Vue's
+   default), so a faded-but-still-overlapping leave would read as a
+   flicker of the old page's content - confirmed live it stayed fully
+   opaque for the first part of its own fade out, overlapping the
+   entering page's own still-mostly-transparent fade in. This variant
+   drops the leave transition entirely instead: the old page is taken
+   out of flow and simply vanishes the instant it stops being the active
+   route, so there's no window where both are visibly blended. */
+.route-enter-active {
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
@@ -527,40 +535,13 @@ body {
   transform: translateY(6px);
 }
 
-.route-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-/* Transitions into/out of welcome (App.vue's own routeTransitionName/
-   transitionMode) render old and new simultaneously, not sequentially -
-   out-in isn't usable there (see App.vue's comment). A faded-but-still-
-   overlapping leave (what .route-leave-active above does) still reads as
-   a flicker of the old page's content, confirmed live: it's fully opaque
-   for the first part of its own ~0.18s fade out, overlapping the
-   entering page's own still-mostly-transparent fade in. This variant
-   drops the leave transition entirely - the old page is taken out of
-   flow and simply vanishes the instant it stops being the active route,
-   so there's no window where both are visibly blended. The enter side
-   keeps the same fade-in as the regular "route" transition. */
-.route-instant-leave-enter-active {
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
-}
-
-.route-instant-leave-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.route-instant-leave-leave-active {
+.route-leave-active {
   position: absolute;
   width: 100%;
   transition: none;
 }
 
-.route-instant-leave-leave-to {
+.route-leave-to {
   opacity: 0;
 }
 
@@ -625,9 +606,6 @@ body {
   .baby-pill-active,
   .dash-enter,
   .route-enter-active,
-  .route-leave-active,
-  .route-instant-leave-enter-active,
-  .route-instant-leave-leave-active,
   .wizard-step {
     transition: none !important;
     animation: none !important;
@@ -644,11 +622,16 @@ body {
   .entry-list-leave-to,
   .confirm-warn-leave-to,
   .dash-enter,
-  .route-enter-from,
-  .route-leave-to,
-  .route-instant-leave-enter-from,
-  .route-instant-leave-leave-to {
+  .route-enter-from {
     transform: none !important;
     opacity: 1 !important;
   }
+
+  /* .route-leave-active/.route-leave-to are deliberately left out above -
+     unlike every other pair here, "from"/"to" aren't opposite ends of the
+     same skipped animation: the leaving page must still end at opacity:0
+     (it's how the old page disappears instantly, not just a motion
+     nicety - see the .route-leave-active comment) regardless of reduced
+     motion, or it would sit fully opaque, permanently overlapping the
+     entering page underneath it. */
 }

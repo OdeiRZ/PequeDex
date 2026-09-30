@@ -107,7 +107,7 @@ const statusText = computed(() => {
 </script>
 
 <template>
-  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-28">
+  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-10">
     <div class="flex items-center justify-between">
       <RouterLink
         :to="{ name: 'dashboard' }"

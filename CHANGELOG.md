@@ -1209,6 +1209,36 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   (`sounds.categories.rain`) — más fiel al contenido real del audio
   que Odei consiguió para esa categoría.
 
+- **Audio real para Ventilador/Grillos** — los dos ficheros que
+  faltaban de Sonidos para dormir, mismo recorte a ~15 min con
+  *crossfade* sin costura que Tormenta/Latido/Olas. Ya no queda
+  ninguna de las 6 categorías con "Audio pendiente". La categoría
+  `lullaby` pasa a llamarse "Grillos" (`sounds.categories.lullaby`) en
+  vez de "Nana" — id interno y nombre de fichero (`lullaby.mp3`) se
+  quedan igual, solo cambia la etiqueta.
+
+- **Tarjeta de Sonidos reubicada bajo las tarjetas resumen** — cuando
+  el interruptor "Tarjetas resumen del día" está activo,
+  `SoundsLinkCard.vue` (contenido extraído sin cambios de la tarjeta
+  que antes iba siempre justo tras la del bebé) pasa a mostrarse justo
+  debajo de `TodaySummary`, para que no se interponga entre la tarjeta
+  del bebé y las tomas/sueño/pañales de hoy — lo primero que se mira
+  al abrir la app. Con las tarjetas resumen desactivadas, o el bebé
+  aún sin nacer, se queda en su sitio de siempre.
+
+- **Color propio por categoría en los iconos de Sonidos** — los 6
+  iconos del selector y del círculo "reproduciendo ahora" en
+  `SoundsView.vue` compartían el mismo `bg-brand-teal/15
+  text-brand-teal`; ahora cada categoría tiene su propio color (tokens
+  `--sound-*` en `base.css`, con su variante clara/oscura, expuestos a
+  Tailwind vía `@theme`, y `soundText`/`soundBg` en `soundCategory.ts`
+  como mapas de clases — mismo patrón que `categoryText`/`categoryBg`
+  de `lib/category.ts`) para distinguirlos de un vistazo. De paso,
+  arreglado el icono de Ventilador: a las 3 aspas originales
+  (arriba/derecha/izquierda) le faltaba la de abajo, así que se veía
+  incompleto — añadida como reflejo vertical exacto de la de arriba,
+  mismo trazado que las otras tres.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

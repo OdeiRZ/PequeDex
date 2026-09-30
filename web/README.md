@@ -381,36 +381,46 @@ del bebé) — activado por defecto, `v-if` directo en la propia etiqueta
 
 ## Sonidos para dormir
 
-Nueva sección (`SoundsView.vue`, ruta `/sonidos`, entrada en el
-Dashboard junto a la de Contracciones): elegir un sonido de una rejilla
-de 6 categorías (ruido blanco, lluvia, latido, nana, olas, ventilador)
-y reproducirlo con un temporizador (15/30/45/60 min o sin límite), con
-un fundido de volumen en el último 10% del tiempo en vez de un corte en
-seco. Validado primero con un borrador interactivo (artifact HTML con
-los tokens reales de la app) antes de tocar código real.
+Nueva sección (`SoundsView.vue`, ruta `/sonidos`): elegir un sonido de
+una rejilla de 6 categorías (ruido blanco, tormenta, latido, grillos,
+olas, ventilador) y reproducirlo con un temporizador (15/30/45/60 min o
+sin límite), con un fundido de volumen en el último 10% del tiempo en
+vez de un corte en seco. Validado primero con un borrador interactivo
+(artifact HTML con los tokens reales de la app) antes de tocar código
+real. La entrada al Dashboard (`SoundsLinkCard.vue`) va junto a la de
+Contracciones, salvo cuando "Tarjetas resumen del día" (ver más abajo)
+está activo y el bebé ya ha nacido: ahí baja justo debajo de
+`TodaySummary`, para no interponerse entre la tarjeta del bebé y las
+tomas/sueño/pañales de hoy.
+
+Cada categoría tiene su propio color de icono (`soundText`/`soundBg`
+en `lib/soundCategory.ts`, tokens `--sound-*` en `base.css` con
+variante clara/oscura — mismo patrón que `categoryText`/`categoryBg`
+de `lib/category.ts` para tomas/sueño/pañales) en vez de compartir el
+`bg-brand-teal` genérico, para distinguirlas de un vistazo en la
+rejilla de 6.
 
 **"Ruido blanco" no usa ningún fichero de audio** — se genera en el
 momento con la Web Audio API (`AudioContext` + un buffer de ruido
 relleno con `Math.random()` + un `GainNode` para el fundido), así que
 esa categoría concreta nunca va a depender de un asset con licencia.
 Las otras 5 sí reproducen un `<audio loop>` apuntando a
-`public/sounds/<categoría>.mp3`. **Tormenta/Latido/Olas ya tienen
-audio real** (recortados a ~15 min desde la grabación original de ~1h
-que pasó Odei — el `<audio loop>` del navegador repite el fichero las
-veces que haga falta para cubrir la duración elegida en el
+`public/sounds/<categoría>.mp3`. **Las 6 categorías tienen ya audio
+real** (recortados a ~15 min desde las grabaciones originales de
+~20min-1h que pasó Odei — el `<audio loop>` del navegador repite el
+fichero las veces que haga falta para cubrir la duración elegida en el
 temporizador, así que 15 min de textura continua sin melodía cubre de
 sobra hasta "Sin límite" sin que se note la repetición, a cambio de
-~43 MB en vez de ~180 MB en el repo). Preparados con un *crossfade*
-real de unos segundos entre el final y el propio principio del clip
-(filtro `acrossfade` de `ffmpeg`, no un recorte a tijeretazo) para que
-el punto donde empalma el bucle consigo mismo no suene como un salto
-brusco — el tipo de sonido continuo (agua, lluvia, latido) lo permite
-sin que se note; una nana con melodía real necesitaría un tratamiento
-distinto. **Nana/Ventilador siguen sin fichero** — mientras tanto, el
-propio evento `error` del `<audio>` marca esa categoría como "Audio
-pendiente" en su tarjeta (deshabilitando solo el botón de reproducir,
-no toda la tarjeta) en vez de dejarla "reproduciendo" para siempre sin
-sonido real.
+~85 MB en vez de varios cientos en el repo). Preparados con un
+*crossfade* real de unos segundos entre el final y el propio principio
+del clip (filtro `acrossfade` de `ffmpeg`, no un recorte a tijeretazo)
+para que el punto donde empalma el bucle consigo mismo no suene como
+un salto brusco — el tipo de sonido continuo (agua, lluvia, latido,
+grillos, ventilador) lo permite sin que se note. Si en el futuro algún
+fichero llegase a faltar, el propio evento `error` del `<audio>`
+marca esa categoría como "Audio pendiente" en su tarjeta
+(deshabilitando solo el botón de reproducir, no toda la tarjeta) en
+vez de dejarla "reproduciendo" para siempre sin sonido real.
 
 El estado (categoría activa, cuenta atrás, si está sonando, qué
 categorías están marcadas como no disponibles) vive en

@@ -72,6 +72,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   Columna `users.predictions_enabled` (booleana, `default(true)`),
   `PUT /user/predictions`, mismo patrón que `action_bar_categories`
   justo arriba pero sin array que validar, solo `required|boolean`.
+- `ProfileController::updateTodaySummaryEnabled()` — activa/desactiva
+  las tarjetas resumen del día (tomas/sueño/pañales bajo la tarjeta del
+  bebé, ver `web/README.md`). Mismo patrón exacto que
+  `updatePredictionsEnabled()` de arriba: columna
+  `users.today_summary_enabled` (booleana, `default(true)`), `PUT
+  /user/today-summary`, `required|boolean` sin más validación.
+  `updateSwipeToDeleteEnabled()` (columna `swipe_to_delete_enabled`,
+  `default(false)`, `PUT /user/swipe-to-delete`) sigue el mismo patrón
+  también, documentado ya antes junto al ajuste en sí en
+  `web/README.md`.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

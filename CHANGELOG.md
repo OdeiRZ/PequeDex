@@ -1181,6 +1181,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   puede seguir siendo suspendido en segundo plano por el sistema
   operativo pese a esto, no es una garantía.
 
+- **Interruptor "Tarjetas resumen del día"** en "Tu cuenta" — tercera
+  copia exacta del patrón ya usado por "Predicciones"/"Borrar con
+  swipe": columna `users.today_summary_enabled` (booleana,
+  `default(true)`), `PUT /user/today-summary`
+  (`UpdateTodaySummaryEnabledRequest`, `required|boolean`), acción
+  `auth.updateTodaySummaryEnabled()` con el mismo guardado-al-vuelo con
+  reversión si falla. Muestra/oculta `TodaySummary.vue` (tomas/sueño/
+  pañales bajo la tarjeta del bebé) con un `v-if` directo en su propia
+  etiqueta en `DashboardView.vue`, sin tocar el componente — que ya se
+  autogate por `stats.length > 0`. Activado por defecto.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

@@ -373,6 +373,12 @@ reversión si el `PUT` falla) que activa/desactiva
 prefiere no ver estimaciones, solo lo registrado. Activadas por
 defecto.
 
+Mismo patrón exacto para el interruptor "Tarjetas resumen del día"
+(`auth.user.today_summary_enabled`, `PUT /user/today-summary`) que
+muestra/oculta `TodaySummary.vue` (tomas/sueño/pañales bajo la tarjeta
+del bebé) — activado por defecto, `v-if` directo en la propia etiqueta
+`<TodaySummary>` en `DashboardView.vue`, sin tocar el componente.
+
 ## Sonidos para dormir
 
 Nueva sección (`SoundsView.vue`, ruta `/sonidos`, entrada en el

@@ -145,7 +145,7 @@ export default {
       m60: '60 min',
       unlimited: 'Sin límite',
     },
-    play: 'Reproducir',
+    play: 'Reproducir {name}',
     stop: 'Detener',
     playing: 'Reproduciendo…',
     fadingOut: 'Bajando el volumen…',

@@ -144,7 +144,7 @@ export default {
       m60: '60 min',
       unlimited: 'No limit',
     },
-    play: 'Play',
+    play: 'Play {name}',
     stop: 'Stop',
     playing: 'Playing…',
     fadingOut: 'Fading out…',

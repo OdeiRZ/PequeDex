@@ -67,7 +67,10 @@ function formatTime(totalSeconds: number): string {
 }
 
 const statusText = computed(() => {
-  if (!isPlayingSelected.value) return t('sounds.play')
+  if (!isPlayingSelected.value) {
+    const name = selectedCategory.value ? t(selectedCategory.value.labelKey) : ''
+    return t('sounds.play', { name })
+  }
   if (durationOption.value === 'unlimited') return t('sounds.playing')
   if (fadingOut.value) return t('sounds.fadingOut')
   return t('sounds.remaining', { time: formatTime(remainingSeconds.value) })
@@ -129,8 +132,6 @@ const statusText = computed(() => {
     </div>
 
     <div v-if="selected" class="rounded-2xl border border-border bg-surface p-6 text-center">
-      <p class="mb-5 font-display text-base font-bold">{{ t(selectedCategory!.labelKey) }}</p>
-
       <SegmentedControl
         :model-value="durationOption"
         :options="durationOptions"
@@ -146,7 +147,7 @@ const statusText = computed(() => {
         type="button"
         class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-brand-teal text-brand-ink shadow-md transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         :disabled="isSelectedUnavailable"
-        :aria-label="isPlayingSelected ? t('sounds.stop') : t('sounds.play')"
+        :aria-label="isPlayingSelected ? t('sounds.stop') : statusText"
         @click="onToggle"
       >
         <svg v-if="!isPlayingSelected" viewBox="0 0 24 24" fill="currentColor" class="h-8 w-8">

@@ -1296,6 +1296,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Un sonido podía quedar silenciado para siempre al cambiar la
+  duración durante su fundido de salida** — encontrado en una revisión
+  de fiabilidad del flujo de Sonidos para dormir tras varias
+  iteraciones seguidas sobre `useSoundPlayer.ts`. `setDuration()`
+  reiniciaba la cuenta atrás sin deshacer un fundido de salida que ya
+  estuviera en marcha: para el ruido blanco,
+  `gainNode.gain.linearRampToValueAtTime(0, …)` agenda una
+  automatización de Web Audio en un instante *absoluto* que no se
+  cancela sola solo porque la duración cambie después, así que seguía
+  silenciando el ruido en su momento original — y si la nueva
+  duración era "Sin límite", se quedaba mudo para siempre, porque en
+  ese modo nada vuelve a comprobar el fundido. Para los ficheros
+  `<audio>` (tormenta, latido…), el volumen se quedaba con el valor
+  bajado del último tick, sin nada que lo restaurase. Se cancela la
+  automatización pendiente (`cancelScheduledValues` + `setValueAtTime`
+  de vuelta a la ganancia normal) o se restaura `audioEl.volume = 1`,
+  pero solo cuando el cambio de duración ocurre realmente en fundido
+  de salida — sin efecto durante el fundido de entrada. 3 tests
+  nuevos para el caso; `setDuration()` no tenía ninguno hasta ahora.
+
 - **Ruido blanco sonaba más fuerte que el resto de audios incluso al
   mínimo de volumen del dispositivo** — se genera a escala digital
   completa (`Math.random() * 2 - 1`, RMS de ~-4.8dBFS), mucho más

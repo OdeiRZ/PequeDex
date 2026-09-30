@@ -387,7 +387,15 @@ olas, ventilador) y reproducirlo con un temporizador (15/30/45/60 min o
 sin límite), con un fundido de entrada fijo (1.5s, independiente de la
 duración elegida) al arrancar y un fundido de salida que sí escala con
 ella, en el último 10% del tiempo, en vez de un corte en seco en
-ninguno de los dos extremos. Validado primero con un borrador interactivo
+ninguno de los dos extremos. Cambiar la duración mientras ya suena el
+fundido de salida (con el selector de duración) deshace ese fundido en
+vez de dejarlo silenciado para siempre con la cuenta atrás ya
+reiniciada — para el ruido blanco cancela la automatización de
+`GainNode` ya agendada (una rampa de Web Audio programada en un
+instante *absoluto* que no se cancela sola), para los ficheros
+`<audio>` restaura `volume = 1`; encontrado en una revisión de
+fiabilidad tras varias iteraciones seguidas sobre `useSoundPlayer.ts`.
+Validado primero con un borrador interactivo
 (artifact HTML con los tokens reales de la app) antes de tocar código
 real. La entrada al Dashboard (`SoundsLinkCard.vue`) va junto a la de
 Contracciones, salvo cuando "Tarjetas resumen del día" (ver más abajo)

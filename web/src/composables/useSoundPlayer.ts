@@ -14,6 +14,16 @@ const DURATION_SECONDS: Record<Exclude<DurationOption, 'unlimited'>, number> = {
 // antes de parar, en vez de cortar en seco.
 const FADE_FRACTION = 0.1
 
+// El ruido blanco se genera a escala completa (Math.random()*2-1, RMS de
+// ~-4.8dBFS), mucho más fuerte que los ficheros mp3 reales (rain.mp3/
+// fan.mp3 rondan -22.5dB de media, medido con `ffmpeg -af volumedetect`)
+// - sin este factor sonaba notablemente más alto que el resto incluso al
+// mínimo de volumen del dispositivo, porque la diferencia está en la
+// señal generada, no en nada que el volumen del sistema pueda compensar.
+// 0.13 ≈ 10^((-22.5 - -4.8) / 20), la ganancia que iguala su RMS al de
+// las otras categorías.
+const WHITE_NOISE_GAIN = 0.13
+
 const STORAGE_KEY = 'pequedex_sound_last'
 
 interface StoredSelection {
@@ -101,7 +111,7 @@ function startWhiteNoise(): void {
   noiseSource.loop = true
 
   gainNode = audioCtx.createGain()
-  gainNode.gain.value = 1
+  gainNode.gain.value = WHITE_NOISE_GAIN
   noiseSource.connect(gainNode).connect(audioCtx.destination)
   noiseSource.start()
 }

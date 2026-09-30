@@ -1239,6 +1239,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   incompleto — añadida como reflejo vertical exacto de la de arriba,
   mismo trazado que las otras tres.
 
+- **Fundido de entrada al arrancar cualquier sonido** en Sonidos para
+  dormir — fijo (1.5s) e independiente de la duración total elegida en
+  el temporizador, a diferencia del fundido de salida que sí escala
+  con ella. El ruido blanco usa la automatización nativa de Web Audio
+  (`GainNode.linearRampToValueAtTime`); los ficheros `<audio>` no
+  tienen equivalente nativo para su `volume`, así que se sube a mano
+  con un `setInterval` de pasos cada 100ms.
+
+- **Animación de "reproduciendo" movida al icono de la tarjeta** — el
+  círculo grande del panel inferior repetía el mismo icono de la
+  tarjeta seleccionada en la rejilla, solo más grande; se elimina y el
+  anillo respirando (`timer-ring`) pasa a vivir en el badge del icono
+  de la tarjeta que está sonando en la rejilla, con `currentColor` en
+  vez de un `brand-teal` fijo para heredar el color propio de cada
+  categoría. El panel gana algo de peso para compensar (texto de
+  estado más grande, botón de 20x20 en vez de 16x16), y el nombre de
+  la categoría pasa a acompañar al verbo en el propio texto de estado
+  ("Reproducir Grillos", "Reproducir Olas"…, clave `sounds.play` con
+  un parámetro `{name}`) en vez de un título aparte.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio
@@ -1264,6 +1284,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   Render) — ambos corren solo en push a `main`.
 
 ### Corregido
+
+- **Ruido blanco sonaba más fuerte que el resto de audios incluso al
+  mínimo de volumen del dispositivo** — se genera a escala digital
+  completa (`Math.random() * 2 - 1`, RMS de ~-4.8dBFS), mucho más
+  fuerte que los ficheros mp3 reales (rain.mp3/fan.mp3 rondan -22.5dB
+  de media, medido con `ffmpeg -af volumedetect`). La diferencia
+  estaba en la propia señal generada, no en nada que el volumen del
+  sistema pudiera compensar. Añadida una ganancia fija de 0.13 al
+  `GainNode` (`10^((-22.5 - -4.8) / 20)`, el factor que iguala su RMS
+  al de las otras categorías) en vez de 1.
+
+- **Nombre del sonido en la notificación/pantalla de bloqueo en
+  inglés y sin traducir** (visto en Android) —
+  `navigator.mediaSession.metadata` usaba el id interno tal cual (ej.
+  `"waves"`, `"fan"`) como título, sin pasar por i18n. Se traduce con
+  el mismo `i18n.global.t` que usa el resto de la app fuera de
+  componentes, a partir del `labelKey` de `SOUND_CATEGORIES`, y se
+  capitaliza la primera letra por si alguna traducción no la trae ya
+  en mayúscula.
 
 - **Iconos de instalación de la PWA sin contraste** — `icon-192`/`icon-512`/
   `icon-maskable-512`/`apple-touch-icon` tenían fondo transparente (las

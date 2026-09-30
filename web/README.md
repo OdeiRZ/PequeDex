@@ -384,8 +384,10 @@ del bebé) — activado por defecto, `v-if` directo en la propia etiqueta
 Nueva sección (`SoundsView.vue`, ruta `/sonidos`): elegir un sonido de
 una rejilla de 6 categorías (ruido blanco, tormenta, latido, grillos,
 olas, ventilador) y reproducirlo con un temporizador (15/30/45/60 min o
-sin límite), con un fundido de volumen en el último 10% del tiempo en
-vez de un corte en seco. Validado primero con un borrador interactivo
+sin límite), con un fundido de entrada fijo (1.5s, independiente de la
+duración elegida) al arrancar y un fundido de salida que sí escala con
+ella, en el último 10% del tiempo, en vez de un corte en seco en
+ninguno de los dos extremos. Validado primero con un borrador interactivo
 (artifact HTML con los tokens reales de la app) antes de tocar código
 real. La entrada al Dashboard (`SoundsLinkCard.vue`) va junto a la de
 Contracciones, salvo cuando "Tarjetas resumen del día" (ver más abajo)
@@ -398,12 +400,24 @@ en `lib/soundCategory.ts`, tokens `--sound-*` en `base.css` con
 variante clara/oscura — mismo patrón que `categoryText`/`categoryBg`
 de `lib/category.ts` para tomas/sueño/pañales) en vez de compartir el
 `bg-brand-teal` genérico, para distinguirlas de un vistazo en la
-rejilla de 6.
+rejilla de 6. La animación de "reproduciendo" (un anillo respirando,
+`.timer-ring`, en `currentColor` para heredar el color de cada
+categoría) vive directamente en el badge del icono de la tarjeta que
+está sonando en la rejilla, no en un círculo aparte duplicado en el
+panel inferior — ese panel solo lleva el selector de duración, el
+texto de estado ("Reproducir Grillos", "Quedan 04:12"…, con el nombre
+de la categoría integrado en el propio texto) y el botón de play/stop.
 
 **"Ruido blanco" no usa ningún fichero de audio** — se genera en el
 momento con la Web Audio API (`AudioContext` + un buffer de ruido
-relleno con `Math.random()` + un `GainNode` para el fundido), así que
-esa categoría concreta nunca va a depender de un asset con licencia.
+relleno con `Math.random()` + un `GainNode` para el fundido y los
+fundidos de entrada/salida), así que esa categoría concreta nunca va a
+depender de un asset con licencia. Al generarse a escala digital
+completa (RMS de ~-4.8dBFS) sonaba notablemente más fuerte que los
+ficheros mp3 reales (que rondan -22.5dB de media) incluso al mínimo de
+volumen del dispositivo — el propio `GainNode` lleva una ganancia fija
+de 0.13, calculada para igualar su RMS al de las otras categorías, en
+vez de sonar a escala completa.
 Las otras 5 sí reproducen un `<audio loop>` apuntando a
 `public/sounds/<categoría>.mp3`. **Las 6 categorías tienen ya audio
 real** (recortados a ~15 min desde las grabaciones originales de
@@ -445,7 +459,12 @@ básico (metadata + controles de play/pause en la pantalla de bloqueo)
 como mejor esfuerzo, envuelto en `try/catch` — un PWA puede seguir
 siendo suspendido en segundo plano por el sistema operativo pese a
 esto, no es una garantía, y la propia API puede no existir en todos los
-entornos.
+entornos. El título de esa metadata se traduce con `i18n.global.t`
+(no el `t()` de un componente, porque `useSoundPlayer.ts` no lo es) a
+partir del `labelKey` de `SOUND_CATEGORIES` y se capitaliza la primera
+letra — usar el id interno tal cual (`category.value`, ej. `"waves"`)
+dejaba la notificación en inglés y sin traducir en Android aunque el
+resto de la app estuviera en español.
 
 Tests en `useSoundPlayer.spec.ts` con `AudioContext`/`HTMLMediaElement`
 mockeados a mano (ninguno de los dos existe en jsdom) y

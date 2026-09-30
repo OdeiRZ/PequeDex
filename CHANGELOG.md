@@ -1259,6 +1259,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   ("Reproducir Grillos", "Reproducir Olas"…, clave `sounds.play` con
   un parámetro `{name}`) en vez de un título aparte.
 
+- **Doble click/doble toque en una tarjeta de Sonidos reproduce o para
+  su sonido** directamente, sin pasar por el botón de play — un primer
+  toque sigue seleccionando la tarjeta como hasta ahora; un segundo
+  toque rápido sobre la misma categoría la reproduce, o la para si ya
+  estaba sonando. Detectado a mano por diferencia de tiempo entre
+  clicks (400ms) en vez de con el `dblclick` nativo del navegador —
+  más fiable en móvil, donde un PWA normalmente desactiva el zoom por
+  doble toque y con ello el comportamiento nativo de `dblclick` varía
+  según el navegador. Sin efecto sobre una categoría marcada como no
+  disponible.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

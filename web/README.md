@@ -449,7 +449,11 @@ está abierta"), así que no puede vivir en el estado local de la vista.
 `SoundsView.vue` solo guarda localmente qué tarjeta está *seleccionada*
 (qué se ve en el reproductor); tocar una categoría distinta llama a
 `stop()` si algo estaba sonando, para que cambiar de sonido sea un
-corte limpio.
+corte limpio. Un doble click/doble toque rápido sobre la misma tarjeta
+(detectado a mano por diferencia de tiempo entre clicks, 400ms, no con
+el `dblclick` nativo — más fiable en móvil que desactiva el zoom por
+doble toque) reproduce esa categoría directamente, o la para si ya
+estaba sonando, sin pasar por el botón de play del panel inferior.
 
 Última categoría/duración elegida persistida en `localStorage`
 (`pequedex_sound_last`, mismo patrón de getter/setter con guardas que

@@ -24,6 +24,13 @@ const FADE_FRACTION = 0.1
 // las otras categorías.
 const WHITE_NOISE_GAIN = 0.13
 
+// Fundido de entrada al arrancar cualquier sonido, fijo e independiente de
+// la duración total elegida (a diferencia del fundido de salida, que sí
+// escala con FADE_FRACTION) - empezar en silencio y subir en poco más de
+// un segundo evita el "golpe" de volumen al pulsar reproducir.
+const FADE_IN_SECONDS = 1.5
+const FADE_IN_STEP_MS = 100
+
 const STORAGE_KEY = 'pequedex_sound_last'
 
 interface StoredSelection {
@@ -74,6 +81,7 @@ const fadingOut = computed(
 )
 
 let tickHandle: ReturnType<typeof setInterval> | null = null
+let fadeInHandle: ReturnType<typeof setInterval> | null = null
 let fadeStarted = false
 
 // Ruta ruido blanco (Web Audio, sin fichero)
@@ -111,15 +119,29 @@ function startWhiteNoise(): void {
   noiseSource.loop = true
 
   gainNode = audioCtx.createGain()
-  gainNode.gain.value = WHITE_NOISE_GAIN
+  gainNode.gain.value = 0
   noiseSource.connect(gainNode).connect(audioCtx.destination)
   noiseSource.start()
+  gainNode.gain.linearRampToValueAtTime(WHITE_NOISE_GAIN, audioCtx.currentTime + FADE_IN_SECONDS)
+}
+
+function fadeInAudioEl(el: HTMLAudioElement): void {
+  el.volume = 0
+  const totalSteps = Math.round((FADE_IN_SECONDS * 1000) / FADE_IN_STEP_MS)
+  let step = 0
+  fadeInHandle = setInterval(() => {
+    step++
+    el.volume = Math.min(1, step / totalSteps)
+    if (step >= totalSteps && fadeInHandle) {
+      clearInterval(fadeInHandle)
+      fadeInHandle = null
+    }
+  }, FADE_IN_STEP_MS)
 }
 
 function startFile(cat: Exclude<SoundCategory, 'white-noise'>): void {
   const el = getAudioEl()
   el.src = `${import.meta.env.BASE_URL}sounds/${SOUND_FILES[cat]}`
-  el.volume = 1
   el.currentTime = 0
   // Un rechazo aquí (política de autoplay, fichero ausente antes de que
   // el evento "error" llegue a dispararse) se trata igual que un 404 -
@@ -129,6 +151,7 @@ function startFile(cat: Exclude<SoundCategory, 'white-noise'>): void {
     unavailable.value.add(cat)
     stop()
   })
+  fadeInAudioEl(el)
 }
 
 function stopAudioGraph(): void {
@@ -238,6 +261,10 @@ function stop(): void {
   if (tickHandle) {
     clearInterval(tickHandle)
     tickHandle = null
+  }
+  if (fadeInHandle) {
+    clearInterval(fadeInHandle)
+    fadeInHandle = null
   }
   stopAudioGraph()
   playing.value = false

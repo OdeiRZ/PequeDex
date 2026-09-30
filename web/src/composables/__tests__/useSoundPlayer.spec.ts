@@ -105,31 +105,39 @@ describe('useSoundPlayer', () => {
     expect(playing.value).toBe(false)
   })
 
-  it('ramps the white-noise gain to 0 once the last 10% of the duration starts, not before', async () => {
+  it('ramps the white-noise gain in on start, then to 0 once the last 10% of the duration starts', async () => {
     const { useSoundPlayer } = await importFresh()
     const { play } = useSoundPlayer()
 
     play('white-noise', '15') // 900s total, fade window = last 90s
     const gain = createdGainNodes[0]!
 
-    vi.advanceTimersByTime(700 * 1000) // still well outside the fade window
-    expect(gain.gain.linearRampToValueAtTime).not.toHaveBeenCalled()
+    // Fundido de entrada: una llamada ya al arrancar, a un valor > 0.
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
+    const [fadeInTarget] = gain.gain.linearRampToValueAtTime.mock.calls[0]!
+    expect(fadeInTarget).toBeGreaterThan(0)
+
+    vi.advanceTimersByTime(700 * 1000) // still well outside the fade-out window
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
 
     vi.advanceTimersByTime(200 * 1000) // now inside the last 10%
-    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
-    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, expect.any(Number))
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(2)
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, expect.any(Number))
   })
 
-  it('fades <audio> volume down gradually during the last 10% instead of a hard cut', async () => {
+  it('fades <audio> volume up from silence on start, then down gradually during the last 10%', async () => {
     const { useSoundPlayer } = await importFresh()
     const { play } = useSoundPlayer()
 
     play('rain', '15') // 900s total, fade window = last 90s
     await Promise.resolve()
     const el = createdAudioElements[0]!
+    expect(el.volume).toBe(0) // empieza en silencio, fundido de entrada
+
+    vi.advanceTimersByTime(1500) // fundido de entrada completo (1.5s, fijo)
     expect(el.volume).toBe(1)
 
-    vi.advanceTimersByTime(810 * 1000) // enters the fade window at exactly 90s left
+    vi.advanceTimersByTime(810 * 1000 - 1500) // llega a 90s restantes (810s desde el arranque)
     expect(el.volume).toBe(1) // linear ramp starts at 1 right at the boundary
 
     vi.advanceTimersByTime(30 * 1000) // 60s left - one third into the 90s fade window
@@ -139,6 +147,19 @@ describe('useSoundPlayer', () => {
     vi.advanceTimersByTime(30 * 1000) // 30s left - further into the fade
     expect(el.volume).toBeLessThan(volumeAfterOneTick)
     expect(el.volume).toBeGreaterThanOrEqual(0)
+  })
+
+  it('fades in from silence regardless of the chosen duration', async () => {
+    const { useSoundPlayer } = await importFresh()
+    const { play } = useSoundPlayer()
+
+    play('rain', 'unlimited')
+    await Promise.resolve()
+    const el = createdAudioElements[0]!
+    expect(el.volume).toBe(0)
+
+    vi.advanceTimersByTime(1500)
+    expect(el.volume).toBe(1)
   })
 
   it('switching category mid-playback stops the previous sound before starting the next', async () => {
@@ -169,18 +190,22 @@ describe('useSoundPlayer', () => {
     expect(playing.value).toBe(false)
   })
 
-  it('never fades or auto-stops on "unlimited", even after a long time', async () => {
+  it('fades in but never fades out or auto-stops on "unlimited", even after a long time', async () => {
     const { useSoundPlayer } = await importFresh()
     const { play, playing, remainingSeconds } = useSoundPlayer()
 
     play('white-noise', 'unlimited')
     const gain = createdGainNodes[0]!
 
+    // Solo la llamada del fundido de entrada - nunca un fundido de salida.
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
+
     vi.advanceTimersByTime(2 * 60 * 60 * 1000)
 
     expect(playing.value).toBe(true)
     expect(remainingSeconds.value).toBe(0)
-    expect(gain.gain.linearRampToValueAtTime).not.toHaveBeenCalled()
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
+    expect(gain.gain.linearRampToValueAtTime).not.toHaveBeenCalledWith(0, expect.any(Number))
   })
 
   it('persists the last picked category/duration and preselects them on the next import', async () => {

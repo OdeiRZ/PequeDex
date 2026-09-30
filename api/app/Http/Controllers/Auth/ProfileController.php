@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Requests\Auth\UpdateSwipeToDeleteEnabledRequest;
+use App\Http\Requests\Auth\UpdateTodaySummaryEnabledRequest;
 use App\Models\User;
 use App\Services\Users\AvatarProcessor;
 use Illuminate\Http\JsonResponse;
@@ -58,6 +59,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['swipe_to_delete_enabled' => $request->validated('swipe_to_delete_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateTodaySummaryEnabled(UpdateTodaySummaryEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['today_summary_enabled' => $request->validated('today_summary_enabled')]);
 
         return response()->json($user);
     }

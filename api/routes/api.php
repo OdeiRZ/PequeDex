@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/action-bar', [ProfileController::class, 'updateActionBarCategories']);
     Route::put('/user/predictions', [ProfileController::class, 'updatePredictionsEnabled']);
     Route::put('/user/swipe-to-delete', [ProfileController::class, 'updateSwipeToDeleteEnabled']);
+    Route::put('/user/today-summary', [ProfileController::class, 'updateTodaySummaryEnabled']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:6,1');
     Route::post('/user/avatar', [ProfileController::class, 'updateAvatar'])->middleware('throttle:6,1');
     Route::delete('/user/avatar', [ProfileController::class, 'deleteAvatar']);

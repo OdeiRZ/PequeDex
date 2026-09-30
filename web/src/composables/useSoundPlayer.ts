@@ -288,11 +288,33 @@ function setDuration(duration: DurationOption): void {
   durationOption.value = duration
   if (!playing.value) return
 
+  // Si ya estábamos dentro de la ventana de fundido de salida, calculado
+  // con los valores de ANTES de tocar nada de lo de abajo.
+  const wasFadingOut =
+    totalSeconds.value > 0 && remainingSeconds.value / totalSeconds.value <= FADE_FRACTION
+
   // Reinicia la cuenta atrás con la nueva duración sin cortar el audio
   // que ya está sonando.
   totalSeconds.value = duration === 'unlimited' ? 0 : DURATION_SECONDS[duration]
   remainingSeconds.value = totalSeconds.value
   fadeStarted = false
+
+  // Sin esto, alargar la duración (o pasar a "Sin límite") mientras ya
+  // sonaba el fundido de salida dejaba el sonido silenciado para siempre:
+  // la automatización de Web Audio del ruido blanco queda agendada en el
+  // instante absoluto en que se programó y no se cancela sola solo porque
+  // remainingSeconds/totalSeconds hayan cambiado, y el <audio> se queda
+  // con el volumen bajado del último tick - en ningún caso hay nada que
+  // los vuelva a subir una vez la cuenta atrás se ha reiniciado.
+  if (wasFadingOut) {
+    if (category.value === 'white-noise' && gainNode && audioCtx) {
+      gainNode.gain.cancelScheduledValues(audioCtx.currentTime)
+      gainNode.gain.setValueAtTime(WHITE_NOISE_GAIN, audioCtx.currentTime)
+    } else if (audioEl) {
+      audioEl.volume = 1
+    }
+  }
+
   if (category.value) storeLast(category.value, duration)
 }
 

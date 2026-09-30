@@ -19,6 +19,7 @@ class MockGainNode {
     value: 1,
     linearRampToValueAtTime: vi.fn(),
     cancelScheduledValues: vi.fn(),
+    setValueAtTime: vi.fn(),
   }
   connect = vi.fn()
   disconnect = vi.fn()
@@ -206,6 +207,58 @@ describe('useSoundPlayer', () => {
     expect(remainingSeconds.value).toBe(0)
     expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1)
     expect(gain.gain.linearRampToValueAtTime).not.toHaveBeenCalledWith(0, expect.any(Number))
+  })
+
+  it('changing duration mid fade-out cancels the stale white-noise ramp instead of leaving it silenced', async () => {
+    const { useSoundPlayer } = await importFresh()
+    const { play, setDuration } = useSoundPlayer()
+
+    play('white-noise', '15') // 900s total, fade window = last 90s
+    const gain = createdGainNodes[0]!
+
+    vi.advanceTimersByTime(890 * 1000) // 10s left, deep in the fade-out window
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, expect.any(Number))
+
+    // El usuario alarga la duración creyendo que seguirá sonando - sin la
+    // cancelación, la rampa a 0 ya agendada seguiría silenciando el ruido
+    // en su instante original pese a que la cuenta atrás se ha reiniciado.
+    setDuration('60')
+
+    expect(gain.gain.cancelScheduledValues).toHaveBeenCalled()
+    const [restoredGain] = gain.gain.setValueAtTime.mock.calls[0]!
+    expect(restoredGain).toBeGreaterThan(0)
+  })
+
+  it('changing duration mid fade-out restores full <audio> volume instead of leaving it lowered', async () => {
+    const { useSoundPlayer } = await importFresh()
+    const { play, setDuration } = useSoundPlayer()
+
+    play('rain', '15') // 900s total, fade window = last 90s
+    await Promise.resolve()
+    const el = createdAudioElements[0]!
+
+    vi.advanceTimersByTime(890 * 1000) // 10s left, deep in the fade-out window
+    expect(el.volume).toBeLessThan(1)
+
+    setDuration('unlimited')
+
+    expect(el.volume).toBe(1)
+  })
+
+  it('changing duration while not fading out does not touch the volume/gain', async () => {
+    const { useSoundPlayer } = await importFresh()
+    const { play, setDuration } = useSoundPlayer()
+
+    play('white-noise', '15')
+    const gain = createdGainNodes[0]!
+    gain.gain.cancelScheduledValues.mockClear()
+    gain.gain.setValueAtTime.mockClear()
+
+    vi.advanceTimersByTime(5000) // still nowhere near the fade window
+    setDuration('30')
+
+    expect(gain.gain.cancelScheduledValues).not.toHaveBeenCalled()
+    expect(gain.gain.setValueAtTime).not.toHaveBeenCalled()
   })
 
   it('persists the last picked category/duration and preselects them on the next import', async () => {

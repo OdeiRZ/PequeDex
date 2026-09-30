@@ -49,6 +49,8 @@ function onToggle() {
   }
 }
 
+const selectedCategory = computed(() => SOUND_CATEGORIES.find((c) => c.id === selected.value))
+
 const isPlayingSelected = computed(() => playing.value && category.value === selected.value)
 const isSelectedUnavailable = computed(
   () => !!selected.value && unavailable.value.has(selected.value),
@@ -110,9 +112,13 @@ const statusText = computed(() => {
         @click="selectCategory(cat.id)"
       >
         <span
-          class="grid h-12 w-12 place-items-center rounded-full"
+          class="relative grid h-12 w-12 place-items-center rounded-full"
           :class="[soundBg[cat.id], soundText[cat.id]]"
         >
+          <span
+            class="timer-ring"
+            :class="{ 'is-running': playing && category === cat.id && !fadingOut }"
+          ></span>
           <SoundCategoryIcon :category="cat.id" class="h-6 w-6" />
         </span>
         <span class="text-sm font-semibold">{{ t(cat.labelKey) }}</span>
@@ -122,39 +128,31 @@ const statusText = computed(() => {
       </button>
     </div>
 
-    <div v-if="selected" class="rounded-2xl border border-border bg-surface p-5 text-center">
+    <div v-if="selected" class="rounded-2xl border border-border bg-surface p-6 text-center">
+      <p class="mb-5 font-display text-base font-bold">{{ t(selectedCategory!.labelKey) }}</p>
+
       <SegmentedControl
         :model-value="durationOption"
         :options="durationOptions"
-        class="mb-5"
+        class="mb-6"
         @update:model-value="setDuration"
       />
 
-      <div class="relative mx-auto mb-4 grid h-28 w-28 place-items-center">
-        <span class="timer-ring" :class="{ 'is-running': isPlayingSelected && !fadingOut }"></span>
-        <span
-          class="grid h-20 w-20 place-items-center rounded-full"
-          :class="[soundBg[selected], soundText[selected]]"
-        >
-          <SoundCategoryIcon :category="selected" class="h-9 w-9" />
-        </span>
-      </div>
-
-      <p class="mb-4 text-sm text-text-muted">
+      <p class="mb-5 text-base font-semibold text-text-muted">
         {{ isSelectedUnavailable ? t('sounds.unavailableHint') : statusText }}
       </p>
 
       <button
         type="button"
-        class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-teal text-brand-ink shadow-md transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+        class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-brand-teal text-brand-ink shadow-md transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         :disabled="isSelectedUnavailable"
         :aria-label="isPlayingSelected ? t('sounds.stop') : t('sounds.play')"
         @click="onToggle"
       >
-        <svg v-if="!isPlayingSelected" viewBox="0 0 24 24" fill="currentColor" class="h-7 w-7">
+        <svg v-if="!isPlayingSelected" viewBox="0 0 24 24" fill="currentColor" class="h-8 w-8">
           <path d="M8 5v14l11-7z" />
         </svg>
-        <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-7 w-7">
+        <svg v-else viewBox="0 0 24 24" fill="currentColor" class="h-8 w-8">
           <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
         </svg>
       </button>
@@ -167,12 +165,16 @@ const statusText = computed(() => {
    puede reutilizar entre componentes al ser CSS con scope), pero
    respirando de forma continua mientras suena en vez de solo una
    pulsación - aquí no hay un evento puntual que marcar, solo "sigue
-   sonando". */
+   sonando". Vive en el badge del icono de la tarjeta que está
+   sonando en la rejilla (no en un círculo aparte duplicado abajo),
+   así que usa currentColor para heredar el color propio de cada
+   categoría (soundText en lib/soundCategory.ts) en vez de un
+   brand-teal fijo. */
 .timer-ring {
   position: absolute;
   inset: -4px;
   border-radius: 999px;
-  border: 2px solid var(--brand-teal);
+  border: 2px solid currentColor;
   opacity: 0;
   pointer-events: none;
 }

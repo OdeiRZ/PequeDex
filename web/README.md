@@ -494,6 +494,56 @@ un composable-singleton, y su cobertura real más allá del composable ya
 testeado y de `SegmentedControl`/el icono (triviales) sería solo de
 marcado/cableado.
 
+## Sonido y vibración al interactuar
+
+Interruptor "Sonido y vibración al interactuar" en "Tu cuenta" (cuarta
+copia exacta del patrón de Predicciones/Borrar con swipe/Tarjetas
+resumen: `auth.user.interaction_feedback_enabled`,
+`PUT /user/interaction-feedback`, activado por defecto). Composable
+nuevo `useFeedback.ts` (`src/composables/`) — sin estado de singleton,
+solo tres funciones (`tap`/`success`/`error`) que comprueban ese
+ajuste en cada llamada, no en un valor cacheado, para que activarlo/
+desactivarlo tenga efecto inmediato sin recargar la página:
+
+- **Sonido**: 3 tonos cortos sintetizados con Web Audio (`tap` un blip
+  discreto, `success` dos notas ascendentes, `error` un tono grave con
+  doble pulso) sobre un único `AudioContext` reutilizado entre
+  llamadas — sin ningún fichero de audio, mismo criterio que el ruido
+  blanco de Sonidos para dormir.
+- **Vibración**: `navigator.vibrate()` con feature-detect y
+  `try/catch` (patrones `8`ms para `tap`, `10`ms para `success`,
+  `[12, 40, 12]` para `error` — estos dos últimos son los que ya usaba
+  `toast.ts` en un `hapticBuzz()` local antes de este cambio, ahora
+  centralizados aquí). **No existe en PC ni en iOS Safari** — Apple
+  nunca ha implementado la Vibration API ahí y no tiene planes
+  anunciados de hacerlo; en esas plataformas el ajuste solo controla
+  el sonido.
+
+En vez de instrumentar cada botón de la app uno a uno, se engancha en
+los puntos de interacción que ya existían en el código:
+
+- **`directives/press.ts`** (`v-press`, ya aplicada a ~20 botones
+  primarios/submit de Dashboard/Contracciones/AccountSheet/auth/
+  onboarding para el efecto visual "pulsado"): `feedback.tap()` en el
+  mismo `pointerdown` que añade la clase `.is-pressed` — cubre todos
+  esos botones sin tocarlos uno por uno, incluido el start/stop de
+  Contracciones.
+- **`ActionBar.vue`**: `tap()` en `onTap()`, junto al ripple que ya
+  dibuja al cambiar de categoría.
+- **`DeleteButton.vue`**: `tap()` en `onClick()`, junto al shake de
+  confirmación.
+- **`SoundsView.vue`**: `tap()` al pulsar play/stop y en la rama de
+  doble-tap que arranca/para un sonido.
+- **`stores/toast.ts`**: su `hapticBuzz()` local se sustituye por
+  `useFeedback().success()`/`.error()` según el tipo de toast — mismo
+  momento (dentro de `show()`), ahora sí gateado por el ajuste en vez
+  de vibrar siempre incondicionalmente.
+
+Tests en `useFeedback.spec.ts` (gating on/off, ausencia de
+`navigator.vibrate`/`AudioContext` sin lanzar excepción, reuso del
+mismo `AudioContext` entre llamadas) y 3 añadidos a `toast.spec.ts`
+para el nuevo gating.
+
 ## Diseño
 
 Tailwind CSS v4 (`@tailwindcss/vite`, configuración CSS-first vía

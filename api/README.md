@@ -81,7 +81,11 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `updateSwipeToDeleteEnabled()` (columna `swipe_to_delete_enabled`,
   `default(false)`, `PUT /user/swipe-to-delete`) sigue el mismo patrón
   también, documentado ya antes junto al ajuste en sí en
-  `web/README.md`.
+  `web/README.md`. `updateInteractionFeedbackEnabled()` (columna
+  `interaction_feedback_enabled`, `default(true)`,
+  `PUT /user/interaction-feedback`) es la cuarta copia del mismo
+  patrón — controla el sonido/vibración al interactuar con la
+  interfaz, ver `web/README.md`.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

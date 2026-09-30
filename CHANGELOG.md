@@ -1270,6 +1270,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   según el navegador. Sin efecto sobre una categoría marcada como no
   disponible.
 
+- **Sonido y vibración al interactuar con la interfaz**, con
+  interruptor propio en "Tu cuenta" (cuarta copia exacta del patrón de
+  Predicciones/Borrar con swipe/Tarjetas resumen, activado por
+  defecto). Nuevo composable `useFeedback.ts`: 3 tonos cortos
+  sintetizados con Web Audio (sin ningún fichero, mismo criterio que
+  el ruido blanco de Sonidos para dormir) + `navigator.vibrate()` con
+  feature-detect — en PC, y en iOS Safari (que nunca ha implementado
+  la Vibration API), solo suena, sin vibrar. Enganchado en los puntos
+  de interacción ya existentes en el código en vez de tocar cada
+  botón de la app uno a uno: la directiva `v-press` (ya aplicada a
+  ~20 botones primarios/submit) dispara la pulsación genérica,
+  `ActionBar.vue`/`DeleteButton.vue`/`SoundsView.vue` cubren sus
+  propios casos (cambio de categoría, confirmar borrado, play/stop de
+  un sonido), y el `hapticBuzz()` que ya tenía `toast.ts` para sus
+  toasts de éxito/error —hasta ahora sin pasar por ningún ajuste— se
+  centraliza aquí, gateado igual que el resto.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

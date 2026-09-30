@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
-import { SOUND_FILES, type SoundCategory } from '@/lib/soundCategory'
+import { i18n } from '@/i18n'
+import { SOUND_CATEGORIES, SOUND_FILES, type SoundCategory } from '@/lib/soundCategory'
 
 export type DurationOption = '15' | '30' | '45' | '60' | 'unlimited'
 
@@ -196,11 +197,22 @@ function applyFadeStep(): void {
   }
 }
 
+// El id interno (p.ej. "white-noise") nunca se muestra tal cual en la
+// notificación/pantalla de bloqueo - se traduce con el mismo i18n que
+// usa el resto de la app (i18n.global.t, no el t() de un componente,
+// porque este composable no es uno) y se capitaliza la primera letra
+// por si algún día una traducción no la trae ya en mayúscula.
+function categoryLabel(cat: SoundCategory): string {
+  const entry = SOUND_CATEGORIES.find((c) => c.id === cat)
+  const label = entry ? i18n.global.t(entry.labelKey) : cat
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
 function setMediaSession(): void {
   try {
     if (!('mediaSession' in navigator) || !category.value) return
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: category.value,
+      title: categoryLabel(category.value),
       artist: 'PequeDex',
     })
     navigator.mediaSession.playbackState = 'playing'

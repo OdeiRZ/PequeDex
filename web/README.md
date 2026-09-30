@@ -394,12 +394,23 @@ momento con la Web Audio API (`AudioContext` + un buffer de ruido
 relleno con `Math.random()` + un `GainNode` para el fundido), así que
 esa categoría concreta nunca va a depender de un asset con licencia.
 Las otras 5 sí reproducen un `<audio loop>` apuntando a
-`public/sounds/<categoría>.mp3` — ficheros que no existen todavía (se
-incorporarán con licencia más adelante, fuera de este cambio); mientras
-tanto, el propio evento `error` del `<audio>` marca esa categoría como
-"Audio pendiente" en su tarjeta (deshabilitando solo el botón de
-reproducir, no toda la tarjeta) en vez de dejarla "reproduciendo" para
-siempre sin sonido real.
+`public/sounds/<categoría>.mp3`. **Tormenta/Latido/Olas ya tienen
+audio real** (recortados a ~15 min desde la grabación original de ~1h
+que pasó Odei — el `<audio loop>` del navegador repite el fichero las
+veces que haga falta para cubrir la duración elegida en el
+temporizador, así que 15 min de textura continua sin melodía cubre de
+sobra hasta "Sin límite" sin que se note la repetición, a cambio de
+~43 MB en vez de ~180 MB en el repo). Preparados con un *crossfade*
+real de unos segundos entre el final y el propio principio del clip
+(filtro `acrossfade` de `ffmpeg`, no un recorte a tijeretazo) para que
+el punto donde empalma el bucle consigo mismo no suene como un salto
+brusco — el tipo de sonido continuo (agua, lluvia, latido) lo permite
+sin que se note; una nana con melodía real necesitaría un tratamiento
+distinto. **Nana/Ventilador siguen sin fichero** — mientras tanto, el
+propio evento `error` del `<audio>` marca esa categoría como "Audio
+pendiente" en su tarjeta (deshabilitando solo el botón de reproducir,
+no toda la tarjeta) en vez de dejarla "reproduciendo" para siempre sin
+sonido real.
 
 El estado (categoría activa, cuenta atrás, si está sonando, qué
 categorías están marcadas como no disponibles) vive en

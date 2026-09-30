@@ -129,10 +129,10 @@ export default {
   sounds: {
     title: 'Sonidos para dormir',
     linkCardTitle: 'Sonidos para dormir',
-    linkCardBody: 'Ruido blanco, lluvia y más para ayudar a conciliar el sueño.',
+    linkCardBody: 'Ruido blanco, tormenta y más para ayudar a conciliar el sueño.',
     categories: {
       whiteNoise: 'Ruido blanco',
-      rain: 'Lluvia',
+      rain: 'Tormenta',
       heartbeat: 'Latido',
       lullaby: 'Nana',
       waves: 'Olas',

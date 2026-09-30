@@ -1192,6 +1192,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   etiqueta en `DashboardView.vue`, sin tocar el componente — que ya se
   autogate por `stats.length > 0`. Activado por defecto.
 
+- **Audio real para Tormenta/Latido/Olas** — los tres primeros
+  ficheros reales de Sonidos para dormir (de 6 categorías, quedan
+  Nana/Ventilador sin fichero, con "Audio pendiente" en su tarjeta).
+  Recortados de ~1h a ~15 min desde las grabaciones originales que
+  pasó Odei — el `<audio loop>` del navegador repite el fichero las
+  veces que haga falta para la duración elegida en el temporizador
+  (nada en `useSoundPlayer.ts` depende de la duración real del
+  fichero), así que 15 min de textura continua sin melodía cubre de
+  sobra incluso "Sin límite" sin que se note la repetición, a cambio
+  de ~43 MB en vez de ~180 MB en el repo. Con un *crossfade* real de
+  unos segundos entre el final del clip y su propio principio
+  (`acrossfade` de `ffmpeg`, no un recorte a tijeretazo) para que el
+  punto donde el bucle empalma consigo mismo no suene como un salto
+  brusco. De paso, la categoría "Lluvia" pasa a llamarse "Tormenta"
+  (`sounds.categories.rain`) — más fiel al contenido real del audio
+  que Odei consiguió para esa categoría.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

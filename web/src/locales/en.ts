@@ -128,10 +128,10 @@ export default {
   sounds: {
     title: 'Sleep sounds',
     linkCardTitle: 'Sleep sounds',
-    linkCardBody: 'White noise, rain and more to help your baby fall asleep.',
+    linkCardBody: 'White noise, storm and more to help your baby fall asleep.',
     categories: {
       whiteNoise: 'White noise',
-      rain: 'Rain',
+      rain: 'Storm',
       heartbeat: 'Heartbeat',
       lullaby: 'Lullaby',
       waves: 'Waves',

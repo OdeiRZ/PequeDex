@@ -249,6 +249,30 @@ async function onToggleSwipeToDelete() {
   }
 }
 
+// --- Ajustes: tarjetas resumen del día ---
+
+// Mismo patrón guardado-al-vuelo que los dos anteriores - activado por
+// defecto (ver migración): las tarjetas ya eran visibles para todo el
+// mundo antes de que existiera este ajuste.
+const todaySummaryEnabled = ref(true)
+let todaySummarySaveToken = 0
+
+async function onToggleTodaySummary() {
+  const previous = todaySummaryEnabled.value
+  const next = !previous
+  todaySummaryEnabled.value = next
+
+  const token = ++todaySummarySaveToken
+  try {
+    await auth.updateTodaySummaryEnabled(next)
+  } catch {
+    if (token === todaySummarySaveToken) {
+      todaySummaryEnabled.value = previous
+      toast.show(t('profile.todaySummary.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -265,6 +289,7 @@ watch(
     actionBarSelection.value = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
     predictionsEnabled.value = auth.user?.predictions_enabled ?? true
     swipeToDeleteEnabled.value = auth.user?.swipe_to_delete_enabled ?? false
+    todaySummaryEnabled.value = auth.user?.today_summary_enabled ?? true
   },
 )
 </script>
@@ -456,6 +481,27 @@ watch(
         <span
           class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: swipeToDeleteEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.todaySummary.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.todaySummary.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="todaySummaryEnabled"
+        :aria-label="t('profile.todaySummary.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="todaySummaryEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleTodaySummary"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: todaySummaryEnabled ? '22px' : '2px' }"
         ></span>
       </button>
     </div>

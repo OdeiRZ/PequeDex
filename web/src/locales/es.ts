@@ -432,5 +432,10 @@ export default {
         'Desliza una entrada hacia la izquierda para borrarla, en vez del icono de papelera siempre visible.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    todaySummary: {
+      title: 'Tarjetas resumen del día',
+      description: 'Muestra las tarjetas de tomas, sueño y pañales bajo la tarjeta del bebé.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

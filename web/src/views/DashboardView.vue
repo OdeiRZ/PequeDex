@@ -1568,6 +1568,7 @@ const sleepPredictionDue = computed(() => {
 
           <template v-if="isBorn">
             <TodaySummary
+              v-if="auth.user?.today_summary_enabled"
               class="dash-enter"
               :timeline="rhythmTimeline"
               :enabled-categories="enabledCategories"

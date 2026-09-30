@@ -427,5 +427,10 @@ export default {
       description: 'Swipe an entry left to delete it, instead of the always-visible trash icon.',
       saveError: 'Could not save the change. Please try again.',
     },
+    todaySummary: {
+      title: "Today's summary cards",
+      description: 'Show the feed, sleep and diaper count cards under the baby card.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

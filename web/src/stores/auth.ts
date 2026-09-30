@@ -12,6 +12,7 @@ export interface User {
   action_bar_categories: Category[] | null
   predictions_enabled: boolean
   swipe_to_delete_enabled: boolean
+  today_summary_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -129,6 +130,13 @@ export const useAuthStore = defineStore('auth', {
     async updateSwipeToDeleteEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/swipe-to-delete', {
         swipe_to_delete_enabled: enabled,
+      })
+      this.user = data
+    },
+
+    async updateTodaySummaryEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/today-summary', {
+        today_summary_enabled: enabled,
       })
       this.user = data
     },

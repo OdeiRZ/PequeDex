@@ -373,6 +373,69 @@ reversión si el `PUT` falla) que activa/desactiva
 prefiere no ver estimaciones, solo lo registrado. Activadas por
 defecto.
 
+## Sonidos para dormir
+
+Nueva sección (`SoundsView.vue`, ruta `/sonidos`, entrada en el
+Dashboard junto a la de Contracciones): elegir un sonido de una rejilla
+de 6 categorías (ruido blanco, lluvia, latido, nana, olas, ventilador)
+y reproducirlo con un temporizador (15/30/45/60 min o sin límite), con
+un fundido de volumen en el último 10% del tiempo en vez de un corte en
+seco. Validado primero con un borrador interactivo (artifact HTML con
+los tokens reales de la app) antes de tocar código real.
+
+**"Ruido blanco" no usa ningún fichero de audio** — se genera en el
+momento con la Web Audio API (`AudioContext` + un buffer de ruido
+relleno con `Math.random()` + un `GainNode` para el fundido), así que
+esa categoría concreta nunca va a depender de un asset con licencia.
+Las otras 5 sí reproducen un `<audio loop>` apuntando a
+`public/sounds/<categoría>.mp3` — ficheros que no existen todavía (se
+incorporarán con licencia más adelante, fuera de este cambio); mientras
+tanto, el propio evento `error` del `<audio>` marca esa categoría como
+"Audio pendiente" en su tarjeta (deshabilitando solo el botón de
+reproducir, no toda la tarjeta) en vez de dejarla "reproduciendo" para
+siempre sin sonido real.
+
+El estado (categoría activa, cuenta atrás, si está sonando, qué
+categorías están marcadas como no disponibles) vive en
+`useSoundPlayer.ts` (`src/composables/`, primer fichero de esa carpeta
+en este repo) como un **singleton a nivel de módulo** — los refs se
+declaran fuera de la función exportada, así que todo importador
+comparte la misma instancia — mismo criterio que `useTheme.ts` de
+LudoDex. Es deliberado: el sonido tiene que seguir sonando si el
+usuario navega fuera de `/sonidos` (todo el sentido de la función es
+"sonar mientras el bebé se duerme", no "solo mientras esta pantalla
+está abierta"), así que no puede vivir en el estado local de la vista.
+`SoundsView.vue` solo guarda localmente qué tarjeta está *seleccionada*
+(qué se ve en el reproductor); tocar una categoría distinta llama a
+`stop()` si algo estaba sonando, para que cambiar de sonido sea un
+corte limpio.
+
+Última categoría/duración elegida persistida en `localStorage`
+(`pequedex_sound_last`, mismo patrón de getter/setter con guardas que
+`theme.ts`), para preseleccionarlas la próxima vez sin arrancar el
+audio automáticamente. Wireado también un `navigator.mediaSession`
+básico (metadata + controles de play/pause en la pantalla de bloqueo)
+como mejor esfuerzo, envuelto en `try/catch` — un PWA puede seguir
+siendo suspendido en segundo plano por el sistema operativo pese a
+esto, no es una garantía, y la propia API puede no existir en todos los
+entornos.
+
+Tests en `useSoundPlayer.spec.ts` con `AudioContext`/`HTMLMediaElement`
+mockeados a mano (ninguno de los dos existe en jsdom) y
+`vi.useFakeTimers()` para la cuenta atrás: parada automática en 0,
+fundido real en las dos rutas de audio (ramp de ganancia para ruido
+blanco, `volume` decreciente para `<audio>`), cambio de categoría a
+media reproducción detiene la anterior antes de arrancar la siguiente,
+un fallo de reproducción marca "no disponible" sin dejar `playing=true`,
+"sin límite" nunca dispara fundido ni parada automática, y la
+persistencia sobrevive a un reimport fresco del módulo
+(`vi.resetModules()`). Deliberadamente sin un `SoundsView.spec.ts` —
+sería el primer test de vista del repo (solo hay tests de componentes y
+stores hasta ahora), sin patrón previo de montaje con router + i18n +
+un composable-singleton, y su cobertura real más allá del composable ya
+testeado y de `SegmentedControl`/el icono (triviales) sería solo de
+marcado/cableado.
+
 ## Diseño
 
 Tailwind CSS v4 (`@tailwindcss/vite`, configuración CSS-first vía
@@ -881,6 +944,34 @@ ninguna pista de qué había ido mal (encontrado en real: subir un hito
 con foto se quedaba así de "colgado" en el móvil - ver `api/README.md`
 sobre `docker/uploads.ini`). Ahora cada uno muestra
 `t('dashboard.saveError')` por toast si falla.
+
+## Transiciones entre rutas
+
+`App.vue` envuelve `<RouterView>` en un único `<Transition name="route">`
+global — deliberadamente **sin** `mode="out-in"`. Lo tuvo en su día (para
+evitar que `DashboardView`/`ContractionsView` montaran dos veces sus
+propios intervalos de sondeo en un cambio de ruta), pero `out-in` resultó
+ser poco fiable en este Vue/navegador: una transición se queda colgada
+para siempre bajo ciertas condiciones — el router ya tiene la ruta y el
+componente resueltos, pero el DOM no pinta nada más, ni la página vieja
+ni la nueva. Se encontró primero en transiciones que tocaban `welcome`
+(arreglado en su momento con un bypass acotado solo a esa ruta) y
+después, por separado, en Dashboard ↔ Contracciones — sin `welcome` de
+por medio, confirmando que nunca fue un problema específico de una ruta
+concreta. **No reintroducir `mode="out-in"` aquí** sin volver a probar a
+fondo cada pareja de rutas del router con clicks reales (no solo con
+`history.pushState`/eventos sintéticos en consola, que no siempre
+reproducen el mismo fallo).
+
+Viejo y nuevo se montan en su lugar en simultáneo (el modo por defecto
+de Vue): `.route-leave-active` saca la página saliente del flujo
+(`position: absolute`) y la hace desaparecer al instante, sin
+transición, en cuanto deja de ser la ruta activa — evita la alternativa
+peor de un fundido de salida que se solape visualmente con el fundido
+de entrada de la página nueva (probado y descartado: se ve como un
+parpadeo del contenido viejo). Cada intervalo de sondeo en
+Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
+breve solape de montaje es inofensivo.
 
 ## Despliegue
 

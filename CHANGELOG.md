@@ -1150,6 +1150,37 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   permitido con un segundo cuidador vinculado, vuelta automática a la
   pantalla de onboarding tras abandonar.
 
+- **Sonidos para dormir** (`SoundsView.vue`, ruta `/sonidos`): rejilla
+  de 6 categorías (ruido blanco, lluvia, latido, nana, olas,
+  ventilador) y un reproductor con temporizador (15/30/45/60 min o sin
+  límite) y fundido de volumen en el último 10% del tiempo, en vez de
+  cortar en seco. Validado primero con un borrador interactivo (artifact
+  HTML con los tokens reales de la app) antes de tocar código.
+  Entrada nueva en el Dashboard, junto a la de Contracciones, pero
+  `v-if="babies.current"` sin más (sin el `!isBorn` de aquella — tiene
+  sentido también después de nacer) y con `bg-brand-teal` en vez de
+  `bg-sleep`, para no reutilizar el color de la categoría de registro
+  "Sueño" en una tarjeta que no tiene nada que ver con esa taxonomía.
+  "Ruido blanco" no usa ningún fichero de audio: se genera en el
+  momento con Web Audio (`AudioContext` + un buffer de ruido +
+  `GainNode` para el fundido). Las otras 5 categorías reproducen un
+  `<audio>` apuntando a `public/sounds/<categoría>.mp3` — ficheros que
+  no existen todavía (llegarán con licencia más adelante); mientras
+  tanto, el propio evento `error` del `<audio>` marca la categoría como
+  "Audio pendiente" en su tarjeta en vez de dejarla "reproduciendo"
+  para siempre.
+  El estado (categoría activa, cuenta atrás, si está sonando) vive en
+  `useSoundPlayer.ts`, el primer composable del repo: un singleton a
+  nivel de módulo (mismo criterio que `useTheme.ts` de LudoDex), no
+  estado local de la vista — el sonido debe seguir sonando si el
+  usuario navega fuera de `/sonidos`, que es justo el punto de la
+  función. Última categoría/duración elegida persistida en
+  `localStorage`, mismo patrón de guardas que `theme.ts`. Wireado
+  también un `navigator.mediaSession` básico (metadata + controles de
+  play/pause en la pantalla de bloqueo), como mejor esfuerzo — un PWA
+  puede seguir siendo suspendido en segundo plano por el sistema
+  operativo pese a esto, no es una garantía.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio
@@ -1498,3 +1529,30 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   y `BabyController::store()` creaba el `Baby` y vinculaba al cuidador en dos pasos sin
   transacción — un fallo entre medias dejaba un `Baby` huérfano sin ningún cuidador,
   inaccesible para siempre. Ambos pasos van ahora dentro de `DB::transaction()`.
+- **Pantalla en blanco al cambiar de ruta, en cualquier pareja de
+  vistas** — `mode="out-in"` (`App.vue`) llevaba desde la pasada del
+  splash con un bypass acotado solo a las transiciones que tocaban
+  `welcome` (ver el arreglo de "la pantalla seguía en blanco" más
+  arriba): se dio por resuelto en cuanto `welcome` funcionó, sin
+  comprobar si el mismo problema afectaba a otras parejas de rutas.
+  Reproducido en vivo, con clicks reales (no solo en pruebas
+  automatizadas), en Dashboard ↔ Contracciones — sin `welcome` de por
+  medio: tras una navegación por `RouterLink`, el `<main>` que se va se
+  queda pegado para siempre con las clases de entrada y salida de Vue a
+  la vez, sin pintar nada más; una recarga completa a la misma URL
+  renderiza la vista correctamente cada vez, confirmando que el
+  problema estaba en el mecanismo de transición del lado cliente, no en
+  las vistas en sí. Confirmado también con un `git stash` sobre un
+  checkout limpio: el bug ya existía antes de la pasada de Sonidos, no
+  lo introdujo esa feature — simplemente nunca se había vuelto a probar
+  desde el arreglo de `welcome`. `mode="out-in"` quitado globalmente en
+  vez de seguir añadiendo cada ruta nueva a una lista de excepciones
+  (le pasó exactamente eso a `/sonidos` al añadirla) — viejo y nuevo se
+  montan ahora en simultáneo (el modo por defecto de Vue) con la salida
+  instantánea que ya estaba probada para `welcome`, en vez de esperar
+  un fin de transición que nunca llega a completarse. Cada intervalo de
+  sondeo en Dashboard/Contracciones ya tiene su propio `onUnmounted`,
+  así que el breve solape es inofensivo, no una fuga. Verificado en
+  vivo, con clicks reales, en Dashboard ↔ Contracciones y Dashboard ↔
+  Sonidos (con audio sonando de fondo durante la navegación), en la
+  misma pestaña donde antes se colgaba de forma reproducible.

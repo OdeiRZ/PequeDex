@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import SoundCategoryIcon from '@/components/SoundCategoryIcon.vue'
-import { SOUND_CATEGORIES, type SoundCategory } from '@/lib/soundCategory'
+import { SOUND_CATEGORIES, soundBg, soundText, type SoundCategory } from '@/lib/soundCategory'
 import { useSoundPlayer, type DurationOption } from '@/composables/useSoundPlayer'
 
 const { t } = useI18n()
@@ -110,7 +110,8 @@ const statusText = computed(() => {
         @click="selectCategory(cat.id)"
       >
         <span
-          class="grid h-12 w-12 place-items-center rounded-full bg-brand-teal/15 text-brand-teal"
+          class="grid h-12 w-12 place-items-center rounded-full"
+          :class="[soundBg[cat.id], soundText[cat.id]]"
         >
           <SoundCategoryIcon :category="cat.id" class="h-6 w-6" />
         </span>
@@ -132,7 +133,8 @@ const statusText = computed(() => {
       <div class="relative mx-auto mb-4 grid h-28 w-28 place-items-center">
         <span class="timer-ring" :class="{ 'is-running': isPlayingSelected && !fadingOut }"></span>
         <span
-          class="grid h-20 w-20 place-items-center rounded-full bg-brand-teal/15 text-brand-teal"
+          class="grid h-20 w-20 place-items-center rounded-full"
+          :class="[soundBg[selected], soundText[selected]]"
         >
           <SoundCategoryIcon :category="selected" class="h-9 w-9" />
         </span>

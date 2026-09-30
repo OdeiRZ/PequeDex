@@ -29,3 +29,25 @@ export const SOUND_FILES: Record<Exclude<SoundCategory, 'white-noise'>, string> 
   waves: 'waves.mp3',
   fan: 'fan.mp3',
 }
+
+// Tailwind's scanner needs these class names to appear literally in source
+// somewhere - a template literal like `text-sound-${category}` would never
+// match, so every category/utility combination is spelled out here once
+// (mismo criterio que categoryText/categoryBg en lib/category.ts).
+export const soundText: Record<SoundCategory, string> = {
+  'white-noise': 'text-sound-white-noise',
+  rain: 'text-sound-rain',
+  heartbeat: 'text-sound-heartbeat',
+  lullaby: 'text-sound-lullaby',
+  waves: 'text-sound-waves',
+  fan: 'text-sound-fan',
+}
+
+export const soundBg: Record<SoundCategory, string> = {
+  'white-noise': 'bg-sound-white-noise/15',
+  rain: 'bg-sound-rain/15',
+  heartbeat: 'bg-sound-heartbeat/15',
+  lullaby: 'bg-sound-lullaby/15',
+  waves: 'bg-sound-waves/15',
+  fan: 'bg-sound-fan/15',
+}

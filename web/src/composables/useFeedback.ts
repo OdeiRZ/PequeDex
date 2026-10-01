@@ -127,10 +127,14 @@ function playTone(kind: FeedbackKind): void {
       playBlip(ctx, now + 0.055, 950, 0.04, 0.045)
       break
     case 'nav':
-      // Un swoosh ascendente - "entrando" en una sección nueva
-      // (Contracciones, Sonidos para dormir...), textura de barrido en
-      // vez de un pitido fijo como success.
-      playSweep(ctx, now, 420, 760, 0.05, 0.14)
+      // Arpegio de 3 notas rápidas y ascendentes - "entrando" en una
+      // sección nueva (Contracciones, Sonidos para dormir...). Notas
+      // discretas en vez de un barrido continuo (que sonaba más a
+      // "silbido" que a confirmación): más parecido al timbre de
+      // cambiar de sala/canal de una app de chat.
+      playBlip(ctx, now, 494, 0.045, 0.06)
+      playBlip(ctx, now + 0.05, 587, 0.045, 0.06)
+      playBlip(ctx, now + 0.1, 740, 0.05, 0.08)
       break
     case 'theme':
       // Un timbre suave de dos notas superpuestas, más largo que el

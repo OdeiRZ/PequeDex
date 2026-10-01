@@ -501,23 +501,30 @@ copia exacta del patrón de Predicciones/Borrar con swipe/Tarjetas
 resumen: `auth.user.interaction_feedback_enabled`,
 `PUT /user/interaction-feedback`, activado por defecto). Composable
 nuevo `useFeedback.ts` (`src/composables/`) — sin estado de singleton,
-solo tres funciones (`tap`/`success`/`error`) que comprueban ese
-ajuste en cada llamada, no en un valor cacheado, para que activarlo/
-desactivarlo tenga efecto inmediato sin recargar la página:
+solo funciones (`tap`/`success`/`error`/`cancel`/`select`/`nav`/
+`theme`/`warnVibrate`) que comprueban ese ajuste en cada llamada, no
+en un valor cacheado, para que activarlo/desactivarlo tenga efecto
+inmediato sin recargar la página:
 
-- **Sonido**: 3 tonos cortos sintetizados con Web Audio (`tap` un blip
-  discreto, `success` dos notas ascendentes, `error` un tono grave con
-  doble pulso) sobre un único `AudioContext` reutilizado entre
-  llamadas — sin ningún fichero de audio, mismo criterio que el ruido
-  blanco de Sonidos para dormir.
+- **Sonido**: tonos cortos sintetizados con Web Audio sobre un único
+  `AudioContext` reutilizado entre llamadas — sin ningún fichero de
+  audio, mismo criterio que el ruido blanco de Sonidos para dormir.
+  Cada tipo tiene su propio timbre, no un genérico reutilizado: `tap`
+  un blip discreto, `success` dos notas ascendentes, `error` un tono
+  grave con doble pulso, `cancel` un barrido descendente (`playSweep`,
+  frecuencia deslizante en vez de fija — un "paso atrás"), `select`
+  dos blips muy cortos y agudos (el tic-tic de un selector), `nav` un
+  barrido ascendente (entrar en una sección nueva), `theme` dos notas
+  superpuestas algo más largas. `warnVibrate` no suena — solo vibra.
 - **Vibración**: `navigator.vibrate()` con feature-detect y
-  `try/catch` (patrones `8`ms para `tap`, `10`ms para `success`,
-  `[12, 40, 12]` para `error` — estos dos últimos son los que ya usaba
-  `toast.ts` en un `hapticBuzz()` local antes de este cambio, ahora
-  centralizados aquí). **No existe en PC ni en iOS Safari** — Apple
-  nunca ha implementado la Vibration API ahí y no tiene planes
-  anunciados de hacerlo; en esas plataformas el ajuste solo controla
-  el sonido.
+  `try/catch`, un patrón distinto por tipo (`8`ms `tap`, `10`ms
+  `success`, `[12, 40, 12]` `error` — estos dos últimos son los que ya
+  usaba `toast.ts` en un `hapticBuzz()` local antes de este cambio,
+  ahora centralizados aquí — `6`ms `cancel`/`warnVibrate`,
+  `[5, 18, 5]` `select`, `14`ms `nav`, `16`ms `theme`). **No existe en
+  PC ni en iOS Safari** — Apple nunca ha implementado la Vibration API
+  ahí y no tiene planes anunciados de hacerlo; en esas plataformas el
+  ajuste solo controla el sonido.
 
 En vez de instrumentar cada botón de la app uno a uno, se engancha en
 los puntos de interacción que ya existían en el código:
@@ -538,6 +545,25 @@ los puntos de interacción que ya existían en el código:
   `useFeedback().success()`/`.error()` según el tipo de toast — mismo
   momento (dentro de `show()`), ahora sí gateado por el ajuste en vez
   de vibrar siempre incondicionalmente.
+- **`SegmentedControl.vue`**: `select()` al cambiar de valor (no al
+  re-tocar la opción ya activa) — un único fichero cubre idioma,
+  duración de Sonidos, tipo de toma, sexo del bebé y cualquier otro
+  selector de ese tipo.
+- **`ThemeToggle.vue`**: `theme()` en `toggle()`.
+- **Botones "Cancelar"**: `cancel()` — `cancelSheet()` nuevo en
+  `DashboardView.vue` (envoltura de `closeSheet()` solo para el click
+  del botón, ya que `closeSheet()` en sí también se llama tras un
+  guardado con éxito), y la rama "no confirmado" de los diálogos de
+  confirmación en `ContractionsView.vue`.
+- **Entradas a una sección propia**: `nav()` en los enlaces a
+  Contracciones (`DashboardView.vue`) y Sonidos para dormir
+  (`SoundsLinkCard.vue`).
+- **`EntryCard.vue`**: `warnVibrate()` como preaviso a mitad del gesto
+  de swipe-to-delete — el swipe aquí es scroll nativo con
+  `scroll-snap` (no un drag a mano), así que el enganche es un
+  listener de `scroll` que dispara un único pulso cuando el
+  `scrollLeft` cruza el 50% del ancho revelado, rearmado en cuanto el
+  panel vuelve a cerrarse.
 
 Tests en `useFeedback.spec.ts` (gating on/off, ausencia de
 `navigator.vibrate`/`AudioContext` sin lanzar excepción, reuso del

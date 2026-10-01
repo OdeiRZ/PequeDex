@@ -1287,6 +1287,22 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   toasts de éxito/error —hasta ahora sin pasar por ningún ajuste— se
   centraliza aquí, gateado igual que el resto.
 
+- **4 tipos de sonido/vibración más en `useFeedback.ts`** —
+  `cancel`/`select`/`nav`/`theme`, cada uno con timbre y patrón de
+  vibración propios (incluido un `playSweep()` nuevo, de frecuencia
+  deslizante en vez de fija, para `cancel`/`nav`) en vez de reutilizar
+  el genérico `tap`: `select` en `SegmentedControl.vue` (idioma,
+  duración de Sonidos, tipo de toma, sexo del bebé — cualquier
+  selector de ese tipo, de un plumazo), `theme` al cambiar de modo
+  claro/oscuro, `cancel` en los botones "Cancelar" y en la rama "no"
+  de los diálogos de confirmación, `nav` al entrar en Contracciones o
+  Sonidos para dormir desde el Dashboard. También `warnVibrate()`
+  (solo vibración, sin tono) como preaviso a mitad del gesto de
+  swipe-to-delete en `EntryCard.vue` — un pulso cuando el dedo ya ha
+  revelado la mitad del panel de borrar, antes de soltarlo, ya que un
+  sonido a mitad de un arrastre que aún se puede cancelar se sentiría
+  fuera de lugar.
+
 ### Cambiado
 
 - **Frontend migrado de Cloudflare Pages a GitHub Pages** — el dominio

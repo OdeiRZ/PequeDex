@@ -2,17 +2,15 @@ import { useAuthStore } from '@/stores/auth'
 
 export type FeedbackKind = 'tap' | 'success' | 'error'
 
-// Mismos patrones que ya usaba toast.ts en su hapticBuzz() local para
-// success/error (10ms / [12, 40, 12]) - se mantienen tal cual, ya estaban
-// calibrados, en vez de inventar otros al centralizarlos aquí. 'tap' sí
-// se ha retocado: 8ms resultó imperceptible en pruebas reales en Android
-// (Chrome) - la llamada a navigator.vibrate() no fallaba ni se bloqueaba,
-// simplemente muchos motores de vibración no llegan a arrancar en un
-// pulso tan corto. 18ms es el mínimo habitual para un "tap" que sí se
-// note, sin llegar a sentirse largo en una pulsación que ocurre en casi
-// cada botón de la app.
+// Mismos patrones que ya usaba toast.ts en su hapticBuzz() local (10ms
+// para éxito, [12, 40, 12] para error) - se mantienen tal cual, ya
+// estaban calibrados, en vez de inventar otros al centralizarlos aquí.
+// 'tap' es más corto porque ocurre en casi cada pulsación, no solo en
+// confirmaciones puntuales. (La subida pasajera a 18ms resultó
+// innecesaria: lo que impedía sentir la vibración era "Vibración
+// táctil" desactivada a nivel de Android, no la duración del pulso.)
 const VIBRATION_PATTERNS: Record<FeedbackKind, number | number[]> = {
-  tap: 18,
+  tap: 8,
   success: 10,
   error: [12, 40, 12],
 }

@@ -61,7 +61,7 @@ describe('useFeedback', () => {
     feedback.success()
     feedback.error()
 
-    expect(vibrate).toHaveBeenNthCalledWith(1, 18)
+    expect(vibrate).toHaveBeenNthCalledWith(1, 8)
     expect(vibrate).toHaveBeenNthCalledWith(2, 10)
     expect(vibrate).toHaveBeenNthCalledWith(3, [12, 40, 12])
   })

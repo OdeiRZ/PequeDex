@@ -502,9 +502,9 @@ resumen: `auth.user.interaction_feedback_enabled`,
 `PUT /user/interaction-feedback`, activado por defecto). Composable
 nuevo `useFeedback.ts` (`src/composables/`) — sin estado de singleton,
 solo funciones (`tap`/`success`/`error`/`cancel`/`select`/`nav`/
-`theme`/`warnVibrate`) que comprueban ese ajuste en cada llamada, no
-en un valor cacheado, para que activarlo/desactivarlo tenga efecto
-inmediato sin recargar la página:
+`navBack`/`theme`/`warnVibrate`) que comprueban ese ajuste en cada
+llamada, no en un valor cacheado, para que activarlo/desactivarlo
+tenga efecto inmediato sin recargar la página:
 
 - **Sonido**: tonos cortos sintetizados con Web Audio sobre un único
   `AudioContext` reutilizado entre llamadas — sin ningún fichero de
@@ -514,17 +514,21 @@ inmediato sin recargar la página:
   grave con doble pulso, `cancel` un barrido descendente (`playSweep`,
   frecuencia deslizante en vez de fija — un "paso atrás"), `select`
   dos blips muy cortos y agudos (el tic-tic de un selector), `nav` un
-  barrido ascendente (entrar en una sección nueva), `theme` dos notas
-  superpuestas algo más largas. `warnVibrate` no suena — solo vibra.
+  arpegio de 3 notas ascendentes (494/587/740Hz — un primer intento
+  con `playSweep`, de barrido continuo, sonaba más a silbido que a
+  confirmación), `navBack` las mismas 3 notas tocadas al revés y algo
+  más juntas (un repliegue rápido, no una entrada espejada a cámara
+  lenta), `theme` dos notas superpuestas algo más largas.
+  `warnVibrate` no suena — solo vibra.
 - **Vibración**: `navigator.vibrate()` con feature-detect y
   `try/catch`, un patrón distinto por tipo (`8`ms `tap`, `10`ms
   `success`, `[12, 40, 12]` `error` — estos dos últimos son los que ya
   usaba `toast.ts` en un `hapticBuzz()` local antes de este cambio,
   ahora centralizados aquí — `6`ms `cancel`/`warnVibrate`,
-  `[5, 18, 5]` `select`, `14`ms `nav`, `16`ms `theme`). **No existe en
-  PC ni en iOS Safari** — Apple nunca ha implementado la Vibration API
-  ahí y no tiene planes anunciados de hacerlo; en esas plataformas el
-  ajuste solo controla el sonido.
+  `[5, 18, 5]` `select`, `14`ms `nav`, `10`ms `navBack`, `16`ms
+  `theme`). **No existe en PC ni en iOS Safari** — Apple nunca ha
+  implementado la Vibration API ahí y no tiene planes anunciados de
+  hacerlo; en esas plataformas el ajuste solo controla el sonido.
 
 En vez de instrumentar cada botón de la app uno a uno, se engancha en
 los puntos de interacción que ya existían en el código:
@@ -555,9 +559,10 @@ los puntos de interacción que ya existían en el código:
   del botón, ya que `closeSheet()` en sí también se llama tras un
   guardado con éxito), y la rama "no confirmado" de los diálogos de
   confirmación en `ContractionsView.vue`.
-- **Entradas a una sección propia**: `nav()` en los enlaces a
+- **Entradas/salidas de una sección propia**: `nav()` en los enlaces a
   Contracciones (`DashboardView.vue`) y Sonidos para dormir
-  (`SoundsLinkCard.vue`).
+  (`SoundsLinkCard.vue`); `navBack()` en el botón de volver de esas
+  dos mismas vistas (`ContractionsView.vue`/`SoundsView.vue`).
 - **`EntryCard.vue`**: `warnVibrate()` como preaviso a mitad del gesto
   de swipe-to-delete — el swipe aquí es scroll nativo con
   `scroll-snap` (no un drag a mano), así que el enganche es un

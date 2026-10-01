@@ -14,7 +14,7 @@ async function importFresh() {
 
 class MockOscillatorNode {
   type = 'sine'
-  frequency = { setValueAtTime: vi.fn() }
+  frequency = { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() }
   connect = vi.fn((dest: unknown) => dest)
   start = vi.fn()
   stop = vi.fn()
@@ -64,6 +64,59 @@ describe('useFeedback', () => {
     expect(vibrate).toHaveBeenNthCalledWith(1, 8)
     expect(vibrate).toHaveBeenNthCalledWith(2, 10)
     expect(vibrate).toHaveBeenNthCalledWith(3, [12, 40, 12])
+  })
+
+  it('vibrates with a distinct pattern for each of the newer kinds', async () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+    vi.stubGlobal('AudioContext', MockAudioContext)
+    const { useFeedback } = await importFresh()
+    const feedback = useFeedback()
+
+    feedback.cancel()
+    feedback.select()
+    feedback.nav()
+    feedback.theme()
+
+    expect(vibrate).toHaveBeenNthCalledWith(1, 6)
+    expect(vibrate).toHaveBeenNthCalledWith(2, [5, 18, 5])
+    expect(vibrate).toHaveBeenNthCalledWith(3, 14)
+    expect(vibrate).toHaveBeenNthCalledWith(4, 16)
+
+    // Todas distintas entre sí y de tap/success/error.
+    const allPatterns = vibrate.mock.calls.map((call) => JSON.stringify(call[0]))
+    expect(new Set(allPatterns).size).toBe(allPatterns.length)
+  })
+
+  it('warnVibrate only vibrates, never plays a tone', async () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+    class CountingAudioContext extends MockAudioContext {
+      static instanceCount = 0
+      constructor() {
+        super()
+        CountingAudioContext.instanceCount++
+      }
+    }
+    vi.stubGlobal('AudioContext', CountingAudioContext)
+    const { useFeedback } = await importFresh()
+
+    useFeedback().warnVibrate()
+
+    expect(vibrate).toHaveBeenCalledWith(6)
+    expect(CountingAudioContext.instanceCount).toBe(0)
+  })
+
+  it('warnVibrate respects the same gate as the rest', async () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
+    vi.stubGlobal('AudioContext', MockAudioContext)
+    useAuthStore().user = { interaction_feedback_enabled: false } as unknown as User
+    const { useFeedback } = await importFresh()
+
+    useFeedback().warnVibrate()
+
+    expect(vibrate).not.toHaveBeenCalled()
   })
 
   it('does nothing at all when interaction_feedback_enabled is off', async () => {

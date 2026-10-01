@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { applyTheme, getStoredTheme, storeTheme } from '@/theme'
+import { useFeedback } from '@/composables/useFeedback'
 
 const { t } = useI18n()
+const feedback = useFeedback()
 
 const isDark = ref(resolvesToDark())
 
@@ -19,6 +21,7 @@ function toggle() {
   storeTheme(next)
   applyTheme(next)
   isDark.value = next === 'dark'
+  feedback.theme()
 }
 </script>
 

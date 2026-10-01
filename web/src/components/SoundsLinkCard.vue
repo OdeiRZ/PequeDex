@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useFeedback } from '@/composables/useFeedback'
 
 const { t } = useI18n()
+const feedback = useFeedback()
 </script>
 
 <template>
   <RouterLink
     :to="{ name: 'sounds' }"
     class="card-interactive flex items-center gap-3 rounded-2xl p-4"
+    @click="feedback.nav()"
   >
     <span
       class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-teal/15 text-brand-teal"

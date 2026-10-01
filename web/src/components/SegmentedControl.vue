@@ -1,6 +1,16 @@
 <script setup lang="ts" generic="T extends string">
-defineProps<{ modelValue: T; options: { value: T; label: string }[] }>()
-defineEmits<{ 'update:modelValue': [value: T] }>()
+import { useFeedback } from '@/composables/useFeedback'
+
+const props = defineProps<{ modelValue: T; options: { value: T; label: string }[] }>()
+const emit = defineEmits<{ 'update:modelValue': [value: T] }>()
+const feedback = useFeedback()
+
+function onSelect(value: T) {
+  // Sin sonido/vibración si se vuelve a tocar la opción ya activa - no
+  // hay cambio real que confirmar.
+  if (value !== props.modelValue) feedback.select()
+  emit('update:modelValue', value)
+}
 </script>
 
 <template>
@@ -16,7 +26,7 @@ defineEmits<{ 'update:modelValue': [value: T] }>()
       class="rounded-lg px-2 py-2 text-sm font-semibold transition-colors"
       :class="modelValue === option.value ? 'bg-surface text-brand shadow-sm' : 'text-text-muted'"
       :aria-pressed="modelValue === option.value"
-      @click="$emit('update:modelValue', option.value)"
+      @click="onSelect(option.value)"
     >
       {{ option.label }}
     </button>

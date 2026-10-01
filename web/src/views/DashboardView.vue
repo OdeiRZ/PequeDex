@@ -18,6 +18,7 @@ import {
   type TimelineEntry,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
+import { useFeedback } from '@/composables/useFeedback'
 import ActionBar from '@/components/ActionBar.vue'
 import AppMark from '@/components/AppMark.vue'
 import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
@@ -44,6 +45,7 @@ import { extractValidationMessage } from '@/lib/api'
 const auth = useAuthStore()
 const babies = useBabiesStore()
 const toast = useToastStore()
+const feedback = useFeedback()
 const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -348,6 +350,15 @@ function openSheet(sheet: Exclude<Sheet, null>) {
 
 function closeSheet() {
   activeSheet.value = null
+}
+
+// closeSheet() también se llama tras un guardado con éxito (ya tiene su
+// propio tap/success) - esta envoltura es solo para los botones
+// "Cancelar" en sí, donde sí tiene sentido el sonido/vibración propios
+// de cancelar.
+function cancelSheet() {
+  feedback.cancel()
+  closeSheet()
 }
 
 // null en el usuario = las 5 visibles (valor por defecto, sin
@@ -1012,6 +1023,7 @@ async function onLeaveBaby() {
 }
 
 function cancelLeaveBaby() {
+  feedback.cancel()
   confirmingLeave.value = false
   leaveError.value = null
   deleteBabyError.value = null
@@ -1501,6 +1513,7 @@ const sleepPredictionDue = computed(() => {
             v-if="babies.current && !isBorn"
             :to="{ name: 'contractions' }"
             class="card-interactive flex items-center gap-3 rounded-2xl p-4"
+            @click="feedback.nav()"
           >
             <span
               class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sleep/15 text-sleep"
@@ -1798,7 +1811,7 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingFeed" class="btn-primary flex-1">
@@ -1847,7 +1860,7 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingSleep" class="btn-primary flex-1">
@@ -2018,7 +2031,7 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingDiaper" class="btn-primary flex-1">
@@ -2097,7 +2110,7 @@ const sleepPredictionDue = computed(() => {
               {{ growthError }}
             </p>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingGrowth" class="btn-primary flex-1">
@@ -2209,7 +2222,7 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button v-press type="submit" :disabled="savingMilestone" class="btn-primary flex-1">
@@ -2252,7 +2265,7 @@ const sleepPredictionDue = computed(() => {
               <input id="baby-birth-date" v-model="babyBirthDate" type="date" class="field-input" />
             </div>
             <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="closeSheet">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
                 {{ t('common.cancel') }}
               </button>
               <button

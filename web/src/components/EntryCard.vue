@@ -2,6 +2,7 @@
 import { computed, ref, useSlots } from 'vue'
 import CategoryIcon from './CategoryIcon.vue'
 import { categoryText, categoryBg, categoryRing, type Category } from '@/lib/category'
+import { useFeedback } from '@/composables/useFeedback'
 
 const props = withDefaults(
   defineProps<{
@@ -58,6 +59,7 @@ const props = withDefaults(
 const emit = defineEmits<{ open: [] }>()
 
 const slots = useSlots()
+const feedback = useFeedback()
 
 const swipeMode = computed(() => props.swipeToDelete && props.interactive && !!slots.actions)
 
@@ -77,6 +79,31 @@ const REVEAL_PX = 64
 const CLOSE_THRESHOLD_PX = 4
 
 const scrollerRef = ref<HTMLElement | null>(null)
+
+// Preaviso háptico a mitad del gesto de swipe, no al terminarlo - para
+// cuando el dedo ya ha revelado lo suficiente del panel de borrar como
+// para que soltarlo ahí sea una decisión real, no un roce accidental.
+// Solo vibración (warnVibrate(), sin tono): a mitad de un arrastre que
+// el usuario aún puede cancelar deslizando hacia atrás, un sonido se
+// sentiría fuera de lugar. Un único pulso por revelado - el booleano
+// evita que dispare en cada tick de scroll mientras el dedo sigue ahí,
+// y se rearma en cuanto el panel vuelve a cerrarse.
+const WARN_THRESHOLD_PX = REVEAL_PX * 0.5
+let warned = false
+
+function onScroll() {
+  const scroller = scrollerRef.value
+  if (!scroller) return
+
+  if (scroller.scrollLeft >= WARN_THRESHOLD_PX) {
+    if (!warned) {
+      warned = true
+      feedback.warnVibrate()
+    }
+  } else {
+    warned = false
+  }
+}
 
 function onRowClick() {
   const scroller = scrollerRef.value
@@ -114,6 +141,7 @@ function onRowClick() {
       ref="scrollerRef"
       class="flex rounded-2xl"
       :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3', categoryBg[category]]"
+      @scroll="swipeMode && onScroll()"
     >
       <component
         :is="interactive ? 'button' : 'div'"

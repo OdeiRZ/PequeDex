@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useBabiesStore, type Contraction } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
+import { useFeedback } from '@/composables/useFeedback'
 import BottomSheet from '@/components/BottomSheet.vue'
 import ContractionTimeline from '@/components/ContractionTimeline.vue'
 import {
@@ -17,6 +18,7 @@ import { extractValidationMessage } from '@/lib/api'
 
 const babies = useBabiesStore()
 const toast = useToastStore()
+const feedback = useFeedback()
 const { t, locale } = useI18n()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -234,6 +236,7 @@ const confirmingBreak = ref(false)
 
 async function onConfirmBreak(confirmed: boolean) {
   if (!confirmed) {
+    feedback.cancel()
     closeSheet()
     return
   }
@@ -315,6 +318,7 @@ async function onDeleteAllContractions() {
 }
 
 function cancelDeleteAllContractions() {
+  feedback.cancel()
   confirmingDeleteAll.value = false
   deleteAllError.value = null
 }

@@ -362,6 +362,7 @@ async function onExportPdf() {
         :to="{ name: 'dashboard' }"
         class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text"
         :aria-label="t('common.back')"
+        @click="feedback.navBack()"
       >
         <svg
           viewBox="0 0 24 24"

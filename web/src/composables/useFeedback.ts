@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/stores/auth'
 
-export type FeedbackKind = 'tap' | 'success' | 'error' | 'cancel' | 'select' | 'nav' | 'theme'
+export type FeedbackKind =
+  'tap' | 'success' | 'error' | 'cancel' | 'select' | 'nav' | 'navBack' | 'theme'
 
 // Patrones de vibración, uno por tipo - success/error vienen de lo que ya
 // tenía toast.ts antes de esta feature (10ms / [12, 40, 12]), se mantienen
@@ -17,6 +18,7 @@ const VIBRATION_PATTERNS: Record<FeedbackKind, number | number[]> = {
   cancel: 6,
   select: [5, 18, 5],
   nav: 14,
+  navBack: 10,
   theme: 16,
 }
 
@@ -136,6 +138,15 @@ function playTone(kind: FeedbackKind): void {
       playBlip(ctx, now + 0.05, 587, 0.045, 0.06)
       playBlip(ctx, now + 0.1, 740, 0.05, 0.08)
       break
+    case 'navBack':
+      // El mismo arpegio de 'nav', mismas 3 notas, tocadas al revés -
+      // "saliendo" de la sección en vez de entrando. Más corto en
+      // conjunto (notas más próximas entre sí) para que se lea como un
+      // repliegue rápido, no como una entrada espejada a cámara lenta.
+      playBlip(ctx, now, 740, 0.045, 0.06)
+      playBlip(ctx, now + 0.045, 587, 0.045, 0.06)
+      playBlip(ctx, now + 0.09, 494, 0.05, 0.08)
+      break
     case 'theme':
       // Un timbre suave de dos notas superpuestas, más largo que el
       // resto - un cambio de modo (día/noche) es menos frecuente que un
@@ -166,6 +177,7 @@ export function useFeedback() {
     cancel: () => fire('cancel'),
     select: () => fire('select'),
     nav: () => fire('nav'),
+    navBack: () => fire('navBack'),
     theme: () => fire('theme'),
     // Solo vibración, sin tono - para un "preaviso" a mitad de un gesto
     // en curso (el swipe-to-delete de EntryCard.vue). Un sonido ahí, a

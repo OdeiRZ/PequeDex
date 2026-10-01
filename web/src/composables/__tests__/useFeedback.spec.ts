@@ -76,12 +76,14 @@ describe('useFeedback', () => {
     feedback.cancel()
     feedback.select()
     feedback.nav()
+    feedback.navBack()
     feedback.theme()
 
     expect(vibrate).toHaveBeenNthCalledWith(1, 6)
     expect(vibrate).toHaveBeenNthCalledWith(2, [5, 18, 5])
     expect(vibrate).toHaveBeenNthCalledWith(3, 14)
-    expect(vibrate).toHaveBeenNthCalledWith(4, 16)
+    expect(vibrate).toHaveBeenNthCalledWith(4, 10)
+    expect(vibrate).toHaveBeenNthCalledWith(5, 16)
 
     // Todas distintas entre sí y de tap/success/error.
     const allPatterns = vibrate.mock.calls.map((call) => JSON.stringify(call[0]))

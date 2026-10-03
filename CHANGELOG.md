@@ -9,6 +9,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Barrido circular al cambiar de tema** (`ThemeToggle.vue`): en vez de un
+  cambio instantáneo, un círculo crece desde el propio botón cubriendo la
+  pantalla con el tema nuevo - como un amanecer/atardecer. Usa la View
+  Transitions API nativa (Chrome/Edge, Safari 18+) animando el recorte
+  circular de la captura del tema nuevo con Web Animations API; en
+  navegadores sin soporte, o con `prefers-reduced-motion` activado, cae al
+  cambio instantáneo de siempre. El color del halo no está fijado a mano:
+  es la propia captura del tema de destino asomando por el círculo, así
+  que sale oscuro al pasar a oscuro y claro al pasar a claro sin lógica
+  adicional.
 - **Pantalla de bienvenida fusionada** (`WelcomeView.vue`, ruta
   `/bienvenida`), inspirada en la app Napper pero con la identidad visual
   propia de PequeDex: fondo de 3 esferas difuminadas en el degradado de

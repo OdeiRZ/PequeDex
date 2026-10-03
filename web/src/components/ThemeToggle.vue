@@ -16,12 +16,58 @@ function resolvesToDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
-function toggle() {
+function switchTheme() {
   const next = isDark.value ? 'light' : 'dark'
   storeTheme(next)
   applyTheme(next)
   isDark.value = next === 'dark'
+}
+
+// Barrido circular "amanecer/atardecer" desde el propio botón, en vez de un
+// cambio de tema instantáneo - View Transitions API (Chrome/Edge, Safari
+// 18+; en el resto simplemente cae al cambio instantáneo de siempre, ver
+// más abajo). El navegador captura una foto del estado viejo y nuevo y nos
+// deja animar el recorte circular entre ambas con la Web Animations API -
+// receta estándar de la propia spec (ver
+// https://developer.chrome.com/docs/web-platform/view-transitions), con una
+// diferencia: la receta original encoge el tema viejo hacia el botón al
+// oscurecer (el círculo nace lejos y desaparece ahí), aquí se quiere que
+// las dos direcciones nazcan igual EN el botón y crezcan hacia fuera, así
+// que siempre se anima `::view-transition-new(root)` creciendo desde 0,
+// cambie a donde cambie. El color del halo no se elige a mano: es
+// literalmente la captura del tema hacia el que se cambia asomando por el
+// círculo, así que al pasar a oscuro el halo ya sale oscuro y al pasar a
+// claro, claro, sin más lógica.
+function toggle(event: MouseEvent) {
   feedback.theme()
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!document.startViewTransition || reducedMotion) {
+    switchTheme()
+    return
+  }
+
+  const x = event.clientX
+  const y = event.clientY
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  )
+
+  const transition = document.startViewTransition(switchTheme)
+
+  void transition.ready.then(() => {
+    document.documentElement.animate(
+      {
+        clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`],
+      },
+      {
+        duration: 500,
+        easing: 'ease-in',
+        pseudoElement: '::view-transition-new(root)',
+      },
+    )
+  })
 }
 </script>
 
@@ -31,7 +77,7 @@ function toggle() {
     class="grid h-8 w-8 place-items-center rounded-full border border-border bg-surface text-text-muted"
     :aria-label="t('common.toggleTheme')"
     :aria-pressed="isDark"
-    @click="toggle"
+    @click="toggle($event)"
   >
     <svg
       viewBox="0 0 24 24"

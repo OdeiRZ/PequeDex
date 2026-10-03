@@ -662,3 +662,24 @@ body {
      motion, or it would sit fully opaque, permanently overlapping the
      entering page underneath it. */
 }
+
+/* Barrido circular del cambio de tema (ver ThemeToggle.vue): se desactiva
+   el cross-fade por defecto de la View Transitions API (lo sustituye por
+   completo la animación de clip-path que dispara el propio componente,
+   siempre creciendo desde el botón hacia fuera en las dos direcciones) y se
+   fija el apilado para que la captura nueva quede siempre encima de la
+   vieja mientras crece - si no, Chrome la pinta por debajo del todo y el
+   círculo no se ve. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}

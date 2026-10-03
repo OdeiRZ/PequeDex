@@ -645,7 +645,12 @@ verse bien en una captura:
   persistido en `localStorage` (`pequedex_theme`) y aplicado antes del
   montaje en `main.ts` para que no parpadee el tema equivocado en la
   primera pintura. El oscuro no es un extra estético: es quien de
-  verdad se usa de noche para las tomas.
+  verdad se usa de noche para las tomas. El propio cambio de tema lleva
+  un barrido circular que crece desde el botón (View Transitions API +
+  Web Animations API, con caída a cambio instantáneo si el navegador no
+  la soporta o hay `prefers-reduced-motion`) — ver el docblock de
+  `toggle()` en `ThemeToggle.vue` y las reglas `::view-transition-*` al
+  final de `base.css`.
 - **Mobile-first con hoja inferior**: `ActionBar.vue` (barra fija con
   los 5 registros rápidos, alcanzable con el pulgar) abre un
   `BottomSheet.vue` por encima del contenido en vez de un formulario

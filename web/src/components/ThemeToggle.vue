@@ -47,8 +47,13 @@ function toggle(event: MouseEvent) {
     return
   }
 
-  const x = event.clientX
-  const y = event.clientY
+  // Centro del propio botón, no el punto exacto donde cayó el dedo/cursor -
+  // un halo que siempre nace del mismo sitio en vez de bailar según dónde
+  // se pulsó se lee más como "sale del interruptor" y menos como un efecto
+  // pegado al puntero.
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = rect.left + rect.width / 2
+  const y = rect.top + rect.height / 2
   const endRadius = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y),

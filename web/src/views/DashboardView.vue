@@ -1386,7 +1386,7 @@ const sleepPredictionDue = computed(() => {
         <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-28">
           <div
             v-if="babies.babies.length > 1"
-            class="dash-enter -mb-2 flex gap-2 overflow-x-auto pb-1"
+            class="dash-enter -mb-3 flex gap-2 overflow-x-auto pb-1"
           >
             <button
               v-for="baby in babies.babies"
@@ -1405,7 +1405,7 @@ const sleepPredictionDue = computed(() => {
           </div>
 
           <div
-            class="dash-enter relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
+            class="dash-enter -mb-2 relative overflow-hidden rounded-2xl p-5 text-brand-ink shadow-md"
             style="background: linear-gradient(155deg, var(--brand) 0%, var(--brand-teal) 130%)"
           >
             <span

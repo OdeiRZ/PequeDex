@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { applyTheme, getStoredTheme, storeTheme, THEME_COLOR } from '@/theme'
+import { applyTheme, getStoredTheme, storeTheme } from '@/theme'
 import { useFeedback } from '@/composables/useFeedback'
 
 const { t } = useI18n()
@@ -23,63 +23,100 @@ function switchTheme() {
   isDark.value = next === 'dark'
 }
 
+// Calienta la maquinaria interna de la View Transitions API con una
+// transición vacía (sin ningún cambio visual) nada más montar el
+// interruptor, no en el primer toggle real. Diagnóstico en vivo con un
+// vídeo del móvil: el primer barrido de verdad se quedaba pillado un buen
+// rato (como si el tema aún no estuviera disponible) antes de arrancar,
+// y los siguientes iban bien - la propia API tiene que crear sus capas de
+// composición internas la primera vez que se usa en la página, un coste
+// que solo se paga una vez. Disparándolo aquí, en segundo plano al cargar
+// y sin ningún cambio visible (`() => {}` no toca el DOM), ese coste ya
+// está pagado para cuando el usuario pulsa el botón de verdad.
+// requestIdleCallback (con setTimeout como alternativa en Safari, que no
+// lo implementa) para no competir con la carga inicial de la página.
+let warmedUp = false
+function warmUpViewTransitions() {
+  if (warmedUp || !document.startViewTransition) return
+  warmedUp = true
+
+  const run = () => void document.startViewTransition!(() => {}).ready.catch(() => {})
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(run, { timeout: 2000 })
+  } else {
+    setTimeout(run, 500)
+  }
+}
+
+onMounted(warmUpViewTransitions)
+
 // Barrido circular "amanecer/atardecer" desde el propio botón, en vez de un
-// cambio de tema instantáneo.
+// cambio de tema instantáneo - View Transitions API (Chrome/Edge, Safari
+// 18+; en el resto simplemente cae al cambio instantáneo de siempre, ver
+// más abajo). El navegador captura una foto del estado viejo y nuevo y nos
+// deja animar el recorte circular entre ambas con la Web Animations API -
+// receta estándar de la propia spec (ver
+// https://developer.chrome.com/docs/web-platform/view-transitions), con dos
+// diferencias:
+// 1. Siempre se anima `::view-transition-new(root)` creciendo desde 0 en
+//    el centro del botón hacia fuera, en las dos direcciones (claro→oscuro
+//    y oscuro→claro), no solo una.
+// 2. Las coordenadas del centro se expresan en `vw`/`vh`, no en píxeles
+//    sueltos - estas unidades se resuelven siempre contra el viewport CSS
+//    real, con independencia del tamaño que el navegador le dé por dentro
+//    al árbol de pseudo-elementos de la transición (donde se vio el otro
+//    síntoma del mismo vídeo: el círculo nacía desplazado hacia arriba del
+//    botón en una pestaña normal de móvil).
 //
-// Dos intentos anteriores usaron la View Transitions API (recorte circular
-// de `::view-transition-new(root)` vía Web Animations API) y, probados en
-// Android real, resultaron frágiles de dos formas distintas: 1) la API
-// tiene que capturar una foto de toda la pantalla por dentro antes de poder
-// animar nada, lo que a veces introducía un retraso perceptible donde no
-// pasaba nada en absoluto antes del barrido; 2) las coordenadas del centro
-// (tanto en píxeles como en vw/vh) no siempre coincidían con las del propio
-// botón - el círculo nacía desplazado hacia arriba en una pestaña normal
-// de móvil, sin que lograra aislar ni arreglar la causa exacta con certeza
-// en dos rondas de cambios.
-//
-// Esta versión no usa la View Transitions API en absoluto: un <div> normal
-// con `clip-path`, sin ninguna captura de pantalla de por medio, usa
-// exactamente el mismo sistema de coordenadas que `getBoundingClientRect()`
-// del propio botón - cero ambigüedad posible sobre dónde nace el círculo -
-// y es instantáneo (solo crea un elemento y lo anima, nada que capturar).
-// El círculo es del color sólido del tema AL QUE SE VA (`THEME_COLOR`, el
-// mismo origen que ya usa theme.ts para `theme-color-override`) y crece
-// desde el botón hasta cubrir toda la pantalla; el cambio de tema real se
-// aplica justo al terminar, cuando el círculo ya la cubre entera, así que
-// el "cambio" por debajo es invisible.
+// El color del halo no se elige a mano: es literalmente la captura del
+// tema hacia el que se cambia asomando por el círculo, así que al pasar a
+// oscuro el halo ya sale oscuro y al pasar a claro, claro, sin más lógica.
 function toggle(event: MouseEvent) {
   feedback.theme()
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (reducedMotion) {
+  if (!document.startViewTransition || reducedMotion) {
     switchTheme()
     return
   }
 
   const button = event.currentTarget as HTMLElement
-  const rect = button.getBoundingClientRect()
-  const x = rect.left + rect.width / 2
-  const y = rect.top + rect.height / 2
-  const endRadius = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y),
-  )
+  const transition = document.startViewTransition(switchTheme)
 
-  const nextTheme = isDark.value ? 'light' : 'dark'
-  const overlay = document.createElement('div')
-  overlay.style.cssText = `position:fixed;inset:0;z-index:9999;pointer-events:none;background:${THEME_COLOR[nextTheme]}`
-  document.body.appendChild(overlay)
-
-  const sweep = overlay.animate(
-    { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
-    { duration: 500, easing: 'ease-in' },
-  )
-
-  void sweep.finished
-    .catch(() => {})
+  void transition.ready
     .then(() => {
-      switchTheme()
-      overlay.remove()
+      const rect = button.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const x = `${(centerX / window.innerWidth) * 100}vw`
+      const y = `${(centerY / window.innerHeight) * 100}vh`
+      const endRadius = Math.hypot(
+        Math.max(centerX, window.innerWidth - centerX),
+        Math.max(centerY, window.innerHeight - centerY),
+      )
+
+      // La clase que desactiva el cross-fade por defecto (ver base.css) solo
+      // se añade aquí, justo antes de animar el recorte propio - no de
+      // forma permanente - para que, si `ready` llega a rechazar más abajo
+      // (la propia API puede abortar la transición si algo más pinta
+      // entremedias), el navegador conserve su cross-fade por defecto como
+      // respaldo en vez de quedarse con la pantalla vieja congelada sin
+      // ninguna animación.
+      document.documentElement.classList.add('theme-sweep-active')
+      const sweep = document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x} ${y})`, `circle(${endRadius}px at ${x} ${y})`] },
+        { duration: 500, easing: 'ease-in', pseudoElement: '::view-transition-new(root)' },
+      )
+      void sweep.finished
+        .catch(() => {})
+        .then(() => document.documentElement.classList.remove('theme-sweep-active'))
+    })
+    .catch(() => {
+      // Transición abortada por el navegador antes de poder animar nuestro
+      // círculo - el tema ya ha cambiado (switchTheme() se ejecutó de forma
+      // síncrona dentro de startViewTransition), simplemente no hay barrido
+      // esta vez; sin theme-sweep-active, el cross-fade por defecto ya
+      // habrá hecho su parte.
     })
 }
 </script>

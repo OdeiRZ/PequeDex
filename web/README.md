@@ -130,14 +130,22 @@ porque la verificación local solo cubría los otros tres.
   `openGrowthEdit()`, un `editing*Id` por tipo — mismo patrón que ya
   tenía el hito), no solo verla/borrarla; `EntryCard.vue` envuelve su
   contenido en un botón propio para que el icono de borrar (fuera de
-  ese botón, no dentro) siga siendo un control independiente. Los tres
-  campos `datetime-local` (toma/sueño/pañal, no medida/hito, que solo
+  ese botón, no dentro) siga siendo un control independiente. Los
+  campos de fecha/hora (toma/sueño/pañal, no medida/hito, que solo
   llevan fecha) pasan por `toLocalInputValue()`/`toUtcIso()` en ambas
-  direcciones: el backend corre en `app.timezone=UTC`, pero un
-  `datetime-local` no lleva zona horaria propia, así que mandar su
-  valor tal cual hacía que el servidor lo tomara como si ya fuera UTC
-  en vez de hora local - se descubrió al editar sin tocar la hora y ver
-  que igualmente se desplazaba en cada guardado. El avatar en
+  direcciones, sigan siendo el `<input type="datetime-local">` nativo o
+  `DateTimeWheel.vue` (ver más abajo) - el modelo es el mismo string en
+  ambos casos: el backend corre en `app.timezone=UTC`, pero ese formato
+  no lleva zona horaria propia, así que mandar su valor tal cual hacía
+  que el servidor lo tomara como si ya fuera UTC en vez de hora local -
+  se descubrió al editar sin tocar la hora y ver que igualmente se
+  desplazaba en cada guardado. Inicio de toma, inicio de sueño y pañal
+  usan `DateTimeWheel.vue` (tres `WheelColumn.vue` - día, hora,
+  minuto - con sonido al deslizar, ver "Sonido y vibración al
+  interactuar" más abajo); fin de sueño se queda con el
+  `datetime-local` nativo de siempre, porque puede dejarse vacío a
+  propósito ("sigue durmiendo"), algo que una rueda no representa sin
+  un interruptor aparte. El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no
@@ -559,10 +567,11 @@ los puntos de interacción que ya existían en el código:
   selector de ese tipo.
 - **`ThemeToggle.vue`**: `theme()` en `toggle()`.
 - **`WheelColumn.vue`** (selector tipo rueda, día/mes/año en el
-  asistente de "Añadir bebé"): `tick()` en `onScroll()` cada vez que la
-  fila más cercana al centro cambia mientras el usuario aún sigue
-  deslizando — independiente del `update:modelValue` que emite por
-  separado, solo al asentarse el scroll.
+  asistente de "Añadir bebé"; día/hora/minuto en `DateTimeWheel.vue`,
+  ver más abajo): `tick()` en `onScroll()` cada vez que la fila más
+  cercana al centro cambia mientras el usuario aún sigue deslizando —
+  independiente del `update:modelValue` que emite por separado, solo al
+  asentarse el scroll.
 - **Botones "Cancelar"**: `cancel()` — `cancelSheet()` nuevo en
   `DashboardView.vue` (envoltura de `closeSheet()` solo para el click
   del botón, ya que `closeSheet()` en sí también se llama tras un

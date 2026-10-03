@@ -274,6 +274,13 @@ export default {
       toastUpdated: 'Sleep updated.',
       toastCreated: 'Sleep saved.',
     },
+    dateTimeWheel: {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      day: 'day',
+      hour: 'hour',
+      minute: 'minute',
+    },
     diaperForm: {
       editTitle: 'Edit diaper',
       type: 'Type',

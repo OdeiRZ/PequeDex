@@ -9,6 +9,22 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Selector de fecha/hora propio en los formularios de toma, pañal e
+  inicio de sueño** (`DateTimeWheel.vue`, nuevo): sustituye al
+  `<input type="datetime-local">` nativo en esos tres campos. El motivo
+  no es solo estético - el selector nativo lo dibuja el propio sistema
+  operativo fuera del DOM de la página, así que no hay forma de engancharle
+  un sonido por cada fila mientras se desliza (solo un evento al
+  confirmar). `DateTimeWheel.vue` son tres `WheelColumn.vue` normales (día,
+  hora, minuto) que ya suenan solas - "Hoy"/"Ayer" para los dos días más
+  cercanos, fecha corta para el resto, acotado al `min` del formulario
+  (nacimiento del bebé u hora de inicio del sueño para su propio fin) o a
+  90 días atrás por defecto. El modelo sigue siendo el mismo string que ya
+  producía el datetime-local, así que el resto del formulario (conversión
+  a/desde UTC, valor por defecto al abrir la hoja...) no cambia. **El
+  campo "Fin del sueño" se queda con el input nativo de siempre** - puede
+  dejarse vacío a propósito ("sigue durmiendo"), algo que una rueda no
+  representa sin un interruptor aparte.
 - **Sonido al deslizar el selector tipo rueda** (`WheelColumn.vue`, usado
   en el asistente de "Añadir bebé" para día/mes/año): un tono muy corto y
   discreto (`feedback.tick()`, nuevo en `useFeedback.ts`) suena cada vez

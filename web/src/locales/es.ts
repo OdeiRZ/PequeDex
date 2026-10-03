@@ -276,6 +276,13 @@ export default {
       toastUpdated: 'Sueño actualizado.',
       toastCreated: 'Sueño guardado.',
     },
+    dateTimeWheel: {
+      today: 'Hoy',
+      yesterday: 'Ayer',
+      day: 'día',
+      hour: 'hora',
+      minute: 'minuto',
+    },
     diaperForm: {
       editTitle: 'Editar pañal',
       type: 'Tipo',

@@ -25,6 +25,7 @@ import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
 import DailyRhythm from '@/components/DailyRhythm.vue'
+import DateTimeWheel from '@/components/DateTimeWheel.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
 import EntryCard from '@/components/EntryCard.vue'
 import MilestoneStories from '@/components/MilestoneStories.vue'
@@ -1798,16 +1799,12 @@ const sleepPredictionDue = computed(() => {
               </div>
             </div>
             <div>
-              <label for="feed-started-at" class="field-label">{{
-                t('dashboard.feedForm.when')
-              }}</label>
-              <input
-                id="feed-started-at"
+              <span class="field-label">{{ t('dashboard.feedForm.when') }}</span>
+              <DateTimeWheel
                 v-model="feedStartedAt"
-                type="datetime-local"
                 :min="minDateTime"
-                required
-                class="field-input"
+                :date-locale="dateLocale"
+                :ariaLabel="t('dashboard.feedForm.when')"
               />
             </div>
             <div class="mt-1 flex gap-3">
@@ -1835,16 +1832,12 @@ const sleepPredictionDue = computed(() => {
           </h3>
           <form class="flex flex-col gap-4" @submit.prevent="onSubmitSleep">
             <div>
-              <label for="sleep-started-at" class="field-label">{{
-                t('dashboard.sleepForm.start')
-              }}</label>
-              <input
-                id="sleep-started-at"
+              <span class="field-label">{{ t('dashboard.sleepForm.start') }}</span>
+              <DateTimeWheel
                 v-model="sleepStartedAt"
-                type="datetime-local"
                 :min="minDateTime"
-                required
-                class="field-input"
+                :date-locale="dateLocale"
+                :ariaLabel="t('dashboard.sleepForm.start')"
               />
             </div>
             <div>
@@ -2018,16 +2011,12 @@ const sleepPredictionDue = computed(() => {
               </div>
             </div>
             <div>
-              <label for="diaper-changed-at" class="field-label">{{
-                t('dashboard.diaperForm.when')
-              }}</label>
-              <input
-                id="diaper-changed-at"
+              <span class="field-label">{{ t('dashboard.diaperForm.when') }}</span>
+              <DateTimeWheel
                 v-model="diaperChangedAt"
-                type="datetime-local"
                 :min="minDateTime"
-                required
-                class="field-input"
+                :date-locale="dateLocale"
+                :ariaLabel="t('dashboard.diaperForm.when')"
               />
             </div>
             <div class="mt-1 flex gap-3">

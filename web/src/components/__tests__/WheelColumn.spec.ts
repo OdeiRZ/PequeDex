@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import WheelColumn from '@/components/WheelColumn.vue'
 
 // jsdom doesn't implement Element.scrollTo at all (real browsers do) -
@@ -37,6 +38,11 @@ function mountWheel(modelValue: number) {
 
 describe('WheelColumn', () => {
   beforeEach(() => {
+    // useFeedback() lee interaction_feedback_enabled de useAuthStore() en
+    // cada tick - sin una Pinia activa, el propio onScroll (que ahora
+    // dispara un tick por fila cruzada) lanzaría "no active pinia" en
+    // cuanto hubiera un usuario que probar.
+    setActivePinia(createPinia())
     vi.useFakeTimers()
   })
 

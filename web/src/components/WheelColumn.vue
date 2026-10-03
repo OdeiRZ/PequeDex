@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T extends string | number">
 import { onMounted, ref, watch } from 'vue'
+import { useFeedback } from '@/composables/useFeedback'
 
 // Same scroll-snap "wheel" feel as a native iOS/Android date picker, built
 // from a plain scrollable div instead of a library - BabyOnboardingWizard
@@ -11,6 +12,8 @@ const props = defineProps<{
   ariaLabel: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: T] }>()
+
+const feedback = useFeedback()
 
 const ITEM_HEIGHT = 40
 const VISIBLE_ROWS = 3
@@ -35,9 +38,26 @@ function indexOfValue(value: T): number {
   return index === -1 ? 0 : index
 }
 
+function nearestIndex(): number {
+  if (!scroller.value) return 0
+  return Math.min(
+    props.items.length - 1,
+    Math.max(0, Math.round(scroller.value.scrollTop / ITEM_HEIGHT)),
+  )
+}
+
+// Qué fila sonó el último "tick" - para disparar uno nuevo solo al cruzar a
+// una fila distinta, no en cada evento scroll (que dispara de sobra
+// mientras el dedo sigue dentro de la misma fila). Sincronizado también en
+// cada scrollToIndex() programático (montaje, click, reset externo), para
+// que el primer deslizamiento del usuario después de uno de esos saltos no
+// compare contra una fila ya vieja y dispare un tick de más.
+let lastTickIndex = -1
+
 function scrollToIndex(index: number, smooth: boolean) {
   if (!scroller.value) return
 
+  lastTickIndex = index
   programmaticScroll = true
   scroller.value.scrollTo({ top: index * ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' })
   window.setTimeout(
@@ -77,16 +97,21 @@ function selectIndex(index: number) {
 function onScroll() {
   if (programmaticScroll) return
 
+  // El "clic" del dial, uno por fila cruzada - independiente del commit de
+  // abajo (que solo emite al asentarse): el usuario tiene que notar cada
+  // valor por el que pasa el dedo mientras aún sigue deslizando, no solo
+  // el que queda seleccionado al soltar.
+  const liveIndex = nearestIndex()
+  if (liveIndex !== lastTickIndex) {
+    lastTickIndex = liveIndex
+    feedback.tick()
+  }
+
   window.clearTimeout(settleTimeout)
   settleTimeout = window.setTimeout(() => {
     if (!scroller.value) return
 
-    const index = Math.min(
-      props.items.length - 1,
-      Math.max(0, Math.round(scroller.value.scrollTop / ITEM_HEIGHT)),
-    )
-    const item = props.items[index]
-
+    const item = props.items[nearestIndex()]
     if (item && item.value !== props.modelValue) emit('update:modelValue', item.value)
   }, SETTLE_DELAY_MS)
 }

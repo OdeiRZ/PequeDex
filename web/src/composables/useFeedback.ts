@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/auth'
 
 export type FeedbackKind =
-  'tap' | 'success' | 'error' | 'cancel' | 'select' | 'nav' | 'navBack' | 'theme'
+  'tap' | 'success' | 'error' | 'cancel' | 'select' | 'nav' | 'navBack' | 'theme' | 'tick'
 
 // Patrones de vibración, uno por tipo - success/error vienen de lo que ya
 // tenía toast.ts antes de esta feature (10ms / [12, 40, 12]), se mantienen
@@ -10,7 +10,10 @@ export type FeedbackKind =
 // un patrón de dos pulsos para que se note como un "tic-tic" distinto de
 // un único 'tap', y 'theme'/'nav' son un pulso algo más largo que 'tap' -
 // marcan un cambio más notable (de modo, de sección) que una pulsación
-// cualquiera.
+// cualquiera. 'tick' es el más corto de todos a propósito - WheelColumn.vue
+// lo dispara una vez por cada fila que cruza el dedo al deslizar, así que
+// un patrón largo (o el doble pulso de 'select') se notaría como un zumbido
+// continuo en vez de un "clic-clic-clic" discreto al pasar por cada valor.
 const VIBRATION_PATTERNS: Record<FeedbackKind, number | number[]> = {
   tap: 8,
   success: 10,
@@ -20,6 +23,7 @@ const VIBRATION_PATTERNS: Record<FeedbackKind, number | number[]> = {
   nav: 14,
   navBack: 10,
   theme: 16,
+  tick: 3,
 }
 
 function vibrate(kind: FeedbackKind): void {
@@ -160,6 +164,13 @@ function playTone(kind: FeedbackKind): void {
       playBlip(ctx, now, 520, 0.11, 0.16)
       playBlip(ctx, now + 0.05, 780, 0.09, 0.16)
       break
+    case 'tick':
+      // Un único blip muy corto y discreto - pensado para repetirse varias
+      // veces seguidas sin solaparse ni sonar a ruido continuo (WheelColumn.vue
+      // lo dispara una vez por cada fila que cruza el dedo al deslizar un
+      // selector tipo rueda, igual que el "clic" de un dial físico).
+      playBlip(ctx, now, 850, 0.07, 0.035)
+      break
   }
 }
 
@@ -185,6 +196,7 @@ export function useFeedback() {
     nav: () => fire('nav'),
     navBack: () => fire('navBack'),
     theme: () => fire('theme'),
+    tick: () => fire('tick'),
     // Solo vibración, sin tono - para un "preaviso" a mitad de un gesto
     // en curso (el swipe-to-delete de EntryCard.vue). Un sonido ahí, a
     // mitad de un arrastre que el usuario aún puede cancelar, se sentiría

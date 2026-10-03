@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Sonido al deslizar el selector tipo rueda** (`WheelColumn.vue`, usado
+  en el asistente de "Añadir bebé" para día/mes/año): un tono muy corto y
+  discreto (`feedback.tick()`, nuevo en `useFeedback.ts`) suena cada vez
+  que el dedo cruza una fila al deslizar, como el clic de un dial físico -
+  independiente del valor que queda seleccionado al soltar (que sigue
+  emitiendo `update:modelValue` solo una vez, al asentarse). Mismo
+  interruptor de "Tu cuenta" que el resto de sonidos de interacción.
 - **Barrido circular al cambiar de tema** (`ThemeToggle.vue`): en vez de un
   cambio instantáneo, un círculo crece desde el propio botón cubriendo la
   pantalla con el tema nuevo - como un amanecer/atardecer. Usa la View

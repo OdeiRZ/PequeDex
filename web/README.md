@@ -502,8 +502,8 @@ resumen: `auth.user.interaction_feedback_enabled`,
 `PUT /user/interaction-feedback`, activado por defecto). Composable
 nuevo `useFeedback.ts` (`src/composables/`) — sin estado de singleton,
 solo funciones (`tap`/`success`/`error`/`cancel`/`select`/`nav`/
-`navBack`/`theme`/`warnVibrate`) que comprueban ese ajuste en cada
-llamada, no en un valor cacheado, para que activarlo/desactivarlo
+`navBack`/`theme`/`tick`/`warnVibrate`) que comprueban ese ajuste en
+cada llamada, no en un valor cacheado, para que activarlo/desactivarlo
 tenga efecto inmediato sin recargar la página:
 
 - **Sonido**: tonos cortos sintetizados con Web Audio sobre un único
@@ -518,17 +518,21 @@ tenga efecto inmediato sin recargar la página:
   con `playSweep`, de barrido continuo, sonaba más a silbido que a
   confirmación), `navBack` las mismas 3 notas tocadas al revés y algo
   más juntas (un repliegue rápido, no una entrada espejada a cámara
-  lenta), `theme` dos notas superpuestas algo más largas.
-  `warnVibrate` no suena — solo vibra.
+  lenta), `theme` dos notas superpuestas algo más largas, `tick` un
+  único blip muy corto (35ms) y discreto pensado para repetirse varias
+  veces seguidas sin solaparse ni sonar a ruido continuo — el clic de
+  un dial físico, no una confirmación puntual. `warnVibrate` no suena
+  — solo vibra.
 - **Vibración**: `navigator.vibrate()` con feature-detect y
   `try/catch`, un patrón distinto por tipo (`8`ms `tap`, `10`ms
   `success`, `[12, 40, 12]` `error` — estos dos últimos son los que ya
   usaba `toast.ts` en un `hapticBuzz()` local antes de este cambio,
   ahora centralizados aquí — `6`ms `cancel`/`warnVibrate`,
   `[5, 18, 5]` `select`, `14`ms `nav`, `10`ms `navBack`, `16`ms
-  `theme`). **No existe en PC ni en iOS Safari** — Apple nunca ha
-  implementado la Vibration API ahí y no tiene planes anunciados de
-  hacerlo; en esas plataformas el ajuste solo controla el sonido.
+  `theme`, `3`ms `tick`). **No existe en PC ni en iOS Safari** — Apple
+  nunca ha implementado la Vibration API ahí y no tiene planes
+  anunciados de hacerlo; en esas plataformas el ajuste solo controla
+  el sonido.
 
 En vez de instrumentar cada botón de la app uno a uno, se engancha en
 los puntos de interacción que ya existían en el código:
@@ -554,6 +558,11 @@ los puntos de interacción que ya existían en el código:
   duración de Sonidos, tipo de toma, sexo del bebé y cualquier otro
   selector de ese tipo.
 - **`ThemeToggle.vue`**: `theme()` en `toggle()`.
+- **`WheelColumn.vue`** (selector tipo rueda, día/mes/año en el
+  asistente de "Añadir bebé"): `tick()` en `onScroll()` cada vez que la
+  fila más cercana al centro cambia mientras el usuario aún sigue
+  deslizando — independiente del `update:modelValue` que emite por
+  separado, solo al asentarse el scroll.
 - **Botones "Cancelar"**: `cancel()` — `cancelSheet()` nuevo en
   `DashboardView.vue` (envoltura de `closeSheet()` solo para el click
   del botón, ya que `closeSheet()` en sí también se llama tras un

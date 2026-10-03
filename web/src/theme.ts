@@ -17,8 +17,10 @@ export function storeTheme(theme: Theme): void {
 
 // Mirrors --bg from base.css - keeps the Android status bar/toolbar color
 // (driven by <meta name="theme-color">) matching the app's actual
-// background instead of a stale fixed color, in an installed PWA.
-const THEME_COLOR: Record<'light' | 'dark', string> = {
+// background instead of a stale fixed color, in an installed PWA. Exportado
+// porque ThemeToggle.vue lo reutiliza también para el color del barrido
+// circular del cambio de tema (ver su propio docblock).
+export const THEME_COLOR: Record<'light' | 'dark', string> = {
   light: '#fbf7f2',
   dark: '#1c1b22',
 }

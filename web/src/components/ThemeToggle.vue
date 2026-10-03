@@ -29,15 +29,23 @@ function switchTheme() {
 // más abajo). El navegador captura una foto del estado viejo y nuevo y nos
 // deja animar el recorte circular entre ambas con la Web Animations API -
 // receta estándar de la propia spec (ver
-// https://developer.chrome.com/docs/web-platform/view-transitions), con una
-// diferencia: la receta original encoge el tema viejo hacia el botón al
-// oscurecer (el círculo nace lejos y desaparece ahí), aquí se quiere que
-// las dos direcciones nazcan igual EN el botón y crezcan hacia fuera, así
-// que siempre se anima `::view-transition-new(root)` creciendo desde 0,
-// cambie a donde cambie. El color del halo no se elige a mano: es
-// literalmente la captura del tema hacia el que se cambia asomando por el
-// círculo, así que al pasar a oscuro el halo ya sale oscuro y al pasar a
-// claro, claro, sin más lógica.
+// https://developer.chrome.com/docs/web-platform/view-transitions), con dos
+// diferencias:
+// 1. La receta original encoge el tema viejo hacia el botón al oscurecer
+//    (el círculo nace lejos y desaparece ahí); aquí se quiere que las dos
+//    direcciones nazcan igual EN el botón y crezcan hacia fuera, así que
+//    siempre se anima `::view-transition-new(root)` creciendo desde 0.
+// 2. Las coordenadas del centro se expresan en `vw`/`vh`, no en píxeles
+//    sueltos - estas unidades se resuelven siempre contra el viewport CSS
+//    real, con independencia del tamaño que el navegador le dé por dentro
+//    al árbol de pseudo-elementos de la transición (reportado en vivo:
+//    el círculo nacía bien en la PWA instalada a pantalla completa, pero
+//    desplazado hacia arriba del botón en una pestaña normal de móvil -
+//    un caso exactamente de ese tipo de discrepancia de tamaño).
+//
+// El color del halo no se elige a mano: es literalmente la captura del
+// tema hacia el que se cambia asomando por el círculo, así que al pasar a
+// oscuro el halo ya sale oscuro y al pasar a claro, claro, sin más lógica.
 function toggle(event: MouseEvent) {
   feedback.theme()
 
@@ -50,35 +58,41 @@ function toggle(event: MouseEvent) {
   const button = event.currentTarget as HTMLElement
   const transition = document.startViewTransition(switchTheme)
 
-  void transition.ready.then(() => {
-    // La posición se lee aquí, no antes de startViewTransition() - este
-    // botón vive en un header `sticky top-0` (AppHeader.vue), y en una
-    // pestaña normal (a diferencia de la PWA instalada a pantalla
-    // completa, sin barra que ocultar) el toque puede disparar que la
-    // barra de direcciones de Android se oculte justo entonces, cambiando
-    // el viewport entre el click y el arranque real de la transición.
-    // Leer ya con la transición lista evita que el círculo nazca
-    // desplazado respecto al botón - reportado en vivo: se veía bien en la
-    // instalada, pero nacía más arriba del botón en el navegador normal.
-    const rect = button.getBoundingClientRect()
-    const x = rect.left + rect.width / 2
-    const y = rect.top + rect.height / 2
-    const endRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    )
+  void transition.ready
+    .then(() => {
+      const rect = button.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const x = `${(centerX / window.innerWidth) * 100}vw`
+      const y = `${(centerY / window.innerHeight) * 100}vh`
+      const endRadius = Math.hypot(
+        Math.max(centerX, window.innerWidth - centerX),
+        Math.max(centerY, window.innerHeight - centerY),
+      )
 
-    document.documentElement.animate(
-      {
-        clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`],
-      },
-      {
-        duration: 500,
-        easing: 'ease-in',
-        pseudoElement: '::view-transition-new(root)',
-      },
-    )
-  })
+      // La clase que desactiva el cross-fade por defecto (ver base.css) solo
+      // se añade aquí, justo antes de animar el recorte propio - no de
+      // forma permanente - para que, si `ready` llega a rechazar más abajo
+      // (la propia API puede abortar la transición si algo más pinta
+      // entremedias), el navegador conserve su cross-fade por defecto como
+      // respaldo en vez de quedarse con la pantalla vieja congelada sin
+      // ninguna animación.
+      document.documentElement.classList.add('theme-sweep-active')
+      const sweep = document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x} ${y})`, `circle(${endRadius}px at ${x} ${y})`] },
+        { duration: 500, easing: 'ease-in', pseudoElement: '::view-transition-new(root)' },
+      )
+      void sweep.finished
+        .catch(() => {})
+        .then(() => document.documentElement.classList.remove('theme-sweep-active'))
+    })
+    .catch(() => {
+      // Transición abortada por el navegador antes de poder animar nuestro
+      // círculo - el tema ya ha cambiado (switchTheme() se ejecutó de forma
+      // síncrona dentro de startViewTransition), simplemente no hay barrido
+      // esta vez; sin theme-sweep-active, el cross-fade por defecto ya
+      // habrá hecho su parte.
+    })
 }
 </script>
 

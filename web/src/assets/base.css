@@ -663,23 +663,26 @@ body {
      entering page underneath it. */
 }
 
-/* Barrido circular del cambio de tema (ver ThemeToggle.vue): se desactiva
-   el cross-fade por defecto de la View Transitions API (lo sustituye por
-   completo la animación de clip-path que dispara el propio componente,
-   siempre creciendo desde el botón hacia fuera en las dos direcciones) y se
-   fija el apilado para que la captura nueva quede siempre encima de la
-   vieja mientras crece - si no, Chrome la pinta por debajo del todo y el
-   círculo no se ve. */
-::view-transition-old(root),
-::view-transition-new(root) {
+/* Barrido circular del cambio de tema (ver ThemeToggle.vue): mientras
+   `.theme-sweep-active` está puesta en <html> (solo durante el propio
+   barrido, no siempre - ver el componente) se desactiva el cross-fade por
+   defecto de la View Transitions API, sustituido por la animación de
+   clip-path que dispara el propio componente, y se fija el apilado para
+   que la captura nueva quede siempre encima de la vieja mientras crece -
+   si no, Chrome la pinta por debajo del todo y el círculo no se ve. Fuera
+   de esa clase (p. ej. si la transición se aborta antes de llegar a
+   animar) el cross-fade por defecto del navegador queda intacto como
+   respaldo, en vez de dejar la pantalla congelada sin ninguna animación. */
+:root.theme-sweep-active::view-transition-old(root),
+:root.theme-sweep-active::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-::view-transition-old(root) {
+:root.theme-sweep-active::view-transition-old(root) {
   z-index: 1;
 }
 
-::view-transition-new(root) {
+:root.theme-sweep-active::view-transition-new(root) {
   z-index: 9999;
 }

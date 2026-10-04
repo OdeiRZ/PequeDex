@@ -567,15 +567,25 @@ function openSleepEdit(sleep: Sleep) {
 }
 
 // Botón "Finalizar" directamente en la tarjeta de un sueño en curso (ver
-// la línea temporal más abajo) - mismo criterio que el de la toma de
-// pecho: abre la edición ya con el fin puesto a "ahora mismo" (igual que
-// un `nowForInput()` recién abierto, no uno congelado al momento de
-// pulsar), y hay que confirmar con "Guardar" como cualquier otra
-// edición, no guarda solo con pulsarlo.
-function onFinishSleep(sleep: Sleep) {
+// la línea temporal más abajo) - a diferencia del de la toma de pecho,
+// este SÍ guarda directamente, sin abrir el formulario a confirmar: un
+// sueño solo lleva una fecha que fijar (el fin, a "ahora mismo"), no hay
+// nada más que repasar antes de guardar como sí lo hay en una toma
+// (lado, tipo de leche, duración...). Si se pulsó por error, la propia
+// fila ya permite editarlo después como cualquier otra entrada.
+async function onFinishSleep(sleep: Sleep) {
   feedback.tap()
-  openSleepEdit(sleep)
-  sleepEndedAt.value = nowForInput()
+
+  try {
+    await babies.updateSleep(sleep.id, {
+      started_at: sleep.started_at,
+      ended_at: new Date().toISOString(),
+    })
+    toast.show(t('dashboard.sleepForm.toastUpdated'))
+    void babies.fetchSleepPrediction().catch(() => {})
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+  }
 }
 
 async function onSubmitSleep() {
@@ -777,16 +787,18 @@ function formatDuration(startedAt: string, endedAt: string | null): string {
 
 // Duración como badge a la derecha de la fila - la línea temporal solo
 // mostraba la hora de inicio, sin ninguna pista de cuánto duró sin abrir
-// la entrada a editarla. Un sueño aún en curso (sin ended_at) muestra lo
-// llevado hasta ahora, no vacío - se actualiza solo en el siguiente
-// repintado (el sondeo de la línea temporal cada 5s ya fuerza uno). Una
+// la entrada a editarla. Un sueño EN CURSO no lleva badge, a propósito -
+// esa fila ya lleva su propio botón "Finalizar" (ver más abajo), y un
+// contador en vivo al lado era ruido de más, no información extra: el
+// badge solo aparece una vez el sueño tiene ended_at de verdad. Una
 // toma, a diferencia del sueño, no tiene ningún concepto de "en curso" -
 // sin ended_at (no se indicó duración, o es biberón/sólido, que no la
-// llevan) simplemente no hay badge, nada que calcular contra "ahora
-// mismo". "h"/"min" sin traducir, mismo criterio que "ml"/"kg"/"cm" en el
-// resto de la app: unidades, no texto.
+// llevan) simplemente no hay badge. "h"/"min" sin traducir, mismo
+// criterio que "ml"/"kg"/"cm" en el resto de la app: unidades, no texto.
 function entryDuration(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type === 'sleep') return formatDuration(entry.data.started_at, entry.data.ended_at)
+  if (entry.type === 'sleep' && entry.data.ended_at) {
+    return formatDuration(entry.data.started_at, entry.data.ended_at)
+  }
   if (entry.type === 'feed' && entry.data.type === 'pecho' && entry.data.ended_at) {
     return formatDuration(entry.data.started_at, entry.data.ended_at)
   }

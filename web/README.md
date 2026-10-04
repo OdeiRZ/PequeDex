@@ -178,10 +178,18 @@ porque la verificación local solo cubría los otros tres.
   tenían las predicciones, en vez de montar un segundo timer solo para
   esto. Un sueño en curso lleva su propio "Finalizar" directamente en
   la tarjeta de la línea temporal (`onFinishSleep()`, junto al icono de
-  borrar de siempre) en vez de una tarjeta aparte como la toma - abre
-  la edición con el fin puesto a "ahora mismo", mismo criterio de
-  confirmar con "Guardar". Esto obligó a que `EntryCard.vue` admitiera
-  un prop `revealPx` (antes una constante fija pensada para un único
+  borrar de siempre) en vez de una tarjeta aparte como la toma - y, a
+  diferencia del de la toma, este SÍ guarda directamente al pulsarlo
+  (`ended_at` a "ahora mismo"), sin abrir el formulario a confirmar: un
+  sueño solo lleva una fecha que fijar, no hay nada más que repasar
+  antes de guardar como sí lo hay en una toma (lado, tipo de leche,
+  duración...); si se pulsó por error, la propia fila ya permite
+  editarlo después como cualquier otra entrada. Mientras está en curso
+  tampoco lleva badge de duración (`entryDuration()` solo calcula para
+  un sueño con `ended_at`) - el contador en vivo al lado del botón era
+  ruido de más, no información extra; el badge aparece una vez tiene fin
+  de verdad. Esto obligó a que `EntryCard.vue` admitiera un prop
+  `revealPx` (antes una constante fija pensada para un único
   `DeleteButton`): el panel que revela el swipe-to-delete necesita más
   ancho cuando el slot de acciones lleva dos botones en vez de uno; en
   modo no-swipe (el habitual) no hacía falta tocar nada, el slot ya

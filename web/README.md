@@ -145,7 +145,15 @@ porque la verificación local solo cubría los otros tres.
   interactuar" más abajo); fin de sueño se queda con el
   `datetime-local` nativo de siempre, porque puede dejarse vacío a
   propósito ("sigue durmiendo"), algo que una rueda no representa sin
-  un interruptor aparte. El avatar en
+  un interruptor aparte. Una toma al pecho también lleva un selector de
+  duración (`feedDurationOptions`, chips "Sin indicar"/5/10/15/20/30/45
+  min, mismo estilo que el color de las heces del pañal) - se manda como
+  `feedStartedAt` + los minutos elegidos convertidos a un `ended_at`
+  absoluto (`onSubmitFeed()`), no como un valor aparte, así que si se
+  toca la hora de inicio sin tocar la duración, el fin se mueve con ella
+  en vez de quedar fijo en el pasado. Biberón y sólido no llevan
+  duración - `ended_at` en la API ahora lleva `prohibited_unless:
+  type,pecho` (ver `api/README.md`). El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no
@@ -701,16 +709,16 @@ verse bien en una captura:
   ocultar, no solo el de login.
 - **`EntryCard.vue` / `CategoryIcon.vue` / `src/lib/category.ts`** —
   la tarjeta compartida por línea temporal y crecimiento, con su franja
-  de color por categoría. Título/hora/icono con tipografía algo mayor
-  (`text-base`/`text-sm`/44px) y algo más de aire (`p-3.5`) — reportado
-  en vivo: las tarjetas dejaban mucho hueco vacío a la derecha del texto
-  para lo poco que ocupaban. El `badge` del componente (existía ya, sin
-  usuario ninguno) ahora sí tiene uno: `entrySleepDuration()` en
-  `DashboardView.vue` rellena ese hueco en las entradas de sueño con su
-  duración ("2h 15min"), calculada desde `started_at`/`ended_at` (o
-  hasta ahora mismo si sigue en curso, sin `ended_at`) - antes solo se
-  veía la hora de inicio. Las clases de Tailwind por categoría
-  (`text-feed`, `bg-feed/15`, …) están en `category.ts` como tablas de
+  de color por categoría. El `badge` del componente (existía ya, sin
+  usuario ninguno) ahora sí tiene uno: `entryDuration()` en
+  `DashboardView.vue` rellena el hueco a la derecha del título/hora en
+  las entradas de sueño y en las tomas al pecho con duración indicada,
+  con su duración ("2h 15min") calculada desde `started_at`/`ended_at`
+  (sueño: hasta ahora mismo si sigue en curso, sin `ended_at`; toma: nada
+  si no se indicó duración, no hay concepto de "en curso" para una toma)
+  - antes solo se veía la hora de inicio. Las clases de Tailwind por
+  categoría (`text-feed`, `bg-feed/15`, …) están en `category.ts` como
+  tablas de
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal
   cual en el código fuente. Los iconos de `CategoryIcon.vue` (toma,

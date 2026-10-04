@@ -264,6 +264,8 @@ export default {
       milkTypeLabel: 'Milk type',
       colostrum: 'Colostrum',
       milk: 'Milk',
+      durationLabel: 'Duration',
+      durationUnspecified: 'Not specified',
       toastUpdated: 'Feed updated.',
       toastCreated: 'Feed saved.',
     },

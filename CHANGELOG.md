@@ -9,16 +9,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
-- **Tarjetas de la línea temporal más grandes y con duración del sueño**
-  (`EntryCard.vue`, `DashboardView.vue`): título (`text-sm`→`text-base`),
-  hora/descripción (`text-xs`→`text-sm`) e icono (36px→44px) más grandes,
-  con algo más de aire (`p-3`→`p-3.5`) — las tarjetas quedaban con mucho
-  hueco vacío a la derecha del texto para lo poco que ocupaban. Se
-  aprovecha ese hueco con el `badge` del componente (ya existía, sin
-  ningún sitio que lo usara): las entradas de sueño muestran ahora su
-  duración ("2h 15min") a la derecha, calculada desde `started_at`/
-  `ended_at` (o hasta ahora mismo si sigue en curso) - antes solo se veía
-  la hora de inicio, sin ninguna pista de cuánto había dormido sin abrir
+- **Duración de la toma al pecho, con selector de minutos estándar**
+  (`api`: migración ninguna falta — `feeds.ended_at` ya existía en la
+  tabla y en el modelo, solo sin usar desde el frontend; se le añade
+  `prohibited_unless:type,pecho` a su validación, mismo patrón que
+  `side`/`milk_type`. `web`: nuevo selector "Sin indicar"/5/10/15/20/30/
+  45 min en "+ Toma" cuando el tipo es pecho, mismo estilo de chips que
+  ya usa el color de las heces del pañal). Se envía como `started_at` +
+  los minutos elegidos, no como un `ended_at` absoluto aparte - si se
+  toca la hora de inicio sin tocar la duración, el fin se mueve con ella.
+  Biberón y sólido no llevan duración (no es un dato que se suela
+  cronometrar fuera del pecho).
+- **Duración de sueño/toma como `badge` en la línea temporal**
+  (`EntryCard.vue`, `DashboardView.vue`): el `badge` del componente ya
+  existía pero ningún sitio lo usaba — ahora las entradas de sueño
+  muestran su duración ("2h 15min") a la derecha, calculada desde
+  `started_at`/`ended_at` (o hasta ahora mismo si sigue en curso), y las
+  tomas al pecho con duración indicada hacen lo mismo. Antes solo se veía
+  la hora de inicio, sin ninguna pista de cuánto había durado sin abrir
   la entrada a editarla.
 - **Sonido en las flechas de navegación del "Ritmo"** (`DailyRhythm.vue`):
   `tap()` al cambiar de día (anterior/siguiente), mismas flechas que ya

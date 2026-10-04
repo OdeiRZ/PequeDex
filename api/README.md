@@ -129,6 +129,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   tiene sentido (`type = sucio`/`ambos`, nadie está obligado a anotarlo
   cada vez), pero prohibido explícitamente para `type = mojado` — un
   pañal solo mojado no tiene heces que describir.
+- `Feed::ended_at` — existía en la tabla y el modelo desde el principio
+  (mismo patrón que `Sleep`), pero sin usar desde el frontend hasta que
+  se le añadió `prohibited_unless:type,pecho` a su validación: la
+  duración de una toma solo tiene sentido al pecho, no en biberón/sólido
+  (nadie cronometra un biberón). El frontend (ver `web/README.md`) manda
+  `started_at` + unos minutos elegidos de un selector, convertidos a un
+  `ended_at` absoluto antes de mandarlos — los minutos son solo el
+  vocabulario del formulario, la API sigue viendo el mismo par de
+  instantes que ya usaba `Sleep`.
 - `SleepController::index` admite un parámetro opcional `?since=` para
   acotar a una ventana reciente en vez de traer el historial completo
   del bebé — lo usa el gráfico semanal de sueño del frontend (ver

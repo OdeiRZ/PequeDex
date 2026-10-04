@@ -128,11 +128,37 @@ it('rejects a started_at or ended_at in the future', function () {
         'started_at' => now()->addDay()->toDateTimeString(),
     ])->assertUnprocessable()->assertJsonValidationErrors('started_at');
 
+    // pecho, no biberon - ended_at ahora solo aplica a tomas de pecho (ver
+    // test de abajo), así que el biberón de antes habría disparado
+    // *también* prohibited_unless, mezclando dos motivos de rechazo
+    // distintos en un único assert.
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'pecho',
+        'side' => 'izquierdo',
+        'milk_type' => 'leche',
+        'started_at' => now()->subHour()->toDateTimeString(),
+        'ended_at' => now()->addDay()->toDateTimeString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
+});
+
+it('creates a breastfeed with a duration, and rejects a bottle feed with one', function () {
+    $user = actingAsUser();
+    $baby = babyFor($user);
+
+    $this->postJson("/api/babies/{$baby->id}/feeds", [
+        'type' => 'pecho',
+        'side' => 'ambos',
+        'milk_type' => 'leche',
+        'started_at' => '2026-08-30 10:00:00',
+        'ended_at' => '2026-08-30 10:15:00',
+    ])->assertCreated()
+        ->assertJsonPath('data.ended_at', '2026-08-30T10:15:00.000000Z');
+
     $this->postJson("/api/babies/{$baby->id}/feeds", [
         'type' => 'biberon',
         'amount_ml' => 100,
-        'started_at' => now()->subHour()->toDateTimeString(),
-        'ended_at' => now()->addDay()->toDateTimeString(),
+        'started_at' => '2026-08-30 10:00:00',
+        'ended_at' => '2026-08-30 10:15:00',
     ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
 });
 

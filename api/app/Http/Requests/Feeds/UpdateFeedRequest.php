@@ -34,7 +34,11 @@ class UpdateFeedRequest extends FormRequest
             'milk_type' => ['required_if:type,'.FeedType::Pecho->value, 'prohibited_unless:type,'.FeedType::Pecho->value, Rule::enum(MilkType::class)],
             'amount_ml' => ['required_if:type,'.FeedType::Biberon->value, 'prohibited_unless:type,'.FeedType::Biberon->value, 'integer', 'min:1'],
             'started_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
-            'ended_at' => ['nullable', 'date', 'after:started_at', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
+            // Duración de la toma (frontend: selector de minutos
+            // estándar sobre un pecho, convertido a started_at+minutos) -
+            // mismo patrón prohibited_unless que side/milk_type, solo
+            // tiene sentido para un pecho.
+            'ended_at' => ['nullable', 'date', 'prohibited_unless:type,'.FeedType::Pecho->value, 'after:started_at', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
             'notes' => ['nullable', 'string'],
         ];
     }
@@ -55,6 +59,7 @@ class UpdateFeedRequest extends FormRequest
             'amount_ml.min' => 'La cantidad debe ser de al menos 1 ml.',
             ...$this->dateFieldMessages('started_at', 'la hora de inicio'),
             'ended_at.date' => 'La hora de fin no es una fecha válida.',
+            'ended_at.prohibited_unless' => 'La duración solo aplica a las tomas de pecho.',
             'ended_at.after' => 'La hora de fin debe ser posterior a la hora de inicio.',
             'ended_at.before_or_equal' => 'La hora de fin no puede ser posterior al momento actual.',
         ];

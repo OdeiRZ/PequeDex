@@ -266,6 +266,8 @@ export default {
       milkTypeLabel: 'Tipo de leche',
       colostrum: 'Calostro',
       milk: 'Leche',
+      durationLabel: 'Duración',
+      durationUnspecified: 'Sin indicar',
       toastUpdated: 'Toma actualizada.',
       toastCreated: 'Toma guardada.',
     },

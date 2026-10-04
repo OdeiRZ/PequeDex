@@ -140,7 +140,7 @@ function onRowClick() {
     <div
       ref="scrollerRef"
       class="flex rounded-2xl"
-      :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3.5', categoryBg[category]]"
+      :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3', categoryBg[category]]"
       @scroll="swipeMode && onScroll()"
     >
       <component
@@ -149,7 +149,7 @@ function onRowClick() {
         class="flex min-w-0 items-center gap-3 rounded-2xl text-left"
         :class="[
           interactive && 'group',
-          swipeMode ? [categoryBg[category], 'w-full shrink-0 snap-start p-3.5'] : 'flex-1',
+          swipeMode ? [categoryBg[category], 'w-full shrink-0 snap-start p-3'] : 'flex-1',
         ]"
         @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
       >
@@ -157,25 +157,25 @@ function onRowClick() {
           v-if="photoSrc"
           :src="photoSrc"
           :alt="photoAlt ?? ''"
-          class="h-11 w-11 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
+          class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
         />
         <span
           v-else
-          class="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
           :class="categoryText[category]"
         >
-          <CategoryIcon :category="category" class="h-5 w-5" />
+          <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />
         </span>
 
         <div class="min-w-0 flex-1">
-          <div class="flex min-w-0 items-center gap-1.5 text-base font-semibold">
+          <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
             <span class="truncate">{{ title }}</span>
             <svg
               v-if="dropletColor"
               viewBox="0 0 24 24"
               stroke="currentColor"
               stroke-width="1.5"
-              class="h-3.5 w-3.5 shrink-0 text-text-muted"
+              class="h-3 w-3 shrink-0 text-text-muted"
               :style="{ fill: dropletColor }"
               aria-hidden="true"
             >
@@ -186,7 +186,7 @@ function onRowClick() {
               viewBox="0 0 24 24"
               stroke="currentColor"
               stroke-width="1"
-              class="h-3.5 w-3.5 shrink-0 text-text-muted"
+              class="h-3 w-3 shrink-0 text-text-muted"
               :style="{ fill: poopColor }"
               aria-hidden="true"
             >
@@ -197,20 +197,20 @@ function onRowClick() {
             </svg>
             <span
               v-if="emoji"
-              class="shrink-0 text-sm leading-none"
+              class="shrink-0 text-xs leading-none"
               :class="emojiPulsing && 'entry-emoji-pulsing'"
               aria-hidden="true"
             >
               {{ emoji }}
             </span>
           </div>
-          <div class="text-sm tabular-nums text-text-muted">{{ meta }}</div>
-          <div v-if="description" class="mt-0.5 text-sm text-text-muted">{{ description }}</div>
+          <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
+          <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
         </div>
 
         <span
           v-if="badge"
-          class="whitespace-nowrap rounded-full bg-surface/70 px-2.5 py-1 text-sm font-bold"
+          class="whitespace-nowrap rounded-full bg-surface/70 px-2 py-0.5 text-xs font-bold"
           :class="categoryText[category]"
         >
           {{ badge }}

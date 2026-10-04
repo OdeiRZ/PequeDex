@@ -308,6 +308,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     // broken/incomplete rather than "not filled in yet".
     feedAmountMl.value = '10'
     feedStartedAt.value = nowForInput()
+    feedDurationMinutes.value = null
     editingFeedId.value = null
   } else if (sheet === 'sleep') {
     sleepStartedAt.value = nowForInput()
@@ -386,6 +387,12 @@ const feedSide = ref<'izquierdo' | 'derecho' | 'ambos'>('izquierdo')
 const feedMilkType = ref<MilkType>('leche')
 const feedAmountMl = ref('')
 const feedStartedAt = ref('')
+// Minutos, no un ended_at absoluto - se deriva de feedStartedAt + esto al
+// enviar el formulario (ver onSubmitFeed), así que si se toca la hora de
+// inicio sin tocar la duración, el fin se mueve con ella en vez de quedar
+// fijo en un instante ya pasado. null = "sin indicar" (no todo el mundo
+// cronometra la toma), no 0.
+const feedDurationMinutes = ref<number | null>(null)
 const savingFeed = ref(false)
 
 // Stepper flanking the plain number input, not replacing it - a round
@@ -462,6 +469,16 @@ function onSelectFeedMilkType(value: MilkType) {
   feedMilkType.value = value
 }
 
+// Minutos estándar para una toma al pecho - igual que el color de las
+// heces del pañal, "Sin indicar" (null) es una opción más, no un estado
+// de error: no todo el mundo cronometra cuánto dura cada toma.
+const feedDurationOptions = [5, 10, 15, 20, 30, 45]
+
+function onSelectFeedDuration(value: number | null) {
+  if (value !== feedDurationMinutes.value) feedback.select()
+  feedDurationMinutes.value = value
+}
+
 function openFeedEdit(feed: Feed) {
   editingFeedId.value = feed.id
   feedType.value = feed.type
@@ -469,6 +486,9 @@ function openFeedEdit(feed: Feed) {
   feedMilkType.value = feed.milk_type ?? 'leche'
   feedAmountMl.value = feed.amount_ml?.toString() ?? ''
   feedStartedAt.value = toLocalInputValue(feed.started_at)
+  feedDurationMinutes.value = feed.ended_at
+    ? Math.round((new Date(feed.ended_at).getTime() - new Date(feed.started_at).getTime()) / 60_000)
+    : null
   activeSheet.value = 'feed'
 }
 
@@ -476,12 +496,22 @@ async function onSubmitFeed() {
   savingFeed.value = true
 
   try {
+    const startedAtIso = toUtcIso(feedStartedAt.value)
     const payload = {
       type: feedType.value,
       side: feedType.value === 'pecho' ? feedSide.value : undefined,
       milk_type: feedType.value === 'pecho' ? feedMilkType.value : undefined,
       amount_ml: feedType.value === 'biberon' ? Number(feedAmountMl.value) : undefined,
-      started_at: toUtcIso(feedStartedAt.value),
+      started_at: startedAtIso,
+      // Se manda como instante absoluto (no los minutos sueltos) porque
+      // es lo que la API espera y lo que ya usa Sleep para lo mismo - los
+      // minutos son solo el vocabulario del formulario, no el del dato.
+      ended_at:
+        feedType.value === 'pecho' && feedDurationMinutes.value
+          ? new Date(
+              new Date(startedAtIso).getTime() + feedDurationMinutes.value * 60_000,
+            ).toISOString()
+          : undefined,
     }
 
     if (editingFeedId.value) {
@@ -705,23 +735,32 @@ function entrySleepPulsing(entry: (typeof babies.timeline)[number]): boolean {
   return entry.type === 'sleep' && entry.data.ended_at === null
 }
 
-// Duración como badge a la derecha de la fila - la línea temporal solo
-// mostraba la hora de inicio, sin ninguna pista de cuánto duró el sueño
-// sin abrir la entrada a editarla. Un sueño aún en curso (sin ended_at)
-// muestra lo llevado hasta ahora, no vacío - se actualiza solo en el
-// siguiente repintado (el sondeo de la línea temporal cada 5s ya fuerza
-// uno). "h"/"min" sin traducir, mismo criterio que "ml"/"kg"/"cm" en el
-// resto de la app: unidades, no texto.
-function entrySleepDuration(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'sleep') return undefined
-
-  const start = new Date(entry.data.started_at).getTime()
-  const end = entry.data.ended_at ? new Date(entry.data.ended_at).getTime() : Date.now()
+function formatDuration(startedAt: string, endedAt: string | null): string {
+  const start = new Date(startedAt).getTime()
+  const end = endedAt ? new Date(endedAt).getTime() : Date.now()
   const minutes = Math.max(0, Math.round((end - start) / 60_000))
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60
 
   return hours > 0 ? `${hours}h ${remainingMinutes}min` : `${remainingMinutes}min`
+}
+
+// Duración como badge a la derecha de la fila - la línea temporal solo
+// mostraba la hora de inicio, sin ninguna pista de cuánto duró sin abrir
+// la entrada a editarla. Un sueño aún en curso (sin ended_at) muestra lo
+// llevado hasta ahora, no vacío - se actualiza solo en el siguiente
+// repintado (el sondeo de la línea temporal cada 5s ya fuerza uno). Una
+// toma, a diferencia del sueño, no tiene ningún concepto de "en curso" -
+// sin ended_at (no se indicó duración, o es biberón/sólido, que no la
+// llevan) simplemente no hay badge, nada que calcular contra "ahora
+// mismo". "h"/"min" sin traducir, mismo criterio que "ml"/"kg"/"cm" en el
+// resto de la app: unidades, no texto.
+function entryDuration(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type === 'sleep') return formatDuration(entry.data.started_at, entry.data.ended_at)
+  if (entry.type === 'feed' && entry.data.type === 'pecho' && entry.data.ended_at) {
+    return formatDuration(entry.data.started_at, entry.data.ended_at)
+  }
+  return undefined
 }
 
 // Same reasoning, applied to a feed's milk - a droplet colored like
@@ -1705,7 +1744,7 @@ const sleepPredictionDue = computed(() => {
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
-                    :badge="entrySleepDuration(item.entry)"
+                    :badge="entryDuration(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"
@@ -1806,6 +1845,39 @@ const sleepPredictionDue = computed(() => {
                     <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
                   </svg>
                   {{ option.label }}
+                </button>
+              </div>
+            </div>
+            <div v-if="feedType === 'pecho'">
+              <span class="field-label">{{ t('dashboard.feedForm.durationLabel') }}</span>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    feedDurationMinutes === null
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-pressed="feedDurationMinutes === null"
+                  @click="onSelectFeedDuration(null)"
+                >
+                  {{ t('dashboard.feedForm.durationUnspecified') }}
+                </button>
+                <button
+                  v-for="minutes in feedDurationOptions"
+                  :key="minutes"
+                  type="button"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    feedDurationMinutes === minutes
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-pressed="feedDurationMinutes === minutes"
+                  @click="onSelectFeedDuration(minutes)"
+                >
+                  {{ minutes }} min
                 </button>
               </div>
             </div>

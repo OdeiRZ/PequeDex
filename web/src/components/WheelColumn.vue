@@ -66,18 +66,40 @@ let lastTickIndex = -1
 const liveIndex = ref(indexOfValue(props.modelValue))
 
 function scrollToIndex(index: number, smooth: boolean) {
-  if (!scroller.value) return
+  const el = scroller.value
+  if (!el) return
 
   lastTickIndex = index
   liveIndex.value = index
   programmaticScroll = true
-  scroller.value.scrollTo({ top: index * ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' })
-  window.setTimeout(
-    () => {
-      programmaticScroll = false
-    },
-    smooth ? 300 : 0,
-  )
+  el.scrollTo({ top: index * ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' })
+
+  if (!smooth) {
+    programmaticScroll = false
+    return
+  }
+
+  // Esperar al evento real `scrollend`, no a un temporizador fijo - un
+  // salto largo (p.ej. de la fecha de nacimiento del bebé hasta hoy, al
+  // abrir "+ Sueño" tras haber editado antes algo cercano al
+  // nacimiento) tarda más que un salto de una sola fila, y un timeout
+  // fijo demasiado corto reactivaba `onScroll()` a mitad de la
+  // animación: los eventos de scroll que aún quedaban por disparar se
+  // trataban entonces como un gesto real del usuario, y el valor que
+  // quedaba seleccionado al asentarse (`SETTLE_DELAY_MS` después) era
+  // el día por el que iba pasando la animación en ese momento, no el de
+  // destino - de ahí que pareciera "irse" al nacimiento en vez de a
+  // hoy. El timeout de reserva (1000ms) es solo para navegadores sin
+  // soporte de `scrollend` (Safari < 17.4), no una duración estimada.
+  let settled = false
+  const finish = () => {
+    if (settled) return
+    settled = true
+    programmaticScroll = false
+    el.removeEventListener('scrollend', finish)
+  }
+  el.addEventListener('scrollend', finish, { once: true })
+  window.setTimeout(finish, 1000)
 }
 
 onMounted(() => {

@@ -7,6 +7,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido
+
+- **La rueda de "Inicio" se iba a la fecha de nacimiento del bebé al crear
+  un sueño nuevo, en vez de a hoy** (`WheelColumn.vue`): la hoja de "+
+  Sueño" está siempre montada (se oculta trasladándola fuera de la
+  pantalla, no con un `v-if`), así que su rueda de día arranca con el
+  valor vacío de `sleepStartedAt` y aterriza en el índice 0 (el día más
+  antiguo permitido - el nacimiento). Al abrir la hoja para crear, el
+  código sí intenta corregirlo con un scroll suave hasta "hoy", pero
+  asumía que esa animación tardaba 300ms fijos; si el salto es largo
+  (editar antes un sueño cercano al nacimiento y luego abrir "+ Sueño"
+  para uno nuevo), la animación real del navegador tarda más, el
+  temporizador deja de ignorar eventos de scroll antes de que termine,
+  y el día que queda seleccionado al asentarse es el que tocaba a mitad
+  de la animación - cerca del nacimiento, no el destino real. Ahora
+  espera al evento real `scrollend` del navegador (con un timeout de
+  reserva de 1000ms solo para Safari < 17.4, que no lo soporta) en vez
+  de un temporizador fijo.
+
 ### Añadido
 
 - **Botón "Finalizar" directamente en la tarjeta de un sueño en curso**

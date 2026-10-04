@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Botón "Finalizar" en una toma de pecho en curso**: tarjeta nueva
+  encima de todo lo demás en el Dashboard (más accionable que cualquier
+  predicción) cuando hay una toma de pecho sin duración indicada -
+  `babies.timeline` ya viene ordenado del más reciente al más antiguo,
+  así que el primer feed de pecho sin `ended_at` que aparece es el
+  actual, sin ordenar nada a mano. "Finalizar" abre el formulario de
+  edición de esa misma toma con la duración ya puesta - el tiempo
+  transcurrido exacto redondeado hacia arriba al minuto, no forzado al
+  chip estándar más cercano (una toma de 7 minutos no se infla a 10) -
+  y el usuario confirma con "Guardar" como cualquier otra edición, el
+  botón no guarda solo con pulsarlo. El tiempo transcurrido se muestra
+  en vivo, reutilizando el mismo temporizador de 30s que ya tenían las
+  predicciones en vez de montar uno nuevo.
 - **Duración de la toma al pecho, con selector de minutos estándar**
   (`api`: migración ninguna falta — `feeds.ended_at` ya existía en la
   tabla y en el modelo, solo sin usar desde el frontend; se le añade

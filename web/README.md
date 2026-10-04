@@ -162,7 +162,21 @@ porque la verificación local solo cubría los otros tres.
   validado), así que poner "Sin indicar" en una toma con duración previa
   no la borraba. Biberón y sólido no llevan duración - `ended_at` en la
   API ahora lleva `prohibited_unless:type,pecho` (ver `api/README.md`).
-  El avatar en
+  `ongoingBreastfeed` (justo encima de todo lo demás en el Dashboard
+  cuando hay una, más accionable que cualquier predicción) es la
+  primera toma de pecho sin `ended_at` en `babies.timeline` - ya viene
+  ordenado del más reciente al más antiguo (mismo orden que el propio
+  backend, `sortByDesc('at')`), así que no hace falta ordenar nada a
+  mano. Su botón "Finalizar" (`onFinishFeed()`) abre el formulario de
+  edición de esa misma toma con la duración ya puesta - el tiempo
+  transcurrido exacto redondeado hacia arriba al minuto
+  (`Math.ceil`), no forzado al chip estándar más cercano (una toma de 7
+  minutos no se infla a 10) - y hay que confirmar con "Guardar" como
+  cualquier otra edición, el botón no guarda solo con pulsarlo. El
+  tiempo mostrado en la tarjeta (`ongoingBreastfeedElapsedLabel`)
+  reutiliza el mismo `predictionNow` (temporizador de 30s) que ya
+  tenían las predicciones, en vez de montar un segundo timer solo para
+  esto. El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no

@@ -24,23 +24,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   pensada para un único `DeleteButton`) para que el panel revelado por
   el swipe-to-delete pueda ensancharse cuando el slot de acciones lleva
   dos botones en vez de uno - en modo no-swipe (el por defecto) no hacía
-  falta tocar nada, el slot ya fluye con el `gap-3` del propio row. De
-  paso, `onFinishFeed()` (el mismo botón para una toma de pecho, ver más
-  abajo) gana el `feedback.tap()` que se había quedado corto en el
-  primer commit.
-- **Botón "Finalizar" en una toma de pecho en curso**: tarjeta nueva
-  encima de todo lo demás en el Dashboard (más accionable que cualquier
-  predicción) cuando hay una toma de pecho sin duración indicada -
-  `babies.timeline` ya viene ordenado del más reciente al más antiguo,
-  así que el primer feed de pecho sin `ended_at` que aparece es el
-  actual, sin ordenar nada a mano. "Finalizar" abre el formulario de
-  edición de esa misma toma con la duración ya puesta - el tiempo
-  transcurrido exacto redondeado hacia arriba al minuto, no forzado al
-  chip estándar más cercano (una toma de 7 minutos no se infla a 10) -
-  y el usuario confirma con "Guardar" como cualquier otra edición, el
-  botón no guarda solo con pulsarlo. El tiempo transcurrido se muestra
-  en vivo, reutilizando el mismo temporizador de 30s que ya tenían las
-  predicciones en vez de montar uno nuevo.
+  falta tocar nada, el slot ya fluye con el `gap-3` del propio row.
+
+  Un primer intento añadió también una tarjeta equivalente para una
+  "toma de pecho en curso" (encima de todo lo demás en el Dashboard, con
+  su propio "Finalizar"), pero se retiró: a diferencia del sueño, una
+  toma sin `ended_at` no significa "en curso" - es sencillamente el
+  estado normal de no haber indicado duración (opcional), así que la
+  tarjeta salía siempre que la última toma de pecho cargada no tuviera
+  duración, aunque fuera de hace horas. La duración de una toma se seguía
+  pudiendo indicar - y editar luego si hacía falta - desde el propio
+  selector del formulario (ver más abajo).
 - **Duración de la toma al pecho, con selector de minutos estándar**
   (`api`: migración ninguna falta — `feeds.ended_at` ya existía en la
   tabla y en el modelo, solo sin usar desde el frontend; se le añade

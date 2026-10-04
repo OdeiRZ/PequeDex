@@ -371,10 +371,6 @@ export default {
       noPattern: 'No hay suficiente regularidad en los horarios para estimar la siguiente toma.',
       nextFeed: 'Estimación de la siguiente toma: {at}',
     },
-    ongoingFeed: {
-      title: 'Toma de pecho en curso',
-      finish: 'Finalizar',
-    },
     growth: {
       title: 'Crecimiento',
       empty: 'Todavía no hay medidas registradas.',

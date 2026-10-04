@@ -162,24 +162,18 @@ porque la verificación local solo cubría los otros tres.
   validado), así que poner "Sin indicar" en una toma con duración previa
   no la borraba. Biberón y sólido no llevan duración - `ended_at` en la
   API ahora lleva `prohibited_unless:type,pecho` (ver `api/README.md`).
-  `ongoingBreastfeed` (justo encima de todo lo demás en el Dashboard
-  cuando hay una, más accionable que cualquier predicción) es la
-  primera toma de pecho sin `ended_at` en `babies.timeline` - ya viene
-  ordenado del más reciente al más antiguo (mismo orden que el propio
-  backend, `sortByDesc('at')`), así que no hace falta ordenar nada a
-  mano. Su botón "Finalizar" (`onFinishFeed()`) abre el formulario de
-  edición de esa misma toma con la duración ya puesta - el tiempo
-  transcurrido exacto redondeado hacia arriba al minuto
-  (`Math.ceil`), no forzado al chip estándar más cercano (una toma de 7
-  minutos no se infla a 10) - y hay que confirmar con "Guardar" como
-  cualquier otra edición, el botón no guarda solo con pulsarlo. El
-  tiempo mostrado en la tarjeta (`ongoingBreastfeedElapsedLabel`)
-  reutiliza el mismo `predictionNow` (temporizador de 30s) que ya
-  tenían las predicciones, en vez de montar un segundo timer solo para
-  esto. Un sueño en curso lleva su propio "Finalizar" directamente en
-  la tarjeta de la línea temporal (`onFinishSleep()`, junto al icono de
-  borrar de siempre) en vez de una tarjeta aparte como la toma - y, a
-  diferencia del de la toma, este SÍ guarda directamente al pulsarlo
+  Un primer intento añadió una tarjeta "toma de pecho en curso" (encima
+  de todo lo demás en el Dashboard, con su propio "Finalizar"), pero se
+  retiró: a diferencia del sueño, una toma sin `ended_at` no significa
+  "en curso" - es sencillamente el estado normal de no haber indicado
+  duración (opcional, nadie está obligado a cronometrar cada toma), así
+  que la tarjeta salía siempre que la última toma de pecho cargada no
+  tuviera duración, aunque fuera de hace horas. Un sueño en curso sí
+  lleva su propio "Finalizar" directamente en la tarjeta de la línea
+  temporal (`onFinishSleep()`, junto al icono de borrar de siempre) -
+  ahí `ended_at === null` sí es de verdad "está pasando ahora mismo",
+  gracias al 💤 pulsante que ya existía para detectarlo. Este botón SÍ
+  guarda directamente al pulsarlo
   (`ended_at` a "ahora mismo"), sin abrir el formulario a confirmar: un
   sueño solo lleva una fecha que fijar, no hay nada más que repasar
   antes de guardar como sí lo hay en una toma (lado, tipo de leche,

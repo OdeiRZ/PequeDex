@@ -1435,48 +1435,6 @@ const sleepPredictionDue = computed(() => {
   const at = babies.sleepPrediction?.prediction?.at
   return at !== undefined && new Date(at).getTime() <= predictionNow.value.getTime()
 })
-
-// --- Toma de pecho en curso: botón de "Finalizar" ---
-//
-// `babies.timeline` ya viene ordenado del más reciente al más antiguo
-// (mismo orden que usa el propio backend, `sortByDesc('at')`), así que
-// el primer feed de pecho sin ended_at que aparece ES el más reciente -
-// no hace falta ordenar nada a mano. Un biberón/sólido, o una toma de
-// pecho que ya tiene duración, no cuentan: no hay nada que "finalizar".
-const ongoingBreastfeed = computed<Feed | undefined>(() => {
-  const entry = babies.timeline.find(
-    (e): e is Extract<TimelineEntry, { type: 'feed' }> =>
-      e.type === 'feed' && e.data.type === 'pecho' && e.data.ended_at === null,
-  )
-  return entry?.data
-})
-
-// Reutiliza el mismo ticker que las predicciones (30s, no hace falta más
-// precisión) en vez de montar un segundo timer solo para esto.
-const ongoingBreastfeedElapsedLabel = computed(() => {
-  const feed = ongoingBreastfeed.value
-  if (!feed) return ''
-  void predictionNow.value // dependencia reactiva - repinta con cada tick
-  return formatDuration(feed.started_at, null)
-})
-
-// Abre el formulario de edición de esa misma toma con la duración ya
-// puesta - el tiempo transcurrido exacto (redondeado hacia arriba al
-// minuto, nunca a uno de los chips de 10/20/30/45), no un valor forzado
-// a la opción estándar más cercana, para no inflar una toma corta. El
-// usuario revisa y confirma con "Guardar" como cualquier otra edición,
-// esto no guarda solo con pulsar "Finalizar".
-function onFinishFeed() {
-  const feed = ongoingBreastfeed.value
-  if (!feed) return
-
-  feedback.tap()
-  openFeedEdit(feed)
-  feedDurationMinutes.value = Math.max(
-    1,
-    Math.ceil((Date.now() - new Date(feed.started_at).getTime()) / 60_000),
-  )
-}
 </script>
 
 <template>
@@ -1721,29 +1679,6 @@ function onFinishFeed() {
           <SoundsLinkCard v-if="babies.current && !(isBorn && auth.user?.today_summary_enabled)" />
 
           <template v-if="isBorn">
-            <!-- Encima de todo lo demás, incluido el resumen del día -
-                 una toma de pecho en curso es más accionable que
-                 cualquier predicción u otra tarjeta, no debería hacer
-                 falta bajar a buscarla en la línea temporal. -->
-            <EntryCard
-              v-if="ongoingBreastfeed && enabledCategories.includes('feed')"
-              class="dash-enter"
-              category="feed"
-              :title="t('dashboard.ongoingFeed.title')"
-              :meta="ongoingBreastfeedElapsedLabel"
-              :interactive="false"
-              pulsing
-            >
-              <template #actions>
-                <button
-                  type="button"
-                  class="shrink-0 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-feed"
-                  @click="onFinishFeed"
-                >
-                  {{ t('dashboard.ongoingFeed.finish') }}
-                </button>
-              </template>
-            </EntryCard>
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"

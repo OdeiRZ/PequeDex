@@ -367,10 +367,6 @@ export default {
       noPattern: 'Not enough regularity in the schedule to estimate the next feed.',
       nextFeed: 'Estimated next feed: {at}',
     },
-    ongoingFeed: {
-      title: 'Breastfeed in progress',
-      finish: 'Finish',
-    },
     growth: {
       title: 'Growth',
       empty: 'No measurements logged yet.',

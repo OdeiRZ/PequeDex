@@ -176,7 +176,16 @@ porque la verificación local solo cubría los otros tres.
   tiempo mostrado en la tarjeta (`ongoingBreastfeedElapsedLabel`)
   reutiliza el mismo `predictionNow` (temporizador de 30s) que ya
   tenían las predicciones, en vez de montar un segundo timer solo para
-  esto. El avatar en
+  esto. Un sueño en curso lleva su propio "Finalizar" directamente en
+  la tarjeta de la línea temporal (`onFinishSleep()`, junto al icono de
+  borrar de siempre) en vez de una tarjeta aparte como la toma - abre
+  la edición con el fin puesto a "ahora mismo", mismo criterio de
+  confirmar con "Guardar". Esto obligó a que `EntryCard.vue` admitiera
+  un prop `revealPx` (antes una constante fija pensada para un único
+  `DeleteButton`): el panel que revela el swipe-to-delete necesita más
+  ancho cuando el slot de acciones lleva dos botones en vez de uno; en
+  modo no-swipe (el habitual) no hacía falta tocar nada, el slot ya
+  fluye con el `gap-3` del propio row. El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no

@@ -52,8 +52,14 @@ const props = withDefaults(
      * no effect without both `interactive` and real `#actions` content
      * (a prediction row has neither an open action nor a delete one). */
     swipeToDelete?: boolean
+    /** Ancho en px del panel de acciones revelado por el swipe - el
+     * valor por defecto (64) encaja justo un `DeleteButton` (h-7/w-7 +
+     * padding), el único contenido que lleva `#actions` en casi todos
+     * los sitios. Solo hace falta subirlo cuando ese slot lleva más de
+     * un botón (un sueño en curso, con "Finalizar" junto al borrar). */
+    revealPx?: number
   }>(),
-  { interactive: true, pulsing: false, emojiPulsing: false, swipeToDelete: false },
+  { interactive: true, pulsing: false, emojiPulsing: false, swipeToDelete: false, revealPx: 64 },
 )
 
 const emit = defineEmits<{ open: [] }>()
@@ -71,11 +77,9 @@ const swipeMode = computed(() => props.swipeToDelete && props.interactive && !!s
 // is genuinely outside the scrollable viewport at scrollLeft 0 (not
 // just visually covered), and the browser's own scroll physics
 // (momentum, rubber-banding) replace every line of manual resistance/
-// axis-lock math that used to live here. REVEAL_PX is the actions
-// panel's own width (DeleteButton at h-7/w-7 plus padding) - scrolling
-// to the container's max scrollLeft (panel width, since the row itself
-// is 100% width) reveals exactly it, no more.
-const REVEAL_PX = 64
+// axis-lock math that used to live here. Scrolling to the container's
+// max scrollLeft (the `revealPx` prop, since the row itself is 100%
+// width) reveals exactly that much, no more.
 const CLOSE_THRESHOLD_PX = 4
 
 const scrollerRef = ref<HTMLElement | null>(null)
@@ -88,7 +92,7 @@ const scrollerRef = ref<HTMLElement | null>(null)
 // sentiría fuera de lugar. Un único pulso por revelado - el booleano
 // evita que dispare en cada tick de scroll mientras el dedo sigue ahí,
 // y se rearma en cuanto el panel vuelve a cerrarse.
-const WARN_THRESHOLD_PX = REVEAL_PX * 0.5
+const WARN_THRESHOLD_PX = props.revealPx * 0.5
 let warned = false
 
 function onScroll() {
@@ -241,8 +245,8 @@ function onRowClick() {
 
       <div
         v-if="swipeMode"
-        class="flex shrink-0 snap-end items-center justify-end pr-3"
-        :style="{ width: `${REVEAL_PX}px` }"
+        class="flex shrink-0 snap-end items-center justify-end gap-1.5 pr-3"
+        :style="{ width: `${revealPx}px` }"
       >
         <slot name="actions" />
       </div>

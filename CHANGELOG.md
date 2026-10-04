@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Botón "Finalizar" directamente en la tarjeta de un sueño en curso**
+  (línea temporal): junto al icono de borrar de siempre - solo cuando el
+  sueño está en curso (`entrySleepPulsing()`, el mismo criterio que ya
+  usaba el 💤 pulsante). Abre la edición de ese sueño con el fin ya
+  puesto a "ahora mismo" (`onFinishSleep()`), a confirmar con "Guardar"
+  como cualquier otra edición. `EntryCard.vue` gana un prop `revealPx`
+  (antes una constante fija `REVEAL_PX = 64`, pensada para un único
+  `DeleteButton`) para que el panel revelado por el swipe-to-delete
+  pueda ensancharse cuando el slot de acciones lleva dos botones en vez
+  de uno - en modo no-swipe (el por defecto) no hacía falta tocar nada,
+  el slot ya fluye con el `gap-3` del propio row. De paso,
+  `onFinishFeed()` (el mismo botón para una toma de pecho, ver más
+  abajo) gana el `feedback.tap()` que se había quedado corto en el
+  primer commit.
 - **Botón "Finalizar" en una toma de pecho en curso**: tarjeta nueva
   encima de todo lo demás en el Dashboard (más accionable que cualquier
   predicción) cuando hay una toma de pecho sin duración indicada -

@@ -566,6 +566,18 @@ function openSleepEdit(sleep: Sleep) {
   activeSheet.value = 'sleep'
 }
 
+// Botón "Finalizar" directamente en la tarjeta de un sueño en curso (ver
+// la línea temporal más abajo) - mismo criterio que el de la toma de
+// pecho: abre la edición ya con el fin puesto a "ahora mismo" (igual que
+// un `nowForInput()` recién abierto, no uno congelado al momento de
+// pulsar), y hay que confirmar con "Guardar" como cualquier otra
+// edición, no guarda solo con pulsarlo.
+function onFinishSleep(sleep: Sleep) {
+  feedback.tap()
+  openSleepEdit(sleep)
+  sleepEndedAt.value = nowForInput()
+}
+
 async function onSubmitSleep() {
   savingSleep.value = true
 
@@ -1446,6 +1458,7 @@ function onFinishFeed() {
   const feed = ongoingBreastfeed.value
   if (!feed) return
 
+  feedback.tap()
   openFeedEdit(feed)
   feedDurationMinutes.value = Math.max(
     1,
@@ -1828,10 +1841,21 @@ function onFinishFeed() {
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
                     :badge="entryDuration(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
+                    :reveal-px="
+                      item.entry.type === 'sleep' && entrySleepPulsing(item.entry) ? 112 : 64
+                    "
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"
                   >
                     <template #actions>
+                      <button
+                        v-if="item.entry.type === 'sleep' && entrySleepPulsing(item.entry)"
+                        type="button"
+                        class="shrink-0 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-sleep"
+                        @click="onFinishSleep(item.entry.data)"
+                      >
+                        {{ t('dashboard.timeline.finishSleep') }}
+                      </button>
                       <DeleteButton @click="onDeleteEntry(item.entry)" />
                     </template>
                   </EntryCard>

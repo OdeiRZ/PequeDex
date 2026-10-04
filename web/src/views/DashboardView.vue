@@ -453,6 +453,15 @@ const feedMilkTypeOptions = computed(() => [
   },
 ])
 
+// Mismo criterio que SegmentedControl.vue (que cubre type/side, justo
+// encima en el formulario) - sin sonido/vibración si se vuelve a tocar la
+// opción ya activa, ya que este selector no usa ese componente (lleva su
+// propio gotita de color por opción, no solo texto).
+function onSelectFeedMilkType(value: MilkType) {
+  if (value !== feedMilkType.value) feedback.select()
+  feedMilkType.value = value
+}
+
 function openFeedEdit(feed: Feed) {
   editingFeedId.value = feed.id
   feedType.value = feed.type
@@ -591,6 +600,21 @@ const diaperResidueColorSwatches = computed(() => [
     color: DIAPER_RESIDUE_COLOR_HEX.meconio,
   },
 ])
+
+// Mismo criterio que SegmentedControl.vue - sin sonido/vibración al
+// re-tocar la opción ya activa. Ninguno de los dos selectores de abajo
+// (tipo de pañal, color de las heces) usa ese componente: el de tipo
+// lleva icono propio por opción y el de color, un swatch de color en vez
+// de fondo plano - mismo motivo que ya tiene feedMilkType arriba.
+function onSelectDiaperType(value: DiaperType) {
+  if (value !== diaperType.value) feedback.select()
+  diaperType.value = value
+}
+
+function onSelectDiaperResidueColor(value: DiaperResidueColor | '') {
+  if (value !== diaperResidueColor.value) feedback.select()
+  diaperResidueColor.value = value
+}
 
 function openDiaperEdit(diaperChange: DiaperChange) {
   editingDiaperId.value = diaperChange.id
@@ -1167,6 +1191,10 @@ const milestoneDescriptionPrompt = computed(() =>
 )
 
 function selectMilestoneCategory(category: MilestoneCategory) {
+  // A diferencia de los selectores de arriba, aquí tocar la opción ya
+  // activa SÍ es un cambio real (la deselecciona) - no hay un valor
+  // "repetido" que silenciar, suena siempre.
+  feedback.select()
   milestoneCategory.value = milestoneCategory.value === category ? null : category
 
   if (milestoneTitle.value !== '' && milestoneTitle.value !== lastSuggestedTitle.value) {
@@ -1745,7 +1773,7 @@ const sleepPredictionDue = computed(() => {
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="feedMilkType === option.value"
-                  @click="feedMilkType = option.value"
+                  @click="onSelectFeedMilkType(option.value)"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -1886,7 +1914,7 @@ const sleepPredictionDue = computed(() => {
                     : 'border-border text-text-muted'
                 "
                 :aria-pressed="diaperType === 'mojado'"
-                @click="diaperType = 'mojado'"
+                @click="onSelectDiaperType('mojado')"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1909,7 +1937,7 @@ const sleepPredictionDue = computed(() => {
                     : 'border-border text-text-muted'
                 "
                 :aria-pressed="diaperType === 'sucio'"
-                @click="diaperType = 'sucio'"
+                @click="onSelectDiaperType('sucio')"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1936,7 +1964,7 @@ const sleepPredictionDue = computed(() => {
                 "
                 :aria-label="t('dashboard.diaperForm.both')"
                 :aria-pressed="diaperType === 'ambos'"
-                @click="diaperType = 'ambos'"
+                @click="onSelectDiaperType('ambos')"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1975,7 +2003,7 @@ const sleepPredictionDue = computed(() => {
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="diaperResidueColor === ''"
-                  @click="diaperResidueColor = ''"
+                  @click="onSelectDiaperResidueColor('')"
                 >
                   {{ t('dashboard.diaperForm.colorUnspecified') }}
                 </button>
@@ -1992,7 +2020,7 @@ const sleepPredictionDue = computed(() => {
                   :style="{ backgroundColor: swatch.color }"
                   :aria-label="swatch.label"
                   :aria-pressed="diaperResidueColor === swatch.value"
-                  @click="diaperResidueColor = swatch.value"
+                  @click="onSelectDiaperResidueColor(swatch.value)"
                 >
                   <svg
                     v-if="diaperResidueColor === swatch.value"

@@ -565,6 +565,14 @@ los puntos de interacción que ya existían en el código:
   re-tocar la opción ya activa) — un único fichero cubre idioma,
   duración de Sonidos, tipo de toma, sexo del bebé y cualquier otro
   selector de ese tipo.
+- **Selectores de tipo/color que no usan `SegmentedControl.vue`**
+  (`DashboardView.vue` — llevan icono o swatch de color propio por
+  opción, no solo texto, que ese componente no admite): tipo de leche
+  (`onSelectFeedMilkType()`), tipo de pañal (`onSelectDiaperType()`) y
+  color de las heces (`onSelectDiaperResidueColor()`) disparan `select()`
+  con el mismo criterio — nada al re-tocar la opción ya activa.
+  `selectMilestoneCategory()` suena siempre, sin esa comprobación — ahí
+  tocar la ya activa sí es un cambio real (la deselecciona).
 - **`ThemeToggle.vue`**: `theme()` en `toggle()`.
 - **`WheelColumn.vue`** (selector tipo rueda, día/mes/año en el
   asistente de "Añadir bebé"; día/hora/minuto en `DateTimeWheel.vue`,

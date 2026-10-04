@@ -9,6 +9,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Sonido en los selectores de tipo de leche, tipo de pañal, color de
+  las heces y categoría de hito**: estos cuatro grupos de botones no usan
+  `SegmentedControl.vue` (llevan icono/swatch de color propio por opción,
+  no solo texto), así que se habían quedado sin el `feedback.select()`
+  que ya suena en tipo de toma, lado, sexo del bebé e idioma. Mismo
+  criterio en los tres primeros (sin sonido al re-tocar la opción ya
+  activa, no hay cambio real); la categoría de hito suena siempre, porque
+  ahí tocar la ya activa sí es un cambio real (la deselecciona).
 - **Selector de fecha/hora propio en los formularios de toma, pañal e
   inicio de sueño** (`DateTimeWheel.vue`, nuevo): sustituye al
   `<input type="datetime-local">` nativo en esos tres campos. El motivo

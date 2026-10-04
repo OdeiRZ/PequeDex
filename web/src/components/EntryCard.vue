@@ -246,6 +246,14 @@ function onRowClick() {
         >
           <path d="M15 6l-6 6 6 6" />
         </svg>
+
+        <!-- Modo no-swipe: el icono de borrar vive aquí, dentro del
+             mismo panel con fondo/padding de categoría - fuera de él
+             (como hermano suelto del panel en el scroller) perdía ese
+             fondo y el centrado vertical que le da `items-center`. En
+             modo swipe sigue viviendo aparte, en el panel que se revela
+             deslizando (ver más abajo). -->
+        <slot v-if="!swipeMode" name="actions" />
       </div>
 
       <div
@@ -255,7 +263,6 @@ function onRowClick() {
       >
         <slot name="actions" />
       </div>
-      <slot v-else name="actions" />
     </div>
   </li>
 </template>

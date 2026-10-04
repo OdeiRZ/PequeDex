@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
 import { parseDateOnly } from '@/lib/localDate'
+import { useFeedback } from '@/composables/useFeedback'
 
 const props = defineProps<{
   timeline: TimelineEntry[]
@@ -20,6 +21,7 @@ const props = defineProps<{
 const emit = defineEmits<{ prev: []; next: [] }>()
 
 const { t } = useI18n()
+const feedback = useFeedback()
 
 const DAY_MS = 86_400_000
 
@@ -64,11 +66,13 @@ const title = computed(() => (props.isToday ? t('dashboard.rhythm.title') : dayL
 const direction = ref<1 | -1>(1)
 
 function onPrev() {
+  feedback.tap()
   direction.value = -1
   emit('prev')
 }
 
 function onNext() {
+  feedback.tap()
   direction.value = 1
   emit('next')
 }

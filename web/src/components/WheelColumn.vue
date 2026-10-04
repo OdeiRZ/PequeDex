@@ -54,10 +54,22 @@ function nearestIndex(): number {
 // compare contra una fila ya vieja y dispare un tick de más.
 let lastTickIndex = -1
 
+// Qué fila está centrada AHORA MISMO - a diferencia de `modelValue`, que
+// solo se actualiza al asentarse el scroll (ver SETTLE_DELAY_MS más
+// abajo), esto se mueve en tiempo real mientras el dedo sigue deslizando.
+// Marca visualmente esa fila (ver `.wheel-item-active` en el CSS) para que
+// quede claro cuál es el valor elegido sin depender solo de la banda
+// posicional del centro - reportado en vivo: en una rueda de día, con
+// etiquetas como "Hoy"/"Ayer", el texto ya deja claro cuál está activa,
+// pero en una de hora/minuto (solo dos dígitos) no había ninguna diferencia
+// visual entre la fila central y el resto.
+const liveIndex = ref(indexOfValue(props.modelValue))
+
 function scrollToIndex(index: number, smooth: boolean) {
   if (!scroller.value) return
 
   lastTickIndex = index
+  liveIndex.value = index
   programmaticScroll = true
   scroller.value.scrollTo({ top: index * ITEM_HEIGHT, behavior: smooth ? 'smooth' : 'auto' })
   window.setTimeout(
@@ -97,21 +109,21 @@ function selectIndex(index: number) {
 function onScroll() {
   if (programmaticScroll) return
 
+  const index = nearestIndex()
+  liveIndex.value = index
+
   // El "clic" del dial, uno por fila cruzada - independiente del commit de
   // abajo (que solo emite al asentarse): el usuario tiene que notar cada
   // valor por el que pasa el dedo mientras aún sigue deslizando, no solo
   // el que queda seleccionado al soltar.
-  const liveIndex = nearestIndex()
-  if (liveIndex !== lastTickIndex) {
-    lastTickIndex = liveIndex
+  if (index !== lastTickIndex) {
+    lastTickIndex = index
     feedback.tick()
   }
 
   window.clearTimeout(settleTimeout)
   settleTimeout = window.setTimeout(() => {
-    if (!scroller.value) return
-
-    const item = props.items[nearestIndex()]
+    const item = props.items[index]
     if (item && item.value !== props.modelValue) emit('update:modelValue', item.value)
   }, SETTLE_DELAY_MS)
 }
@@ -131,6 +143,7 @@ function onScroll() {
       v-for="(item, i) in items"
       :key="item.value"
       class="wheel-item"
+      :class="{ 'wheel-item-active': i === liveIndex }"
       role="option"
       :aria-selected="item.value === modelValue"
       :style="{ height: `${ITEM_HEIGHT}px` }"
@@ -167,6 +180,16 @@ function onScroll() {
   font-weight: 600;
   font-size: 0.95rem;
   color: var(--color-text-muted);
+  transition: color 0.1s ease;
+}
+
+/* La fila centrada de verdad (ver `liveIndex`), no solo la banda de
+   fondo - un número suelto (hora/minuto) no se lee como "elegido" solo
+   por estar dentro de un recuadro, hace falta que el propio texto
+   destaque. */
+.wheel-item-active {
+  color: var(--color-brand);
+  font-weight: 700;
 }
 
 /* Fixed highlighted band in the middle row - always shows where the

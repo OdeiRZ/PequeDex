@@ -557,6 +557,8 @@ los puntos de interacción que ya existían en el código:
   confirmación.
 - **`SoundsView.vue`**: `tap()` al pulsar play/stop y en la rama de
   doble-tap que arranca/para un sonido.
+- **`DailyRhythm.vue`**: `tap()` en `onPrev()`/`onNext()`, las flechas de
+  navegación por día del "Ritmo".
 - **`stores/toast.ts`**: su `hapticBuzz()` local se sustituye por
   `useFeedback().success()`/`.error()` según el tipo de toast — mismo
   momento (dentro de `show()`), ahora sí gateado por el ajuste en vez
@@ -579,7 +581,12 @@ los puntos de interacción que ya existían en el código:
   ver más abajo): `tick()` en `onScroll()` cada vez que la fila más
   cercana al centro cambia mientras el usuario aún sigue deslizando —
   independiente del `update:modelValue` que emite por separado, solo al
-  asentarse el scroll.
+  asentarse el scroll. La misma fila (`liveIndex`, actualizada en tiempo
+  real, no solo al asentarse) lleva además su propio indicador visual —
+  texto en negrita y color de marca, no solo la banda de fondo fija —
+  para que una rueda de solo dígitos (hora/minuto) deje tan claro qué
+  valor está elegido como ya dejaba una de etiquetas con texto propio
+  ("Hoy"/"Ayer").
 - **Botones "Cancelar"**: `cancel()` — `cancelSheet()` nuevo en
   `DashboardView.vue` (envoltura de `closeSheet()` solo para el click
   del botón, ya que `closeSheet()` en sí también se llama tras un

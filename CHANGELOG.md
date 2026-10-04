@@ -9,6 +9,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Sonido en las flechas de navegación del "Ritmo"** (`DailyRhythm.vue`):
+  `tap()` al cambiar de día (anterior/siguiente), mismas flechas que ya
+  tenían icono pero ningún sonido/vibración.
+- **Indicador visual de la fila elegida en `WheelColumn.vue`** (día/mes/
+  año del alta de bebé, día/hora/minuto de `DateTimeWheel.vue`): además
+  de la banda de fondo ya existente, ahora el propio texto de la fila
+  centrada cambia a negrita y color de marca, en tiempo real mientras se
+  desliza (no solo al asentarse) — reportado en vivo: en la rueda de día,
+  con etiquetas como "Hoy"/"Ayer", el valor elegido ya se leía claro por
+  el propio texto, pero en las de hora/minuto (solo dos dígitos) no había
+  ninguna diferencia visual entre la fila central y el resto más allá de
+  la banda.
 - **Sonido en los selectores de tipo de leche, tipo de pañal, color de
   las heces y categoría de hito**: estos cuatro grupos de botones no usan
   `SegmentedControl.vue` (llevan icono/swatch de color propio por opción,

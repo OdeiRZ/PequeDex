@@ -146,14 +146,23 @@ porque la verificación local solo cubría los otros tres.
   `datetime-local` nativo de siempre, porque puede dejarse vacío a
   propósito ("sigue durmiendo"), algo que una rueda no representa sin
   un interruptor aparte. Una toma al pecho también lleva un selector de
-  duración (`feedDurationOptions`, chips "Sin indicar"/5/10/15/20/30/45
-  min, mismo estilo que el color de las heces del pañal) - se manda como
+  duración (`feedDurationOptions`, chips "Sin indicar"/10/20/30/45 min,
+  mismo estilo que el color de las heces del pañal) - se manda como
   `feedStartedAt` + los minutos elegidos convertidos a un `ended_at`
-  absoluto (`onSubmitFeed()`), no como un valor aparte, así que si se
+  absoluto (`feedEndedAtIso()`), no como un valor aparte, así que si se
   toca la hora de inicio sin tocar la duración, el fin se mueve con ella
-  en vez de quedar fijo en el pasado. Biberón y sólido no llevan
-  duración - `ended_at` en la API ahora lleva `prohibited_unless:
-  type,pecho` (ver `api/README.md`). El avatar en
+  en vez de quedar fijo en el pasado. Ese instante se recorta a "ahora
+  mismo" si cae en el futuro (toma recién empezada, los minutos elegidos
+  aún no han pasado) - la API rechaza cualquier `ended_at` futuro, y
+  obligar a esperar a que la toma termine de verdad para poder guardar
+  la duración no parecía buena idea. Se manda siempre explícito (`null`
+  cuando no aplica, nunca omitido del payload): omitir la clave del todo
+  al editar dejaba una duración ya guardada sin tocar en la fila
+  (`$feedModel->update()` solo pisa las columnas presentes en el array
+  validado), así que poner "Sin indicar" en una toma con duración previa
+  no la borraba. Biberón y sólido no llevan duración - `ended_at` en la
+  API ahora lleva `prohibited_unless:type,pecho` (ver `api/README.md`).
+  El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no
@@ -604,6 +613,19 @@ los puntos de interacción que ya existían en el código:
   Contracciones (`DashboardView.vue`) y Sonidos para dormir
   (`SoundsLinkCard.vue`); `navBack()` en el botón de volver de esas
   dos mismas vistas (`ContractionsView.vue`/`SoundsView.vue`).
+- **`onSwitchBaby()`** (`DashboardView.vue`, pastillas de bebé del
+  Dashboard): `select()` al cambiar de bebé - el propio guard contra
+  re-tocar el ya activo (`if (id === babies.current?.id) return`) ya
+  descarta el caso de "sin cambio real", así que suena siempre que
+  llega a ejecutarse, sin repetir esa comprobación.
+- **`toggleActionBarCategory()`** (`AccountSheet.vue`, accesos de la
+  barra principal): `tap()`, mismo criterio guardado-al-vuelo que
+  predicciones/borrar con swipe/tarjetas resumen/sonido al interactuar
+  en ese mismo fichero.
+- **`AppHeader.vue`**: `onOpenAccountSheet()` (`tap()` + abrir la hoja
+  de "Tu cuenta") en el botón del avatar - no importaba `useFeedback`
+  hasta ahora, era el único botón del header sin ningún sonido propio
+  (`ThemeToggle.vue` ya suena solo).
 - **`EntryCard.vue`**: `warnVibrate()` como preaviso a mitad del gesto
   de swipe-to-delete — el swipe aquí es scroll nativo con
   `scroll-snap` (no un drag a mano), así que el enganche es un
@@ -716,7 +738,10 @@ verse bien en una captura:
   con su duración ("2h 15min") calculada desde `started_at`/`ended_at`
   (sueño: hasta ahora mismo si sigue en curso, sin `ended_at`; toma: nada
   si no se indicó duración, no hay concepto de "en curso" para una toma)
-  - antes solo se veía la hora de inicio. Las clases de Tailwind por
+  - antes solo se veía la hora de inicio. El propio badge lleva ancho
+  mínimo y texto centrado, no solo `whitespace-nowrap` - sin esto,
+  "15min" y "2h 15min" generaban píldoras de anchos muy distintos, que
+  no se leían alineadas entre sí fila a fila. Las clases de Tailwind por
   categoría (`text-feed`, `bg-feed/15`, …) están en `category.ts` como
   tablas de
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el

@@ -13,13 +13,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   (`api`: migración ninguna falta — `feeds.ended_at` ya existía en la
   tabla y en el modelo, solo sin usar desde el frontend; se le añade
   `prohibited_unless:type,pecho` a su validación, mismo patrón que
-  `side`/`milk_type`. `web`: nuevo selector "Sin indicar"/5/10/15/20/30/
-  45 min en "+ Toma" cuando el tipo es pecho, mismo estilo de chips que
-  ya usa el color de las heces del pañal). Se envía como `started_at` +
-  los minutos elegidos, no como un `ended_at` absoluto aparte - si se
-  toca la hora de inicio sin tocar la duración, el fin se mueve con ella.
-  Biberón y sólido no llevan duración (no es un dato que se suela
-  cronometrar fuera del pecho).
+  `side`/`milk_type`. `web`: nuevo selector "Sin indicar"/10/20/30/45 min
+  en "+ Toma" cuando el tipo es pecho, mismo estilo de chips que ya usa
+  el color de las heces del pañal — simplificado desde un primer intento
+  con 6 opciones, a petición expresa). Se envía como `started_at` + los
+  minutos elegidos, no como un `ended_at` absoluto aparte - si se toca la
+  hora de inicio sin tocar la duración, el fin se mueve con ella. Si la
+  toma acaba de empezar, los minutos elegidos aún no han pasado del todo
+  y caerían en el futuro (la API rechaza cualquier `ended_at` futuro) -
+  en vez de obligar a esperar a que la toma termine de verdad para poder
+  guardar la duración, se recorta al instante actual. `ended_at` se manda
+  siempre explícito (`null` cuando no aplica, nunca omitido) - omitir la
+  clave del todo al editar dejaba la duración vieja sin tocar en la fila
+  (Laravel solo pisa las columnas presentes en el array validado), así
+  que poner "Sin indicar" en una toma que ya tenía duración no la
+  borraba pese al aviso de "Toma actualizada". Biberón y sólido no
+  llevan duración (no es un dato que se suela cronometrar fuera del
+  pecho).
 - **Duración de sueño/toma como `badge` en la línea temporal**
   (`EntryCard.vue`, `DashboardView.vue`): el `badge` del componente ya
   existía pero ningún sitio lo usaba — ahora las entradas de sueño
@@ -27,7 +37,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `started_at`/`ended_at` (o hasta ahora mismo si sigue en curso), y las
   tomas al pecho con duración indicada hacen lo mismo. Antes solo se veía
   la hora de inicio, sin ninguna pista de cuánto había durado sin abrir
-  la entrada a editarla.
+  la entrada a editarla. Ancho mínimo y texto centrado en el propio
+  badge - sin esto, "15min" y "2h 15min" generaban píldoras de anchos
+  muy distintos que no se leían alineadas entre sí fila a fila.
+- **Sonido al cambiar de bebé, al abrir "Tu cuenta" y al activar/
+  desactivar un acceso de la barra principal**: tres controles sin
+  ningún `feedback.*` hasta ahora. El selector de bebé (`select()`, igual
+  que `SegmentedControl.vue` - nada al re-tocar el ya activo, ya cubierto
+  por su propio guard) y los accesos de la barra (`tap()`, mismo criterio
+  que el resto de ajustes guardado-al-vuelo de `AccountSheet.vue`) viven
+  en `DashboardView.vue`/`AccountSheet.vue`; el botón de perfil
+  (`onOpenAccountSheet()`, `tap()`) en `AppHeader.vue`, que hasta ahora no
+  importaba `useFeedback` en absoluto.
 - **Sonido en las flechas de navegación del "Ritmo"** (`DailyRhythm.vue`):
   `tap()` al cambiar de día (anterior/siguiente), mismas flechas que ya
   tenían icono pero ningún sonido/vibración.

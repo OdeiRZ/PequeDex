@@ -162,6 +162,31 @@ it('creates a breastfeed with a duration, and rejects a bottle feed with one', f
     ])->assertUnprocessable()->assertJsonValidationErrors('ended_at');
 });
 
+it('clears an existing duration when the update sends an explicit null', function () {
+    // El frontend manda null, no omite la clave, precisamente para esto -
+    // omitirla del todo dejaría el ended_at viejo sin tocar en la fila
+    // (Laravel solo pisa las columnas presentes en el array validado).
+    $user = actingAsUser();
+    $baby = babyFor($user);
+    $feed = Feed::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'type' => 'pecho',
+        'side' => 'ambos',
+        'milk_type' => 'leche',
+        'started_at' => '2026-08-30 10:00:00',
+        'ended_at' => '2026-08-30 10:15:00',
+    ]);
+
+    $this->putJson("/api/babies/{$baby->id}/feeds/{$feed->id}", [
+        'type' => 'pecho',
+        'side' => 'ambos',
+        'milk_type' => 'leche',
+        'started_at' => '2026-08-30 10:00:00',
+        'ended_at' => null,
+    ])->assertOk()->assertJsonPath('data.ended_at', null);
+
+    expect($feed->refresh()->ended_at)->toBeNull();
+});
+
 it('lets a caregiver see and edit a feed logged by the other caregiver', function () {
     $owner = actingAsUser();
     $baby = babyFor($owner);

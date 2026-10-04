@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
+import { useFeedback } from '@/composables/useFeedback'
 import AppMark from './AppMark.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import UserAvatar from './UserAvatar.vue'
@@ -13,7 +14,13 @@ const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
 const toast = useToastStore()
+const feedback = useFeedback()
 const { t } = useI18n()
+
+function onOpenAccountSheet() {
+  feedback.tap()
+  ui.openAccountSheet()
+}
 
 function onLogout() {
   // auth.logout() clears the local session synchronously and only fires
@@ -69,7 +76,7 @@ watch(
         v-if="auth.user"
         type="button"
         :aria-label="t('profile.title')"
-        @click="ui.openAccountSheet()"
+        @click="onOpenAccountSheet"
       >
         <UserAvatar :name="auth.user.name" :avatar="auth.user.avatar" :size="28" />
       </button>

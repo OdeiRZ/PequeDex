@@ -190,6 +190,7 @@ async function toggleActionBarCategory(category: Category) {
 
   const next = isSelected ? previous.filter((c) => c !== category) : [...previous, category]
   actionBarSelection.value = next
+  feedback.tap()
 
   const token = ++actionBarSaveToken
   try {

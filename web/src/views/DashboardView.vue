@@ -263,6 +263,10 @@ async function onJoinBaby() {
 async function onSwitchBaby(id: number) {
   if (id === babies.current?.id) return
 
+  // El guard de arriba ya descarta re-tocar el bebé ya activo, así que
+  // esto solo suena en un cambio real - mismo criterio que
+  // SegmentedControl.vue, sin repetir la comparación.
+  feedback.select()
   babies.switchBaby(id)
   await loadBabyData()
 }
@@ -471,8 +475,10 @@ function onSelectFeedMilkType(value: MilkType) {
 
 // Minutos estándar para una toma al pecho - igual que el color de las
 // heces del pañal, "Sin indicar" (null) es una opción más, no un estado
-// de error: no todo el mundo cronometra cuánto dura cada toma.
-const feedDurationOptions = [5, 10, 15, 20, 30, 45]
+// de error: no todo el mundo cronometra cuánto dura cada toma. 4 valores,
+// no más - menos que la lista original (5/10/15/20/30/45) a petición
+// expresa, para que el selector se lea de un vistazo.
+const feedDurationOptions = [10, 20, 30, 45]
 
 function onSelectFeedDuration(value: number | null) {
   if (value !== feedDurationMinutes.value) feedback.select()
@@ -492,6 +498,26 @@ function openFeedEdit(feed: Feed) {
   activeSheet.value = 'feed'
 }
 
+// Minutos -> instante absoluto, recortado a "ahora mismo" si se pasa -
+// la API rechaza cualquier ended_at futuro (antes de validar nada más),
+// así que una toma recién empezada no podía llevar ninguna duración
+// todavía: los 10/20/30/45 min elegidos siempre caían en el futuro hasta
+// que pasara ese tiempo de verdad. En vez de obligar a esperar a que la
+// toma termine para poder guardar la duración, se recorta al instante
+// actual - sigue siendo mejor information que no poder indicar ninguna.
+// `null` (no `undefined`) cuando no aplica - un payload que omite la
+// clave del todo no limpia un ended_at ya guardado al editar (Laravel
+// solo toca las columnas presentes en el array validado); uno explícito
+// a null sí.
+function feedEndedAtIso(startedAtIso: string): string | null {
+  if (feedType.value !== 'pecho' || !feedDurationMinutes.value) return null
+
+  const startedAtMs = new Date(startedAtIso).getTime()
+  const endedAtMs = Math.min(startedAtMs + feedDurationMinutes.value * 60_000, Date.now())
+
+  return endedAtMs > startedAtMs ? new Date(endedAtMs).toISOString() : null
+}
+
 async function onSubmitFeed() {
   savingFeed.value = true
 
@@ -503,15 +529,7 @@ async function onSubmitFeed() {
       milk_type: feedType.value === 'pecho' ? feedMilkType.value : undefined,
       amount_ml: feedType.value === 'biberon' ? Number(feedAmountMl.value) : undefined,
       started_at: startedAtIso,
-      // Se manda como instante absoluto (no los minutos sueltos) porque
-      // es lo que la API espera y lo que ya usa Sleep para lo mismo - los
-      // minutos son solo el vocabulario del formulario, no el del dato.
-      ended_at:
-        feedType.value === 'pecho' && feedDurationMinutes.value
-          ? new Date(
-              new Date(startedAtIso).getTime() + feedDurationMinutes.value * 60_000,
-            ).toISOString()
-          : undefined,
+      ended_at: feedEndedAtIso(startedAtIso),
     }
 
     if (editingFeedId.value) {

@@ -208,9 +208,12 @@ function onRowClick() {
           <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
         </div>
 
+        <!-- min-w + text-center, no solo whitespace-nowrap - sin esto,
+             "15min" y "2h 15min" generaban píldoras de anchos muy
+             distintos que no se leían alineadas entre sí fila a fila. -->
         <span
           v-if="badge"
-          class="whitespace-nowrap rounded-full bg-surface/70 px-2 py-0.5 text-xs font-bold"
+          class="min-w-14 shrink-0 rounded-full bg-surface/70 px-2 py-0.5 text-center text-xs font-bold whitespace-nowrap"
           :class="categoryText[category]"
         >
           {{ badge }}

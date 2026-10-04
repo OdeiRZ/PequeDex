@@ -26,6 +26,23 @@ function mountWheel(modelValue: string, min?: string) {
   return wrapper
 }
 
+// findAllComponents no puede expresar el propio genérico de WheelColumn
+// (<T extends string | number>) desde fuera - cada wrapper encontrado es un
+// VueWrapper real alrededor de una instancia de WheelColumn de todas
+// formas, esto solo reafirma ese hueco de tipado de vue-test-utils. Mismo
+// patrón que ya usa BabyOnboardingWizard.spec.ts para el mismo componente;
+// aquí además se leen props (no solo `.vm.$emit(...)`), así que cada
+// llamada a `.props()` se castea aparte a la forma concreta que hace falta
+// en cada test, en vez de perder el tipado del todo con `any`.
+function wheelColumns(wrapper: VueWrapper) {
+  return wrapper.findAllComponents(WheelColumn) as unknown as VueWrapper[]
+}
+
+interface DayItem {
+  value: string
+  label: string
+}
+
 describe('DateTimeWheel', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -41,32 +58,28 @@ describe('DateTimeWheel', () => {
 
   it('splits modelValue into day/hour/minute wheels', () => {
     const wrapper = mountWheel('2026-09-20T08:05')
-    const columns = wrapper.findAllComponents(WheelColumn)
+    const columns = wheelColumns(wrapper)
 
     expect(columns).toHaveLength(3)
-    expect(columns[0]!.props('modelValue')).toBe('2026-09-20')
-    expect(columns[1]!.props('modelValue')).toBe(8)
-    expect(columns[2]!.props('modelValue')).toBe(5)
+    expect((columns[0]!.props() as { modelValue: string }).modelValue).toBe('2026-09-20')
+    expect((columns[1]!.props() as { modelValue: number }).modelValue).toBe(8)
+    expect((columns[2]!.props() as { modelValue: number }).modelValue).toBe(5)
   })
 
   it('labels today and yesterday, formats the rest with the given locale', () => {
     const wrapper = mountWheel('2026-09-20T08:05')
-    const dayItems = wrapper.findAllComponents(WheelColumn)[0]!.props('items') as {
-      value: string
-      label: string
-    }[]
+    const dayItems = (wheelColumns(wrapper)[0]!.props() as { items: DayItem[] }).items
+    const last = dayItems.length - 1
 
-    expect(dayItems.at(-1)).toEqual({ value: '2026-09-20', label: 'Hoy' })
-    expect(dayItems.at(-2)).toEqual({ value: '2026-09-19', label: 'Ayer' })
-    expect(dayItems.at(-3)!.value).toBe('2026-09-18')
-    expect(dayItems.at(-3)!.label).not.toBe('')
+    expect(dayItems[last]).toEqual({ value: '2026-09-20', label: 'Hoy' })
+    expect(dayItems[last - 1]).toEqual({ value: '2026-09-19', label: 'Ayer' })
+    expect(dayItems[last - 2]!.value).toBe('2026-09-18')
+    expect(dayItems[last - 2]!.label).not.toBe('')
   })
 
   it('limits the day range to `min` when given, instead of the 90-day fallback', () => {
     const wrapper = mountWheel('2026-09-20T08:05', '2026-09-17T00:00')
-    const dayItems = wrapper.findAllComponents(WheelColumn)[0]!.props('items') as {
-      value: string
-    }[]
+    const dayItems = (wheelColumns(wrapper)[0]!.props() as { items: DayItem[] }).items
 
     expect(dayItems).toHaveLength(4) // 17, 18, 19, 20 de septiembre
     expect(dayItems[0]!.value).toBe('2026-09-17')
@@ -76,16 +89,14 @@ describe('DateTimeWheel', () => {
     // Editando un registro de hace más de 90 días, sin min - no debería
     // recortarse de la lista, o la rueda se quedaría sin fila seleccionada.
     const wrapper = mountWheel('2026-01-01T08:05')
-    const dayItems = wrapper.findAllComponents(WheelColumn)[0]!.props('items') as {
-      value: string
-    }[]
+    const dayItems = (wheelColumns(wrapper)[0]!.props() as { items: DayItem[] }).items
 
     expect(dayItems[0]!.value).toBe('2026-01-01')
   })
 
   it('emits a combined modelValue when one wheel changes, preserving the others', async () => {
     const wrapper = mountWheel('2026-09-20T08:05')
-    const hourColumn = wrapper.findAllComponents(WheelColumn)[1]!
+    const hourColumn = wheelColumns(wrapper)[1]!
 
     await hourColumn.vm.$emit('update:modelValue', 14)
 

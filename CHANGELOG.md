@@ -10,21 +10,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 ### Añadido
 
 - **Botón "Finalizar" directamente en la tarjeta de un sueño en curso**
-  (línea temporal): junto al icono de borrar de siempre - solo cuando el
-  sueño está en curso (`entrySleepPulsing()`, el mismo criterio que ya
-  usaba el 💤 pulsante). A diferencia del de la toma de pecho (ver más
-  abajo), este SÍ guarda directamente al pulsarlo (`ended_at` a "ahora
-  mismo"), sin abrir ningún formulario a confirmar - un sueño solo lleva
-  una fecha que fijar, no hay nada más que repasar antes de guardar; si
-  se pulsó por error, la propia fila ya permite editarlo después como
-  cualquier otra entrada. Mientras el sueño está en curso no lleva badge
-  de duración - solo el botón, sin ruido de un contador en vivo al lado;
-  el badge aparece una vez tiene `ended_at` de verdad. `EntryCard.vue`
-  gana un prop `revealPx` (antes una constante fija `REVEAL_PX = 64`,
-  pensada para un único `DeleteButton`) para que el panel revelado por
-  el swipe-to-delete pueda ensancharse cuando el slot de acciones lleva
-  dos botones en vez de uno - en modo no-swipe (el por defecto) no hacía
-  falta tocar nada, el slot ya fluye con el `gap-3` del propio row.
+  (línea temporal): solo cuando el sueño está en curso (`entrySleepPulsing()`,
+  el mismo criterio que ya usaba el 💤 pulsante). Guarda directamente al
+  pulsarlo (`ended_at` a "ahora mismo"), sin abrir ningún formulario a
+  confirmar - un sueño solo lleva una fecha que fijar, no hay nada más
+  que repasar antes de guardar; si se pulsó por error, la propia fila ya
+  permite editarlo después como cualquier otra entrada. Mientras el
+  sueño está en curso no lleva badge de duración - solo el botón, sin
+  ruido de un contador en vivo al lado; el badge aparece una vez tiene
+  `ended_at` de verdad.
+
+  `EntryCard.vue` gana un slot nuevo, `#primaryAction` - distinto de
+  `#actions` (el de borrar). El primer intento metió el "Finalizar"
+  dentro de `#actions`, que con `swipe_to_delete_enabled` activado solo
+  se revela deslizando la fila hacia la izquierda; para una acción no
+  destructiva que debe verse siempre, sin gesto de por medio, hacía
+  falta un sitio propio al margen del swipe. `#primaryAction` vive como
+  hermano del contenedor que hace scroll-snap, no dentro de él, así que
+  nunca se desplaza con el swipe pase lo que pase con ese ajuste.
 
   Un primer intento añadió también una tarjeta equivalente para una
   "toma de pecho en curso" (encima de todo lo demás en el Dashboard, con

@@ -170,24 +170,32 @@ porque la verificación local solo cubría los otros tres.
   que la tarjeta salía siempre que la última toma de pecho cargada no
   tuviera duración, aunque fuera de hace horas. Un sueño en curso sí
   lleva su propio "Finalizar" directamente en la tarjeta de la línea
-  temporal (`onFinishSleep()`, junto al icono de borrar de siempre) -
-  ahí `ended_at === null` sí es de verdad "está pasando ahora mismo",
-  gracias al 💤 pulsante que ya existía para detectarlo. Este botón SÍ
-  guarda directamente al pulsarlo
-  (`ended_at` a "ahora mismo"), sin abrir el formulario a confirmar: un
-  sueño solo lleva una fecha que fijar, no hay nada más que repasar
-  antes de guardar como sí lo hay en una toma (lado, tipo de leche,
-  duración...); si se pulsó por error, la propia fila ya permite
-  editarlo después como cualquier otra entrada. Mientras está en curso
-  tampoco lleva badge de duración (`entryDuration()` solo calcula para
-  un sueño con `ended_at`) - el contador en vivo al lado del botón era
-  ruido de más, no información extra; el badge aparece una vez tiene fin
-  de verdad. Esto obligó a que `EntryCard.vue` admitiera un prop
-  `revealPx` (antes una constante fija pensada para un único
-  `DeleteButton`): el panel que revela el swipe-to-delete necesita más
-  ancho cuando el slot de acciones lleva dos botones en vez de uno; en
-  modo no-swipe (el habitual) no hacía falta tocar nada, el slot ya
-  fluye con el `gap-3` del propio row. El avatar en
+  temporal (`onFinishSleep()`) - ahí `ended_at === null` sí es de verdad
+  "está pasando ahora mismo", gracias al 💤 pulsante que ya existía para
+  detectarlo. Este botón SÍ guarda directamente al pulsarlo (`ended_at`
+  a "ahora mismo"), sin abrir el formulario a confirmar: un sueño solo
+  lleva una fecha que fijar, no hay nada más que repasar antes de
+  guardar como sí lo hay en una toma (lado, tipo de leche, duración...);
+  si se pulsó por error, la propia fila ya permite editarlo después como
+  cualquier otra entrada. Mientras está en curso tampoco lleva badge de
+  duración (`entryDuration()` solo calcula para un sueño con `ended_at`)
+  - el contador en vivo al lado del botón era ruido de más, no
+  información extra; el badge aparece una vez tiene fin de verdad.
+
+  Un primer intento metió este botón dentro del slot `#actions` de
+  `EntryCard.vue` (el mismo del icono de borrar), ensanchando el panel
+  revelado por el swipe-to-delete con un nuevo prop `revealPx` cuando
+  llevaba dos botones en vez de uno. Bug real en producción: con
+  `swipe_to_delete_enabled` activado, `#actions` solo se revela
+  deslizando la fila hacia la izquierda - un "Finalizar" pensado para
+  verse siempre quedaba escondido detrás de ese gesto, invisible para
+  quien tuviera el ajuste puesto. `EntryCard.vue` ahora separa un slot
+  nuevo, `#primaryAction`, hermano del contenedor que hace scroll-snap
+  (no contenido dentro de él) - siempre visible, nunca se desplaza con
+  el swipe pase lo que pase con ese ajuste; `#actions` sigue siendo el
+  único que de verdad debe esconderse (acción destructiva), así que
+  `revealPx` vuelve a su único uso original (un solo `DeleteButton`). El
+  avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no

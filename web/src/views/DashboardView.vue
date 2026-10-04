@@ -1788,21 +1788,22 @@ const sleepPredictionDue = computed(() => {
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
                     :badge="entryDuration(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
-                    :reveal-px="
-                      item.entry.type === 'sleep' && entrySleepPulsing(item.entry) ? 112 : 64
-                    "
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"
                   >
-                    <template #actions>
+                    <template
+                      v-if="item.entry.type === 'sleep' && entrySleepPulsing(item.entry)"
+                      #primaryAction
+                    >
                       <button
-                        v-if="item.entry.type === 'sleep' && entrySleepPulsing(item.entry)"
                         type="button"
                         class="shrink-0 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-sleep"
                         @click="onFinishSleep(item.entry.data)"
                       >
                         {{ t('dashboard.timeline.finishSleep') }}
                       </button>
+                    </template>
+                    <template #actions>
                       <DeleteButton @click="onDeleteEntry(item.entry)" />
                     </template>
                   </EntryCard>

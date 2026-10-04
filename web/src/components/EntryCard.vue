@@ -54,9 +54,9 @@ const props = withDefaults(
     swipeToDelete?: boolean
     /** Ancho en px del panel de acciones revelado por el swipe - el
      * valor por defecto (64) encaja justo un `DeleteButton` (h-7/w-7 +
-     * padding), el único contenido que lleva `#actions` en casi todos
-     * los sitios. Solo hace falta subirlo cuando ese slot lleva más de
-     * un botón (un sueño en curso, con "Finalizar" junto al borrar). */
+     * padding), el único contenido que lleva `#actions`. Una acción
+     * que deba verse siempre (sin requerir swipe) va en `#primaryAction`,
+     * no aquí - ver su propio comentario más abajo en la plantilla. */
     revealPx?: number
   }>(),
   { interactive: true, pulsing: false, emojiPulsing: false, swipeToDelete: false, revealPx: 64 },
@@ -127,7 +127,7 @@ function onRowClick() {
 
 <template>
   <li
-    class="relative rounded-2xl shadow-sm ring-1 ring-transparent"
+    class="relative flex items-stretch rounded-2xl shadow-sm ring-1 ring-transparent"
     :class="[
       swipeMode && 'overflow-hidden',
       interactive && ['card-interactive', categoryRing[category]],
@@ -143,7 +143,7 @@ function onRowClick() {
          should read as a plain reveal zone, not another tinted card. -->
     <div
       ref="scrollerRef"
-      class="flex rounded-2xl"
+      class="flex min-w-0 flex-1 rounded-2xl"
       :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3', categoryBg[category]]"
       @scroll="swipeMode && onScroll()"
     >
@@ -251,6 +251,15 @@ function onRowClick() {
         <slot name="actions" />
       </div>
       <slot v-else name="actions" />
+    </div>
+
+    <!-- A sibling of the scroller, not content inside it - unlike
+         `#actions` (the delete icon), this must stay put and visible at
+         rest even when `swipeToDelete` is on, since it's a primary action
+         of its own (p.ej. "Finalizar" en un sueño en curso), not a
+         destructive one worth hiding behind a deliberate gesture. -->
+    <div v-if="slots.primaryAction" class="flex shrink-0 items-center py-3 pr-3 pl-1.5">
+      <slot name="primaryAction" />
     </div>
   </li>
 </template>

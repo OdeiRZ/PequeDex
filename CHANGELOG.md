@@ -21,19 +21,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `ended_at` de verdad.
 
   `EntryCard.vue` gana un slot nuevo, `#primaryAction` - distinto de
-  `#actions` (el de borrar). El primer intento metió el "Finalizar"
-  dentro de `#actions`, que con `swipe_to_delete_enabled` activado solo
-  se revela deslizando la fila hacia la izquierda; para una acción no
-  destructiva que debe verse siempre, sin gesto de por medio, hacía
-  falta un sitio propio al margen del swipe. `#primaryAction` vive como
-  hermano del contenedor que hace scroll-snap, no dentro de él, así que
-  nunca se desplaza con el swipe pase lo que pase con ese ajuste.
-  Ese mismo cambio lo dejó fuera del fondo de color de la tarjeta (una
-  franja de fondo plano a su derecha, como si colgara aparte) - el
-  `<li>` ahora recorta siempre a `overflow-hidden` (antes solo en modo
-  swipe) y el propio `#primaryAction` lleva el mismo `categoryBg` que el
-  resto de la fila, así lee como parte continua de la tarjeta en vez de
-  algo pegado fuera.
+  `#actions` (el de borrar, revelado por swipe). Un primer intento metió
+  el "Finalizar" dentro de `#actions`, que con `swipe_to_delete_enabled`
+  activado solo se revela deslizando la fila hacia la izquierda - para
+  una acción no destructiva que debe verse siempre, sin gesto de por
+  medio, hacía falta un sitio propio. La versión final separa el panel
+  visible en reposo (icono, título, badge y ahora `#primaryAction`,
+  todos con el mismo fondo de categoría) del panel de borrar, que vive
+  aparte y solo se revela deslizando - así el botón queda "dentro" de la
+  tarjeta de verdad (junto al texto, antes del puller), no colgando
+  fuera de ella ni escondido tras el swipe. `#primaryAction` es hermano
+  del `<button>` clicable del row, no contenido dentro de él, ya que
+  anidar un botón dentro de otro es HTML inválido.
 
   Un primer intento añadió también una tarjeta equivalente para una
   "toma de pecho en curso" (encima de todo lo demás en el Dashboard, con

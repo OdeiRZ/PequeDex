@@ -183,19 +183,26 @@ porque la verificación local solo cubría los otros tres.
   información extra; el badge aparece una vez tiene fin de verdad.
 
   Un primer intento metió este botón dentro del slot `#actions` de
-  `EntryCard.vue` (el mismo del icono de borrar), ensanchando el panel
-  revelado por el swipe-to-delete con un nuevo prop `revealPx` cuando
-  llevaba dos botones en vez de uno. Bug real en producción: con
-  `swipe_to_delete_enabled` activado, `#actions` solo se revela
-  deslizando la fila hacia la izquierda - un "Finalizar" pensado para
-  verse siempre quedaba escondido detrás de ese gesto, invisible para
-  quien tuviera el ajuste puesto. `EntryCard.vue` ahora separa un slot
-  nuevo, `#primaryAction`, hermano del contenedor que hace scroll-snap
-  (no contenido dentro de él) - siempre visible, nunca se desplaza con
-  el swipe pase lo que pase con ese ajuste; `#actions` sigue siendo el
-  único que de verdad debe esconderse (acción destructiva), así que
-  `revealPx` vuelve a su único uso original (un solo `DeleteButton`). El
-  avatar en
+  `EntryCard.vue` (el mismo del icono de borrar). Bug real en
+  producción: con `swipe_to_delete_enabled` activado, `#actions` solo se
+  revela deslizando la fila hacia la izquierda - un "Finalizar" pensado
+  para verse siempre quedaba escondido detrás de ese gesto. Un segundo
+  intento lo sacó de `#actions` a un slot nuevo, pero como hermano
+  directo de todo el panel - sin el fondo de categoría de la tarjeta,
+  colgaba como una franja aparte en vez de leer como parte de ella.
+
+  La versión final de `EntryCard.vue` separa el panel visible en reposo
+  del panel de borrar de verdad: un `<div>` con el fondo/padding de
+  categoría agrupa el `<button>` clicable (icono, título, badge) junto
+  al slot nuevo `#primaryAction`, ambos siempre a la vista; el panel que
+  revela el swipe (`#actions`, el `DeleteButton`) vive aparte, como
+  hermano de ese panel dentro del contenedor con scroll-snap - solo ese
+  se esconde tras el gesto, por ser la acción destructiva. `#primaryAction`
+  es hermano del `<button>` del row, no contenido dentro de él: anidar
+  un botón ("Finalizar") dentro de otro (el propio row, clicable para
+  abrir la entrada) es HTML inválido y el navegador lo corta solo,
+  rompiendo el DOM. `revealPx` queda en su único uso original (un solo
+  `DeleteButton`). El avatar en
   `AppHeader.vue` abre una hoja de "Tu cuenta" (datos personales,
   idioma, barra de accesos, contraseña, foto) - `AccountSheet.vue`,
   montada una sola vez en `App.vue` junto al propio `AppHeader`, no

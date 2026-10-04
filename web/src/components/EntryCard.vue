@@ -127,105 +127,111 @@ function onRowClick() {
 
 <template>
   <li
-    class="relative flex items-stretch overflow-hidden rounded-2xl shadow-sm ring-1 ring-transparent"
+    class="relative overflow-hidden rounded-2xl shadow-sm ring-1 ring-transparent"
     :class="[
       interactive && ['card-interactive', categoryRing[category]],
       pulsing && 'entry-card-pulsing',
     ]"
   >
-    <!-- The category-tinted background/padding lives here (not on the
-         button below) in the classic layout, since the actions slot sits
-         as its sibling and needs to share the same card surface - the
-         tira reaching the delete icon, not stopping at the button's own
-         edge. In swipe mode it moves onto the button instead: that's the
-         only panel visible at rest, and the actions panel behind it
-         should read as a plain reveal zone, not another tinted card. -->
     <div
       ref="scrollerRef"
-      class="flex min-w-0 flex-1 rounded-2xl"
-      :class="swipeMode ? 'swipe-scroller' : ['items-center gap-3 p-3', categoryBg[category]]"
+      class="flex rounded-2xl"
+      :class="swipeMode && 'swipe-scroller'"
       @scroll="swipeMode && onScroll()"
     >
-      <component
-        :is="interactive ? 'button' : 'div'"
-        :type="interactive ? 'button' : undefined"
-        class="flex min-w-0 items-center gap-3 rounded-2xl text-left"
-        :class="[
-          interactive && 'group',
-          swipeMode ? [categoryBg[category], 'w-full shrink-0 snap-start p-3'] : 'flex-1',
-        ]"
-        @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
+      <!-- El panel visible en reposo: fondo/padding de categoría,
+           título+badge+acción primaria, todo junto. En modo swipe es el
+           único panel a la vista hasta deslizar (`w-full shrink-0
+           snap-start`) - el panel de borrar vive aparte, fuera de este,
+           como hermano dentro del scroller. En modo no-swipe ocupa el
+           espacio normal del row. -->
+      <div
+        class="flex min-w-0 items-center gap-3 rounded-2xl p-3"
+        :class="[categoryBg[category], swipeMode ? 'w-full shrink-0 snap-start' : 'flex-1']"
       >
-        <img
-          v-if="photoSrc"
-          :src="photoSrc"
-          :alt="photoAlt ?? ''"
-          class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
-        />
-        <span
-          v-else
-          class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
-          :class="categoryText[category]"
+        <component
+          :is="interactive ? 'button' : 'div'"
+          :type="interactive ? 'button' : undefined"
+          class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl text-left"
+          :class="interactive && 'group'"
+          @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
         >
-          <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />
-        </span>
+          <img
+            v-if="photoSrc"
+            :src="photoSrc"
+            :alt="photoAlt ?? ''"
+            class="h-10 w-10 shrink-0 rounded-lg object-cover transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
+          />
+          <span
+            v-else
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface/70 transition-transform duration-150 group-hover:scale-110 group-active:scale-110"
+            :class="categoryText[category]"
+          >
+            <CategoryIcon :category="category" class="h-[1.05rem] w-[1.05rem]" />
+          </span>
 
-        <div class="min-w-0 flex-1">
-          <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-            <span class="truncate">{{ title }}</span>
-            <svg
-              v-if="dropletColor"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-              class="h-3 w-3 shrink-0 text-text-muted"
-              :style="{ fill: dropletColor }"
-              aria-hidden="true"
-            >
-              <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
-            </svg>
-            <svg
-              v-if="poopColor"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1"
-              class="h-3 w-3 shrink-0 text-text-muted"
-              :style="{ fill: poopColor }"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="18" r="5.5" />
-              <circle cx="12" cy="13" r="4.3" />
-              <circle cx="12" cy="9" r="3.2" />
-              <circle cx="12" cy="6" r="2" />
-            </svg>
-            <span
-              v-if="emoji"
-              class="shrink-0 text-xs leading-none"
-              :class="emojiPulsing && 'entry-emoji-pulsing'"
-              aria-hidden="true"
-            >
-              {{ emoji }}
-            </span>
+          <div class="min-w-0 flex-1">
+            <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+              <span class="truncate">{{ title }}</span>
+              <svg
+                v-if="dropletColor"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="h-3 w-3 shrink-0 text-text-muted"
+                :style="{ fill: dropletColor }"
+                aria-hidden="true"
+              >
+                <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+              </svg>
+              <svg
+                v-if="poopColor"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1"
+                class="h-3 w-3 shrink-0 text-text-muted"
+                :style="{ fill: poopColor }"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="18" r="5.5" />
+                <circle cx="12" cy="13" r="4.3" />
+                <circle cx="12" cy="9" r="3.2" />
+                <circle cx="12" cy="6" r="2" />
+              </svg>
+              <span
+                v-if="emoji"
+                class="shrink-0 text-xs leading-none"
+                :class="emojiPulsing && 'entry-emoji-pulsing'"
+                aria-hidden="true"
+              >
+                {{ emoji }}
+              </span>
+            </div>
+            <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
+            <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
           </div>
-          <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
-          <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
-        </div>
 
-        <!-- min-w + text-center, no solo whitespace-nowrap - sin esto,
-             "15min" y "2h 15min" generaban píldoras de anchos muy
-             distintos que no se leían alineadas entre sí fila a fila. -->
-        <span
-          v-if="badge"
-          class="min-w-14 shrink-0 rounded-full bg-surface/70 px-2 py-0.5 text-center text-xs font-bold whitespace-nowrap"
-          :class="categoryText[category]"
-        >
-          {{ badge }}
-        </span>
+          <!-- min-w + text-center, no solo whitespace-nowrap - sin esto,
+               "15min" y "2h 15min" generaban píldoras de anchos muy
+               distintos que no se leían alineadas entre sí fila a fila. -->
+          <span
+            v-if="badge"
+            class="min-w-14 shrink-0 rounded-full bg-surface/70 px-2 py-0.5 text-center text-xs font-bold whitespace-nowrap"
+            :class="categoryText[category]"
+          >
+            {{ badge }}
+          </span>
+        </component>
 
-        <!-- The actions panel now sits fully outside the visible viewport
-             at rest (real overflow, not just covered by color) - without
-             this, nothing on screen hints that there's anything to swipe
-             to at all. Lives inside the always-visible first panel, not
+        <!-- Hermano del `component` de arriba, no contenido dentro de
+             él - anidar un `<button>` (p.ej. "Finalizar") dentro de otro
+             `<button>` (el propio row) es HTML inválido y el navegador
+             lo corta solo, rompiendo el DOM. Al vivir aquí, dentro de
+             este mismo panel siempre visible, queda "junto al texto,
+             antes del puller" sin ese problema. -->
+        <slot name="primaryAction" />
+
+        <!-- The swipe hint sits in this same always-visible panel, not
              the drawer itself, so it's never scrolled away with it. -->
         <svg
           v-if="swipeMode"
@@ -240,7 +246,7 @@ function onRowClick() {
         >
           <path d="M15 6l-6 6 6 6" />
         </svg>
-      </component>
+      </div>
 
       <div
         v-if="swipeMode"
@@ -250,23 +256,6 @@ function onRowClick() {
         <slot name="actions" />
       </div>
       <slot v-else name="actions" />
-    </div>
-
-    <!-- A sibling of the scroller, not content inside it - unlike
-         `#actions` (el icono de borrar), esto debe quedarse fijo y
-         visible en reposo aunque `swipeToDelete` esté activo, por ser
-         una acción propia (p.ej. "Finalizar" en un sueño en curso), no
-         una destructiva que merezca esconderse tras un gesto. Mismo
-         `categoryBg` que el resto de la tarjeta (no fondo propio) para
-         que lea como una continuación de ella, no como algo aparte - el
-         `overflow-hidden` del `<li>` ya le da el redondeado del borde
-         derecho sin necesidad de repetirlo aquí. -->
-    <div
-      v-if="slots.primaryAction"
-      class="flex shrink-0 items-center py-3 pr-3 pl-1.5"
-      :class="categoryBg[category]"
-    >
-      <slot name="primaryAction" />
     </div>
   </li>
 </template>

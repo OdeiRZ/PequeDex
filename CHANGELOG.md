@@ -10,29 +10,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 ### Corregido
 
 - **La rueda de "Inicio" se iba a la fecha de nacimiento del bebé al crear
-  un sueño nuevo, en vez de a hoy** (`WheelColumn.vue`): la hoja de "+
-  Sueño" está siempre montada (se oculta trasladándola fuera de la
-  pantalla, no con un `v-if`), así que su rueda de día arranca con el
-  valor vacío de `sleepStartedAt` y aterriza en el índice 0 (el día más
-  antiguo permitido - el nacimiento) nada más cargar el Dashboard,
-  mucho antes de que el usuario abra nada. Al abrir la hoja para crear,
-  el código intentaba corregirlo con un scroll **suave** hasta "hoy" -
-  primer intento: asumía que esa animación tardaba 300ms fijos, y un
-  salto largo (editar antes un sueño cercano al nacimiento y luego
-  abrir "+ Sueño" para uno nuevo) tardaba más de verdad, así que el día
-  que quedaba seleccionado al asentarse era el de a mitad de camino,
-  cerca del nacimiento, no el destino. Pero el problema de fondo no era
-  solo el temporizador: la hoja sigue fuera de pantalla (`translate-y-
-  full`) en el momento exacto en que se dispara ese scroll, así que no
-  hay nada real que animar todavía - cualquier duración fija o esperar
-  a `scrollend` seguía siendo adivinar. La solución de fondo es **no
-  animar este caso en absoluto**: cualquier cambio de valor disparado
-  desde fuera (abrir la hoja para crear o editar) ahora salta a la
-  fecha correcta de forma instantánea, sin animación; el scroll suave
-  (con el propio `scrollend` como señal de fin, no un temporizador
-  fijo) se reserva solo para cuando el usuario toca una fila con el
-  dedo - un salto corto, visible mientras ocurre, donde sí tiene
-  sentido.
+  un sueño nuevo, en vez de a hoy** (`WheelColumn.vue`): confirmado en
+  vivo contra el servidor local (dos intentos anteriores, centrados en
+  la animación del scroll, no lo arreglaban de verdad). La causa real no
+  tenía nada que ver con tiempos de animación: a diferencia de las
+  ruedas de hora/minuto (24 y 60 filas fijas siempre), la de día
+  (`dayOptions` en `DateTimeWheel.vue`) cambia de **tamaño** según el
+  valor - de 1 sola fila inválida (el estado inicial, antes de abrir
+  cualquier hoja, con `sleepStartedAt` todavía vacío) a los N días
+  reales entre el nacimiento y hoy. El watcher que reposiciona la rueda
+  corría con el flush por defecto de Vue (`'pre'`), que se dispara
+  *antes* de que el DOM llegue a pintar esas filas nuevas - el
+  `scrollTo()` se ejecutaba contra el `<div>` todavía con el contenido
+  viejo (una sola fila, ~120px de alto), el navegador recortaba el
+  scroll al máximo posible en ese instante, y nada lo reintentaba
+  después de que el DOM creciera. El valor quedaba perfectamente
+  correcto por dentro (`aria-selected` y el texto en rosa sobre "Hoy",
+  confirmado inspeccionando el DOM en vivo) pero la posición visible de
+  la rueda se quedaba clavada en la primera fila - el nacimiento. Ahora
+  el watcher usa `flush: 'post'`, que espera a que el DOM ya refleje la
+  lista de días en curso antes de intentar el scroll.
 
 ### Añadido
 

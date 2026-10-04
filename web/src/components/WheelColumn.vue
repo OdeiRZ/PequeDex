@@ -113,12 +113,23 @@ onMounted(() => {
 // hoja todavía está fuera de pantalla (`translate-y-full` en
 // `BottomSheet.vue`, no un `v-if`) en ese momento, así que no hay nada
 // que animar de verdad todavía, y el salto puede ser largo (del
-// nacimiento del bebé hasta hoy). Intentarlo con scroll suave aquí fue
-// justo el bug real encontrado en producción: con una animación lo
-// bastante larga como para no terminar antes de que `onScroll()`
-// volviera a escuchar el gesto del usuario, el día que quedaba
-// seleccionado al asentarse era el de a mitad de camino, no el
-// destino - la rueda "se iba" al nacimiento en vez de a hoy.
+// nacimiento del bebé hasta hoy).
+//
+// `flush: 'post'`, no el valor por defecto (`'pre'`) - encontrado en
+// vivo: para una rueda cuyo número de filas es FIJO (hora, minuto) esto
+// no importa, pero `DateTimeWheel.vue` recalcula `dayOptions` con un
+// tamaño que depende del propio valor (de 1 fila "inválida", el estado
+// inicial antes de abrir cualquier hoja, a N días reales entre el
+// nacimiento y hoy). Con el flush por defecto este watcher corre ANTES
+// de que Vue pinte esas filas nuevas en el DOM - `scrollTo()` se
+// ejecutaba entonces contra el `<div>` todavía con el contenido viejo
+// (una sola fila, apenas 120px de alto), el navegador recortaba el
+// scroll al máximo posible en ese momento, y nada lo reintentaba
+// después de que el DOM creciera. El índice y el valor seleccionado
+// quedaban correctos (`aria-selected`, el texto en rosa) pero la
+// posición visible de la rueda se quedaba clavada en la primera fila -
+// el día de nacimiento. `flush: 'post'` espera a que el DOM ya refleje
+// la lista de días del día en curso antes de intentar el scroll.
 watch(
   () => props.modelValue,
   (value) => {
@@ -127,6 +138,7 @@ watch(
 
     if (targetIndex !== currentIndex) scrollToIndex(targetIndex, false)
   },
+  { flush: 'post' },
 )
 
 // Scrolling is the primary gesture (matches a native date wheel), but a

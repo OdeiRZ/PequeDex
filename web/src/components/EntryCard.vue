@@ -127,9 +127,8 @@ function onRowClick() {
 
 <template>
   <li
-    class="relative flex items-stretch rounded-2xl shadow-sm ring-1 ring-transparent"
+    class="relative flex items-stretch overflow-hidden rounded-2xl shadow-sm ring-1 ring-transparent"
     :class="[
-      swipeMode && 'overflow-hidden',
       interactive && ['card-interactive', categoryRing[category]],
       pulsing && 'entry-card-pulsing',
     ]"
@@ -254,11 +253,19 @@ function onRowClick() {
     </div>
 
     <!-- A sibling of the scroller, not content inside it - unlike
-         `#actions` (the delete icon), this must stay put and visible at
-         rest even when `swipeToDelete` is on, since it's a primary action
-         of its own (p.ej. "Finalizar" en un sueño en curso), not a
-         destructive one worth hiding behind a deliberate gesture. -->
-    <div v-if="slots.primaryAction" class="flex shrink-0 items-center py-3 pr-3 pl-1.5">
+         `#actions` (el icono de borrar), esto debe quedarse fijo y
+         visible en reposo aunque `swipeToDelete` esté activo, por ser
+         una acción propia (p.ej. "Finalizar" en un sueño en curso), no
+         una destructiva que merezca esconderse tras un gesto. Mismo
+         `categoryBg` que el resto de la tarjeta (no fondo propio) para
+         que lea como una continuación de ella, no como algo aparte - el
+         `overflow-hidden` del `<li>` ya le da el redondeado del borde
+         derecho sin necesidad de repetirlo aquí. -->
+    <div
+      v-if="slots.primaryAction"
+      class="flex shrink-0 items-center py-3 pr-3 pl-1.5"
+      :class="categoryBg[category]"
+    >
       <slot name="primaryAction" />
     </div>
   </li>

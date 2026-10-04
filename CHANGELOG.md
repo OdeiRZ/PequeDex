@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Tarjetas de la línea temporal más grandes y con duración del sueño**
+  (`EntryCard.vue`, `DashboardView.vue`): título (`text-sm`→`text-base`),
+  hora/descripción (`text-xs`→`text-sm`) e icono (36px→44px) más grandes,
+  con algo más de aire (`p-3`→`p-3.5`) — las tarjetas quedaban con mucho
+  hueco vacío a la derecha del texto para lo poco que ocupaban. Se
+  aprovecha ese hueco con el `badge` del componente (ya existía, sin
+  ningún sitio que lo usara): las entradas de sueño muestran ahora su
+  duración ("2h 15min") a la derecha, calculada desde `started_at`/
+  `ended_at` (o hasta ahora mismo si sigue en curso) - antes solo se veía
+  la hora de inicio, sin ninguna pista de cuánto había dormido sin abrir
+  la entrada a editarla.
 - **Sonido en las flechas de navegación del "Ritmo"** (`DailyRhythm.vue`):
   `tap()` al cambiar de día (anterior/siguiente), mismas flechas que ya
   tenían icono pero ningún sonido/vibración.

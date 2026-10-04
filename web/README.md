@@ -701,7 +701,15 @@ verse bien en una captura:
   ocultar, no solo el de login.
 - **`EntryCard.vue` / `CategoryIcon.vue` / `src/lib/category.ts`** —
   la tarjeta compartida por línea temporal y crecimiento, con su franja
-  de color por categoría. Las clases de Tailwind por categoría
+  de color por categoría. Título/hora/icono con tipografía algo mayor
+  (`text-base`/`text-sm`/44px) y algo más de aire (`p-3.5`) — reportado
+  en vivo: las tarjetas dejaban mucho hueco vacío a la derecha del texto
+  para lo poco que ocupaban. El `badge` del componente (existía ya, sin
+  usuario ninguno) ahora sí tiene uno: `entrySleepDuration()` en
+  `DashboardView.vue` rellena ese hueco en las entradas de sueño con su
+  duración ("2h 15min"), calculada desde `started_at`/`ended_at` (o
+  hasta ahora mismo si sigue en curso, sin `ended_at`) - antes solo se
+  veía la hora de inicio. Las clases de Tailwind por categoría
   (`text-feed`, `bg-feed/15`, …) están en `category.ts` como tablas de
   búsqueda literales, no interpoladas (`` `text-${category}` ``): el
   escáner de Tailwind solo detecta nombres de clase que aparecen tal

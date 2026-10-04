@@ -705,6 +705,25 @@ function entrySleepPulsing(entry: (typeof babies.timeline)[number]): boolean {
   return entry.type === 'sleep' && entry.data.ended_at === null
 }
 
+// Duración como badge a la derecha de la fila - la línea temporal solo
+// mostraba la hora de inicio, sin ninguna pista de cuánto duró el sueño
+// sin abrir la entrada a editarla. Un sueño aún en curso (sin ended_at)
+// muestra lo llevado hasta ahora, no vacío - se actualiza solo en el
+// siguiente repintado (el sondeo de la línea temporal cada 5s ya fuerza
+// uno). "h"/"min" sin traducir, mismo criterio que "ml"/"kg"/"cm" en el
+// resto de la app: unidades, no texto.
+function entrySleepDuration(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'sleep') return undefined
+
+  const start = new Date(entry.data.started_at).getTime()
+  const end = entry.data.ended_at ? new Date(entry.data.ended_at).getTime() : Date.now()
+  const minutes = Math.max(0, Math.round((end - start) / 60_000))
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+
+  return hours > 0 ? `${hours}h ${remainingMinutes}min` : `${remainingMinutes}min`
+}
+
 // Same reasoning, applied to a feed's milk - a droplet colored like
 // the real thing next to the row's title. A bottle carries milk too
 // (formula or expressed, both read as white - `milk_type` itself is
@@ -1686,6 +1705,7 @@ const sleepPredictionDue = computed(() => {
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
+                    :badge="entrySleepDuration(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"

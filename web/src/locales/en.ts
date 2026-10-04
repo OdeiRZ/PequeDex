@@ -272,7 +272,8 @@ export default {
     sleepForm: {
       editTitle: 'Edit sleep',
       start: 'Starts',
-      end: 'Ends (leave empty if still sleeping)',
+      end: 'Ends',
+      stillOngoing: 'Still sleeping',
       toastUpdated: 'Sleep updated.',
       toastCreated: 'Sleep saved.',
     },

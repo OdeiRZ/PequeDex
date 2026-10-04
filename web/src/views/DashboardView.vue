@@ -316,7 +316,8 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     editingFeedId.value = null
   } else if (sheet === 'sleep') {
     sleepStartedAt.value = nowForInput()
-    sleepEndedAt.value = ''
+    sleepEndedAt.value = nowForInput()
+    sleepStillOngoing.value = true
     editingSleepId.value = null
   } else if (sheet === 'diaper') {
     diaperType.value = 'mojado'
@@ -555,14 +556,26 @@ async function onSubmitFeed() {
 // --- Registro rápido: sueño ---
 
 const sleepStartedAt = ref('')
+// Siempre lleva un valor concreto, aunque el sueño siga en curso - la
+// propia rueda (a diferencia del <input type="datetime-local"> nativo
+// que sustituye) no tiene forma de representar "sin valor", así que
+// necesita algo que mostrar en cuanto `sleepStillOngoing` se desactive,
+// no solo cuando ya hay un fin real guardado.
 const sleepEndedAt = ref('')
+const sleepStillOngoing = ref(true)
 const savingSleep = ref(false)
 const editingSleepId = ref<number | null>(null)
+
+function onToggleSleepStillOngoing() {
+  feedback.tap()
+  sleepStillOngoing.value = !sleepStillOngoing.value
+}
 
 function openSleepEdit(sleep: Sleep) {
   editingSleepId.value = sleep.id
   sleepStartedAt.value = toLocalInputValue(sleep.started_at)
-  sleepEndedAt.value = sleep.ended_at ? toLocalInputValue(sleep.ended_at) : ''
+  sleepStillOngoing.value = sleep.ended_at === null
+  sleepEndedAt.value = sleep.ended_at ? toLocalInputValue(sleep.ended_at) : nowForInput()
   activeSheet.value = 'sleep'
 }
 
@@ -594,7 +607,7 @@ async function onSubmitSleep() {
   try {
     const payload = {
       started_at: toUtcIso(sleepStartedAt.value),
-      ended_at: sleepEndedAt.value ? toUtcIso(sleepEndedAt.value) : null,
+      ended_at: sleepStillOngoing.value ? null : toUtcIso(sleepEndedAt.value),
     }
 
     if (editingSleepId.value) {
@@ -2015,15 +2028,35 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div>
-              <label for="sleep-ended-at" class="field-label">{{
-                t('dashboard.sleepForm.end')
-              }}</label>
-              <input
-                id="sleep-ended-at"
+              <div class="flex items-center justify-between gap-4">
+                <span class="field-label">{{ t('dashboard.sleepForm.end') }}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="sleepStillOngoing"
+                  :aria-label="t('dashboard.sleepForm.stillOngoing')"
+                  class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+                  :class="sleepStillOngoing ? 'bg-brand' : 'bg-surface-sunken'"
+                  @click="onToggleSleepStillOngoing"
+                >
+                  <span
+                    class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+                    :style="{ left: sleepStillOngoing ? '22px' : '2px' }"
+                  ></span>
+                </button>
+              </div>
+              <!-- A diferencia de "Empieza", esta rueda no siempre está
+                   presente - un sueño que sigue en curso no tiene fin
+                   que elegir todavía, y a diferencia del <input
+                   type="datetime-local"> nativo que sustituye, la
+                   rueda no tiene forma de representar "vacío". -->
+              <DateTimeWheel
+                v-if="!sleepStillOngoing"
                 v-model="sleepEndedAt"
-                type="datetime-local"
+                class="mt-2"
                 :min="sleepStartedAt || minDateTime"
-                class="field-input"
+                :date-locale="dateLocale"
+                :ariaLabel="t('dashboard.sleepForm.end')"
               />
             </div>
             <div class="mt-1 flex gap-3">

@@ -274,7 +274,8 @@ export default {
     sleepForm: {
       editTitle: 'Editar sueño',
       start: 'Empieza',
-      end: 'Termina (déjalo vacío si sigue durmiendo)',
+      end: 'Termina',
+      stillOngoing: 'Sigue durmiendo',
       toastUpdated: 'Sueño actualizado.',
       toastCreated: 'Sueño guardado.',
     },

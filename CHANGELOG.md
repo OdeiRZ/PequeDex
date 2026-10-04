@@ -33,6 +33,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **El campo "Termina" de un sueño usa ahora la rueda, como "Empieza"**
+  (seguía con el `<input type="datetime-local">` nativo, única pieza del
+  formulario que no lo había hecho): junto a ella, un interruptor
+  "Sigue durmiendo" (`sleepStillOngoing` en `DashboardView.vue`) - a
+  diferencia del nativo, que representa "sin fin todavía" con solo
+  dejarlo vacío, la rueda siempre muestra un día/hora/minuto concreto,
+  así que necesita un control aparte para ese estado. Activado por
+  defecto al crear (oculta la rueda, `ended_at` se manda `null`); al
+  editar, arranca según tenga o no `ended_at` ya guardado - y si no lo
+  tiene, la rueda igualmente parte de "ahora mismo" por si se
+  desactiva el interruptor, no de un valor vacío que no sabría
+  representar.
 - **Botón "Finalizar" directamente en la tarjeta de un sueño en curso**
   (línea temporal): solo cuando el sueño está en curso (`entrySleepPulsing()`,
   el mismo criterio que ya usaba el 💤 pulsante). Guarda directamente al

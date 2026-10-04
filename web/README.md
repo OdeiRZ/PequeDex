@@ -139,13 +139,20 @@ porque la verificación local solo cubría los otros tres.
   no lleva zona horaria propia, así que mandar su valor tal cual hacía
   que el servidor lo tomara como si ya fuera UTC en vez de hora local -
   se descubrió al editar sin tocar la hora y ver que igualmente se
-  desplazaba en cada guardado. Inicio de toma, inicio de sueño y pañal
-  usan `DateTimeWheel.vue` (tres `WheelColumn.vue` - día, hora,
+  desplazaba en cada guardado. Inicio de toma, inicio/fin de sueño y
+  pañal usan `DateTimeWheel.vue` (tres `WheelColumn.vue` - día, hora,
   minuto - con sonido al deslizar, ver "Sonido y vibración al
-  interactuar" más abajo); fin de sueño se queda con el
-  `datetime-local` nativo de siempre, porque puede dejarse vacío a
-  propósito ("sigue durmiendo"), algo que una rueda no representa sin
-  un interruptor aparte. Una toma al pecho también lleva un selector de
+  interactuar" más abajo). Fin de sueño fue la excepción durante un
+  tiempo (se quedaba con el `datetime-local` nativo), porque puede
+  dejarse vacío a propósito ("sigue durmiendo") y una rueda no
+  representa "vacío" por sí sola - ahora lleva la misma rueda que el
+  resto, junto a un interruptor "Sigue durmiendo"
+  (`sleepStillOngoing`) que la oculta y manda `ended_at: null` cuando
+  está activado (por defecto al crear); al editar, arranca encendido o
+  apagado según si el sueño ya tenía `ended_at`, y si no lo tenía, la
+  rueda parte igualmente de "ahora mismo" por si se apaga el
+  interruptor, no de un valor vacío que no sabría representar. Una
+  toma al pecho también lleva un selector de
   duración (`feedDurationOptions`, chips "Sin indicar"/10/20/30/45 min,
   mismo estilo que el color de las heces del pañal) - se manda como
   `feedStartedAt` + los minutos elegidos convertidos a un `ended_at`

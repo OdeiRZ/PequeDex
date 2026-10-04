@@ -14,17 +14,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   Sueño" está siempre montada (se oculta trasladándola fuera de la
   pantalla, no con un `v-if`), así que su rueda de día arranca con el
   valor vacío de `sleepStartedAt` y aterriza en el índice 0 (el día más
-  antiguo permitido - el nacimiento). Al abrir la hoja para crear, el
-  código sí intenta corregirlo con un scroll suave hasta "hoy", pero
-  asumía que esa animación tardaba 300ms fijos; si el salto es largo
-  (editar antes un sueño cercano al nacimiento y luego abrir "+ Sueño"
-  para uno nuevo), la animación real del navegador tarda más, el
-  temporizador deja de ignorar eventos de scroll antes de que termine,
-  y el día que queda seleccionado al asentarse es el que tocaba a mitad
-  de la animación - cerca del nacimiento, no el destino real. Ahora
-  espera al evento real `scrollend` del navegador (con un timeout de
-  reserva de 1000ms solo para Safari < 17.4, que no lo soporta) en vez
-  de un temporizador fijo.
+  antiguo permitido - el nacimiento) nada más cargar el Dashboard,
+  mucho antes de que el usuario abra nada. Al abrir la hoja para crear,
+  el código intentaba corregirlo con un scroll **suave** hasta "hoy" -
+  primer intento: asumía que esa animación tardaba 300ms fijos, y un
+  salto largo (editar antes un sueño cercano al nacimiento y luego
+  abrir "+ Sueño" para uno nuevo) tardaba más de verdad, así que el día
+  que quedaba seleccionado al asentarse era el de a mitad de camino,
+  cerca del nacimiento, no el destino. Pero el problema de fondo no era
+  solo el temporizador: la hoja sigue fuera de pantalla (`translate-y-
+  full`) en el momento exacto en que se dispara ese scroll, así que no
+  hay nada real que animar todavía - cualquier duración fija o esperar
+  a `scrollend` seguía siendo adivinar. La solución de fondo es **no
+  animar este caso en absoluto**: cualquier cambio de valor disparado
+  desde fuera (abrir la hoja para crear o editar) ahora salta a la
+  fecha correcta de forma instantánea, sin animación; el scroll suave
+  (con el propio `scrollend` como señal de fin, no un temporizador
+  fijo) se reserva solo para cuando el usuario toca una fila con el
+  dedo - un salto corto, visible mientras ocurre, donde sí tiene
+  sentido.
 
 ### Añadido
 

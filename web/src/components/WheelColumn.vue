@@ -106,13 +106,26 @@ onMounted(() => {
   scrollToIndex(indexOfValue(props.modelValue), false)
 })
 
+// Sin animación - a diferencia de `selectIndex()` (un salto corto, una
+// fila que el usuario ve mientras ocurre), esto dispara siempre que el
+// padre cambia `modelValue` desde fuera, lo que en esta app solo pasa
+// justo antes de abrir una hoja (crear/editar una toma, sueño...) - la
+// hoja todavía está fuera de pantalla (`translate-y-full` en
+// `BottomSheet.vue`, no un `v-if`) en ese momento, así que no hay nada
+// que animar de verdad todavía, y el salto puede ser largo (del
+// nacimiento del bebé hasta hoy). Intentarlo con scroll suave aquí fue
+// justo el bug real encontrado en producción: con una animación lo
+// bastante larga como para no terminar antes de que `onScroll()`
+// volviera a escuchar el gesto del usuario, el día que quedaba
+// seleccionado al asentarse era el de a mitad de camino, no el
+// destino - la rueda "se iba" al nacimiento en vez de a hoy.
 watch(
   () => props.modelValue,
   (value) => {
     const targetIndex = indexOfValue(value)
     const currentIndex = scroller.value ? Math.round(scroller.value.scrollTop / ITEM_HEIGHT) : -1
 
-    if (targetIndex !== currentIndex) scrollToIndex(targetIndex, true)
+    if (targetIndex !== currentIndex) scrollToIndex(targetIndex, false)
   },
 )
 

@@ -2282,7 +2282,7 @@ const sleepPredictionDue = computed(() => {
                 v-model="growthWeightKg"
                 type="number"
                 min="0.1"
-                step="0.1"
+                step="0.01"
                 class="field-input"
               />
             </div>

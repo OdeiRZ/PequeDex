@@ -33,6 +33,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **El peso de un registro de crecimiento admite dos decimales**
+  (`growth-weight` en `DashboardView.vue`): el campo llevaba
+  `step="0.1"`, que limita los incrementos de las flechas nativas del
+  `<input type="number">` a décimas y puede marcar como inválido un
+  valor con más precisión (p.ej. `3.22`) según el navegador. El propio
+  backend ya guardaba gramos enteros (`weight_grams`, sin cambios ahí:
+  3.22kg → 3220g, tan exacto como 3.2kg → 3200g) y el listado ya
+  mostraba dos decimales (`toFixed(2)`) - solo el formulario de entrada
+  se quedaba corto. Ahora `step="0.01"`.
 - **La línea temporal ya no repite la fecha junto a la hora**
   (`DashboardView.vue`): cada fila ya vive agrupada bajo un separador de
   día (`5 de octubre de 2026`), así que llevar la fecha completa también

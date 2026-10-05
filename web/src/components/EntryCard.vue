@@ -182,7 +182,7 @@ function onRowClick() {
                  la hora se queda aquí tal cual, como siempre. -->
             <div
               v-if="badge || dropletColor || poopColor || emoji"
-              class="flex items-center gap-1 text-sm font-bold"
+              class="mt-0.5 flex items-center gap-1 text-sm font-bold"
               :class="categoryText[category]"
             >
               <span v-if="badge">{{ badge }}</span>
@@ -215,7 +215,7 @@ function onRowClick() {
                 {{ emoji }}
               </span>
             </div>
-            <div v-else class="text-sm tabular-nums text-text-muted">{{ meta }}</div>
+            <div v-else class="mt-0.5 text-sm tabular-nums text-text-muted">{{ meta }}</div>
 
             <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
           </div>

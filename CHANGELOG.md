@@ -33,6 +33,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Talla "0" como opción de pañal y 15min como opción de duración de
+  toma** - ambas se sumaron a la lista ya existente en cada sitio donde
+  vivía (`DiaperSize` enum y `Rule::in()` del backend; `DIAPER_SIZES`/
+  `feedDurationOptions` y sus copias en `AccountSheet.vue` para los
+  valores por defecto) en vez de crear un camino nuevo, así que
+  aparecen automáticamente en el formulario, en el badge de la línea
+  temporal y en el selector de valores por defecto del perfil.
 - **Talla de pañal y duración de toma por defecto, configurables en
   "Tu cuenta"** (`api`: columnas `default_diaper_size` nullable
   (`App\Enums\DiaperSize`) y `default_feed_duration_minutes` nullable

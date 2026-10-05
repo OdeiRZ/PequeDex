@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum DiaperSize: string
 {
+    case Talla0 = '0';
     case Talla1 = '1';
     case Talla2 = '2';
     case Talla3 = '3';

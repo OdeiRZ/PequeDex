@@ -487,7 +487,7 @@ function onSelectFeedMilkType(value: MilkType) {
 // de error: no todo el mundo cronometra cuánto dura cada toma. 4 valores,
 // no más - menos que la lista original (5/10/15/20/30/45) a petición
 // expresa, para que el selector se lea de un vistazo.
-const feedDurationOptions = [10, 20, 30, 45]
+const feedDurationOptions = [10, 15, 20, 30, 45]
 
 function onSelectFeedDuration(value: number | null) {
   if (value !== feedDurationMinutes.value) feedback.select()
@@ -713,7 +713,7 @@ function onSelectDiaperResidueColor(value: DiaperResidueColor | '') {
 // expresa). Opcional, igual que el color de las heces: no todo el mundo
 // quiere anotarla cada vez, y aplica igual a mojado/sucio/ambos (a
 // diferencia del color, que solo tiene sentido con algo que mirar).
-const DIAPER_SIZES: DiaperSize[] = ['1', '2', '3', '4', '5', '6+']
+const DIAPER_SIZES: DiaperSize[] = ['0', '1', '2', '3', '4', '5', '6+']
 
 function onSelectDiaperSize(value: DiaperSize | '') {
   if (value !== diaperSize.value) feedback.select()

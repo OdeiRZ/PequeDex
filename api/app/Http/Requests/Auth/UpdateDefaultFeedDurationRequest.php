@@ -19,7 +19,7 @@ class UpdateDefaultFeedDurationRequest extends FormRequest
     {
         return [
             // Mismas opciones que feedDurationOptions en DashboardView.vue.
-            'default_feed_duration_minutes' => ['nullable', Rule::in([10, 20, 30, 45])],
+            'default_feed_duration_minutes' => ['nullable', Rule::in([10, 15, 20, 30, 45])],
         ];
     }
 }

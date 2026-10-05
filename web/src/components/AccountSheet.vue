@@ -339,7 +339,7 @@ async function onSelectDefaultDiaperSize(value: DiaperSize | '') {
 
 // --- Ajustes: duración de toma al pecho por defecto ---
 
-const DEFAULT_FEED_DURATION_OPTIONS = [10, 20, 30, 45]
+const DEFAULT_FEED_DURATION_OPTIONS = [10, 15, 20, 30, 45]
 const defaultFeedDurationMinutes = ref<number | null>(null)
 let defaultFeedDurationSaveToken = 0
 
@@ -640,7 +640,7 @@ watch(
           {{ t('dashboard.diaperForm.sizeUnspecified') }}
         </button>
         <button
-          v-for="size in ['1', '2', '3', '4', '5', '6+'] as DiaperSize[]"
+          v-for="size in ['0', '1', '2', '3', '4', '5', '6+'] as DiaperSize[]"
           :key="size"
           type="button"
           role="radio"

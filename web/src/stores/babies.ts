@@ -19,7 +19,7 @@ export type FeedSide = 'izquierdo' | 'derecho' | 'ambos'
 export type MilkType = 'calostro' | 'leche'
 export type DiaperType = 'mojado' | 'sucio' | 'ambos'
 export type DiaperResidueColor = 'verde' | 'amarillo' | 'marron' | 'meconio'
-export type DiaperSize = '1' | '2' | '3' | '4' | '5' | '6+'
+export type DiaperSize = '0' | '1' | '2' | '3' | '4' | '5' | '6+'
 
 export interface Feed {
   id: number

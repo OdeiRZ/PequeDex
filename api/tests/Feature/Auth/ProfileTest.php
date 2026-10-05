@@ -243,7 +243,7 @@ it('sets and clears a default feed duration, defaulting to none', function () {
 it('rejects a default feed duration outside the picker options', function () {
     actingAsUser();
 
-    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 15])
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 12])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('default_feed_duration_minutes');
 });

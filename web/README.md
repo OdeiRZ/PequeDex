@@ -1028,6 +1028,18 @@ verse bien en una captura:
   opacidad + `translateY` suave, `prefers-reduced-motion` respetado)
   distingue un sueño en curso (`ended_at` aún `null`) de uno ya
   terminado sin cambiar el propio emoji.
+
+  Estos tres (`dropletColor`/`poopColor`/`emoji`) vivían junto al
+  título, en una fila aparte del `badge` de duración - duplicaban
+  conceptualmente la info de "tipo/estado" que ya llevaba la propia
+  pastilla al lado. Se movieron dentro de ella: la pastilla ahora
+  renderiza icono(s) + `badge` (texto) cuando hay duración, o solo
+  icono(s) sin texto cuando no la hay - un pañal, que nunca tuvo
+  duración ni, hasta ahora, pastilla propia. El color real de cada
+  icono se mantiene (no se vuelve monocromo de categoría); `min-w-14`
+  (el ancho mínimo que alinea "15min"/"2h 15min" entre filas) solo se
+  aplica cuando hay texto, para que una pastilla solo-icono se encoja a
+  su contenido en vez de arrastrar ese hueco vacío.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

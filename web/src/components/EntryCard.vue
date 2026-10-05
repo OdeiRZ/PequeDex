@@ -173,53 +173,65 @@ function onRowClick() {
           <div class="min-w-0 flex-1">
             <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
               <span class="truncate">{{ title }}</span>
-              <svg
-                v-if="dropletColor"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-                class="h-3 w-3 shrink-0 text-text-muted"
-                :style="{ fill: dropletColor }"
-                aria-hidden="true"
-              >
-                <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
-              </svg>
-              <svg
-                v-if="poopColor"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1"
-                class="h-3 w-3 shrink-0 text-text-muted"
-                :style="{ fill: poopColor }"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="18" r="5.5" />
-                <circle cx="12" cy="13" r="4.3" />
-                <circle cx="12" cy="9" r="3.2" />
-                <circle cx="12" cy="6" r="2" />
-              </svg>
-              <span
-                v-if="emoji"
-                class="shrink-0 text-xs leading-none"
-                :class="emojiPulsing && 'entry-emoji-pulsing'"
-                aria-hidden="true"
-              >
-                {{ emoji }}
-              </span>
             </div>
             <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
             <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
           </div>
 
-          <!-- min-w + text-center, no solo whitespace-nowrap - sin esto,
-               "15min" y "2h 15min" generaban píldoras de anchos muy
-               distintos que no se leían alineadas entre sí fila a fila. -->
+          <!-- La pastilla ahora concentra TODA la info de "estado" de la
+               entrada: icono(s) de tipo (gota de leche/orina, caca) +
+               duración si la hay - antes el icono vivía junto al título y
+               la duración vivía aquí, duplicando el "de qué tipo es esto"
+               en dos sitios de la misma fila. Con texto (sueño/toma con
+               duración), `min-w-14` + `justify-center` mantiene el
+               alineado entre filas que ya tenía antes ("15min" y "2h
+               15min" con el mismo ancho mínimo); sin texto (p.ej. un
+               pañal, que no tiene duración), la pastilla se encoge a solo
+               el icono en vez de forzar ese mismo ancho mínimo vacío. -->
           <span
-            v-if="badge"
-            class="min-w-14 shrink-0 rounded-full bg-surface/70 px-2 py-0.5 text-center text-xs font-bold whitespace-nowrap"
-            :class="categoryText[category]"
+            v-if="badge || dropletColor || poopColor || emoji"
+            class="flex shrink-0 items-center whitespace-nowrap rounded-full bg-surface/70"
+            :class="[
+              categoryText[category],
+              badge
+                ? 'min-w-14 justify-center gap-1 px-2 py-0.5 text-xs font-bold'
+                : 'gap-0.5 px-1.5 py-1',
+            ]"
           >
-            {{ badge }}
+            <svg
+              v-if="dropletColor"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              class="h-3 w-3 shrink-0 text-text-muted"
+              :style="{ fill: dropletColor }"
+              aria-hidden="true"
+            >
+              <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+            </svg>
+            <svg
+              v-if="poopColor"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1"
+              class="h-3 w-3 shrink-0 text-text-muted"
+              :style="{ fill: poopColor }"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="18" r="5.5" />
+              <circle cx="12" cy="13" r="4.3" />
+              <circle cx="12" cy="9" r="3.2" />
+              <circle cx="12" cy="6" r="2" />
+            </svg>
+            <span
+              v-if="emoji"
+              class="shrink-0 text-xs leading-none"
+              :class="emojiPulsing && 'entry-emoji-pulsing'"
+              aria-hidden="true"
+            >
+              {{ emoji }}
+            </span>
+            <span v-if="badge">{{ badge }}</span>
           </span>
         </component>
 

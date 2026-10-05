@@ -33,6 +33,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **La pastilla de la línea temporal absorbe ahora el icono de tipo de
+  entrada** (`EntryCard.vue`): el icono de gota (tipo de leche en una
+  toma, orina en un pañal) y el de caca vivían junto al título, por
+  duplicado conceptual con la propia duración/estado que ya mostraba la
+  pastilla al lado. Ahora ambos viven dentro de la misma pastilla -
+  icono(s) + texto cuando hay duración (toma, sueño terminado), o solo
+  icono(s) sin texto cuando no la hay (un pañal, que no tiene duración:
+  antes no llevaba pastilla en absoluto). El color real de cada icono se
+  mantiene (el de la leche o el residuo elegido, no un monocromo de
+  categoría) - es lo que lo hace reconocible de un vistazo. `min-w-14`
+  (el ancho mínimo que alinea "15min" y "2h 15min" entre filas) solo se
+  aplica cuando hay texto; una pastilla solo-icono se encoge a su
+  contenido en vez de arrastrar ese hueco vacío.
 - **El campo "Termina" de un sueño usa ahora la rueda, como "Empieza"**
   (seguía con el `<input type="datetime-local">` nativo, única pieza del
   formulario que no lo había hecho): junto a ella, un interruptor

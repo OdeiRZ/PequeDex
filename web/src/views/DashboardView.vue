@@ -2028,8 +2028,11 @@ const sleepPredictionDue = computed(() => {
               />
             </div>
             <div>
-              <div class="flex items-center justify-between gap-4">
-                <span class="field-label">{{ t('dashboard.sleepForm.end') }}</span>
+              <span class="field-label">{{ t('dashboard.sleepForm.end') }}</span>
+              <div
+                class="flex items-center justify-between gap-4 rounded-xl border border-border px-3 py-2.5"
+              >
+                <span class="text-sm font-medium">{{ t('dashboard.sleepForm.stillOngoing') }}</span>
                 <button
                   type="button"
                   role="switch"

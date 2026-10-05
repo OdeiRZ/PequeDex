@@ -44,7 +44,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   editar, arranca según tenga o no `ended_at` ya guardado - y si no lo
   tiene, la rueda igualmente parte de "ahora mismo" por si se
   desactiva el interruptor, no de un valor vacío que no sabría
-  representar.
+  representar. Bug real encontrado en un móvil (captura en mano): el
+  texto "Sigue durmiendo" solo se mandaba como `aria-label` del propio
+  interruptor - nunca llegaba a pintarse en pantalla, así que se veía
+  un interruptor sin ningún texto al lado, sin explicar qué hacía. Vive
+  ahora también como texto visible, no solo accesible.
 - **Botón "Finalizar" directamente en la tarjeta de un sueño en curso**
   (línea temporal): solo cuando el sueño está en curso (`entrySleepPulsing()`,
   el mismo criterio que ya usaba el 💤 pulsante). Guarda directamente al

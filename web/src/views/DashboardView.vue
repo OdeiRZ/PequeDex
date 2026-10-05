@@ -313,7 +313,10 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     // broken/incomplete rather than "not filled in yet".
     feedAmountMl.value = '10'
     feedStartedAt.value = nowForInput()
-    feedDurationMinutes.value = null
+    // Preselecciona la duración por defecto del perfil (Tu cuenta) solo
+    // al crear - solo tiene efecto visible una vez se elige "Pecho",
+    // igual que el propio selector.
+    feedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
     editingFeedId.value = null
   } else if (sheet === 'sleep') {
     sleepStartedAt.value = nowForInput()
@@ -323,7 +326,10 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   } else if (sheet === 'diaper') {
     diaperType.value = 'mojado'
     diaperResidueColor.value = ''
-    diaperSize.value = ''
+    // Preselecciona la talla por defecto del perfil (Tu cuenta) solo al
+    // crear - editar un pañal existente siempre muestra su propia talla
+    // ya guardada (ver openDiaperEdit()), nunca este valor.
+    diaperSize.value = auth.user?.default_diaper_size ?? ''
     diaperChangedAt.value = nowForInput()
     editingDiaperId.value = null
   } else if (sheet === 'growth') {

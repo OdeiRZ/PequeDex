@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiClient, clearStoredToken, getStoredToken, storeToken } from '@/lib/api'
 import type { Category } from '@/lib/category'
+import type { DiaperSize } from './babies'
 import { useBabiesStore } from './babies'
 
 export interface User {
@@ -14,6 +15,12 @@ export interface User {
   swipe_to_delete_enabled: boolean
   today_summary_enabled: boolean
   interaction_feedback_enabled: boolean
+  // Preseleccionan el valor correspondiente al abrir "+ Pañal"/"+ Toma"
+  // para crear (nunca al editar, que siempre muestra el de la propia
+  // entrada) - null = sin valor por defecto, el formulario arranca
+  // como hoy ("Sin indicar").
+  default_diaper_size: DiaperSize | null
+  default_feed_duration_minutes: number | null
 }
 
 interface RegisterPayload {
@@ -145,6 +152,20 @@ export const useAuthStore = defineStore('auth', {
     async updateInteractionFeedbackEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/interaction-feedback', {
         interaction_feedback_enabled: enabled,
+      })
+      this.user = data
+    },
+
+    async updateDefaultDiaperSize(size: DiaperSize | null) {
+      const { data } = await apiClient.put('/user/default-diaper-size', {
+        default_diaper_size: size,
+      })
+      this.user = data
+    },
+
+    async updateDefaultFeedDuration(minutes: number | null) {
+      const { data } = await apiClient.put('/user/default-feed-duration', {
+        default_feed_duration_minutes: minutes,
       })
       this.user = data
     },

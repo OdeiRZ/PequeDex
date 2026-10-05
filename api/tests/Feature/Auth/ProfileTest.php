@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DiaperSize;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -199,6 +200,54 @@ it('turns interaction feedback (sound/haptics) off and back on, defaulting to en
     expect($user->refresh()->interaction_feedback_enabled)->toBeTrue();
 });
 
+it('sets and clears a default diaper size, defaulting to none', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->default_diaper_size)->toBeNull();
+
+    $this->putJson('/api/user/default-diaper-size', ['default_diaper_size' => '3'])
+        ->assertOk()
+        ->assertJsonPath('default_diaper_size', '3');
+    expect($user->refresh()->default_diaper_size)->toBe(DiaperSize::Talla3);
+
+    $this->putJson('/api/user/default-diaper-size', ['default_diaper_size' => null])
+        ->assertOk()
+        ->assertJsonPath('default_diaper_size', null);
+    expect($user->refresh()->default_diaper_size)->toBeNull();
+});
+
+it('rejects an invalid default diaper size', function () {
+    actingAsUser();
+
+    $this->putJson('/api/user/default-diaper-size', ['default_diaper_size' => 'XL'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('default_diaper_size');
+});
+
+it('sets and clears a default feed duration, defaulting to none', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->default_feed_duration_minutes)->toBeNull();
+
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 20])
+        ->assertOk()
+        ->assertJsonPath('default_feed_duration_minutes', 20);
+    expect($user->refresh()->default_feed_duration_minutes)->toBe(20);
+
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => null])
+        ->assertOk()
+        ->assertJsonPath('default_feed_duration_minutes', null);
+    expect($user->refresh()->default_feed_duration_minutes)->toBeNull();
+});
+
+it('rejects a default feed duration outside the picker options', function () {
+    actingAsUser();
+
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 15])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('default_feed_duration_minutes');
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
@@ -209,4 +258,6 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user/swipe-to-delete', ['swipe_to_delete_enabled' => true])->assertUnauthorized();
     $this->putJson('/api/user/today-summary', ['today_summary_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/interaction-feedback', ['interaction_feedback_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/default-diaper-size', ['default_diaper_size' => '3'])->assertUnauthorized();
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 20])->assertUnauthorized();
 });

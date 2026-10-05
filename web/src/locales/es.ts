@@ -457,5 +457,15 @@ export default {
         'Un sonido breve y una vibración (si el dispositivo lo permite) al pulsar botones importantes.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    defaultDiaperSize: {
+      title: 'Talla de pañal por defecto',
+      description: 'Preseleccionada al crear un pañal nuevo - no afecta a los ya guardados.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
+    defaultFeedDuration: {
+      title: 'Duración de toma al pecho por defecto',
+      description: 'Preseleccionada al crear una toma nueva - no afecta a las ya guardadas.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

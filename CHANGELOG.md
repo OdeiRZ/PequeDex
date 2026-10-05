@@ -33,6 +33,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Talla de pañal y duración de toma por defecto, configurables en
+  "Tu cuenta"** (`api`: columnas `default_diaper_size` nullable
+  (`App\Enums\DiaperSize`) y `default_feed_duration_minutes` nullable
+  en `users`, dos rutas `PUT /user/default-diaper-size` y
+  `PUT /user/default-feed-duration`, mismo patrón guardado-al-vuelo que
+  `interaction_feedback_enabled` y el resto de ajustes de esta familia
+  - salvo que, al no ser booleanos, cada chip del grupo de radios manda
+  directamente su propio valor en vez de invertir un estado. `web`: dos
+  grupos de radios nuevos en `AccountSheet.vue`, mismas opciones que ya
+  ofrecen los propios formularios ("Sin indicar"/1-6+ para el pañal,
+  "Sin indicar"/10/20/30/45min para la toma). Solo preseleccionan al
+  CREAR una entrada nueva (`openSheet()` en `DashboardView.vue`) -
+  editar una ya existente sigue mostrando siempre su propio valor
+  guardado, nunca este por defecto.
 - **Talla del pañal, opcional, al crear/editar un cambio** (`api`:
   columna `size` nullable en `diaper_changes`, enum `DiaperSize`
   ('1'..'5','6+' - sin "RN", a petición expresa; estándar genérico, no

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import type { DiaperSize } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -307,6 +308,58 @@ async function onToggleInteractionFeedback() {
   }
 }
 
+// --- Ajustes: talla de pañal por defecto ---
+
+// A diferencia de los interruptores de arriba, esto no es un booleano
+// sino "cuál de estas opciones" - mismo patrón guardado-al-vuelo, pero
+// sin el booleano `next`: cada chip llama directamente con su propio
+// valor (o '' para "Sin indicar"). Solo preselecciona al CREAR un
+// pañal nuevo (ver `openSheet()` en DashboardView.vue) - editar uno
+// existente siempre muestra su propia talla ya guardada, nunca este
+// valor por defecto.
+const defaultDiaperSize = ref<DiaperSize | ''>('')
+let defaultDiaperSizeSaveToken = 0
+
+async function onSelectDefaultDiaperSize(value: DiaperSize | '') {
+  const previous = defaultDiaperSize.value
+  if (value === previous) return
+  defaultDiaperSize.value = value
+  feedback.tap()
+
+  const token = ++defaultDiaperSizeSaveToken
+  try {
+    await auth.updateDefaultDiaperSize(value || null)
+  } catch {
+    if (token === defaultDiaperSizeSaveToken) {
+      defaultDiaperSize.value = previous
+      toast.show(t('profile.defaultDiaperSize.saveError'), 'error')
+    }
+  }
+}
+
+// --- Ajustes: duración de toma al pecho por defecto ---
+
+const DEFAULT_FEED_DURATION_OPTIONS = [10, 20, 30, 45]
+const defaultFeedDurationMinutes = ref<number | null>(null)
+let defaultFeedDurationSaveToken = 0
+
+async function onSelectDefaultFeedDuration(value: number | null) {
+  const previous = defaultFeedDurationMinutes.value
+  if (value === previous) return
+  defaultFeedDurationMinutes.value = value
+  feedback.tap()
+
+  const token = ++defaultFeedDurationSaveToken
+  try {
+    await auth.updateDefaultFeedDuration(value)
+  } catch {
+    if (token === defaultFeedDurationSaveToken) {
+      defaultFeedDurationMinutes.value = previous
+      toast.show(t('profile.defaultFeedDuration.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -325,6 +378,8 @@ watch(
     swipeToDeleteEnabled.value = auth.user?.swipe_to_delete_enabled ?? false
     todaySummaryEnabled.value = auth.user?.today_summary_enabled ?? true
     interactionFeedbackEnabled.value = auth.user?.interaction_feedback_enabled ?? true
+    defaultDiaperSize.value = auth.user?.default_diaper_size ?? ''
+    defaultFeedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
   },
 )
 </script>
@@ -560,6 +615,88 @@ watch(
           :style="{ left: interactionFeedbackEnabled ? '22px' : '2px' }"
         ></span>
       </button>
+    </div>
+
+    <div class="mt-4">
+      <span class="field-label">{{ t('profile.defaultDiaperSize.title') }}</span>
+      <p class="text-xs text-text-muted">{{ t('profile.defaultDiaperSize.description') }}</p>
+      <div
+        class="mt-2 flex flex-wrap items-center gap-2"
+        role="radiogroup"
+        :aria-label="t('profile.defaultDiaperSize.title')"
+      >
+        <button
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultDiaperSize === ''
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultDiaperSize === ''"
+          @click="onSelectDefaultDiaperSize('')"
+        >
+          {{ t('dashboard.diaperForm.sizeUnspecified') }}
+        </button>
+        <button
+          v-for="size in ['1', '2', '3', '4', '5', '6+'] as DiaperSize[]"
+          :key="size"
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultDiaperSize === size
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultDiaperSize === size"
+          @click="onSelectDefaultDiaperSize(size)"
+        >
+          {{ size }}
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <span class="field-label">{{ t('profile.defaultFeedDuration.title') }}</span>
+      <p class="text-xs text-text-muted">{{ t('profile.defaultFeedDuration.description') }}</p>
+      <div
+        class="mt-2 flex flex-wrap items-center gap-2"
+        role="radiogroup"
+        :aria-label="t('profile.defaultFeedDuration.title')"
+      >
+        <button
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultFeedDurationMinutes === null
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultFeedDurationMinutes === null"
+          @click="onSelectDefaultFeedDuration(null)"
+        >
+          {{ t('dashboard.feedForm.durationUnspecified') }}
+        </button>
+        <button
+          v-for="minutes in DEFAULT_FEED_DURATION_OPTIONS"
+          :key="minutes"
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultFeedDurationMinutes === minutes
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultFeedDurationMinutes === minutes"
+          @click="onSelectDefaultFeedDuration(minutes)"
+        >
+          {{ minutes }} min
+        </button>
+      </div>
     </div>
 
     <form

@@ -85,7 +85,17 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `interaction_feedback_enabled`, `default(true)`,
   `PUT /user/interaction-feedback`) es la cuarta copia del mismo
   patrón — controla el sonido/vibración al interactuar con la
-  interfaz, ver `web/README.md`.
+  interfaz, ver `web/README.md`. `updateDefaultDiaperSize()`/
+  `updateDefaultFeedDuration()` rompen el patrón en un punto: no son
+  booleanos, así que no hay nada que invertir - cada petición manda
+  directamente el valor elegido (o `null` para "Sin indicar"). Columnas
+  `users.default_diaper_size` (nullable, `App\Enums\DiaperSize`) y
+  `users.default_feed_duration_minutes` (nullable, `unsignedSmallInteger`),
+  `PUT /user/default-diaper-size` / `PUT /user/default-feed-duration`,
+  validados con `Rule::enum`/`Rule::in([10,20,30,45])` - mismas opciones
+  que ofrecen los propios formularios "+ Pañal"/"+ Toma". Ver
+  `web/README.md` para cómo se usan al preseleccionar un formulario
+  nuevo.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

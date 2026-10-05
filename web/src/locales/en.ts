@@ -451,5 +451,15 @@ export default {
       description: 'A short sound and vibration (where supported) when tapping key buttons.',
       saveError: 'Could not save the change. Please try again.',
     },
+    defaultDiaperSize: {
+      title: 'Default diaper size',
+      description: 'Preselected when creating a new diaper change - does not affect saved ones.',
+      saveError: 'Could not save the change. Please try again.',
+    },
+    defaultFeedDuration: {
+      title: 'Default breastfeed duration',
+      description: 'Preselected when creating a new feed - does not affect saved ones.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

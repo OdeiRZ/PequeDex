@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
+use App\Http\Requests\Auth\UpdateDefaultDiaperSizeRequest;
+use App\Http\Requests\Auth\UpdateDefaultFeedDurationRequest;
 use App\Http\Requests\Auth\UpdateInteractionFeedbackEnabledRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
@@ -80,6 +82,28 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['interaction_feedback_enabled' => $request->validated('interaction_feedback_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateDefaultDiaperSize(UpdateDefaultDiaperSizeRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['default_diaper_size' => $request->validated('default_diaper_size')]);
+
+        return response()->json($user);
+    }
+
+    public function updateDefaultFeedDuration(UpdateDefaultFeedDurationRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update([
+            'default_feed_duration_minutes' => $request->validated('default_feed_duration_minutes'),
+        ]);
 
         return response()->json($user);
     }

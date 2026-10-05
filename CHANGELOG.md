@@ -40,32 +40,29 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   (`toLocaleTimeString`). La propia hora pasa a `text-sm` (antes `text-xs`,
   el mismo tamaño que la descripción) para que no quede perdida frente al
   resto de la fila.
-- **La pastilla de la línea temporal absorbe ahora el icono de tipo de
-  entrada** (`EntryCard.vue`): el icono de gota (tipo de leche en una
-  toma, orina en un pañal), el de caca y el 💤 de un sueño terminado
-  vivían junto al título, por duplicado conceptual con la propia
-  duración/estado que ya mostraba la pastilla al lado. Ahora viven
-  dentro de la misma pastilla, DESPUÉS del texto - la duración/estado es
-  el dato principal, el icono un detalle que lo acompaña, no al revés:
-  icono(s) + texto cuando hay duración (toma, sueño terminado), o solo
-  icono(s) sin texto cuando no la hay (un pañal, que no tiene duración:
-  antes no llevaba pastilla en absoluto). El color real de cada icono se
-  mantiene (el de la leche o el residuo elegido, no un monocromo de
-  categoría) - es lo que lo hace reconocible de un vistazo. `min-w-11`
-  (el ancho mínimo que alinea "15min" y "2h 15min" entre filas, reducido
-  desde `min-w-14` para dejarle más aire a la hora de al lado) solo se
-  aplica cuando hay texto; una pastilla solo-icono se encoge a su
-  contenido en vez de arrastrar ese hueco vacío. Centrado verificado con
-  `getBoundingClientRect()` en vivo (hueco izquierdo = hueco derecho en
-  las tres), no solo a ojo sobre una captura - ahí es donde ya nos
-  habíamos equivocado una vez antes.
+- **La pastilla de duración/tipo de la línea temporal desaparece: la
+  hora pasa a ser una marca de tiempo discreta a la derecha, y el
+  estado (duración + icono de tipo) vive en la segunda línea del
+  propio texto** (`EntryCard.vue`). Varios intentos previos (pastilla
+  con ancho mínimo compartido, con carril invisible, centrada o
+  justificada a la izquierda...) intentaban arreglar el mismo síntoma
+  - bordes de la pastilla desalineados entre filas - sin cuestionar si
+  debía seguir siendo una pastilla aparte. La solución que se queda:
+  quitar la pastilla por completo. El icono de gota (tipo de leche en
+  una toma, orina en un pañal), el de caca y el 💤 de un sueño
+  terminado, junto con el texto de duración, pasan a ser la segunda
+  línea de la columna de texto (color de categoría, sin fondo); la
+  hora, que antes ocupaba esa línea, se encoge a una marca de tiempo
+  pequeña y muda en el lado derecho de la fila, junto al icono de
+  borrar - sin competir por ancho con nada, porque ya no hay pastilla
+  con la que alinearse. Sin duración/tipo que mostrar (crecimiento,
+  hitos, predicciones), la hora se queda donde siempre ha estado, sin
+  cambios.
 
   Un sueño todavía en curso (sin `ended_at`, con su propio botón
-  "Finalizar" en vez de pastilla de duración) no lleva el 💤 en ninguna
-  pastilla - vive dentro del propio botón, al final del texto, con la
-  misma animación de "respirar" que antes llevaba junto al título
-  (movida de `EntryCard.vue` a `DashboardView.vue` con él, ya que ahí es
-  donde vive ahora el único sitio que la usa).
+  "Finalizar" en vez de duración) no lleva el 💤 junto al texto - vive
+  dentro del propio botón, al final, con su misma animación de
+  "respirar" (`DashboardView.vue`, único sitio que ya la usa).
 - **El campo "Termina" de un sueño usa ahora la rueda, como "Empieza"**
   (seguía con el `<input type="datetime-local">` nativo, única pieza del
   formulario que no lo había hecho): junto a ella, un interruptor

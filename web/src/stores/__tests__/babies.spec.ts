@@ -177,6 +177,47 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
+  it('folds an updated feed into dayTimeline too, not just timeline', async () => {
+    // Real bug found live: editing/deleting an entry several days back
+    // only patched `timeline` (always "today"), so a past day's visible
+    // list - rendered from `dayTimeline` - kept showing the stale
+    // version until navigating away and back forced a refetch.
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
+    vi.mocked(apiClient.put).mockResolvedValue({
+      data: { data: { id: 7, started_at: '2026-08-25T10:00:00Z', amount_ml: 150 } },
+    })
+    const store = useBabiesStore()
+    await store.create({})
+    store.dayTimeline = [
+      { type: 'feed', at: '2026-08-25T10:00:00Z', data: { id: 7, amount_ml: 90 } as never },
+    ]
+
+    await store.updateFeed(7, { type: 'biberon', amount_ml: 150, started_at: '2026-08-25T10:00' })
+
+    expect(store.dayTimeline).toEqual([
+      {
+        type: 'feed',
+        at: '2026-08-25T10:00:00Z',
+        data: { id: 7, started_at: '2026-08-25T10:00:00Z', amount_ml: 150 },
+      },
+    ])
+  })
+
+  it('removes a deleted feed from dayTimeline too, not just timeline', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
+    vi.mocked(apiClient.delete).mockResolvedValue({})
+    const store = useBabiesStore()
+    await store.create({})
+    store.dayTimeline = [
+      { type: 'feed', at: '2026-08-25T10:00:00Z', data: { id: 5 } as never },
+      { type: 'feed', at: '2026-08-25T09:00:00Z', data: { id: 6 } as never },
+    ]
+
+    await store.deleteFeed(5)
+
+    expect(store.dayTimeline.map((e) => e.data.id)).toEqual([6])
+  })
+
   it('restores the timeline if deleting a feed fails', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
     vi.mocked(apiClient.delete).mockRejectedValue(new Error('network error'))

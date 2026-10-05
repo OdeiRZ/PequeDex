@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Editar o borrar una toma/sueño/pañal de un día anterior no se
+  reflejaba en la línea temporal hasta cambiar de día en "Ritmo" y
+  volver** (`stores/babies.ts`): la lista de un día pasado se pinta
+  desde `dayTimeline` (una copia aparte, solo para ese día - separada
+  de `timeline`, que es siempre "lo más reciente de hoy", para no pisarse
+  con el sondeo cada 5s mientras el dashboard está abierto), pero
+  `createFeed()`/`updateFeed()`/`deleteFeed()` y sus equivalentes de
+  sueño/pañal solo tocaban `timeline`. Cambiar de día forzaba un
+  `fetchDayTimeline()` nuevo, que sí traía el dato correcto del
+  servidor - de ahí que "cambiar de día y volver" lo arreglara. Ahora
+  las seis acciones actualizan ambas copias a la vez.
 - **La rueda de "Inicio" se iba a la fecha de nacimiento del bebé al crear
   un sueño nuevo, en vez de a hoy** (`WheelColumn.vue`): confirmado en
   vivo contra el servidor local (dos intentos anteriores, centrados en

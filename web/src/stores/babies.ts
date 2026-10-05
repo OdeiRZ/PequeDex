@@ -206,12 +206,23 @@ interface BabiesState {
 // Inserts (or, if one with the same type+id already exists, replaces
 // and repositions) a single entry into an already-sorted-desc-by-`at`
 // timeline array, returning a new array - used by create*/update* below
-// to fold the POST/PUT response straight into `timeline` instead of a
-// second round-trip re-fetching the whole thing just to learn what the
-// first response already said. Correctly repositions on update too
-// (editing a feed's `started_at` backwards, say), not just a same-slot
-// overwrite - a plain `findIndex` + splice-in-place would leave it
-// sorted wrong until the dashboard's own 5s poll caught up.
+// to fold the POST/PUT response straight into `timeline` AND
+// `dayTimeline` instead of a second round-trip re-fetching the whole
+// thing just to learn what the first response already said. Applied to
+// both arrays unconditionally, not just whichever one is currently
+// rendered (see `rhythmTimeline` in DashboardView.vue) - real bug found
+// live: editing/deleting an entry several days back only patched
+// `timeline` (always "today"), so the visible list on that past day
+// kept showing the stale version until navigating away and back forced
+// a fresh `fetchDayTimeline()`. Harmless when the edited entry belongs
+// to a different day than whatever `dayTimeline` currently holds - the
+// view's own date-range filter (`visibleTimeline`) clips it back out
+// before it would ever render, and the next real day-navigation
+// overwrites `dayTimeline` wholesale from the server anyway. Correctly
+// repositions on update too (editing a feed's `started_at` backwards,
+// say), not just a same-slot overwrite - a plain `findIndex` +
+// splice-in-place would leave it sorted wrong until the dashboard's own
+// 5s poll caught up.
 function upsertTimelineEntry(timeline: TimelineEntry[], entry: TimelineEntry): TimelineEntry[] {
   const withoutExisting = timeline.filter(
     (existing) => !(existing.type === entry.type && existing.data.id === entry.data.id),
@@ -386,47 +397,41 @@ export const useBabiesStore = defineStore('babies', {
     // instead.
     async createFeed(payload: CreateFeedPayload) {
       const { data } = await apiClient.post(`/babies/${this.current!.id}/feeds`, payload)
-      this.timeline = upsertTimelineEntry(this.timeline, {
-        type: 'feed',
-        at: data.data.started_at,
-        data: data.data,
-      })
+      const entry: TimelineEntry = { type: 'feed', at: data.data.started_at, data: data.data }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     async updateFeed(id: number, payload: CreateFeedPayload) {
       const { data } = await apiClient.put(`/babies/${this.current!.id}/feeds/${id}`, payload)
-      this.timeline = upsertTimelineEntry(this.timeline, {
-        type: 'feed',
-        at: data.data.started_at,
-        data: data.data,
-      })
+      const entry: TimelineEntry = { type: 'feed', at: data.data.started_at, data: data.data }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     async createSleep(payload: CreateSleepPayload) {
       const { data } = await apiClient.post(`/babies/${this.current!.id}/sleeps`, payload)
-      this.timeline = upsertTimelineEntry(this.timeline, {
-        type: 'sleep',
-        at: data.data.started_at,
-        data: data.data,
-      })
+      const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     async updateSleep(id: number, payload: CreateSleepPayload) {
       const { data } = await apiClient.put(`/babies/${this.current!.id}/sleeps/${id}`, payload)
-      this.timeline = upsertTimelineEntry(this.timeline, {
-        type: 'sleep',
-        at: data.data.started_at,
-        data: data.data,
-      })
+      const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
       const { data } = await apiClient.post(`/babies/${this.current!.id}/diaper-changes`, payload)
-      this.timeline = upsertTimelineEntry(this.timeline, {
+      const entry: TimelineEntry = {
         type: 'diaper_change',
         at: data.data.changed_at,
         data: data.data,
-      })
+      }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
@@ -434,11 +439,13 @@ export const useBabiesStore = defineStore('babies', {
         `/babies/${this.current!.id}/diaper-changes/${id}`,
         payload,
       )
-      this.timeline = upsertTimelineEntry(this.timeline, {
+      const entry: TimelineEntry = {
         type: 'diaper_change',
         at: data.data.changed_at,
         data: data.data,
-      })
+      }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
     },
 
     // Optimistic: removed from `timeline` synchronously, before the
@@ -453,7 +460,11 @@ export const useBabiesStore = defineStore('babies', {
     // not a best-guess re-insertion.
     async deleteFeed(id: number) {
       const previous = this.timeline
+      const previousDay = this.dayTimeline
       this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'feed' && entry.data.id === id),
+      )
+      this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'feed' && entry.data.id === id),
       )
 
@@ -461,13 +472,18 @@ export const useBabiesStore = defineStore('babies', {
         await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`)
       } catch (error) {
         this.timeline = previous
+        this.dayTimeline = previousDay
         throw error
       }
     },
 
     async deleteSleep(id: number) {
       const previous = this.timeline
+      const previousDay = this.dayTimeline
       this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'sleep' && entry.data.id === id),
+      )
+      this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
 
@@ -475,13 +491,18 @@ export const useBabiesStore = defineStore('babies', {
         await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
       } catch (error) {
         this.timeline = previous
+        this.dayTimeline = previousDay
         throw error
       }
     },
 
     async deleteDiaperChange(id: number) {
       const previous = this.timeline
+      const previousDay = this.dayTimeline
       this.timeline = this.timeline.filter(
+        (entry) => !(entry.type === 'diaper_change' && entry.data.id === id),
+      )
+      this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'diaper_change' && entry.data.id === id),
       )
 
@@ -489,6 +510,7 @@ export const useBabiesStore = defineStore('babies', {
         await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
       } catch (error) {
         this.timeline = previous
+        this.dayTimeline = previousDay
         throw error
       }
     },

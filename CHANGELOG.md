@@ -41,7 +41,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   depende del tipo de pañal - una talla aplica igual a mojado, sucio o
   ambos. `web`: grupo de radios (`role="radiogroup"`) en "+ Pañal",
   mismo estilo de chip que ya usa "Sin indicar" del color de las heces,
-  justo antes del selector de "Cuándo").
+  justo antes del selector de "Cuándo"). La talla, cuando se indicó,
+  se muestra también en la línea temporal - `entryDiaperSizeLabel()`
+  en `DashboardView.vue` rellena el mismo badge que ya usaba la
+  duración de una toma/sueño (`entryDuration()`, `undefined` siempre
+  para un pañal, que no tiene concepto de duración), así que "Talla 1"
+  sale junto a los iconos de tipo exactamente igual que "10min" sale
+  junto a la gota de leche. Sin talla indicada, la fila se queda solo
+  con los iconos, como ya hacía antes de que existiera este campo.
 - **El peso de un registro de crecimiento admite dos decimales**
   (`growth-weight` en `DashboardView.vue`): el campo llevaba
   `step="0.1"`, que limita los incrementos de las flechas nativas del

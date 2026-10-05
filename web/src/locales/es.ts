@@ -301,6 +301,7 @@ export default {
       meconium: 'Meconio',
       sizeLabel: 'Talla',
       sizeUnspecified: 'Sin indicar',
+      sizeBadge: 'Talla {size}',
       toastUpdated: 'Pañal actualizado.',
       toastCreated: 'Pañal guardado.',
     },

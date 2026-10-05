@@ -835,6 +835,17 @@ function entryDuration(entry: (typeof babies.timeline)[number]): string | undefi
   return undefined
 }
 
+// Mismo hueco de badge que la duración de arriba, pero para un pañal -
+// que no tiene concepto de duración, así que entryDuration() siempre
+// devuelve undefined para él. Solo cuando la talla se indicó al
+// guardar (es opcional, ver `diaperSize` más abajo); sin ella, la fila
+// se queda con solo los iconos de tipo, como ya hacía antes de que
+// existiera este campo.
+function entryDiaperSizeLabel(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type !== 'diaper_change' || !entry.data.size) return undefined
+  return t('dashboard.diaperForm.sizeBadge', { size: entry.data.size })
+}
+
 // Same reasoning, applied to a feed's milk - a droplet colored like
 // the real thing next to the row's title. A bottle carries milk too
 // (formula or expressed, both read as white - `milk_type` itself is
@@ -1820,7 +1831,7 @@ const sleepPredictionDue = computed(() => {
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepPulsing(item.entry) ? undefined : entrySleepEmoji(item.entry)"
-                    :badge="entryDuration(item.entry)"
+                    :badge="entryDuration(item.entry) ?? entryDiaperSizeLabel(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"

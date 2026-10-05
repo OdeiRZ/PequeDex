@@ -299,6 +299,7 @@ export default {
       meconium: 'Meconium',
       sizeLabel: 'Size',
       sizeUnspecified: 'Unspecified',
+      sizeBadge: 'Size {size}',
       toastUpdated: 'Diaper updated.',
       toastCreated: 'Diaper saved.',
     },

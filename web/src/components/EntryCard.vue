@@ -182,21 +182,24 @@ function onRowClick() {
                tipo es esto" en dos sitios de la misma fila. El texto va
                primero y los iconos al final, no al revés - son un
                detalle que acompaña al dato principal (cuánto/qué tipo),
-               no la primera cosa que se lee. Con texto (sueño/toma con
-               duración), `min-w-14` + `justify-center` mantiene el
-               alineado entre filas que ya tenía antes ("15min" y "2h
-               15min" con el mismo ancho mínimo); sin texto (p.ej. un
-               pañal, que no tiene duración), la pastilla se encoge a solo
-               el icono en vez de forzar ese mismo ancho mínimo vacío. -->
+               no la primera cosa que se lee.
+
+               `min-w-16` es el MISMO ancho mínimo para las tres
+               variantes (con texto o solo icono) - a propósito, no por
+               descuido. Un primer intento lo aplicaba solo cuando había
+               texto, para que una pastilla solo-icono (pañal) se
+               encogiera a su contenido; en la práctica eso dejaba cada
+               fila con un ancho de pastilla distinto, empujadas todas
+               contra el icono de borrar por la derecha (ancho fijo) -
+               bordes derechos perfectamente alineados, pero el
+               izquierdo "bailando" fila a fila, confirmado a pixel sobre
+               una foto real del móvil. Con el mismo ancho mínimo en las
+               tres, también alinean por la izquierda - una pastilla
+               solo-icono queda con algo de aire de más a cambio. -->
           <span
             v-if="badge || dropletColor || poopColor || emoji"
-            class="flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-surface/70"
-            :class="[
-              categoryText[category],
-              badge
-                ? 'min-w-11 gap-1 px-1.5 py-0.5 text-[0.7rem] font-bold'
-                : 'gap-0.5 px-1.5 py-1',
-            ]"
+            class="flex min-w-16 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-surface/70 px-1.5 py-1 text-[0.7rem] font-bold"
+            :class="categoryText[category]"
           >
             <span v-if="badge">{{ badge }}</span>
             <svg

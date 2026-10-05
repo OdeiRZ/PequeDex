@@ -1019,27 +1019,42 @@ verse bien en una captura:
   `DashboardView.vue` calculan qué icono(s) lleva cada fila de pañal en
   la línea temporal, mismo criterio que el propio formulario: gota para
   mojado/ambos, caca (con el mismo *fallback* a marrón) para
-  sucio/ambos. Tercera prop opcional, `emoji` (más `emojiPulsing`) -
-  genérica, no específica de sueño, a diferencia de `dropletColor`/
-  `poopColor`: aquí sí es literalmente el emoji 💤 (`entrySleepEmoji()`
-  en `DashboardView.vue`), porque no hay ningún color que comunicar,
-  mismo criterio que ya usa `lib/milestoneCategory.ts` para los hitos -
-  "emoji, no un set de iconos". `emojiPulsing` (una animación de
-  opacidad + `translateY` suave, `prefers-reduced-motion` respetado)
-  distingue un sueño en curso (`ended_at` aún `null`) de uno ya
-  terminado sin cambiar el propio emoji.
+  sucio/ambos. Tercera prop opcional, `emoji` - genérica, no específica
+  de sueño, a diferencia de `dropletColor`/`poopColor`: aquí sí es
+  literalmente el emoji 💤 (`entrySleepEmoji()` en `DashboardView.vue`),
+  porque no hay ningún color que comunicar, mismo criterio que ya usa
+  `lib/milestoneCategory.ts` para los hitos - "emoji, no un set de
+  iconos". Solo se pasa para un sueño ya terminado - uno en curso (sin
+  `ended_at`) no lo lleva, porque ese tiene su propio botón "Finalizar"
+  en vez de pastilla (ver más abajo), y es ahí donde vive su 💤 ahora.
 
   Estos tres (`dropletColor`/`poopColor`/`emoji`) vivían junto al
   título, en una fila aparte del `badge` de duración - duplicaban
   conceptualmente la info de "tipo/estado" que ya llevaba la propia
-  pastilla al lado. Se movieron dentro de ella: la pastilla ahora
-  renderiza icono(s) + `badge` (texto) cuando hay duración, o solo
-  icono(s) sin texto cuando no la hay - un pañal, que nunca tuvo
-  duración ni, hasta ahora, pastilla propia. El color real de cada
-  icono se mantiene (no se vuelve monocromo de categoría); `min-w-14`
-  (el ancho mínimo que alinea "15min"/"2h 15min" entre filas) solo se
-  aplica cuando hay texto, para que una pastilla solo-icono se encoja a
-  su contenido en vez de arrastrar ese hueco vacío.
+  pastilla al lado. Se movieron dentro de ella, DESPUÉS del texto: la
+  duración/estado es el dato principal que se lee primero, el icono un
+  detalle que lo acompaña al final, no al revés (orden anterior: icono
+  antes que texto). La pastilla ahora renderiza `badge` (texto) +
+  icono(s) cuando hay duración, o solo icono(s) sin texto cuando no la
+  hay - un pañal, que nunca tuvo duración ni, hasta ahora, pastilla
+  propia. El color real de cada icono se mantiene (no se vuelve
+  monocromo de categoría); `min-w-11` (el ancho mínimo que alinea
+  "15min"/"2h 15min" entre filas, reducido desde `min-w-14` y con texto
+  más pequeño, `text-[0.7rem]` en vez de `text-xs`, para dejarle más
+  peso visual a la hora de al lado - que a su vez sube de `text-xs` a
+  `text-sm`) solo se aplica cuando hay texto, para que una pastilla
+  solo-icono se encoja a su contenido en vez de arrastrar ese hueco
+  vacío. Centrado del contenido dentro de la pastilla verificado con
+  `getBoundingClientRect()` en vivo (hueco izquierdo = hueco derecho),
+  no solo a ojo sobre una captura recortada - ya nos habíamos
+  equivocado una vez antes confiando solo en eso.
+
+  La prop `emojiPulsing` que existía para animar el 💤 de un sueño en
+  curso se retiró por completo: ya no hace falta, porque ese 💤 ya no
+  vive aquí - vive dentro del propio botón "Finalizar"
+  (`DashboardView.vue`, junto a `entrySleepPulsing()`), con la misma
+  animación de "respirar" movida con él a un `<style scoped>` propio de
+  esa vista.
 - **`ActionBar.vue`** pasa de barra plana pegada al borde inferior a
   una pastilla flotante (`rounded-full`, sombra propia, margen lateral)
   — se siente a controles de una app nativa, no a la barra de acciones

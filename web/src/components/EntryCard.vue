@@ -23,17 +23,14 @@ const props = withDefaults(
      * appear alongside `dropletColor` at once (a "both" diaper change
      * has pee and poop both). */
     poopColor?: string | null
-    /** A small emoji next to the title - 💤 for a sleep entry (see
-     * `entrySleepEmoji()` in `DashboardView.vue`). Emoji, not an SVG
-     * icon, same "matches this app's existing convention, no new
-     * assets" reasoning as `lib/milestoneCategory.ts`'s own emoji map.
-     * Undefined renders nothing. */
+    /** A small emoji in the badge pill - 💤 for a finished sleep entry
+     * (see `entrySleepEmoji()` in `DashboardView.vue`). A sleep still in
+     * progress doesn't pass this - that one shows its own 💤 inside the
+     * "Finalizar" button instead (`#primaryAction`), not here. Emoji,
+     * not an SVG icon, same "matches this app's existing convention, no
+     * new assets" reasoning as `lib/milestoneCategory.ts`'s own emoji
+     * map. Undefined renders nothing. */
     emoji?: string | null
-    /** Gently breathes the emoji above instead of leaving it static -
-     * an ongoing sleep (no `ended_at` yet), so "still asleep right
-     * now" reads differently at a glance from "was asleep, already
-     * woke up". */
-    emojiPulsing?: boolean
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -59,7 +56,7 @@ const props = withDefaults(
      * no aquí - ver su propio comentario más abajo en la plantilla. */
     revealPx?: number
   }>(),
-  { interactive: true, pulsing: false, emojiPulsing: false, swipeToDelete: false, revealPx: 64 },
+  { interactive: true, pulsing: false, swipeToDelete: false, revealPx: 64 },
 )
 
 const emit = defineEmits<{ open: [] }>()
@@ -174,15 +171,18 @@ function onRowClick() {
             <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
               <span class="truncate">{{ title }}</span>
             </div>
-            <div class="text-xs tabular-nums text-text-muted">{{ meta }}</div>
+            <div class="text-sm tabular-nums text-text-muted">{{ meta }}</div>
             <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
           </div>
 
-          <!-- La pastilla ahora concentra TODA la info de "estado" de la
-               entrada: icono(s) de tipo (gota de leche/orina, caca) +
-               duración si la hay - antes el icono vivía junto al título y
-               la duración vivía aquí, duplicando el "de qué tipo es esto"
-               en dos sitios de la misma fila. Con texto (sueño/toma con
+          <!-- La pastilla concentra TODA la info de "estado" de la
+               entrada: duración (si la hay) + icono(s) de tipo (gota de
+               leche/orina, caca, 💤) - antes el icono vivía junto al
+               título y la duración vivía aquí, duplicando el "de qué
+               tipo es esto" en dos sitios de la misma fila. El texto va
+               primero y los iconos al final, no al revés - son un
+               detalle que acompaña al dato principal (cuánto/qué tipo),
+               no la primera cosa que se lee. Con texto (sueño/toma con
                duración), `min-w-14` + `justify-center` mantiene el
                alineado entre filas que ya tenía antes ("15min" y "2h
                15min" con el mismo ancho mínimo); sin texto (p.ej. un
@@ -190,14 +190,15 @@ function onRowClick() {
                el icono en vez de forzar ese mismo ancho mínimo vacío. -->
           <span
             v-if="badge || dropletColor || poopColor || emoji"
-            class="flex shrink-0 items-center whitespace-nowrap rounded-full bg-surface/70"
+            class="flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-surface/70"
             :class="[
               categoryText[category],
               badge
-                ? 'min-w-14 justify-center gap-1 px-2 py-0.5 text-xs font-bold'
+                ? 'min-w-11 gap-1 px-1.5 py-0.5 text-[0.7rem] font-bold'
                 : 'gap-0.5 px-1.5 py-1',
             ]"
           >
+            <span v-if="badge">{{ badge }}</span>
             <svg
               v-if="dropletColor"
               viewBox="0 0 24 24"
@@ -223,15 +224,9 @@ function onRowClick() {
               <circle cx="12" cy="9" r="3.2" />
               <circle cx="12" cy="6" r="2" />
             </svg>
-            <span
-              v-if="emoji"
-              class="shrink-0 text-xs leading-none"
-              :class="emojiPulsing && 'entry-emoji-pulsing'"
-              aria-hidden="true"
-            >
+            <span v-if="emoji" class="shrink-0 text-xs leading-none" aria-hidden="true">
               {{ emoji }}
             </span>
-            <span v-if="badge">{{ badge }}</span>
           </span>
         </component>
 
@@ -296,31 +291,6 @@ function onRowClick() {
 
 @media (prefers-reduced-motion: reduce) {
   .entry-card-pulsing {
-    animation: none;
-  }
-}
-
-/* A gentle rise-and-fade, not a hard blink - reads as "still
-   happening" without competing for attention with the flash/glow
-   animations elsewhere on this same card. */
-.entry-emoji-pulsing {
-  animation: entry-emoji-breathe 2s ease-in-out infinite;
-}
-
-@keyframes entry-emoji-breathe {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-1px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .entry-emoji-pulsing {
     animation: none;
   }
 }

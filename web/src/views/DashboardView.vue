@@ -1794,11 +1794,15 @@ const sleepPredictionDue = computed(() => {
                     v-else
                     :category="entryCategory(item.entry)"
                     :title="entryTitle(item.entry)"
-                    :meta="new Date(item.entry.at).toLocaleString(dateLocale)"
+                    :meta="
+                      new Date(item.entry.at).toLocaleTimeString(dateLocale, {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    "
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
-                    :emoji="entrySleepEmoji(item.entry)"
-                    :emoji-pulsing="entrySleepPulsing(item.entry)"
+                    :emoji="entrySleepPulsing(item.entry) ? undefined : entrySleepEmoji(item.entry)"
                     :badge="entryDuration(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
@@ -1810,10 +1814,13 @@ const sleepPredictionDue = computed(() => {
                     >
                       <button
                         type="button"
-                        class="shrink-0 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-sleep"
+                        class="flex shrink-0 items-center gap-1 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-sleep"
                         @click="onFinishSleep(item.entry.data)"
                       >
                         {{ t('dashboard.timeline.finishSleep') }}
+                        <span class="sleep-emoji-pulsing text-xs leading-none" aria-hidden="true"
+                          >💤</span
+                        >
                       </button>
                     </template>
                     <template #actions>
@@ -2590,3 +2597,30 @@ const sleepPredictionDue = computed(() => {
     </template>
   </div>
 </template>
+
+<style scoped>
+/* Mismo "respirar" que antes llevaba el 💤 de EntryCard.vue mientras el
+   sueño seguía en curso - se movió aquí al mover el propio emoji, junto
+   al botón "Finalizar", en vez de a una pastilla aparte. */
+.sleep-emoji-pulsing {
+  animation: sleep-emoji-breathe 2s ease-in-out infinite;
+}
+
+@keyframes sleep-emoji-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sleep-emoji-pulsing {
+    animation: none;
+  }
+}
+</style>

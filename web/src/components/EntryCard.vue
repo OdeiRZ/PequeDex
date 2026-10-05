@@ -171,63 +171,61 @@ function onRowClick() {
             <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
               <span class="truncate">{{ title }}</span>
             </div>
-            <div class="text-sm tabular-nums text-text-muted">{{ meta }}</div>
+
+            <!-- La pastilla va SEGUIDA del texto principal (la hora), no
+                 debajo en su propia línea ni como hermana empujada contra
+                 el icono de borrar por la derecha - eso último dejaba su
+                 borde izquierdo en un sitio distinto fila a fila, según
+                 cuánto midiera su propio contenido (confirmado a pixel
+                 sobre una foto real: bordes derechos alineados, pero el
+                 izquierdo "bailando"). `flex-wrap` las mantiene en la
+                 misma línea cuando cabe (el caso normal) y solo baja la
+                 pastilla a una línea propia si el ancho real no alcanza,
+                 en vez de forzar un salto siempre. Duración + icono(s) de
+                 tipo (gota de leche/orina, caca, 💤) dentro de la
+                 pastilla - texto primero, iconos al final, como detalle
+                 que acompaña al dato principal, no al revés. -->
+            <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span class="text-sm tabular-nums text-text-muted">{{ meta }}</span>
+              <span
+                v-if="badge || dropletColor || poopColor || emoji"
+                class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-surface/70 px-1.5 py-0.5 text-[0.7rem] font-bold"
+                :class="categoryText[category]"
+              >
+                <span v-if="badge">{{ badge }}</span>
+                <svg
+                  v-if="dropletColor"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="h-3 w-3 shrink-0 text-text-muted"
+                  :style="{ fill: dropletColor }"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
+                </svg>
+                <svg
+                  v-if="poopColor"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  class="h-3 w-3 shrink-0 text-text-muted"
+                  :style="{ fill: poopColor }"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="18" r="5.5" />
+                  <circle cx="12" cy="13" r="4.3" />
+                  <circle cx="12" cy="9" r="3.2" />
+                  <circle cx="12" cy="6" r="2" />
+                </svg>
+                <span v-if="emoji" class="shrink-0 text-xs leading-none" aria-hidden="true">
+                  {{ emoji }}
+                </span>
+              </span>
+            </div>
+
             <div v-if="description" class="mt-0.5 text-xs text-text-muted">{{ description }}</div>
           </div>
-
-          <!-- La pastilla concentra TODA la info de "estado" de la
-               entrada: duración (si la hay) + icono(s) de tipo (gota de
-               leche/orina, caca, 💤) - antes el icono vivía junto al
-               título y la duración vivía aquí, duplicando el "de qué
-               tipo es esto" en dos sitios de la misma fila. El texto va
-               primero y los iconos al final, no al revés - son un
-               detalle que acompaña al dato principal (cuánto/qué tipo),
-               no la primera cosa que se lee. Con texto (sueño/toma con
-               duración), `min-w-14` + `justify-center` mantiene el
-               alineado entre filas que ya tenía antes ("15min" y "2h
-               15min" con el mismo ancho mínimo); sin texto (p.ej. un
-               pañal, que no tiene duración), la pastilla se encoge a solo
-               el icono en vez de forzar ese mismo ancho mínimo vacío. -->
-          <span
-            v-if="badge || dropletColor || poopColor || emoji"
-            class="flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-surface/70"
-            :class="[
-              categoryText[category],
-              badge
-                ? 'min-w-11 gap-1 px-1.5 py-0.5 text-[0.7rem] font-bold'
-                : 'gap-0.5 px-1.5 py-1',
-            ]"
-          >
-            <span v-if="badge">{{ badge }}</span>
-            <svg
-              v-if="dropletColor"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-              class="h-3 w-3 shrink-0 text-text-muted"
-              :style="{ fill: dropletColor }"
-              aria-hidden="true"
-            >
-              <path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z" />
-            </svg>
-            <svg
-              v-if="poopColor"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1"
-              class="h-3 w-3 shrink-0 text-text-muted"
-              :style="{ fill: poopColor }"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="18" r="5.5" />
-              <circle cx="12" cy="13" r="4.3" />
-              <circle cx="12" cy="9" r="3.2" />
-              <circle cx="12" cy="6" r="2" />
-            </svg>
-            <span v-if="emoji" class="shrink-0 text-xs leading-none" aria-hidden="true">
-              {{ emoji }}
-            </span>
-          </span>
         </component>
 
         <!-- Hermano del `component` de arriba, no contenido dentro de

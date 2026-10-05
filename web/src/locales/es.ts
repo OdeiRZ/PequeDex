@@ -299,6 +299,8 @@ export default {
       yellow: 'Amarillo',
       brown: 'Marrón',
       meconium: 'Meconio',
+      sizeLabel: 'Talla',
+      sizeUnspecified: 'Sin indicar',
       toastUpdated: 'Pañal actualizado.',
       toastCreated: 'Pañal guardado.',
     },

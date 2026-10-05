@@ -3,6 +3,7 @@
 namespace App\Http\Requests\DiaperChanges;
 
 use App\Enums\DiaperResidueColor;
+use App\Enums\DiaperSize;
 use App\Enums\DiaperType;
 use App\Http\Requests\Concerns\AuthorizesBabyAccess;
 use App\Http\Requests\Concerns\HasDateFieldMessages;
@@ -25,6 +26,7 @@ class UpdateDiaperChangeRequest extends FormRequest
             'changed_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'type' => ['required', Rule::enum(DiaperType::class)],
             'residue_color' => ['nullable', 'prohibited_if:type,'.DiaperType::Mojado->value, Rule::enum(DiaperResidueColor::class)],
+            'size' => ['nullable', Rule::enum(DiaperSize::class)],
             'notes' => ['nullable', 'string'],
         ];
     }

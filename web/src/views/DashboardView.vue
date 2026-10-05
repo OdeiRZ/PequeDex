@@ -8,6 +8,7 @@ import {
   type BabySex,
   type DiaperChange,
   type DiaperResidueColor,
+  type DiaperSize,
   type DiaperType,
   type Feed,
   type FeedType,
@@ -322,6 +323,7 @@ function openSheet(sheet: Exclude<Sheet, null>) {
   } else if (sheet === 'diaper') {
     diaperType.value = 'mojado'
     diaperResidueColor.value = ''
+    diaperSize.value = ''
     diaperChangedAt.value = nowForInput()
     editingDiaperId.value = null
   } else if (sheet === 'growth') {
@@ -633,6 +635,7 @@ async function onSubmitSleep() {
 
 const diaperType = ref<DiaperType>('mojado')
 const diaperResidueColor = ref<DiaperResidueColor | ''>('')
+const diaperSize = ref<DiaperSize | ''>('')
 const diaperChangedAt = ref('')
 const savingDiaper = ref(false)
 const editingDiaperId = ref<number | null>(null)
@@ -699,10 +702,23 @@ function onSelectDiaperResidueColor(value: DiaperResidueColor | '') {
   diaperResidueColor.value = value
 }
 
+// No ligada a una marca concreta - el estándar genérico que usa la
+// mayoría de fabricantes en España, de "1" a "6+" (sin "RN", a petición
+// expresa). Opcional, igual que el color de las heces: no todo el mundo
+// quiere anotarla cada vez, y aplica igual a mojado/sucio/ambos (a
+// diferencia del color, que solo tiene sentido con algo que mirar).
+const DIAPER_SIZES: DiaperSize[] = ['1', '2', '3', '4', '5', '6+']
+
+function onSelectDiaperSize(value: DiaperSize | '') {
+  if (value !== diaperSize.value) feedback.select()
+  diaperSize.value = value
+}
+
 function openDiaperEdit(diaperChange: DiaperChange) {
   editingDiaperId.value = diaperChange.id
   diaperType.value = diaperChange.type
   diaperResidueColor.value = diaperChange.residue_color ?? ''
+  diaperSize.value = diaperChange.size ?? ''
   diaperChangedAt.value = toLocalInputValue(diaperChange.changed_at)
   activeSheet.value = 'diaper'
 }
@@ -715,6 +731,7 @@ async function onSubmitDiaper() {
       changed_at: toUtcIso(diaperChangedAt.value),
       type: diaperType.value,
       residue_color: diaperType.value === 'mojado' ? null : diaperResidueColor.value || null,
+      size: diaperSize.value || null,
     }
 
     if (editingDiaperId.value) {
@@ -2224,6 +2241,45 @@ const sleepPredictionDue = computed(() => {
                   >
                     <path d="M5 13l4 4L19 7" />
                   </svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">{{ t('dashboard.diaperForm.sizeLabel') }}</span>
+              <div
+                class="flex flex-wrap items-center gap-2"
+                role="radiogroup"
+                :aria-label="t('dashboard.diaperForm.sizeLabel')"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    diaperSize === ''
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-checked="diaperSize === ''"
+                  @click="onSelectDiaperSize('')"
+                >
+                  {{ t('dashboard.diaperForm.sizeUnspecified') }}
+                </button>
+                <button
+                  v-for="size in DIAPER_SIZES"
+                  :key="size"
+                  type="button"
+                  role="radio"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    diaperSize === size
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-checked="diaperSize === size"
+                  @click="onSelectDiaperSize(size)"
+                >
+                  {{ size }}
                 </button>
               </div>
             </div>

@@ -33,6 +33,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Talla del pañal, opcional, al crear/editar un cambio** (`api`:
+  columna `size` nullable en `diaper_changes`, enum `DiaperSize`
+  ('1'..'5','6+' - sin "RN", a petición expresa; estándar genérico, no
+  ligado a una marca concreta), validación `nullable` + `Rule::enum` en
+  ambos FormRequest, mismo patrón que `residue_color` salvo que no
+  depende del tipo de pañal - una talla aplica igual a mojado, sucio o
+  ambos. `web`: grupo de radios (`role="radiogroup"`) en "+ Pañal",
+  mismo estilo de chip que ya usa "Sin indicar" del color de las heces,
+  justo antes del selector de "Cuándo").
 - **El peso de un registro de crecimiento admite dos decimales**
   (`growth-weight` en `DashboardView.vue`): el campo llevaba
   `step="0.1"`, que limita los incrementos de las flechas nativas del

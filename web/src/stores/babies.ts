@@ -19,6 +19,7 @@ export type FeedSide = 'izquierdo' | 'derecho' | 'ambos'
 export type MilkType = 'calostro' | 'leche'
 export type DiaperType = 'mojado' | 'sucio' | 'ambos'
 export type DiaperResidueColor = 'verde' | 'amarillo' | 'marron' | 'meconio'
+export type DiaperSize = '1' | '2' | '3' | '4' | '5' | '6+'
 
 export interface Feed {
   id: number
@@ -49,6 +50,7 @@ export interface DiaperChange {
   changed_at: string
   type: DiaperType
   residue_color: DiaperResidueColor | null
+  size: DiaperSize | null
   notes: string | null
 }
 
@@ -138,6 +140,7 @@ interface CreateDiaperChangePayload {
   changed_at: string
   type: DiaperType
   residue_color?: DiaperResidueColor | null
+  size?: DiaperSize | null
   notes?: string | null
 }
 

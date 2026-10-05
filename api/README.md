@@ -129,6 +129,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   tiene sentido (`type = sucio`/`ambos`, nadie está obligado a anotarlo
   cada vez), pero prohibido explícitamente para `type = mojado` — un
   pañal solo mojado no tiene heces que describir.
+- `DiaperChange::size` (`App\Enums\DiaperSize`, '1'..'5'/'6+') — opcional
+  igual que `residue_color`, pero sin ninguna regla `prohibited_if`: a
+  diferencia del color (que solo tiene sentido con algo que mirar), la
+  talla aplica igual a `mojado`/`sucio`/`ambos`. Estándar genérico, no
+  ligado a ninguna marca concreta; sin "RN" (recién nacido), a petición
+  expresa.
 - `Feed::ended_at` — existía en la tabla y el modelo desde el principio
   (mismo patrón que `Sleep`), pero sin usar desde el frontend hasta que
   se le añadió `prohibited_unless:type,pecho` a su validación: la

@@ -297,6 +297,8 @@ export default {
       yellow: 'Yellow',
       brown: 'Brown',
       meconium: 'Meconium',
+      sizeLabel: 'Size',
+      sizeUnspecified: 'Unspecified',
       toastUpdated: 'Diaper updated.',
       toastCreated: 'Diaper saved.',
     },

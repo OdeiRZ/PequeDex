@@ -3,6 +3,7 @@
 namespace App\Http\Requests\DiaperChanges;
 
 use App\Enums\DiaperResidueColor;
+use App\Enums\DiaperSize;
 use App\Enums\DiaperType;
 use App\Http\Requests\Concerns\AuthorizesBabyAccess;
 use App\Http\Requests\Concerns\HasDateFieldMessages;
@@ -28,6 +29,9 @@ class StoreDiaperChangeRequest extends FormRequest
             // wants to note it every time - but meaningless (and
             // prohibited) for a purely wet one.
             'residue_color' => ['nullable', 'prohibited_if:type,'.DiaperType::Mojado->value, Rule::enum(DiaperResidueColor::class)],
+            // A diferencia de residue_color, no depende del tipo - la
+            // talla aplica igual a mojado/sucio/ambos.
+            'size' => ['nullable', Rule::enum(DiaperSize::class)],
             'notes' => ['nullable', 'string'],
         ];
     }

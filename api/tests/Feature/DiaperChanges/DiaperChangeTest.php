@@ -54,6 +54,38 @@ it('rejects a residue color on a purely wet diaper change', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('residue_color');
 });
 
+it('creates a diaper change with a size', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'mojado',
+        'size' => '3',
+    ])->assertCreated()->assertJsonPath('data.size', '3');
+});
+
+it('allows a diaper change with no size at all', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'mojado',
+    ])->assertCreated()->assertJsonPath('data.size', null);
+});
+
+it('rejects an invalid diaper size', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+
+    $this->postJson("/api/babies/{$baby->id}/diaper-changes", [
+        'changed_at' => '2026-08-30 10:00:00',
+        'type' => 'mojado',
+        'size' => 'XL',
+    ])->assertUnprocessable()->assertJsonValidationErrors('size');
+});
+
 it('rejects an invalid diaper type', function () {
     $user = actingAsUser();
     $baby = babyForDiaperTest($user);

@@ -222,7 +222,7 @@ function onRowClick() {
 
           <span
             v-if="badge || dropletColor || poopColor || emoji"
-            class="shrink-0 text-center text-sm font-bold tabular-nums text-text-muted"
+            class="mr-1.5 shrink-0 text-center text-sm font-bold tabular-nums text-text-muted"
           >
             {{ meta }}
           </span>

@@ -152,6 +152,39 @@ export default {
     unavailable: 'Audio coming soon',
     unavailableHint: 'This sound will be available soon.',
   },
+  stats: {
+    title: 'Statistics',
+    linkCardTitle: 'Statistics',
+    linkCardBody: 'Sleep, feeding and diaper patterns.',
+    notEnoughData: 'Not enough data yet for this statistic.',
+    noDataYet: 'No data in any time slot yet.',
+    hourBucket: {
+      dawn: 'Early morning',
+      morning: 'Morning',
+      afternoon: 'Afternoon',
+      night: 'Night',
+    },
+    sleep: {
+      title: 'Sleep',
+      totalLabel: 'Sleeps logged',
+      averageLabel: 'Average duration',
+      byHourLabel: 'Minutes asleep per time slot',
+    },
+    feed: {
+      title: 'Feeds',
+      pechoShareLabel: 'Breastfed',
+      biberonShareLabel: 'Bottle-fed',
+      pechoDurationLabel: 'Average duration (breast)',
+      bottleAmountLabel: 'Average amount (bottle)',
+      byHourLabel: 'Feeds per time slot',
+    },
+    diaper: {
+      title: 'Diapers',
+      bySizeLabel: 'By size',
+      peeByHourLabel: 'Wet changes per time slot',
+      poopByHourLabel: 'Dirty changes per time slot',
+    },
+  },
   dashboard: {
     onboarding: {
       name: 'Name (optional)',

@@ -64,6 +64,38 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Nueva sección "Estadísticas" (`/estadisticas`), primera fase**:
+  patrones de sueño (duración media, franja del día donde más duerme),
+  tomas (reparto pecho/biberón, lado más usado, duración media al
+  pecho, cantidad media en biberón, franja del día con más tomas) y
+  pañales (reparto mojado/sucio/ambos, total por talla, franjas con más
+  pis/caca por separado). Centralizado en el bebé actual únicamente, sin
+  export a PDF todavía (queda para una fase posterior, una vez esta
+  pantalla esté asentada).
+
+  Todo el cálculo vive en el frontend (`lib/stats.ts`, funciones puras
+  y testeadas sin tocar Pinia, mismo criterio que `lib/sleepHistory.ts`/
+  `lib/contractionStats.ts`), no en un endpoint nuevo - ninguno de los
+  endpoints `GET /babies/{id}/{sleeps,feeds,diaper-changes}` necesitó
+  cambios, ya devolvían el historial completo sin filtrar (confirmado
+  leyendo los controladores). Agregar por franja horaria en el backend
+  habría requerido saber la zona horaria real de quien mira la app, que
+  el servidor no conoce - exactamente el motivo por el que
+  `WeeklySleep.vue`/`DailyRhythm.vue` ya calculan en el navegador en vez
+  de en Laravel. `babies.fetchStatsData()` (nuevo) trae los tres
+  historiales en paralelo a tres arrays dedicados (`statsSleeps`/
+  `statsFeeds`/`statsDiaperChanges`), separados de `timeline`/
+  `dayTimeline`/`recentSleeps` para no interferir con lo que ya leen.
+
+  Cuatro franjas horarias fijas (Madrugada 00-06, Mañana 06-12, Tarde
+  12-18, Noche 18-24), bucketing por la hora LOCAL de inicio de cada
+  evento, no un reparto proporcional minuto a minuto como ya hace
+  `summarizeSleepByDay()` por día - "a qué hora suele empezar" es la
+  lectura más útil para "franja más habitual" sin esa complejidad
+  extra. "Datos insuficientes" con menos de 3 entradas (mismo umbral
+  `MIN_SAMPLE_SIZE` que `SleepPatternPredictor`/`FeedPatternPredictor`
+  en el backend) en vez de una media o un reparto que dice más de lo
+  que los datos sostienen.
 - **La hora se adelanta junto al icono de tipo cuando aún no hay
   duración** (`EntryCard.vue`): mientras una toma espera a que se pulse
   su botón "Finalizar" (ver más abajo) - o en cualquier otra entrada

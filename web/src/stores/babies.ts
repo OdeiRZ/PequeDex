@@ -201,6 +201,15 @@ interface BabiesState {
   feedPrediction: FeedPrediction | null
   recentSleeps: Sleep[]
   contractions: Contraction[]
+  /** The baby's whole history of each, for `StatsView.vue` - unlike
+   * `timeline`/`dayTimeline` (bounded to "most recent N" or a single
+   * day) or `recentSleeps` (a short rolling window for the weekly
+   * chart), stats like "franja más habitual" need every entry ever
+   * logged, not just a recent slice. Fetched once when the stats page
+   * opens (`fetchStatsData()`), not kept live/polled. */
+  statsSleeps: Sleep[]
+  statsFeeds: Feed[]
+  statsDiaperChanges: DiaperChange[]
 }
 
 // Inserts (or, if one with the same type+id already exists, replaces
@@ -270,6 +279,9 @@ export const useBabiesStore = defineStore('babies', {
     feedPrediction: null,
     recentSleeps: [],
     contractions: [],
+    statsSleeps: [],
+    statsFeeds: [],
+    statsDiaperChanges: [],
   }),
 
   actions: {
@@ -720,6 +732,28 @@ export const useBabiesStore = defineStore('babies', {
         params: { since: sinceParam },
       })
       this.recentSleeps = data.data
+    },
+
+    // The full history of each, for StatsView.vue - `feeds`/
+    // `diaper-changes` already return everything with no `since` filter
+    // (unlike `sleeps`, which defaults to the same unfiltered behavior
+    // when called with none here), so no new backend endpoint was
+    // needed for this. Fetched in parallel, once, when the stats page
+    // mounts.
+    async fetchStatsData() {
+      if (!this.current) {
+        return
+      }
+
+      const babyId = this.current.id
+      const [sleeps, feeds, diaperChanges] = await Promise.all([
+        apiClient.get(`/babies/${babyId}/sleeps`),
+        apiClient.get(`/babies/${babyId}/feeds`),
+        apiClient.get(`/babies/${babyId}/diaper-changes`),
+      ])
+      this.statsSleeps = sleeps.data.data
+      this.statsFeeds = feeds.data.data
+      this.statsDiaperChanges = diaperChanges.data.data
     },
   },
 })

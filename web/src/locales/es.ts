@@ -153,6 +153,39 @@ export default {
     unavailable: 'Audio pendiente',
     unavailableHint: 'Este sonido estará disponible próximamente.',
   },
+  stats: {
+    title: 'Estadísticas',
+    linkCardTitle: 'Estadísticas',
+    linkCardBody: 'Patrones de sueño, tomas y pañales.',
+    notEnoughData: 'Todavía no hay datos suficientes para esta estadística.',
+    noDataYet: 'Sin datos en ninguna franja todavía.',
+    hourBucket: {
+      dawn: 'Madrugada',
+      morning: 'Mañana',
+      afternoon: 'Tarde',
+      night: 'Noche',
+    },
+    sleep: {
+      title: 'Sueño',
+      totalLabel: 'Sueños registrados',
+      averageLabel: 'Duración media',
+      byHourLabel: 'Minutos dormidos por franja',
+    },
+    feed: {
+      title: 'Tomas',
+      pechoShareLabel: 'Al pecho',
+      biberonShareLabel: 'Con biberón',
+      pechoDurationLabel: 'Duración media (pecho)',
+      bottleAmountLabel: 'Cantidad media (biberón)',
+      byHourLabel: 'Tomas por franja',
+    },
+    diaper: {
+      title: 'Pañales',
+      bySizeLabel: 'Por talla',
+      peeByHourLabel: 'Pis por franja',
+      poopByHourLabel: 'Caca por franja',
+    },
+  },
   dashboard: {
     onboarding: {
       name: 'Nombre (opcional)',

@@ -34,6 +34,7 @@ import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
 import SoundsLinkCard from '@/components/SoundsLinkCard.vue'
+import StatsLinkCard from '@/components/StatsLinkCard.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
 import { DIAPER_PEE_COLOR, DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
@@ -1820,6 +1821,7 @@ const sleepPredictionDue = computed(() => {
               v-if="babies.current && auth.user?.today_summary_enabled"
               class="dash-enter"
             />
+            <StatsLinkCard class="dash-enter" />
 
             <section
               v-if="enabledCategories.includes('milestone')"

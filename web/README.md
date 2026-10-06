@@ -1270,6 +1270,51 @@ parpadeo del contenido viejo). Cada intervalo de sondeo en
 Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
 breve solape de montaje es inofensivo.
 
+## Estadísticas (`/estadisticas`)
+
+Primera fase de una sección de analítica más amplia (crecimiento,
+"horarios normativos", export a PDF quedan para después). `StatsView.vue`
++ `lib/stats.ts` (funciones puras, testeadas sin tocar Pinia - mismo
+criterio que `lib/sleepHistory.ts`/`lib/contractionStats.ts`), accesible
+desde una `StatsLinkCard.vue` en el dashboard (mismo patrón que
+`SoundsLinkCard.vue`), solo una vez el bebé ha nacido.
+
+Todo el cálculo vive en el frontend, no en un endpoint nuevo - los tres
+endpoints que ya existían (`GET /babies/{id}/sleeps`, `/feeds`,
+`/diaper-changes`) ya devolvían el historial completo sin filtrar
+(confirmado leyendo los controladores antes de escribir nada), así que
+`babies.fetchStatsData()` (nuevo, en `stores/babies.ts`) solo necesitó
+traer los tres en paralelo a tres arrays dedicados (`statsSleeps`/
+`statsFeeds`/`statsDiaperChanges`) - separados de `timeline`/
+`dayTimeline`/`recentSleeps` para no interferir con lo que ya leen esos.
+Agregar por franja horaria en el propio backend habría exigido que
+Laravel supiera la zona horaria real de quien mira la app, algo que no
+puede saber - el mismo motivo por el que `WeeklySleep.vue`/
+`DailyRhythm.vue` ya calculan sus propios totales en el navegador en vez
+de pedírselos a la API.
+
+Cuatro franjas horarias fijas en `lib/stats.ts` (Madrugada 00-06, Mañana
+06-12, Tarde 12-18, Noche 18-24), bucketing por la hora LOCAL de inicio
+de cada evento (`Date#getHours()`) - no un reparto proporcional
+minuto a minuto entre franjas como ya hace `summarizeSleepByDay()` entre
+días; "a qué hora suele empezar" es la lectura que de verdad importa
+para "franja más habitual" sin esa complejidad de más. Con menos de 3
+entradas (`MIN_SAMPLE_SIZE`, mismo umbral que
+`SleepPatternPredictor`/`FeedPatternPredictor` en el backend) cada
+sección muestra "datos insuficientes" en vez de una media/reparto que
+diría más de lo que los datos realmente sostienen.
+
+`HourBucketChart.vue` es el único componente de gráfico nuevo - reutiliza
+la misma animación "crecer desde el suelo al montar" que ya usaba
+`WeeklySleep.vue` para sus barras semanales, generalizada a 4 barras en
+vez de 7 y a un valor+formateador genéricos (minutos para sueño, conteo
+para tomas/pañales) en vez de horas fijas. Usa `categorySolidBg` (de
+`lib/category.ts`) para el color de cada barra, no una clase Tailwind
+interpolada (`` `bg-${category}` ``) - el propio comentario de
+`category.ts` ya advierte que el escaneador de Tailwind no detecta
+nombres de clase construidos en tiempo de ejecución, solo los que
+aparecen escritos literalmente en el código.
+
 ## Despliegue
 
 En producción ([odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/)):

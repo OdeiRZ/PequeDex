@@ -4,19 +4,27 @@ import { useI18n } from 'vue-i18n'
 import { useBabiesStore } from '@/stores/babies'
 import { useFeedback } from '@/composables/useFeedback'
 import HourBucketChart from '@/components/HourBucketChart.vue'
-import { summarizeSleepStats, summarizeFeedStats, summarizeDiaperStats } from '@/lib/stats'
+import GrowthLineChart from '@/components/GrowthLineChart.vue'
+import {
+  summarizeSleepStats,
+  summarizeFeedStats,
+  summarizeDiaperStats,
+  summarizeGrowthStats,
+} from '@/lib/stats'
 import type { DiaperSize } from '@/stores/babies'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const babies = useBabiesStore()
 const feedback = useFeedback()
+
+const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
 
 const loading = ref(true)
 
 onMounted(async () => {
   loading.value = true
   try {
-    await babies.fetchStatsData()
+    await Promise.all([babies.fetchStatsData(), babies.fetchGrowthMeasurements()])
   } finally {
     loading.value = false
   }
@@ -25,6 +33,7 @@ onMounted(async () => {
 const sleepStats = computed(() => summarizeSleepStats(babies.statsSleeps))
 const feedStats = computed(() => summarizeFeedStats(babies.statsFeeds))
 const diaperStats = computed(() => summarizeDiaperStats(babies.statsDiaperChanges))
+const growthStats = computed(() => summarizeGrowthStats(babies.growthMeasurements))
 
 function formatMinutes(minutes: number): string {
   const rounded = Math.round(minutes)
@@ -35,6 +44,11 @@ function formatMinutes(minutes: number): string {
 
 function formatCount(count: number): string {
   return String(Math.round(count))
+}
+
+function formatGain(value: number, decimals: number, unit: string): string {
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${value.toFixed(decimals)} ${unit}`
 }
 
 // Mismo orden que ya usa la pastilla de la línea temporal (ver
@@ -60,6 +74,35 @@ const diaperSizeRows = computed(() =>
 function percent(part: number, total: number): string {
   return total > 0 ? `${Math.round((part / total) * 100)}%` : '0%'
 }
+
+// Driven by a table rather than three copy-pasted template blocks -
+// weight/height/head only differ in unit, decimal precision, and which
+// slice of `growthStats` they read.
+const growthMetrics = computed(() => [
+  {
+    key: 'weight' as const,
+    stat: growthStats.value.weightKg,
+    unit: 'kg',
+    decimals: 1,
+    titleKey: 'stats.growth.weightTitle',
+  },
+  {
+    key: 'height' as const,
+    stat: growthStats.value.heightCm,
+    unit: 'cm',
+    decimals: 0,
+    titleKey: 'stats.growth.heightTitle',
+  },
+  {
+    key: 'head' as const,
+    stat: growthStats.value.headCircumferenceCm,
+    unit: 'cm',
+    decimals: 0,
+    titleKey: 'stats.growth.headTitle',
+  },
+])
+
+const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.count > 0))
 </script>
 
 <template>
@@ -257,6 +300,61 @@ function percent(part: number, total: number): string {
         </template>
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.notEnoughData') }}
+        </p>
+      </section>
+
+      <!-- Crecimiento -->
+      <section class="card flex flex-col gap-4 p-4">
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
+          {{ t('stats.growth.title') }}
+        </h2>
+
+        <template v-if="hasAnyGrowthData">
+          <div v-for="metric in growthMetrics" :key="metric.key">
+            <template v-if="metric.stat.count > 0">
+              <div class="mb-1 flex items-center justify-between">
+                <span class="text-xs text-text-muted">{{ t(metric.titleKey) }}</span>
+                <span
+                  v-if="metric.stat.latestPercentile !== null"
+                  class="text-xs font-semibold text-growth"
+                >
+                  {{
+                    t('stats.growth.percentile', {
+                      value: Math.round(metric.stat.latestPercentile),
+                    })
+                  }}
+                </span>
+              </div>
+
+              <template v-if="metric.stat.count > 1">
+                <GrowthLineChart
+                  :points="metric.stat.points"
+                  :unit="metric.unit"
+                  :decimals="metric.decimals"
+                  :date-locale="dateLocale"
+                />
+                <div class="mt-1 flex items-baseline justify-between">
+                  <span class="text-lg font-bold tabular-nums">
+                    {{ metric.stat.latestValue?.toFixed(metric.decimals) }} {{ metric.unit }}
+                  </span>
+                  <span
+                    v-if="metric.stat.gained !== null"
+                    class="text-xs font-semibold tabular-nums text-text-muted"
+                  >
+                    {{ formatGain(metric.stat.gained, metric.decimals, metric.unit) }}
+                    {{ t('stats.growth.sinceFirst') }}
+                  </span>
+                </div>
+              </template>
+              <div v-else class="text-lg font-bold tabular-nums">
+                {{ metric.stat.latestValue?.toFixed(metric.decimals) }} {{ metric.unit }}
+              </div>
+            </template>
+          </div>
+        </template>
+        <p v-else class="py-2 text-center text-sm text-text-muted">
+          {{ t('stats.growth.empty') }}
         </p>
       </section>
     </template>

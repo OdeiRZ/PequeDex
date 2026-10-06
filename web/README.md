@@ -1272,8 +1272,8 @@ breve solape de montaje es inofensivo.
 
 ## Estadísticas (`/estadisticas`)
 
-Primera fase de una sección de analítica más amplia (crecimiento,
-"horarios normativos", export a PDF quedan para después). `StatsView.vue`
+Primera fase de una sección de analítica más amplia ("horarios
+normativos", export a PDF quedan para después). `StatsView.vue`
 + `lib/stats.ts` (funciones puras, testeadas sin tocar Pinia - mismo
 criterio que `lib/sleepHistory.ts`/`lib/contractionStats.ts`), accesible
 desde una `StatsLinkCard.vue` en el dashboard (mismo patrón que
@@ -1314,6 +1314,30 @@ interpolada (`` `bg-${category}` ``) - el propio comentario de
 `category.ts` ya advierte que el escaneador de Tailwind no detecta
 nombres de clase construidos en tiempo de ejecución, solo los que
 aparecen escritos literalmente en el código.
+
+**Bloque de Crecimiento** - peso/talla/perímetro craneal, cada uno
+independiente (se registran por separado en "+ Medida") con su propio
+gráfico de línea, último valor, percentil y lo ganado desde el primer
+registro. Reutiliza `babies.growthMeasurements` (ya existente,
+`fetchGrowthMeasurements()`) en vez de los arrays `statsX` nuevos - el
+endpoint de crecimiento ya traía el historial completo con percentiles
+OMS ya calculados por medición (`GrowthMeasurementController`), nada
+que añadir ahí. Sin el umbral `MIN_SAMPLE_SIZE` de las otras tres
+secciones: el crecimiento se mide pocas veces por naturaleza (un
+chequeo semanal/mensual, no varias veces al día), así que una sola
+medición ya merece mostrarse - solo "lo ganado" (`gained` en
+`GrowthMetricStat`) necesita dos para existir, no `count` en general.
+
+`GrowthLineChart.vue` dibuja un SVG a mano (sin librería de gráficos -
+el proyecto no usaba ninguna, y añadir una para un único uso no
+compensaba): el eje X escala por la fecha real de cada medición, no
+por su índice en la lista, para que dos mediciones separadas por
+semanas no queden pegadas como si hubiera pasado un solo día entre
+ellas - ver `xPositions` en el propio componente. Una sola medición
+dibuja un punto centrado en vez de una línea (no hay "proporción"
+posible con un único dato); todas las lecturas idénticas (una línea
+perfectamente plana) usan un rango de valor falso de ±1 en vez de
+dividir por cero al escalar el eje Y.
 
 ## Despliegue
 

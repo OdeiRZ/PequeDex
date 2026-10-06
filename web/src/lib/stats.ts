@@ -5,6 +5,7 @@ import type {
   Feed,
   FeedSide,
   FeedType,
+  GrowthMeasurement,
   Sleep,
 } from '@/stores/babies'
 
@@ -206,5 +207,81 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     bySize,
     peeByHourBucket,
     poopByHourBucket,
+  }
+}
+
+export interface GrowthMetricPoint {
+  date: string
+  value: number
+  percentile: number | null
+}
+
+export interface GrowthMetricStat {
+  points: GrowthMetricPoint[]
+  latestValue: number | null
+  latestPercentile: number | null
+  /** Latest minus first, same unit as `points[].value` - `null` with
+   * fewer than two points, where "gained" isn't a trend yet, just a
+   * single reading. */
+  gained: number | null
+  count: number
+}
+
+function growthMetricStat(
+  measurements: GrowthMeasurement[],
+  valueOf: (m: GrowthMeasurement) => number | null,
+  percentileOf: (m: GrowthMeasurement) => number | null,
+): GrowthMetricStat {
+  const points = measurements
+    .map((m) => ({ date: m.measured_at, value: valueOf(m), percentile: percentileOf(m) }))
+    .filter((p): p is GrowthMetricPoint => p.value !== null)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  if (points.length === 0) {
+    return { points: [], latestValue: null, latestPercentile: null, gained: null, count: 0 }
+  }
+
+  const first = points[0] as GrowthMetricPoint
+  const latest = points[points.length - 1] as GrowthMetricPoint
+
+  return {
+    points,
+    latestValue: latest.value,
+    latestPercentile: latest.percentile,
+    gained: points.length > 1 ? latest.value - first.value : null,
+    count: points.length,
+  }
+}
+
+export interface GrowthStats {
+  weightKg: GrowthMetricStat
+  heightCm: GrowthMetricStat
+  headCircumferenceCm: GrowthMetricStat
+}
+
+// No MIN_SAMPLE_SIZE gate here, unlike the other summarize*Stats above -
+// growth is measured occasionally by nature (a weekly/monthly
+// check-in, not several times a day), so even a single reading is
+// worth showing (just without a "gained" trend, which needs two).
+// weight_grams converts to kg for display, same as DashboardView.vue's
+// own growthWeightKg handling - grams is the storage/wire unit, kg is
+// what the form and this page both show.
+export function summarizeGrowthStats(measurements: GrowthMeasurement[]): GrowthStats {
+  return {
+    weightKg: growthMetricStat(
+      measurements,
+      (m) => (m.weight_grams !== null ? m.weight_grams / 1000 : null),
+      (m) => m.weight_percentile,
+    ),
+    heightCm: growthMetricStat(
+      measurements,
+      (m) => m.height_cm,
+      (m) => m.height_percentile,
+    ),
+    headCircumferenceCm: growthMetricStat(
+      measurements,
+      (m) => m.head_circumference_cm,
+      (m) => m.head_circumference_percentile,
+    ),
   }
 }

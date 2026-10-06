@@ -185,6 +185,17 @@ export default {
       peeByHourLabel: 'Pis por franja',
       poopByHourLabel: 'Caca por franja',
     },
+    growth: {
+      title: 'Crecimiento',
+      weightTitle: 'Peso',
+      heightTitle: 'Talla',
+      headTitle: 'Perímetro craneal',
+      percentile: 'Percentil {value}',
+      sinceFirst: 'desde el primer registro',
+      empty: 'Todavía no hay medidas de crecimiento registradas.',
+      chartLabelSingle: '{value} el {date}',
+      chartLabelRange: '{firstValue} el {firstDate}, {latestValue} el {latestDate}',
+    },
   },
   dashboard: {
     onboarding: {

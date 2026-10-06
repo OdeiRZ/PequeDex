@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeSleepStats, summarizeFeedStats, summarizeDiaperStats } from '@/lib/stats'
-import type { DiaperChange, Feed, Sleep } from '@/stores/babies'
+import {
+  summarizeSleepStats,
+  summarizeFeedStats,
+  summarizeDiaperStats,
+  summarizeGrowthStats,
+} from '@/lib/stats'
+import type { DiaperChange, Feed, GrowthMeasurement, Sleep } from '@/stores/babies'
 
 // Built from local Date components, not a hardcoded "...Z" string - a
 // fixed UTC offset would shift which hour bucket a timestamp lands in
@@ -158,5 +163,75 @@ describe('summarizeDiaperStats', () => {
     expect(poopMorning?.value).toBe(1)
     expect(peeNight?.value).toBe(1)
     expect(poopNight?.value).toBe(1)
+  })
+})
+
+function growthMeasurement(overrides: Partial<GrowthMeasurement> = {}): GrowthMeasurement {
+  return {
+    id: 1,
+    baby_id: 1,
+    user_id: 1,
+    measured_at: local(2026, 8, 7, 10),
+    weight_grams: null,
+    height_cm: null,
+    head_circumference_cm: null,
+    notes: null,
+    weight_percentile: null,
+    height_percentile: null,
+    head_circumference_percentile: null,
+    ...overrides,
+  }
+}
+
+describe('summarizeGrowthStats', () => {
+  it('returns an empty metric with no "gained" trend when nothing was logged', () => {
+    const result = summarizeGrowthStats([])
+    expect(result.weightKg).toEqual({
+      points: [],
+      latestValue: null,
+      latestPercentile: null,
+      gained: null,
+      count: 0,
+    })
+  })
+
+  it('converts weight from grams to kg and reports a single reading with no gain yet', () => {
+    const result = summarizeGrowthStats([
+      growthMeasurement({ weight_grams: 3500, weight_percentile: 45 }),
+    ])
+    expect(result.weightKg.count).toBe(1)
+    expect(result.weightKg.latestValue).toBe(3.5)
+    expect(result.weightKg.latestPercentile).toBe(45)
+    expect(result.weightKg.gained).toBeNull()
+  })
+
+  it('sorts by date and computes the gain between the first and latest reading', () => {
+    const result = summarizeGrowthStats([
+      growthMeasurement({
+        measured_at: local(2026, 9, 7),
+        weight_grams: 4200,
+        weight_percentile: 50,
+      }),
+      growthMeasurement({
+        measured_at: local(2026, 8, 7),
+        weight_grams: 3500,
+        weight_percentile: 45,
+      }),
+    ])
+    expect(result.weightKg.points.map((p) => p.value)).toEqual([3.5, 4.2])
+    expect(result.weightKg.latestValue).toBe(4.2)
+    expect(result.weightKg.latestPercentile).toBe(50)
+    expect(result.weightKg.gained).toBeCloseTo(0.7)
+  })
+
+  it('tracks weight/height/head independently, skipping a metric nobody logged', () => {
+    const result = summarizeGrowthStats([
+      growthMeasurement({ height_cm: 52 }),
+      growthMeasurement({ height_cm: 56 }),
+    ])
+    expect(result.heightCm.count).toBe(2)
+    expect(result.heightCm.gained).toBe(4)
+    expect(result.weightKg.count).toBe(0)
+    expect(result.headCircumferenceCm.count).toBe(0)
   })
 })

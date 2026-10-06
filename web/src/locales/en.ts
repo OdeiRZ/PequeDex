@@ -184,6 +184,17 @@ export default {
       peeByHourLabel: 'Wet changes per time slot',
       poopByHourLabel: 'Dirty changes per time slot',
     },
+    growth: {
+      title: 'Growth',
+      weightTitle: 'Weight',
+      heightTitle: 'Height',
+      headTitle: 'Head circumference',
+      percentile: 'Percentile {value}',
+      sinceFirst: 'since the first measurement',
+      empty: 'No growth measurements logged yet.',
+      chartLabelSingle: '{value} on {date}',
+      chartLabelRange: '{firstValue} on {firstDate}, {latestValue} on {latestDate}',
+    },
   },
   dashboard: {
     onboarding: {

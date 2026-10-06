@@ -64,6 +64,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Bloque de Crecimiento en "Estadísticas"**: peso/talla/perímetro
+  craneal a lo largo del tiempo, cada uno con su propio gráfico de
+  línea (`GrowthLineChart.vue`, SVG dibujado a mano - sin librería de
+  gráficos, el proyecto no tenía ninguna y añadir una para un solo uso
+  no compensaba), último valor + percentil (reutiliza los percentiles
+  OMS que ya calculaba el backend por medición, `GrowthMeasurement`
+  nunca necesitó cambios) y lo ganado desde el primer registro. A
+  diferencia de sueño/tomas/pañales, sin umbral de "datos
+  insuficientes": el crecimiento se mide pocas veces (un chequeo
+  semanal/mensual, no varias veces al día), así que hasta una sola
+  medición merece mostrarse - solo "lo ganado" necesita dos para
+  existir. Los tres tipos de medida son independientes entre sí (se
+  pueden registrar por separado); el bloque entero solo se oculta si
+  no hay ninguna medición de ningún tipo todavía. El eje X del gráfico
+  escala por fecha real, no por índice - dos mediciones con semanas de
+  diferencia no quedan pegadas una a la otra como si hubiera pasado un
+  día.
 - **Nueva sección "Estadísticas" (`/estadisticas`), primera fase**:
   patrones de sueño (duración media, franja del día donde más duerme),
   tomas (reparto pecho/biberón, lado más usado, duración media al

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore } from '@/stores/babies'
 import { useFeedback } from '@/composables/useFeedback'
 import HourBucketChart from '@/components/HourBucketChart.vue'
@@ -11,13 +12,26 @@ import {
   summarizeDiaperStats,
   summarizeGrowthStats,
 } from '@/lib/stats'
+import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import type { DiaperSize } from '@/stores/babies'
 
 const { t, locale } = useI18n()
+const auth = useAuthStore()
 const babies = useBabiesStore()
 const feedback = useFeedback()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
+
+// Mismo significado que ya usa la barra de accesos del dashboard
+// (`enabledCategories` en `DashboardView.vue`) y el propio backend:
+// `null` = las 5 categorías visibles, sin personalizar. Un bloque de
+// estadísticas que ya no se accede a diario (p.ej. sueño, si el
+// cuidador lo desactivó) no debería seguir apareciendo aquí solo
+// porque haya datos antiguos - el ajuste es "no me interesa esto",
+// no "no he logueado nada todavía".
+const enabledCategories = computed<Category[]>(
+  () => auth.user?.action_bar_categories ?? [...ALL_CATEGORIES],
+)
 
 const loading = ref(true)
 
@@ -135,42 +149,8 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
     </div>
 
     <template v-else>
-      <!-- Sueño -->
-      <section class="card flex flex-col gap-3 p-4">
-        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
-          <span class="h-4 w-1.5 shrink-0 rounded-full bg-sleep"></span>
-          {{ t('stats.sleep.title') }}
-        </h2>
-
-        <template v-if="sleepStats.hasEnoughData">
-          <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.sleep.totalLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">{{ sleepStats.totalCompleted }}</div>
-            </div>
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.sleep.averageLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ formatMinutes(sleepStats.averageDurationMinutes ?? 0) }}
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
-            <HourBucketChart
-              :buckets="sleepStats.byHourBucket"
-              category="sleep"
-              :format-value="formatMinutes"
-            />
-          </div>
-        </template>
-        <p v-else class="py-2 text-center text-sm text-text-muted">
-          {{ t('stats.notEnoughData') }}
-        </p>
-      </section>
-
       <!-- Tomas -->
-      <section class="card flex flex-col gap-3 p-4">
+      <section v-if="enabledCategories.includes('feed')" class="card flex flex-col gap-3 p-4">
         <h2 class="flex items-center gap-2 font-display text-sm font-bold">
           <span class="h-4 w-1.5 shrink-0 rounded-full bg-feed"></span>
           {{ t('stats.feed.title') }}
@@ -234,8 +214,42 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
         </p>
       </section>
 
+      <!-- Sueño -->
+      <section v-if="enabledCategories.includes('sleep')" class="card flex flex-col gap-3 p-4">
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span class="h-4 w-1.5 shrink-0 rounded-full bg-sleep"></span>
+          {{ t('stats.sleep.title') }}
+        </h2>
+
+        <template v-if="sleepStats.hasEnoughData">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.totalLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">{{ sleepStats.totalCompleted }}</div>
+            </div>
+            <div class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.averageLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatMinutes(sleepStats.averageDurationMinutes ?? 0) }}
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
+            <HourBucketChart
+              :buckets="sleepStats.byHourBucket"
+              category="sleep"
+              :format-value="formatMinutes"
+            />
+          </div>
+        </template>
+        <p v-else class="py-2 text-center text-sm text-text-muted">
+          {{ t('stats.notEnoughData') }}
+        </p>
+      </section>
+
       <!-- Pañales -->
-      <section class="card flex flex-col gap-3 p-4">
+      <section v-if="enabledCategories.includes('diaper')" class="card flex flex-col gap-3 p-4">
         <h2 class="flex items-center gap-2 font-display text-sm font-bold">
           <span class="h-4 w-1.5 shrink-0 rounded-full bg-diaper"></span>
           {{ t('stats.diaper.title') }}
@@ -304,7 +318,7 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
       </section>
 
       <!-- Crecimiento -->
-      <section class="card flex flex-col gap-4 p-4">
+      <section v-if="enabledCategories.includes('growth')" class="card flex flex-col gap-4 p-4">
         <h2 class="flex items-center gap-2 font-display text-sm font-bold">
           <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
           {{ t('stats.growth.title') }}

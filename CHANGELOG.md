@@ -64,6 +64,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Los bloques de "Estadísticas" respetan los accesos activados en el
+  perfil, y van en el mismo orden que la barra de accesos** (tomas,
+  sueño, pañal, medidas): un cuidador que desactivó sueño de la barra
+  de accesos ya no ve ese bloque aquí tampoco, aunque haya sueños
+  guardados de antes - mismo `enabledCategories` (`auth.user
+  .action_bar_categories`, `null` = las 5 activas) que ya filtra la
+  barra en `DashboardView.vue`, no un ajuste nuevo. El orden anterior
+  (sueño, tomas, pañal, crecimiento) no seguía ningún criterio en
+  particular.
 - **Bloque de Crecimiento en "Estadísticas"**: peso/talla/perímetro
   craneal a lo largo del tiempo, cada uno con su propio gráfico de
   línea (`GrowthLineChart.vue`, SVG dibujado a mano - sin librería de

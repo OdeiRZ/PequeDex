@@ -42,6 +42,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   el watcher usa `flush: 'post'`, que espera a que el DOM ya refleje la
   lista de días en curso antes de intentar el scroll.
 
+### Cambiado
+
+- **El contador de edad del bebé muestra los días de uno en uno hasta
+  que cumple un mes, no hasta las dos semanas** (`lib/babyAge.ts`):
+  antes cambiaba a semanas en cuanto pasaban 13 días
+  (`info.days < 14`); ahora compara contra la fecha real en la que el
+  bebé cumple un mes - el mismo día del mes siguiente al nacimiento
+  (`oneMonthAfter()`), no un proxy fijo de "30 días", para que un bebé
+  nacido un 31 no cambie a semanas antes de tiempo según cuántos días
+  tenga el mes de nacimiento. Nuevo campo `underOneMonth` en
+  `BabyAgeInfo`, que sustituye al cálculo `info.days < 14` que vivía en
+  `DashboardView.vue`.
+
 ### Añadido
 
 - **Talla "0" como opción de pañal y 15min como opción de duración de

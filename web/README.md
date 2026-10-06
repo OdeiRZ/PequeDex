@@ -849,12 +849,17 @@ verse bien en una captura:
     corazón.
 - **Portada "Hoy con {nombre}"** — la tarjeta del bebé (arriba del
   dashboard) muestra un titular con su edad en vez de solo su nombre:
-  `src/lib/babyAge.ts` calcula días (menos de dos semanas) o semanas
+  `src/lib/babyAge.ts` calcula días (hasta que cumple un mes) o semanas
   desde `birth_date`, o la cuenta atrás hasta `due_date` si aún no ha
   nacido — parseando ambas como fecha de calendario local, no con `new
   Date(iso)` directamente, que trata una fecha sin hora como medianoche
   UTC y puede desplazar el día según la zona horaria de quien mire la
-  app. El nombre del bebé pasa a la etiqueta pequeña ("Hoy con
+  app. El corte entre días y semanas (`underOneMonth` en
+  `BabyAgeInfo`) compara contra la fecha real en la que el bebé cumple
+  un mes (`oneMonthAfter()`, el mismo día del mes siguiente al
+  nacimiento), no un proxy fijo de "30 días" - un bebé nacido un 31 no
+  cambia a semanas antes de tiempo según cuántos días tenga el mes de
+  nacimiento. El nombre del bebé pasa a la etiqueta pequeña ("Hoy con
   Violeta"); tocarla sigue desplegando el código de invitación igual
   que antes. El botón de ajustes (antes con el sexo y la fecha como
   su propia etiqueta, repitiendo lo que la tarjeta ya mostraba) pasa a

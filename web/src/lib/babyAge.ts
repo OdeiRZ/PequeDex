@@ -13,30 +13,47 @@ function daysBetween(from: Date, to: Date): number {
   return Math.round((utcTo - utcFrom) / 86_400_000)
 }
 
+// The calendar date the baby turns exactly one month old - same
+// day-of-month next month, not a flat "30 days" proxy (a baby born on
+// the 31st turning "one month" lands on the last day of February some
+// years, same rollover `Date` already does for a human birthday).
+function oneMonthAfter(date: Date): Date {
+  const result = new Date(date)
+  result.setMonth(result.getMonth() + 1)
+  return result
+}
+
 export type BabyAgeInfo =
-  | { type: 'born'; days: number; weeks: number }
+  | { type: 'born'; days: number; weeks: number; underOneMonth: boolean }
   | { type: 'expecting'; daysUntilDue: number }
   | { type: 'unknown' }
 
-// Days for a newborn (the number that actually matters in the first two
-// weeks), weeks once there's more than one to count - same threshold
-// real parenting apps use. Expecting (due_date set, no birth_date yet)
-// gets a countdown instead; neither date set is a real, common state
-// (onboarding lets both be skipped) and just renders as "unknown".
+// Days for a newborn under one month old (the number that actually
+// matters then - "day by day" is how parents actually track it, same
+// as real parenting apps), weeks once a full month has passed.
+// Expecting (due_date set, no birth_date yet) gets a countdown instead;
+// neither date set is a real, common state (onboarding lets both be
+// skipped) and just renders as "unknown".
 export function getBabyAge(
   birthDate: string | null,
   dueDate: string | null,
   now: Date = new Date(),
 ): BabyAgeInfo {
   if (birthDate) {
-    const days = daysBetween(parseDateOnly(birthDate), now)
+    const birth = parseDateOnly(birthDate)
+    const days = daysBetween(birth, now)
     // A `birth_date` in the future isn't really a birth yet - a date
     // picked ahead of time, or a due date entered into the wrong field.
     // Without this, it clamped to `days: 0` and read as "born today",
     // which unlocked feed/sleep/timeline tracking for a baby that
     // hasn't actually arrived.
     if (days >= 0) {
-      return { type: 'born', days, weeks: Math.floor(days / 7) }
+      return {
+        type: 'born',
+        days,
+        weeks: Math.floor(days / 7),
+        underOneMonth: now < oneMonthAfter(birth),
+      }
     }
     return { type: 'expecting', daysUntilDue: -days }
   }

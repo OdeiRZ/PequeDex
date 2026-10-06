@@ -1059,7 +1059,7 @@ const heroHeadline = computed<HeroHeadline>(() => {
   const info = babyAgeInfo.value
 
   if (info.type === 'born') {
-    return info.days < 14
+    return info.underOneMonth
       ? { value: info.days, unit: t('dashboard.hero.ageDaysUnit', info.days), special: null }
       : { value: info.weeks, unit: t('dashboard.hero.ageWeeksUnit', info.weeks), special: null }
   }

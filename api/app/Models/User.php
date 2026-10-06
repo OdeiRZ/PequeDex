@@ -34,6 +34,8 @@ class User extends Authenticatable
         'interaction_feedback_enabled',
         'default_diaper_size',
         'default_feed_duration_minutes',
+        'sounds_enabled',
+        'stats_enabled',
     ];
 
     /**
@@ -63,6 +65,8 @@ class User extends Authenticatable
             'interaction_feedback_enabled' => 'boolean',
             'default_diaper_size' => DiaperSize::class,
             'default_feed_duration_minutes' => 'integer',
+            'sounds_enabled' => 'boolean',
+            'stats_enabled' => 'boolean',
         ];
     }
 

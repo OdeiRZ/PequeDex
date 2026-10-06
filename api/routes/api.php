@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/interaction-feedback', [ProfileController::class, 'updateInteractionFeedbackEnabled']);
     Route::put('/user/default-diaper-size', [ProfileController::class, 'updateDefaultDiaperSize']);
     Route::put('/user/default-feed-duration', [ProfileController::class, 'updateDefaultFeedDuration']);
+    Route::put('/user/sounds', [ProfileController::class, 'updateSoundsEnabled']);
+    Route::put('/user/stats', [ProfileController::class, 'updateStatsEnabled']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:6,1');
     Route::post('/user/avatar', [ProfileController::class, 'updateAvatar'])->middleware('throttle:6,1');
     Route::delete('/user/avatar', [ProfileController::class, 'deleteAvatar']);

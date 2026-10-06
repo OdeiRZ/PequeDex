@@ -506,5 +506,15 @@ export default {
       description: 'Preselected when creating a new feed - does not affect saved ones.',
       saveError: 'Could not save the change. Please try again.',
     },
+    soundsEnabled: {
+      title: 'Sleep sounds',
+      description: 'Show the sleep sounds link on the dashboard.',
+      saveError: 'Could not save the change. Please try again.',
+    },
+    statsEnabled: {
+      title: 'Statistics',
+      description: 'Show the statistics link on the dashboard.',
+      saveError: 'Could not save the change. Please try again.',
+    },
   },
 }

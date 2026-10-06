@@ -11,6 +11,8 @@ use App\Http\Requests\Auth\UpdateInteractionFeedbackEnabledRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
+use App\Http\Requests\Auth\UpdateSoundsEnabledRequest;
+use App\Http\Requests\Auth\UpdateStatsEnabledRequest;
 use App\Http\Requests\Auth\UpdateSwipeToDeleteEnabledRequest;
 use App\Http\Requests\Auth\UpdateTodaySummaryEnabledRequest;
 use App\Models\User;
@@ -104,6 +106,26 @@ class ProfileController extends Controller
         $user->update([
             'default_feed_duration_minutes' => $request->validated('default_feed_duration_minutes'),
         ]);
+
+        return response()->json($user);
+    }
+
+    public function updateSoundsEnabled(UpdateSoundsEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['sounds_enabled' => $request->validated('sounds_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateStatsEnabled(UpdateStatsEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['stats_enabled' => $request->validated('stats_enabled')]);
 
         return response()->json($user);
     }

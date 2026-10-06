@@ -95,7 +95,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   validados con `Rule::enum`/`Rule::in([10,20,30,45])` - mismas opciones
   que ofrecen los propios formularios "+ Pañal"/"+ Toma". Ver
   `web/README.md` para cómo se usan al preseleccionar un formulario
-  nuevo.
+  nuevo. `updateSoundsEnabled()`/`updateStatsEnabled()` (columnas
+  `sounds_enabled`/`stats_enabled`, `default(true)`,
+  `PUT /user/sounds` / `PUT /user/stats`) vuelven al patrón booleano
+  simple de `updateInteractionFeedbackEnabled()` - quinta y sexta copia
+  - y solo controlan si se ve la tarjeta de enlace correspondiente en
+  el dashboard, no si la ruta en sí es accesible, ver `web/README.md`.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

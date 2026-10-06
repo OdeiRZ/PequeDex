@@ -248,6 +248,38 @@ it('rejects a default feed duration outside the picker options', function () {
         ->assertJsonValidationErrors('default_feed_duration_minutes');
 });
 
+it('turns the sounds link off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->sounds_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/sounds', ['sounds_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('sounds_enabled', false);
+    expect($user->refresh()->sounds_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/sounds', ['sounds_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('sounds_enabled', true);
+    expect($user->refresh()->sounds_enabled)->toBeTrue();
+});
+
+it('turns the stats link off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->stats_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/stats', ['stats_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('stats_enabled', false);
+    expect($user->refresh()->stats_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/stats', ['stats_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('stats_enabled', true);
+    expect($user->refresh()->stats_enabled)->toBeTrue();
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
@@ -260,4 +292,6 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user/interaction-feedback', ['interaction_feedback_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/default-diaper-size', ['default_diaper_size' => '3'])->assertUnauthorized();
     $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 20])->assertUnauthorized();
+    $this->putJson('/api/user/sounds', ['sounds_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/stats', ['stats_enabled' => false])->assertUnauthorized();
 });

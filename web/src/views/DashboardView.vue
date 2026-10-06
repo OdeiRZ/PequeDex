@@ -1807,7 +1807,13 @@ const sleepPredictionDue = computed(() => {
                abrir la app) - si están desactivadas, o el bebé aún no ha
                nacido (TodaySummary ni siquiera se monta), se queda en su
                sitio de siempre, justo aquí. -->
-          <SoundsLinkCard v-if="babies.current && !(isBorn && auth.user?.today_summary_enabled)" />
+          <SoundsLinkCard
+            v-if="
+              babies.current &&
+              auth.user?.sounds_enabled &&
+              !(isBorn && auth.user?.today_summary_enabled)
+            "
+          />
 
           <template v-if="isBorn">
             <TodaySummary
@@ -1818,10 +1824,10 @@ const sleepPredictionDue = computed(() => {
               :day="rhythmDate"
             />
             <SoundsLinkCard
-              v-if="babies.current && auth.user?.today_summary_enabled"
+              v-if="babies.current && auth.user?.sounds_enabled && auth.user?.today_summary_enabled"
               class="dash-enter"
             />
-            <StatsLinkCard class="dash-enter" />
+            <StatsLinkCard v-if="auth.user?.stats_enabled" class="dash-enter" />
 
             <section
               v-if="enabledCategories.includes('milestone')"

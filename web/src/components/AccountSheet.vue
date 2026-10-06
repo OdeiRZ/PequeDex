@@ -369,6 +369,54 @@ async function onSelectDefaultFeedDuration(value: number | null) {
   }
 }
 
+// --- Ajustes: enlaces visibles en el dashboard ---
+
+// Mismo patrón guardado-al-vuelo que el resto - activados por defecto
+// (ver migración). Solo muestran/ocultan la tarjeta de enlace
+// correspondiente en el dashboard (`SoundsLinkCard.vue`/
+// `StatsLinkCard.vue`); la ruta en sí (`/sonidos`/`/estadisticas`)
+// sigue accesible directamente, mismo alcance que ya tiene
+// `today_summary_enabled` sobre `TodaySummary.vue`.
+const soundsEnabled = ref(true)
+let soundsEnabledSaveToken = 0
+
+async function onToggleSoundsEnabled() {
+  const previous = soundsEnabled.value
+  const next = !previous
+  soundsEnabled.value = next
+  feedback.tap()
+
+  const token = ++soundsEnabledSaveToken
+  try {
+    await auth.updateSoundsEnabled(next)
+  } catch {
+    if (token === soundsEnabledSaveToken) {
+      soundsEnabled.value = previous
+      toast.show(t('profile.soundsEnabled.saveError'), 'error')
+    }
+  }
+}
+
+const statsEnabled = ref(true)
+let statsEnabledSaveToken = 0
+
+async function onToggleStatsEnabled() {
+  const previous = statsEnabled.value
+  const next = !previous
+  statsEnabled.value = next
+  feedback.tap()
+
+  const token = ++statsEnabledSaveToken
+  try {
+    await auth.updateStatsEnabled(next)
+  } catch {
+    if (token === statsEnabledSaveToken) {
+      statsEnabled.value = previous
+      toast.show(t('profile.statsEnabled.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -389,6 +437,8 @@ watch(
     interactionFeedbackEnabled.value = auth.user?.interaction_feedback_enabled ?? true
     defaultDiaperSize.value = auth.user?.default_diaper_size ?? ''
     defaultFeedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
+    soundsEnabled.value = auth.user?.sounds_enabled ?? true
+    statsEnabled.value = auth.user?.stats_enabled ?? true
   },
 )
 </script>
@@ -706,6 +756,48 @@ watch(
           {{ feedDurationLabel(minutes) }}
         </button>
       </div>
+    </div>
+
+    <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
+      <div>
+        <span class="field-label">{{ t('profile.soundsEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.soundsEnabled.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="soundsEnabled"
+        :aria-label="t('profile.soundsEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="soundsEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleSoundsEnabled"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: soundsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.statsEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.statsEnabled.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="statsEnabled"
+        :aria-label="t('profile.statsEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="statsEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleStatsEnabled"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: statsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
     </div>
 
     <form

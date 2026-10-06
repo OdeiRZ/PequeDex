@@ -64,6 +64,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Sonidos para dormir y Estadísticas, visibles u ocultos desde "Tu
+  cuenta"** (`api`: columnas `sounds_enabled`/`stats_enabled`
+  booleanas, `default(true)`, dos rutas `PUT /user/sounds`/
+  `PUT /user/stats`, quinta y sexta copia del mismo patrón
+  guardado-al-vuelo que `interaction_feedback_enabled` y el resto de
+  esta familia. `web`: dos interruptores nuevos en `AccountSheet.vue`,
+  activados por defecto. Solo muestran/ocultan la tarjeta de enlace
+  correspondiente en el dashboard (`SoundsLinkCard.vue`/
+  `StatsLinkCard.vue`) - no bloquean la ruta en sí, `/sonidos` y
+  `/estadisticas` siguen accesibles directamente si alguien ya tiene
+  el enlace guardado, mismo alcance que ya tenía
+  `today_summary_enabled` sobre `TodaySummary.vue`.
 - **Los bloques de "Estadísticas" respetan los accesos activados en el
   perfil, y van en el mismo orden que la barra de accesos** (tomas,
   sueño, pañal, medidas): un cuidador que desactivó sueño de la barra

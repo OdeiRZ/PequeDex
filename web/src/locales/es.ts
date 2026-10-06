@@ -512,5 +512,15 @@ export default {
       description: 'Preseleccionada al crear una toma nueva - no afecta a las ya guardadas.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    soundsEnabled: {
+      title: 'Sonidos para dormir',
+      description: 'Muestra el acceso a los sonidos para dormir en el dashboard.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
+    statsEnabled: {
+      title: 'Estadísticas',
+      description: 'Muestra el acceso a las estadísticas en el dashboard.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
   },
 }

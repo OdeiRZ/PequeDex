@@ -21,6 +21,13 @@ export interface User {
   // como hoy ("Sin indicar").
   default_diaper_size: DiaperSize | null
   default_feed_duration_minutes: number | null
+  // Muestran/ocultan sus respectivas tarjetas de enlace en el
+  // dashboard (`SoundsLinkCard.vue`/`StatsLinkCard.vue`) - no bloquean
+  // la ruta en sí (`/sonidos`/`/estadisticas` siguen accesibles
+  // directamente), mismo alcance que `today_summary_enabled` sobre
+  // `TodaySummary.vue`.
+  sounds_enabled: boolean
+  stats_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -167,6 +174,16 @@ export const useAuthStore = defineStore('auth', {
       const { data } = await apiClient.put('/user/default-feed-duration', {
         default_feed_duration_minutes: minutes,
       })
+      this.user = data
+    },
+
+    async updateSoundsEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/sounds', { sounds_enabled: enabled })
+      this.user = data
+    },
+
+    async updateStatsEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/stats', { stats_enabled: enabled })
       this.user = data
     },
 

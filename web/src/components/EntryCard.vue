@@ -177,15 +177,26 @@ function onRowClick() {
                  color de la categoría, sin pastilla ni fondo - ya no
                  compite por sitio con la hora, que se traslada a una
                  marca de tiempo pequeña y discreta a la derecha de la
-                 fila (como en un chat), junto al icono de borrar. Sin
-                 estado que mostrar (crecimiento, hitos, predicciones),
-                 la hora se queda aquí tal cual, como siempre. -->
+                 fila (como en un chat), junto al icono de borrar. Antes
+                 de que haya duración (p.ej. una toma con su botón
+                 "Finalizar" aún por pulsar - ver #primaryAction en
+                 DashboardView.vue), no hay nada que mandar a esa marca
+                 de tiempo trasera todavía, así que la hora se queda
+                 aquí mismo, delante del icono de tipo, en vez de volar
+                 sola a la derecha; en cuanto hay duración, salta a su
+                 sitio habitual y esta línea pasa a liderarla ella.
+                 Sin estado que mostrar (crecimiento, hitos,
+                 predicciones), la hora se queda aquí tal cual, como
+                 siempre. -->
             <div
               v-if="badge || dropletColor || poopColor || emoji"
-              class="mt-0.5 flex min-h-5 items-center gap-1 text-sm font-bold"
-              :class="categoryText[category]"
+              class="mt-0.5 flex min-h-5 items-center gap-1 text-sm"
+              :class="
+                badge ? ['font-bold', categoryText[category]] : 'tabular-nums text-text-muted'
+              "
             >
               <span v-if="badge">{{ badge }}</span>
+              <span v-else>{{ meta }}</span>
               <svg
                 v-if="dropletColor"
                 viewBox="0 0 24 24"
@@ -221,7 +232,7 @@ function onRowClick() {
           </div>
 
           <span
-            v-if="badge || dropletColor || poopColor || emoji"
+            v-if="badge"
             class="mr-3 shrink-0 text-center text-sm font-bold tabular-nums text-text-muted"
           >
             {{ meta }}

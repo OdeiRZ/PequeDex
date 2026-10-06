@@ -64,6 +64,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **La hora se adelanta junto al icono de tipo cuando aún no hay
+  duración** (`EntryCard.vue`): mientras una toma espera a que se pulse
+  su botón "Finalizar" (ver más abajo) - o en cualquier otra entrada
+  sin duración pero con icono de tipo, como un pañal - la hora ya no
+  vuela sola a la marca de tiempo de la derecha sin nada que la
+  acompañe; vive en la segunda línea, delante del icono, igual que la
+  duración lo haría si la hubiera. En cuanto hay duración (`badge`), la
+  hora salta a su sitio habitual a la derecha y la segunda línea pasa a
+  liderarla la propia duración - mismo comportamiento que ya había,
+  sin cambios ahí.
 - **Botón "Finalizar" en la toma de pecho más reciente sin duración**
   (`DashboardView.vue`): a diferencia del sueño, `ended_at === null` en
   una toma no significa "en curso" - es su estado normal, opcional

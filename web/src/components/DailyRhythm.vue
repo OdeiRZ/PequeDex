@@ -16,6 +16,10 @@ const props = defineProps<{
    * place. */
   day: string
   isToday: boolean
+  /** True once `day` has reached the baby's own birth date - there's
+   * nothing to browse further back than that, so "anterior" disables
+   * here same as "siguiente" already does once `day` reaches today. */
+  isBirthDay: boolean
 }>()
 
 const emit = defineEmits<{ prev: []; next: [] }>()
@@ -176,7 +180,8 @@ watch(
     <div class="mb-1 flex items-center justify-between gap-2">
       <button
         type="button"
-        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text"
+        :disabled="isBirthDay"
+        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-30"
         :aria-label="t('dashboard.rhythm.prevDay')"
         @click="onPrev"
       >

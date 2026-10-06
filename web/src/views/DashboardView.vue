@@ -99,6 +99,10 @@ async function loadBabyData() {
 // instead, which `rhythmTimeline` below switches to.
 const rhythmDate = ref(todayDateOnlyString())
 const isRhythmToday = computed(() => rhythmDate.value === todayDateOnlyString())
+// There's nothing to browse further back than the baby's own birth
+// date - a day before that would just show an empty "Ritmo" with no
+// real reason to ever land there.
+const isRhythmBirthDay = computed(() => rhythmDate.value === babies.current?.birth_date)
 const rhythmTimeline = computed(() => (isRhythmToday.value ? babies.timeline : babies.dayTimeline))
 
 // The flat "Línea temporal" list below reuses `rhythmTimeline` too - a
@@ -163,6 +167,8 @@ const groupedTimeline = computed<TimelineListItem[]>(() => {
 })
 
 async function onRhythmPrevDay() {
+  if (isRhythmBirthDay.value) return
+
   rhythmDate.value = addDays(rhythmDate.value, -1)
   if (!isRhythmToday.value) {
     await babies.fetchDayTimeline(rhythmDate.value)
@@ -1786,6 +1792,7 @@ const sleepPredictionDue = computed(() => {
               :enabled-categories="enabledCategories"
               :day="rhythmDate"
               :is-today="isRhythmToday"
+              :is-birth-day="isRhythmBirthDay"
               @prev="onRhythmPrevDay"
               @next="onRhythmNextDay"
             />

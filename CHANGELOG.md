@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **"Ritmo" dejaba retroceder a días anteriores al nacimiento del
+  bebé** (`DailyRhythm.vue`/`DashboardView.vue`): la flecha "anterior"
+  no tenía ningún tope, igual que "siguiente" ya lo tiene en "hoy"
+  (`isToday`). Nueva prop `isBirthDay` que desactiva "anterior" en
+  cuanto `rhythmDate` llega a `birth_date` - mismo patrón
+  `:disabled="..."` que la flecha opuesta, más el mismo guard en
+  `onRhythmPrevDay()` por si acaso.
 - **Editar o borrar una toma/sueño/pañal de un día anterior no se
   reflejaba en la línea temporal hasta cambiar de día en "Ritmo" y
   volver** (`stores/babies.ts`): la lista de un día pasado se pinta

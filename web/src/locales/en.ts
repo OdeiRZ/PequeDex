@@ -357,6 +357,7 @@ export default {
       sleepOngoing: 'Sleep (ongoing)',
       diaperSummary: 'Diaper ({type})',
       finishSleep: 'Finish',
+      finishFeed: 'Finish',
     },
     sleepPrediction: {
       title: 'Sleep: prediction',

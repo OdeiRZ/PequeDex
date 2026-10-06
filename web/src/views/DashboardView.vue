@@ -495,6 +495,16 @@ function onSelectFeedMilkType(value: MilkType) {
 // expresa, para que el selector se lea de un vistazo.
 const feedDurationOptions = [10, 15, 20, 30, 45]
 
+// The last option reads "45+", not "45" - a flat "45" implies an exact
+// reading nobody actually took (nothing here times a feed to the
+// minute), while "45+" is honest about being an open-ended top bucket,
+// same reasoning Finalizar below relies on when it caps a long feed at
+// this same option.
+function feedDurationLabel(minutes: number): string {
+  const isTopOption = minutes === feedDurationOptions[feedDurationOptions.length - 1]
+  return isTopOption ? `${minutes}+ min` : `${minutes} min`
+}
+
 function onSelectFeedDuration(value: number | null) {
   if (value !== feedDurationMinutes.value) feedback.select()
   feedDurationMinutes.value = value
@@ -564,6 +574,72 @@ async function onSubmitFeed() {
     toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   } finally {
     savingFeed.value = false
+  }
+}
+
+// "Finalizar" directamente en la tarjeta de la línea temporal, solo
+// para la toma de pecho sin duración MÁS RECIENTE - no para cualquier
+// toma sin indicar, que es su estado normal (opcional, a diferencia
+// del sueño en curso, `ended_at === null` en una toma no significa
+// "está pasando ahora mismo"). Mostrarlo en todas invitaría a pulsarlo
+// sobre una toma de hace días, guardando una duración inventada con
+// pinta de real; restringido a la última, el caso de uso encaja con la
+// intención real ("se me olvidó indicar cuánto duró la que acabo de
+// registrar"). Busca sobre `babies.timeline` (siempre "lo más reciente
+// de todo"), no sobre la lista que se esté viendo en ese momento -
+// sigue identificando la misma toma aunque se esté navegando un día
+// distinto en "Ritmo".
+const latestUnfinishedPechoFeedId = computed<number | null>(() => {
+  const match = babies.timeline.find(
+    (entry): entry is Extract<typeof entry, { type: 'feed' }> =>
+      entry.type === 'feed' && entry.data.type === 'pecho' && !entry.data.ended_at,
+  )
+  return match?.data.id ?? null
+})
+
+function entryFeedCanFinish(entry: (typeof babies.timeline)[number]): boolean {
+  return entry.type === 'feed' && entry.data.id === latestUnfinishedPechoFeedId.value
+}
+
+// Calcula el tiempo transcurrido desde `started_at` hasta el momento de
+// pulsar y lo redondea hacia arriba a la franja existente más próxima -
+// nunca un minuto exacto, que nadie cronometró de verdad; más de 45min
+// se queda en 45 (la pastilla lo muestra como "45+", ver
+// feedDurationLabel()). `feedDurationOptions` ya está ordenado
+// ascendente, así que la primera franja igual o mayor que lo
+// transcurrido es la que toca.
+function roundUpToFeedDurationOption(elapsedMinutes: number): number {
+  return (
+    feedDurationOptions.find((option) => elapsedMinutes <= option) ??
+    Math.max(...feedDurationOptions)
+  )
+}
+
+async function onFinishFeed(feed: Feed) {
+  feedback.tap()
+
+  const startedAtMs = new Date(feed.started_at).getTime()
+  const elapsedMinutes = (Date.now() - startedAtMs) / 60_000
+  const roundedMinutes = roundUpToFeedDurationOption(Math.max(elapsedMinutes, 0))
+  // Recortado a "ahora mismo" igual que feedEndedAtIso() - redondear
+  // hacia arriba puede empujar el fin más allá del instante real
+  // (p.ej. 11 minutos transcurridos -> franja de 15), y la API rechaza
+  // cualquier ended_at futuro.
+  const endedAtMs = Math.min(startedAtMs + roundedMinutes * 60_000, Date.now())
+
+  try {
+    await babies.updateFeed(feed.id, {
+      type: feed.type,
+      side: feed.side ?? undefined,
+      milk_type: feed.milk_type ?? undefined,
+      amount_ml: feed.amount_ml ?? undefined,
+      started_at: feed.started_at,
+      ended_at: new Date(endedAtMs).toISOString(),
+    })
+    toast.show(t('dashboard.feedForm.toastUpdated'))
+    void babies.fetchFeedPrediction().catch(() => {})
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
   }
 }
 
@@ -1864,6 +1940,18 @@ const sleepPredictionDue = computed(() => {
                         >
                       </button>
                     </template>
+                    <template
+                      v-else-if="item.entry.type === 'feed' && entryFeedCanFinish(item.entry)"
+                      #primaryAction
+                    >
+                      <button
+                        type="button"
+                        class="flex shrink-0 items-center gap-1 rounded-full bg-surface/70 px-3 py-1.5 text-xs font-bold text-feed"
+                        @click="onFinishFeed(item.entry.data)"
+                      >
+                        {{ t('dashboard.timeline.finishFeed') }}
+                      </button>
+                    </template>
                     <template #actions>
                       <DeleteButton @click="onDeleteEntry(item.entry)" />
                     </template>
@@ -1992,7 +2080,7 @@ const sleepPredictionDue = computed(() => {
                   :aria-pressed="feedDurationMinutes === minutes"
                   @click="onSelectFeedDuration(minutes)"
                 >
-                  {{ minutes }} min
+                  {{ feedDurationLabel(minutes) }}
                 </button>
               </div>
             </div>

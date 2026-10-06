@@ -359,6 +359,7 @@ export default {
       sleepOngoing: 'Sueño (en curso)',
       diaperSummary: 'Pañal ({type})',
       finishSleep: 'Finalizar',
+      finishFeed: 'Finalizar',
     },
     sleepPrediction: {
       title: 'Sueño: predicción',

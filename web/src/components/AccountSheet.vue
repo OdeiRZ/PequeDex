@@ -340,6 +340,15 @@ async function onSelectDefaultDiaperSize(value: DiaperSize | '') {
 // --- Ajustes: duración de toma al pecho por defecto ---
 
 const DEFAULT_FEED_DURATION_OPTIONS = [10, 15, 20, 30, 45]
+
+// Misma razón que el selector del propio formulario "+ Toma" en
+// DashboardView.vue: "45+" es honesto sobre ser un cajón abierto, no
+// una lectura exacta.
+function feedDurationLabel(minutes: number): string {
+  const isTopOption =
+    minutes === DEFAULT_FEED_DURATION_OPTIONS[DEFAULT_FEED_DURATION_OPTIONS.length - 1]
+  return isTopOption ? `${minutes}+ min` : `${minutes} min`
+}
 const defaultFeedDurationMinutes = ref<number | null>(null)
 let defaultFeedDurationSaveToken = 0
 
@@ -694,7 +703,7 @@ watch(
           :aria-checked="defaultFeedDurationMinutes === minutes"
           @click="onSelectDefaultFeedDuration(minutes)"
         >
-          {{ minutes }} min
+          {{ feedDurationLabel(minutes) }}
         </button>
       </div>
     </div>

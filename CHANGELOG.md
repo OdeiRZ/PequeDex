@@ -64,6 +64,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Botón "Finalizar" en la toma de pecho más reciente sin duración**
+  (`DashboardView.vue`): a diferencia del sueño, `ended_at === null` en
+  una toma no significa "en curso" - es su estado normal, opcional
+  (nadie cronometra cada toma). Mostrar el botón en todas invitaría a
+  pulsarlo sobre una de hace días, guardando una duración inventada con
+  pinta de real; restringido a la última (`latestUnfinishedPechoFeedId`,
+  buscada en `babies.timeline` - "lo más reciente de todo", no en la
+  lista que se esté viendo, así que sigue identificando la misma toma
+  aunque se navegue a otro día en "Ritmo"), el caso de uso encaja con
+  la intención real: "se me olvidó indicar cuánto duró la que acabo de
+  registrar". Al pulsarlo, calcula los minutos transcurridos desde
+  `started_at` y los redondea hacia arriba a la franja existente más
+  próxima (10/15/20/30/45) - nunca un minuto exacto, que nadie
+  cronometró de verdad; recortado a "ahora mismo" si el redondeo se
+  pasa de la hora real, igual que ya hacía `feedEndedAtIso()` en el
+  formulario (la API rechaza cualquier `ended_at` futuro). La última
+  franja del selector (en el formulario, en "Tu cuenta" y en la propia
+  pastilla de la línea temporal) pasa de "45 min" a **"45+ min"** - más
+  honesto sobre ser un cajón abierto, no una lectura exacta.
 - **Talla "0" como opción de pañal y 15min como opción de duración de
   toma** - ambas se sumaron a la lista ya existente en cada sitio donde
   vivía (`DiaperSize` enum y `Rule::in()` del backend; `DIAPER_SIZES`/

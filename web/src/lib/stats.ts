@@ -35,6 +35,24 @@ function average(values: number[]): number | null {
   return values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null
 }
 
+// Entries per calendar day across the whole span the data covers, not
+// per 24h rolling window - the span is inclusive of both the first and
+// last day an entry fell on (`+ 1`), so a single day's worth of
+// entries reads as "N that day", not "N per 0 days" (division by
+// zero). Not requested explicitly, but "cuántas tomas/pañales al día"
+// is the natural follow-up question once "cada cuánto" (the gap) is
+// already on screen - same underlying data, no extra fetch.
+function averagePerDay(timestamps: string[]): number | null {
+  if (timestamps.length === 0) return null
+
+  const times = timestamps.map((t) => new Date(t).getTime())
+  const minMs = Math.min(...times)
+  const maxMs = Math.max(...times)
+  const days = Math.floor((maxMs - minMs) / 86_400_000) + 1
+
+  return timestamps.length / days
+}
+
 export interface HourBucketStat {
   key: HourBucketKey
   value: number
@@ -44,10 +62,21 @@ function emptyBuckets(): HourBucketStat[] {
   return HOUR_BUCKETS.map((b) => ({ key: b.key, value: 0 }))
 }
 
+// Same cutoff as SleepPatternPredictor.php's MAX_WAKE_WINDOW_HOURS - a
+// gap this long is almost always an overnight stretch, not a real
+// nap-to-nap wake window, and would drag the average hours off if
+// counted the same as a daytime gap.
+const MAX_WAKE_WINDOW_HOURS = 6
+
 export interface SleepStats {
   hasEnoughData: boolean
   totalCompleted: number
   averageDurationMinutes: number | null
+  /** Time awake between one sleep ending and the next starting - `null`
+   * with fewer than two completed sleeps, or if every gap was long
+   * enough to look like an overnight stretch rather than a real
+   * wake window (see `MAX_WAKE_WINDOW_HOURS`). */
+  averageWakeWindowMinutes: number | null
   byHourBucket: HourBucketStat[]
 }
 
@@ -57,13 +86,17 @@ export interface SleepStats {
 // more useful read for "franjas más tranquilas" than minute-by-minute
 // overlap would add here.
 export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): SleepStats {
-  const completed = sleeps.filter((s) => s.ended_at !== null)
+  const completed = sleeps
+    .filter((s) => s.ended_at !== null)
+    .slice()
+    .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
 
   if (completed.length < MIN_SAMPLE_SIZE) {
     return {
       hasEnoughData: false,
       totalCompleted: completed.length,
       averageDurationMinutes: null,
+      averageWakeWindowMinutes: null,
       byHourBucket: emptyBuckets(),
     }
   }
@@ -71,6 +104,18 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
   const durations = completed.map(
     (s) => (new Date(s.ended_at as string).getTime() - new Date(s.started_at).getTime()) / 60_000,
   )
+
+  const wakeWindows: number[] = []
+  for (let i = 1; i < completed.length; i++) {
+    const previous = completed[i - 1] as Sleep
+    const current = completed[i] as Sleep
+    const gapMinutes =
+      (new Date(current.started_at).getTime() - new Date(previous.ended_at as string).getTime()) /
+      60_000
+    if (gapMinutes > 0 && gapMinutes <= MAX_WAKE_WINDOW_HOURS * 60) {
+      wakeWindows.push(gapMinutes)
+    }
+  }
 
   const buckets = emptyBuckets()
   for (const sleep of completed) {
@@ -85,9 +130,16 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
     hasEnoughData: true,
     totalCompleted: completed.length,
     averageDurationMinutes: average(durations),
+    averageWakeWindowMinutes: average(wakeWindows),
     byHourBucket: buckets,
   }
 }
+
+// Same cutoff as FeedPatternPredictor.php's MAX_GAP_HOURS - wider than
+// sleep's wake-window cutoff since feeds are typically closer together
+// than naps; a gap this long almost always means an overnight stretch
+// or a genuinely missed log, not the baby's real feeding rhythm.
+const MAX_FEED_GAP_HOURS = 8
 
 export interface FeedStats {
   hasEnoughData: boolean
@@ -96,6 +148,15 @@ export interface FeedStats {
   pechoSideCounts: Record<FeedSide, number>
   averageBottleAmountMl: number | null
   averagePechoDurationMinutes: number | null
+  /** Time between the start of one feed and the next, across every
+   * type (not just pecho) - "cada cuánto come". `null` with fewer than
+   * two feeds, or if every gap looked like an overnight stretch (see
+   * `MAX_FEED_GAP_HOURS`). */
+  averageGapMinutes: number | null
+  /** Feeds per calendar day across the whole logged span - "cuántas
+   * tomas al día de media". `null` below the sample threshold, same as
+   * everything else here. */
+  averagePerDay: number | null
   byHourBucket: HourBucketStat[]
 }
 
@@ -106,7 +167,11 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
   const pechoDurations: number[] = []
   const buckets = emptyBuckets()
 
-  for (const feed of feeds) {
+  const sorted = feeds
+    .slice()
+    .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
+
+  for (const feed of sorted) {
     byType[feed.type]++
 
     if (feed.type === 'pecho' && feed.side) {
@@ -127,25 +192,40 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     if (bucket) bucket.value++
   }
 
-  if (feeds.length < MIN_SAMPLE_SIZE) {
+  if (sorted.length < MIN_SAMPLE_SIZE) {
     return {
       hasEnoughData: false,
-      total: feeds.length,
+      total: sorted.length,
       byType,
       pechoSideCounts,
       averageBottleAmountMl: null,
       averagePechoDurationMinutes: null,
+      averageGapMinutes: null,
+      averagePerDay: null,
       byHourBucket: emptyBuckets(),
+    }
+  }
+
+  const gaps: number[] = []
+  for (let i = 1; i < sorted.length; i++) {
+    const previous = sorted[i - 1] as Feed
+    const current = sorted[i] as Feed
+    const gapMinutes =
+      (new Date(current.started_at).getTime() - new Date(previous.started_at).getTime()) / 60_000
+    if (gapMinutes > 0 && gapMinutes <= MAX_FEED_GAP_HOURS * 60) {
+      gaps.push(gapMinutes)
     }
   }
 
   return {
     hasEnoughData: true,
-    total: feeds.length,
+    total: sorted.length,
     byType,
     pechoSideCounts,
     averageBottleAmountMl: average(bottleAmounts),
     averagePechoDurationMinutes: average(pechoDurations),
+    averageGapMinutes: average(gaps),
+    averagePerDay: averagePerDay(sorted.map((f) => f.started_at)),
     byHourBucket: buckets,
   }
 }
@@ -155,6 +235,9 @@ export interface DiaperStats {
   total: number
   byType: Record<DiaperType, number>
   bySize: Record<DiaperSize | 'unspecified', number>
+  /** Changes per calendar day across the whole logged span - "cuántos
+   * pañales al día de media". */
+  averagePerDay: number | null
   peeByHourBucket: HourBucketStat[]
   poopByHourBucket: HourBucketStat[]
 }
@@ -195,6 +278,7 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
       total: changes.length,
       byType,
       bySize,
+      averagePerDay: null,
       peeByHourBucket: emptyBuckets(),
       poopByHourBucket: emptyBuckets(),
     }
@@ -205,6 +289,7 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     total: changes.length,
     byType,
     bySize,
+    averagePerDay: averagePerDay(changes.map((c) => c.changed_at)),
     peeByHourBucket,
     poopByHourBucket,
   }

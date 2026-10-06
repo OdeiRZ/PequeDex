@@ -85,6 +85,24 @@ describe('summarizeSleepStats', () => {
     expect(afternoon?.value).toBe(15)
     expect(night?.value).toBe(0)
   })
+
+  it('averages the gap between one sleep ending and the next starting', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 11)), // ends 11:00
+      sleep(local(2026, 8, 7, 14), local(2026, 8, 7, 14, 30)), // starts 14:00 -> gap 180min; ends 14:30
+      sleep(local(2026, 8, 7, 20), local(2026, 8, 7, 20, 45)), // starts 20:00 -> gap 330min
+    ])
+    expect(result.averageWakeWindowMinutes).toBe(255)
+  })
+
+  it('excludes a gap long enough to look like an overnight stretch', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 11)), // ends 11:00
+      sleep(local(2026, 8, 7, 12), local(2026, 8, 7, 12, 30)), // starts 12:00 -> gap 60min
+      sleep(local(2026, 8, 8, 8), local(2026, 8, 8, 8, 30)), // starts next day -> gap > 6h, excluded
+    ])
+    expect(result.averageWakeWindowMinutes).toBe(60)
+  })
 })
 
 describe('summarizeFeedStats', () => {
@@ -129,6 +147,35 @@ describe('summarizeFeedStats', () => {
     expect(night?.value).toBe(2)
     expect(morning?.value).toBe(1)
   })
+
+  it('averages the gap between feeds across every type, not just pecho', () => {
+    const result = summarizeFeedStats([
+      feed({ type: 'pecho', started_at: local(2026, 8, 7, 8) }),
+      feed({ type: 'biberon', started_at: local(2026, 8, 7, 11) }), // gap 180min
+      feed({ type: 'solido', started_at: local(2026, 8, 7, 14) }), // gap 180min
+    ])
+    expect(result.averageGapMinutes).toBe(180)
+  })
+
+  it('excludes a feed gap long enough to look like an overnight stretch', () => {
+    const result = summarizeFeedStats([
+      feed({ started_at: local(2026, 8, 7, 8) }),
+      feed({ started_at: local(2026, 8, 7, 10) }), // gap 120min
+      feed({ started_at: local(2026, 8, 8, 7) }), // gap > 8h, excluded
+    ])
+    expect(result.averageGapMinutes).toBe(120)
+  })
+
+  it('averages feeds per calendar day across the whole logged span', () => {
+    const result = summarizeFeedStats([
+      feed({ started_at: local(2026, 8, 7, 8) }),
+      feed({ started_at: local(2026, 8, 7, 14) }),
+      feed({ started_at: local(2026, 8, 8, 8) }),
+      feed({ started_at: local(2026, 8, 8, 14) }),
+    ])
+    // 4 feeds across 2 calendar days (7th and 8th, inclusive).
+    expect(result.averagePerDay).toBe(2)
+  })
 })
 
 describe('summarizeDiaperStats', () => {
@@ -163,6 +210,16 @@ describe('summarizeDiaperStats', () => {
     expect(poopMorning?.value).toBe(1)
     expect(peeNight?.value).toBe(1)
     expect(poopNight?.value).toBe(1)
+  })
+
+  it('averages changes per calendar day across the whole logged span', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ changed_at: local(2026, 8, 7, 14) }),
+      diaperChange({ changed_at: local(2026, 8, 7, 20) }),
+    ])
+    // 3 changes, all on the same calendar day.
+    expect(result.averagePerDay).toBe(3)
   })
 })
 

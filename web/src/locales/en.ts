@@ -168,6 +168,7 @@ export default {
       title: 'Sleep',
       totalLabel: 'Sleeps logged',
       averageLabel: 'Average duration',
+      wakeWindowLabel: 'Awake time between sleeps',
       byHourLabel: 'Minutes asleep per time slot',
     },
     feed: {
@@ -176,11 +177,14 @@ export default {
       biberonShareLabel: 'Bottle-fed',
       pechoDurationLabel: 'Average duration (breast)',
       bottleAmountLabel: 'Average amount (bottle)',
+      gapLabel: 'Time between feeds',
+      perDayLabel: 'Feeds per day',
       byHourLabel: 'Feeds per time slot',
     },
     diaper: {
       title: 'Diapers',
       bySizeLabel: 'By size',
+      perDayLabel: 'Changes per day',
       peeByHourLabel: 'Wet changes per time slot',
       poopByHourLabel: 'Dirty changes per time slot',
     },

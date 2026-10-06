@@ -188,6 +188,21 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
                 {{ Math.round(feedStats.averageBottleAmountMl) }} ml
               </div>
             </div>
+            <div
+              v-if="feedStats.averageGapMinutes !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.feed.gapLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatMinutes(feedStats.averageGapMinutes) }}
+              </div>
+            </div>
+            <div v-if="feedStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.feed.perDayLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ feedStats.averagePerDay.toFixed(1) }}
+              </div>
+            </div>
           </div>
           <div
             v-if="feedStats.byType.pecho > 0"
@@ -233,6 +248,15 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
                 {{ formatMinutes(sleepStats.averageDurationMinutes ?? 0) }}
               </div>
             </div>
+            <div
+              v-if="sleepStats.averageWakeWindowMinutes !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.wakeWindowLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatMinutes(sleepStats.averageWakeWindowMinutes) }}
+              </div>
+            </div>
           </div>
           <div>
             <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
@@ -256,7 +280,7 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
         </h2>
 
         <template v-if="diaperStats.hasEnoughData">
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl bg-surface-sunken p-3">
               <div class="text-xs text-text-muted">{{ t('dashboard.diaperForm.wet') }}</div>
               <div class="text-lg font-bold tabular-nums">
@@ -273,6 +297,12 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
               <div class="text-xs text-text-muted">{{ t('dashboard.diaperForm.both') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ percent(diaperStats.byType.ambos, diaperStats.total) }}
+              </div>
+            </div>
+            <div v-if="diaperStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.diaper.perDayLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ diaperStats.averagePerDay.toFixed(1) }}
               </div>
             </div>
           </div>

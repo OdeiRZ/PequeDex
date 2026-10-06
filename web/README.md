@@ -1339,6 +1339,20 @@ posible con un único dato); todas las lecturas idénticas (una línea
 perfectamente plana) usan un rango de valor falso de ±1 en vez de
 dividir por cero al escalar el eje Y.
 
+**Intervalos y promedios diarios** - `averageWakeWindowMinutes` (sueño) y
+`averageGapMinutes` (tomas) reimplementan el mismo cálculo que
+`SleepPatternPredictor.php`/`FeedPatternPredictor.php` ya hacían en el
+backend (mismos umbrales `MAX_WAKE_WINDOW_HOURS`/`MAX_GAP_HOURS` para
+descartar un hueco tan largo que es casi seguro un tramo nocturno, no
+un patrón real), no una llamada a esos endpoints de predicción - esos
+miran solo las últimas 20 entradas (pensados para "cuándo va a ser la
+próxima"), mientras que esta pantalla ya trabaja sobre el historial
+completo para todo lo demás, y mezclar ambas ventanas de muestra habría
+sido inconsistente. `averagePerDay()` (tomas/pañales al día de media)
+no estaba pedido explícitamente - sale gratis de los mismos datos ya
+cargados, por día de calendario sobre el rango real que cubren (no
+una ventana de 24h fija).
+
 ## Despliegue
 
 En producción ([odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/)):

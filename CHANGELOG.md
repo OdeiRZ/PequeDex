@@ -64,6 +64,21 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Intervalos de sueño y de tomas, y tres estadísticas más no pedidas
+  explícitamente** en "Estadísticas" (`lib/stats.ts`): tiempo despierto
+  medio entre un sueño y el siguiente, y tiempo medio entre tomas -
+  mismo cálculo y mismos umbrales de "ruido" que ya usan
+  `SleepPatternPredictor.php`/`FeedPatternPredictor.php` en el backend
+  (`MAX_WAKE_WINDOW_HOURS = 6`, `MAX_GAP_HOURS = 8`: un hueco más largo
+  es casi siempre un tramo nocturno, no un patrón real, y falsearía la
+  media), reimplementados en el frontend sobre el historial completo
+  en vez de reutilizar los predictores (que miran solo las últimas 20
+  entradas, pensados para "cuándo será la próxima", no para un
+  resumen histórico). De propina, sobre los mismos datos ya cargados:
+  tomas al día de media, cambios de pañal al día de media (ambos vía
+  `averagePerDay()`, por día de calendario sobre el rango real que
+  cubren los datos) - la pregunta natural una vez "cada cuánto" ya
+  está en pantalla, sin ningún fetch adicional.
 - **Sonidos para dormir y Estadísticas, visibles u ocultos desde "Tu
   cuenta"** (`api`: columnas `sounds_enabled`/`stats_enabled`
   booleanas, `default(true)`, dos rutas `PUT /user/sounds`/

@@ -169,6 +169,7 @@ export default {
       title: 'Sueño',
       totalLabel: 'Sueños registrados',
       averageLabel: 'Duración media',
+      wakeWindowLabel: 'Tiempo despierto entre sueños',
       byHourLabel: 'Minutos dormidos por franja',
     },
     feed: {
@@ -177,11 +178,14 @@ export default {
       biberonShareLabel: 'Con biberón',
       pechoDurationLabel: 'Duración media (pecho)',
       bottleAmountLabel: 'Cantidad media (biberón)',
+      gapLabel: 'Cada cuánto come',
+      perDayLabel: 'Tomas al día',
       byHourLabel: 'Tomas por franja',
     },
     diaper: {
       title: 'Pañales',
       bySizeLabel: 'Por talla',
+      perDayLabel: 'Cambios al día',
       peeByHourLabel: 'Pis por franja',
       poopByHourLabel: 'Caca por franja',
     },

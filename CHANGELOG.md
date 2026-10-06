@@ -73,7 +73,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   duración lo haría si la hubiera. En cuanto hay duración (`badge`), la
   hora salta a su sitio habitual a la derecha y la segunda línea pasa a
   liderarla la propia duración - mismo comportamiento que ya había,
-  sin cambios ahí.
+  sin cambios ahí. Como consecuencia directa, el 💤 de un sueño en
+  curso vuelve a vivir junto a la hora (como ya hace la gota en una
+  toma pendiente de "Finalizar"), no dentro del propio botón - se
+  restaura la prop `emojiPulsing` de `EntryCard.vue` (la animación de
+  "respirar" vuelve con ella) que se había retirado cuando el emoji se
+  trasladó al botón por primera vez.
 - **Botón "Finalizar" en la toma de pecho más reciente sin duración**
   (`DashboardView.vue`): a diferencia del sueño, `ended_at === null` en
   una toma no significa "en curso" - es su estado normal, opcional

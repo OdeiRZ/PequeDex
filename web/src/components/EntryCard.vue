@@ -23,14 +23,17 @@ const props = withDefaults(
      * appear alongside `dropletColor` at once (a "both" diaper change
      * has pee and poop both). */
     poopColor?: string | null
-    /** A small emoji in the badge pill - 💤 for a finished sleep entry
-     * (see `entrySleepEmoji()` in `DashboardView.vue`). A sleep still in
-     * progress doesn't pass this - that one shows its own 💤 inside the
-     * "Finalizar" button instead (`#primaryAction`), not here. Emoji,
-     * not an SVG icon, same "matches this app's existing convention, no
-     * new assets" reasoning as `lib/milestoneCategory.ts`'s own emoji
-     * map. Undefined renders nothing. */
+    /** A small emoji next to the title/duration - 💤 for a sleep entry,
+     * finished or not (see `entrySleepEmoji()` in `DashboardView.vue`).
+     * Emoji, not an SVG icon, same "matches this app's existing
+     * convention, no new assets" reasoning as `lib/milestoneCategory.ts`'s
+     * own emoji map. Undefined renders nothing. */
     emoji?: string | null
+    /** Gently breathes the emoji above instead of leaving it static -
+     * an ongoing sleep (no `ended_at` yet), so "still asleep right
+     * now" reads differently at a glance from "was asleep, already
+     * woke up". */
+    emojiPulsing?: boolean
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -56,7 +59,7 @@ const props = withDefaults(
      * no aquí - ver su propio comentario más abajo en la plantilla. */
     revealPx?: number
   }>(),
-  { interactive: true, pulsing: false, swipeToDelete: false, revealPx: 64 },
+  { interactive: true, pulsing: false, emojiPulsing: false, swipeToDelete: false, revealPx: 64 },
 )
 
 const emit = defineEmits<{ open: [] }>()
@@ -222,7 +225,12 @@ function onRowClick() {
                 <circle cx="12" cy="9" r="3.2" />
                 <circle cx="12" cy="6" r="2" />
               </svg>
-              <span v-if="emoji" class="shrink-0 text-xs leading-none" aria-hidden="true">
+              <span
+                v-if="emoji"
+                class="shrink-0 text-xs leading-none"
+                :class="emojiPulsing && 'entry-emoji-pulsing'"
+                aria-hidden="true"
+              >
                 {{ emoji }}
               </span>
             </div>
@@ -300,6 +308,31 @@ function onRowClick() {
 
 @media (prefers-reduced-motion: reduce) {
   .entry-card-pulsing {
+    animation: none;
+  }
+}
+
+/* A gentle rise-and-fade, not a hard blink - reads as "still
+   happening" without competing for attention with the flash/glow
+   animations elsewhere on this same card. */
+.entry-emoji-pulsing {
+  animation: entry-emoji-breathe 2s ease-in-out infinite;
+}
+
+@keyframes entry-emoji-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-emoji-pulsing {
     animation: none;
   }
 }

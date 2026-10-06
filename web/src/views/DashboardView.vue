@@ -884,7 +884,8 @@ function entryPoopColor(entry: (typeof babies.timeline)[number]): string | undef
 // SVG, since there's no color to communicate (see EntryCard.vue's own
 // docblock on `emoji`). `entrySleepPulsing()` is what actually tells
 // "still asleep right now" (no `ended_at` yet) apart from "was
-// asleep, already woke up" - the emoji itself is identical either way.
+// asleep, already woke up" - the emoji itself is identical either way,
+// `emoji-pulsing` below is what breathes it while true.
 function entrySleepEmoji(entry: (typeof babies.timeline)[number]): string | undefined {
   return entry.type === 'sleep' ? '💤' : undefined
 }
@@ -1919,7 +1920,8 @@ const sleepPredictionDue = computed(() => {
                     "
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
-                    :emoji="entrySleepPulsing(item.entry) ? undefined : entrySleepEmoji(item.entry)"
+                    :emoji="entrySleepEmoji(item.entry)"
+                    :emoji-pulsing="entrySleepPulsing(item.entry)"
                     :badge="entryDuration(item.entry) ?? entryDiaperSizeLabel(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
@@ -1935,9 +1937,6 @@ const sleepPredictionDue = computed(() => {
                         @click="onFinishSleep(item.entry.data)"
                       >
                         {{ t('dashboard.timeline.finishSleep') }}
-                        <span class="sleep-emoji-pulsing text-xs leading-none" aria-hidden="true"
-                          >💤</span
-                        >
                       </button>
                     </template>
                     <template
@@ -2765,30 +2764,3 @@ const sleepPredictionDue = computed(() => {
     </template>
   </div>
 </template>
-
-<style scoped>
-/* Mismo "respirar" que antes llevaba el 💤 de EntryCard.vue mientras el
-   sueño seguía en curso - se movió aquí al mover el propio emoji, junto
-   al botón "Finalizar", en vez de a una pastilla aparte. */
-.sleep-emoji-pulsing {
-  animation: sleep-emoji-breathe 2s ease-in-out infinite;
-}
-
-@keyframes sleep-emoji-breathe {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-1px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sleep-emoji-pulsing {
-    animation: none;
-  }
-}
-</style>

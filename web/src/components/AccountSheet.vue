@@ -617,7 +617,7 @@ watch(
       </button>
     </div>
 
-    <div class="mt-4">
+    <div class="mt-6 border-t border-border pt-5">
       <span class="field-label">{{ t('profile.defaultDiaperSize.title') }}</span>
       <p class="text-xs text-text-muted">{{ t('profile.defaultDiaperSize.description') }}</p>
       <div

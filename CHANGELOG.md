@@ -9,6 +9,30 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **PDF de "Contracciones" al día con el de "Estadísticas"**: la
+  cabecera cambia el texto suelto (nombre + "Generado el...") por la
+  misma tarjeta con degradado de marca que ya lleva Estadísticas, y
+  "Generado el..." pasa a un encabezado fijo repetido en cada página.
+  A diferencia de Estadísticas (solo alcanzable con el bebé ya
+  nacido), Contracciones es justo lo contrario - solo mientras el bebé
+  NO ha nacido todavía -, así que el titular de la tarjeta es la
+  cuenta atrás a la fecha prevista ("12 días" / "¡Puede ser hoy!"), no
+  la edad; nuevo `BabyAgeHeadline` (`app/Services/Babies/`), compartido
+  entre los dos controladores de export - antes vivía como un método
+  privado solo en `StatsExportController`, que nunca tuvo que manejar
+  el caso "todavía sin nacer". El botón de "Descargar PDF" gana los
+  mismos dos sonidos que ya tiene el de Estadísticas (`download` al
+  pulsar, `downloadDone` al terminar) en vez de no sonar nada, que es
+  lo que tenía hasta ahora.
+- **Tests unitarios para `BabyAgeHeadline`** (`tests/Unit/Services/
+  Babies/BabyAgeHeadlineTest.php`, 9 casos: días/semanas, singular/
+  plural, el desbordamiento real de Carbon al sumar un mes a un 31 de
+  enero - cae el 3 de marzo, no el 28/29 de febrero -, cuenta atrás a
+  fecha prevista, "hoy", fecha prevista ya pasada, birth_date en el
+  futuro, y ningún dato) - construye el `Baby` directamente
+  (`new Baby([...])`), no con la factory, para no disparar la
+  comprobación de colisión de `invite_code` contra una base de datos
+  que los tests de `Unit` no tienen.
 - **Tests unitarios para la lógica de "Línea temporal"**
   (`DashboardView.vue`, con diferencia la vista más grande de la app y
   hasta ahora sin un solo test propio): las funciones puras que deciden

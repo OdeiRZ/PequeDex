@@ -151,7 +151,12 @@ it('headlines the baby age in days while under one month old', function () {
 
     $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
 
-    expect($data['babyAge'])->toBe(['value' => 10, 'unit' => 'días']);
+    expect($data['babyAge'])->toBe([
+        'type' => 'born',
+        'value' => 10,
+        'unit' => 'días',
+        'special' => null,
+    ]);
 });
 
 it('headlines the baby age in weeks once a month has passed', function () {
@@ -162,5 +167,10 @@ it('headlines the baby age in weeks once a month has passed', function () {
 
     $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
 
-    expect($data['babyAge'])->toBe(['value' => 10, 'unit' => 'semanas']);
+    expect($data['babyAge'])->toBe([
+        'type' => 'born',
+        'value' => 10,
+        'unit' => 'semanas',
+        'special' => null,
+    ]);
 });

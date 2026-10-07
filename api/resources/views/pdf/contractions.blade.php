@@ -18,9 +18,36 @@
            the maroon used everywhere else, so it reads as a distinct
            kind of event on the timeline, not just another stat. */
         body { font-family: sans-serif; font-size: 14px; color: #2b2420; }
-        h1 { font-size: 26px; margin-bottom: 2px; color: #1a1a1a; }
-        .subtitle { color: #7a6f66; margin-bottom: 4px; font-size: 15px; }
-        .meta { color: #a3968a; font-size: 11px; margin-bottom: 18px; }
+        h1 { font-size: 26px; margin-bottom: 14px; color: #1a1a1a; }
+
+        /* Fija en la parte superior de CADA página, igual que .footer ya
+           hace en la inferior. */
+        .header { position: fixed; top: -30px; left: 0; right: 0; text-align: right; font-size: 10px; color: #a3968a; }
+
+        /* Mismo formato que la tarjeta principal del bebé en el dashboard
+           y que la cabecera de pdf/stats.blade.php: nombre + sexo arriba,
+           titular en grande + fecha debajo, sobre un degradado de marca
+           con dos círculos decorativos traslúcidos. A diferencia de
+           Estadísticas (solo alcanzable con el bebé ya nacido),
+           Contracciones es justo lo contrario - solo mientras el bebé NO
+           ha nacido todavía -, así que el titular es la cuenta atrás a la
+           fecha prevista en vez de la edad, vía el mismo
+           BabyAgeHeadline::forBaby() que ya usa Estadísticas (comparte
+           las tres variantes - nacido/previsto/sin fecha - en vez de
+           reimplementar el cálculo aquí). */
+        table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        table.baby-card td { background-color: #a65a6b; background-image: linear-gradient(135deg, #a65a6b 0%, #2f6e68 140%); color: #ffffff; padding: 0; border-radius: 20px; }
+        .baby-card-wrap { position: relative; padding: 26px 30px; }
+        .baby-card-deco-1 { position: absolute; top: -56px; right: -40px; width: 120px; height: 120px; border-radius: 60px; background: rgba(255,255,255,0.14); }
+        .baby-card-deco-2 { position: absolute; bottom: -30px; left: 100px; width: 56px; height: 56px; border-radius: 28px; background: rgba(255,255,255,0.1); }
+        table.baby-card-inner { position: relative; width: 100%; border-collapse: collapse; }
+        table.baby-card-inner td { background: none; padding: 0; color: #ffffff; }
+        .baby-card-name { font-size: 16px; font-weight: bold; letter-spacing: 0.3px; }
+        .baby-card-sex { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.22); border-radius: 12px; padding: 5px 14px; }
+        .baby-card-age { font-size: 46px; font-weight: bold; line-height: 1; }
+        .baby-card-age span { font-size: 19px; font-weight: bold; }
+        .baby-card-special { font-size: 24px; font-weight: bold; }
+        .baby-card-born { font-size: 14px; opacity: 0.95; }
 
         table.stats-bar { width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 0 0 18px -8px; }
         table.stats-bar td { width: 33.33%; background: #f3ece4; border-radius: 8px; padding: 10px 14px; text-align: center; }
@@ -52,9 +79,49 @@
     </style>
 </head>
 <body>
+    <div class="header">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</div>
     <h1>Contracciones</h1>
-    <p class="subtitle">{{ $baby->name ?: 'Bebé' }}</p>
-    <p class="meta">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</p>
+
+    <table class="baby-card">
+        <tr>
+            <td>
+                <div class="baby-card-wrap">
+                    <span class="baby-card-deco-1"></span>
+                    <span class="baby-card-deco-2"></span>
+                    <table class="baby-card-inner">
+                        <tr>
+                            <td style="text-align: left;">
+                                <span class="baby-card-name">{{ $baby->name ?: 'Bebé' }}</span>
+                            </td>
+                            <td style="text-align: right; width: 38%;">
+                                @if ($baby->sex?->value === 'nino')
+                                    <span class="baby-card-sex">Niño</span>
+                                @elseif ($baby->sex?->value === 'nina')
+                                    <span class="baby-card-sex">Niña</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: left; padding-top: 10px;">
+                                @if ($babyAge['special'])
+                                    <span class="baby-card-special">{{ $babyAge['special'] }}</span>
+                                @elseif ($babyAge['value'] !== null)
+                                    <span class="baby-card-age">{{ $babyAge['value'] }} <span>{{ $babyAge['unit'] }}</span></span>
+                                @endif
+                            </td>
+                            <td style="text-align: right; width: 38%; vertical-align: bottom;">
+                                @if ($babyAge['type'] === 'born' && $baby->birth_date)
+                                    <span class="baby-card-born">Nació el {{ \Carbon\CarbonImmutable::parse($baby->birth_date)->translatedFormat('j \d\e F \d\e Y') }}</span>
+                                @elseif ($baby->due_date)
+                                    <span class="baby-card-born">Fecha prevista: {{ \Carbon\CarbonImmutable::parse($baby->due_date)->translatedFormat('j \d\e F \d\e Y') }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <table class="stats-bar">
         <tr>

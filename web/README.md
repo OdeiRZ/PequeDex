@@ -1433,13 +1433,15 @@ endpoints de predicción para esto. Devuelve el PDF como blob
 autenticado por Bearer token (igual que Contracciones), no un enlace
 directo. Dos sonidos propios en vez del `v-press` genérico (ninguno de
 los dos export entraba en el barrido original de ~20 botones de
-"Sonido y vibración al interactuar" - este se añadió después, y un
-"tap" cualquiera no decía nada sobre lo que en realidad pasa):
+"Sonido y vibración al interactuar" - se añadieron después, y un "tap"
+cualquiera no decía nada sobre lo que en realidad pasa):
 `feedback.download()` al pulsar, antes de que el PDF exista siquiera, y
 `feedback.downloadDone()` cuando `justExported` se activa - el segundo
-evento real, independiente, de "ya está listo y descargado". Ver
-"Sonido y vibración al interactuar" más abajo para el timbre de cada
-uno.
+evento real, independiente, de "ya está listo y descargado". El botón
+de exportar de `ContractionsView.vue` (que nunca había llevado ni
+`v-press`) gana exactamente los mismos dos, en el mismo punto de su
+propio `onExportPdf()`. Ver "Sonido y vibración al interactuar" más
+abajo para el timbre de cada uno.
 
 El PDF en sí (`api/resources/views/pdf/stats.blade.php`, ver
 `api/README.md` para el detalle completo) tiene cabecera con el mismo

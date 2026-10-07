@@ -384,7 +384,30 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   resto de la tabla (icono en la columna del número, fecha en la
   columna de inicio, texto centrado en el resto del ancho) pero en azul
   (`#3f7ea6`) en vez del marrón de marca, para distinguirse como un
-  evento aparte.
+  evento aparte. Cabecera rediseñada otra vez más tarde: la tarjeta con
+  degradado y titular en grande que ya lleva Estadísticas, con una
+  diferencia real - Contracciones es alcanzable solo mientras el bebé
+  **no** ha nacido todavía, lo contrario de Estadísticas, así que el
+  titular de la tarjeta es la cuenta atrás a la fecha prevista
+  ("12 días" / "¡Puede ser hoy!" si es hoy mismo), no la edad. Mismo
+  `app/Services/Babies/BabyAgeHeadline.php` que usa
+  `StatsExportController` (ver más abajo) - cubre las tres variantes
+  (nacido/previsto/sin ninguna fecha) desde un único sitio en vez de
+  reimplementar el cálculo aquí solo para el caso que a Estadísticas
+  nunca le hacía falta.
+- `app/Services/Babies/BabyAgeHeadline.php` — mismo cálculo de edad que
+  `getBabyAge()`/`heroHeadline` en `lib/babyAge.ts`/`DashboardView.vue`
+  (días mientras no cumple un mes, semanas después - el mismo
+  desbordamiento de calendario real que usa Carbon al sumar un mes a un
+  día que el mes siguiente no tiene, no una aproximación de "30 días";
+  confirmado con un test que lo fuerza con un bebé nacido el 31 de
+  enero), o una cuenta atrás a la fecha prevista para un bebé que
+  todavía no ha nacido. Compartido por las cabeceras de los dos PDF
+  (Contracciones y Estadísticas) en vez de vivir duplicado o solo donde
+  se necesitó primero - nació como un método privado de
+  `StatsExportController` que solo cubría el caso "nacido", y se sacó a
+  su propio servicio al necesitarlo también Contracciones con las otras
+  dos variantes.
 - `app/Http/Controllers/Stats/StatsExportController.php`
   + `app/Http/Requests/Stats/ExportStatsRequest.php`
   + `resources/views/pdf/stats.blade.php` — exportación a PDF de
@@ -410,13 +433,10 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.
-  `StatsExportController::babyAgeHeadline()` calcula la edad en días
-  (mientras no cumple un mes) o semanas (después) con el mismo criterio
-  que `getBabyAge()` en `lib/babyAge.ts` - días mientras
-  `now() < birth_date->addMonth()`, semanas (`intdiv($days, 7)`)
-  después -, para que la cabecera del PDF (tarjeta con el mismo formato
-  que la tarjeta principal del bebé en el dashboard) muestre el mismo
-  número que ya ve el cuidador en pantalla. Las franjas horarias de
+  `BabyAgeHeadline::forBaby()` (ver su propia entrada más arriba) da la
+  edad para la cabecera del PDF (tarjeta con el mismo formato que la
+  tarjeta principal del bebé en el dashboard), el mismo número que ya
+  ve el cuidador en pantalla. Las franjas horarias de
   cada sección se renderizan con un partial compartido
   (`pdf/partials/bucket-grid.blade.php`, 2 por fila en vez de 4 filas a
   todo lo ancho) que recibe un closure `format` por sección - cada una

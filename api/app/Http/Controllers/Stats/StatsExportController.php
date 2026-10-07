@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Stats;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Stats\ExportStatsRequest;
 use App\Models\Baby;
+use App\Services\Babies\BabyAgeHeadline;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
@@ -37,7 +38,7 @@ class StatsExportController extends Controller
     {
         return [
             'baby' => $baby,
-            'babyAge' => $this->babyAgeHeadline($baby),
+            'babyAge' => BabyAgeHeadline::forBaby($baby),
             'generatedAt' => CarbonImmutable::now(),
             'sleep' => $data['sleep'],
             'feed' => $data['feed'],
@@ -50,30 +51,6 @@ class StatsExportController extends Controller
             'hourBucketLabels' => self::HOUR_BUCKET_LABELS,
             'logo' => $this->logoDataUri(),
         ];
-    }
-
-    /**
-     * Same headline math as `getBabyAge()` in `lib/babyAge.ts` (days
-     * while under one month old, weeks after - the same calendar
-     * month-rollover rule, not a flat "30 days" proxy). Only the "born"
-     * branch: "Estadísticas" is only reachable once the baby has
-     * actually been born, so `birth_date` is always set here.
-     *
-     * @return array{value: int, unit: string}
-     */
-    private function babyAgeHeadline(Baby $baby): array
-    {
-        $birth = CarbonImmutable::parse((string) $baby->birth_date);
-        $now = CarbonImmutable::now();
-        $days = (int) $birth->diffInDays($now);
-
-        if ($now->lt($birth->addMonth())) {
-            return ['value' => $days, 'unit' => $days === 1 ? 'día' : 'días'];
-        }
-
-        $weeks = intdiv($days, 7);
-
-        return ['value' => $weeks, 'unit' => $weeks === 1 ? 'semana' : 'semanas'];
     }
 
     /** Same logo as ContractionsExportController - kept in sync by hand

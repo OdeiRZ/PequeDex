@@ -330,6 +330,11 @@ const justExported = ref(false)
 let justExportedTimer: ReturnType<typeof setTimeout> | undefined
 
 async function onExportPdf() {
+  // Mismos dos eventos que StatsView.vue: "download" al pulsar (antes de
+  // que el PDF exista siquiera), "downloadDone" cuando el icono pasa a
+  // su tick de confirmación - no el "tap" genérico de v-press, que este
+  // botón nunca llevó.
+  feedback.download()
   exporting.value = true
   try {
     const blob = await babies.exportContractionsPdf()
@@ -340,6 +345,7 @@ async function onExportPdf() {
     link.click()
     URL.revokeObjectURL(url)
     justExported.value = true
+    feedback.downloadDone()
     // Cleared and rescheduled rather than left to fire unconditionally -
     // exporting twice in quick succession would otherwise let the first
     // export's timeout hide the second export's checkmark early.

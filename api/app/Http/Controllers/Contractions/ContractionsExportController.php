@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Contractions;
 
 use App\Http\Controllers\Controller;
 use App\Models\Baby;
+use App\Services\Babies\BabyAgeHeadline;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
@@ -117,6 +118,7 @@ class ContractionsExportController extends Controller
         return [
             'groups' => $groups,
             'baby' => $baby,
+            'babyAge' => BabyAgeHeadline::forBaby($baby),
             'boltOn' => $this->boltDataUri('#a65a6b'),
             'boltOff' => $this->boltDataUri('#e8ddd0'),
             'waterIcon' => $this->waterIconDataUri(),

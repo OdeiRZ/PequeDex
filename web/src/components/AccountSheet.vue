@@ -573,27 +573,6 @@ watch(
       />
     </div>
 
-    <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
-      <div>
-        <span class="field-label">{{ t('profile.milestonesEnabled.title') }}</span>
-        <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        :aria-checked="milestonesEnabled"
-        :aria-label="t('profile.milestonesEnabled.title')"
-        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
-        :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
-        @click="onToggleMilestones"
-      >
-        <span
-          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
-          :style="{ left: milestonesEnabled ? '22px' : '2px' }"
-        ></span>
-      </button>
-    </div>
-
     <div class="mt-6 border-t border-border pt-5">
       <span class="field-label">{{ t('profile.actionBar.title') }}</span>
       <p class="mb-3 text-xs text-text-muted">
@@ -646,6 +625,27 @@ watch(
     </div>
 
     <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
+      <div>
+        <span class="field-label">{{ t('profile.milestonesEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="milestonesEnabled"
+        :aria-label="t('profile.milestonesEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleMilestones"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: milestonesEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
       <div>
         <span class="field-label">{{ t('profile.predictions.title') }}</span>
         <p class="text-xs text-text-muted">{{ t('profile.predictions.description') }}</p>

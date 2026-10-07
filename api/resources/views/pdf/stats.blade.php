@@ -9,7 +9,7 @@
            (franja de color por categoría junto al título de cada
            sección, pastillas de cifra tipo "stats-bar"). */
         body { font-family: sans-serif; font-size: 14px; color: #2b2420; }
-        h1 { font-size: 26px; margin-bottom: 10px; color: #1a1a1a; }
+        h1 { font-size: 26px; margin-bottom: 2px; color: #1a1a1a; }
 
         /* Mismo formato que la tarjeta principal del bebé en el dashboard
            (DashboardView.vue): nombre + sexo arriba, edad en grande +
@@ -34,7 +34,7 @@
         .baby-card-age span { font-size: 19px; font-weight: bold; }
         .baby-card-born { font-size: 14px; opacity: 0.95; }
 
-        .meta { color: #a3968a; font-size: 11px; margin: 6px 0 18px; }
+        .meta { color: #a3968a; font-size: 11px; margin: 0 0 14px; }
 
         h2 { font-size: 17px; margin: 22px 0 10px; padding-left: 10px; border-left: 5px solid #a3968a; }
         h2.feed { border-left-color: #c98a3e; }
@@ -66,6 +66,7 @@
 </head>
 <body>
     <h1>Estadísticas</h1>
+    <p class="meta">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</p>
 
     <table class="baby-card">
         <tr>
@@ -99,7 +100,6 @@
             </td>
         </tr>
     </table>
-    <p class="meta">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</p>
 
     {{-- Tomas --}}
     <h2 class="feed">Tomas</h2>

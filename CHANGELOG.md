@@ -62,10 +62,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
-- **"Generado el..." del PDF de "Estadísticas" vuelve a la cabecera
-  superior**, justo debajo del título, en vez de debajo de la tarjeta
-  del bebé (donde había quedado al rediseñarla) - mismo sitio que ya
-  ocupa en `pdf/contractions.blade.php`.
+- **"Generado el..." del PDF de "Estadísticas" fija en el encabezado
+  superior de cada página**, no solo una línea bajo el título en la
+  primera - mismo truco que ya usa `.footer` para repetirse al pie de
+  todas (`position: fixed`, desplazada fuera del área de contenido con
+  un `top` negativo), confirmado en una página posterior con una
+  captura real del PDF (Ghostscript).
 - **Sonido genérico de pulsación en "Descargar PDF" de Estadísticas**,
   en vez de algo que sonara a lo que en realidad pasa: dos eventos
   nuevos en `useFeedback.ts`, `download` (al pulsar, antes de que el

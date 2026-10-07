@@ -190,6 +190,7 @@ async function onExportPdf() {
       </RouterLink>
       <h1 class="font-display text-lg font-bold">{{ t('stats.title') }}</h1>
       <button
+        v-press
         type="button"
         class="export-btn relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
         :class="[exporting && 'is-exporting', justExported && 'is-done']"

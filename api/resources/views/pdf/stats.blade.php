@@ -12,11 +12,14 @@
         h1 { font-size: 26px; margin-bottom: 10px; color: #1a1a1a; }
 
         /* Mismo formato que la tarjeta principal del bebé en el dashboard
-           (DashboardView.vue): degradado de marca, nombre + sexo arriba,
-           edad en grande + fecha de nacimiento debajo. dompdf 3.x soporta
-           background-image con gradientes lineales. */
+           (DashboardView.vue): nombre + sexo arriba, edad en grande +
+           fecha de nacimiento debajo, sobre un fondo de color de marca.
+           Un degradado CSS (como el de la propia tarjeta en pantalla) no
+           se renderizaba de forma fiable combinado con border-radius en
+           esta versión de dompdf - color sólido en su lugar, mismo tono
+           de marca que el resto del PDF. */
         table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-        table.baby-card > tr > td { background-color: #a65a6b; background-image: linear-gradient(155deg, #a65a6b 0%, #2f6e68 130%); color: #ffffff; padding: 14px 18px; border-radius: 14px; }
+        table.baby-card td { background-color: #a65a6b; color: #ffffff; padding: 14px 18px; border-radius: 14px; }
         table.baby-card-inner { width: 100%; border-collapse: collapse; }
         table.baby-card-inner td { background: none; padding: 0; color: #ffffff; }
         .baby-card-name { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
@@ -46,12 +49,7 @@
         table.bucket-grid { width: 100%; border-collapse: separate; border-spacing: 8px 8px; margin: 0 0 14px -8px; }
         table.bucket-grid td { width: 50%; background: #f3ece4; border-radius: 8px; padding: 8px 12px; text-align: center; }
 
-        table.growth-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; margin-bottom: 14px; }
-        table.growth-table th { text-align: right; padding: 4px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; }
-        table.growth-table th:first-child { text-align: left; }
-        table.growth-table td { background: #f3ece4; padding: 7px 10px; text-align: right; }
-        table.growth-table td:first-child { border-radius: 8px 0 0 8px; text-align: left; color: #7a6f66; }
-        table.growth-table td:last-child { border-radius: 0 8px 8px 0; }
+        .stats-note { display: block; font-size: 10px; color: #7a6f66; margin-top: 2px; }
 
         .size-pill { display: inline-block; background: #f3ece4; border-radius: 10px; padding: 4px 10px; margin: 0 6px 6px 0; font-size: 12px; }
         .size-pill b { color: #2b2420; }
@@ -246,27 +244,14 @@
     @else
         @foreach ($growthMetrics as $metric)
             @if ($metric['stat']['count'] > 0)
-                <table class="growth-table">
-                    <thead>
-                        <tr>
-                            <th>{{ $metric['label'] }}</th>
-                            <th>Percentil</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($metric['stat']['points'] as $point)
-                            <tr>
-                                <td>
-                                    {{ \Carbon\CarbonImmutable::parse($point['date'])->translatedFormat('j \d\e F \d\e Y') }}
-                                    — {{ number_format($point['value'], $metric['decimals']) }} {{ $metric['unit'] }}
-                                </td>
-                                <td>{{ $point['percentile'] !== null ? round($point['percentile']) : '—' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <p class="stats-label" style="margin-bottom: 4px;">{{ $metric['label'] }}</p>
+                @include('pdf.partials.growth-points-grid', [
+                    'points' => $metric['stat']['points'],
+                    'unit' => $metric['unit'],
+                    'decimals' => $metric['decimals'],
+                ])
                 @if ($metric['stat']['gained'] !== null)
-                    <p class="empty" style="font-style: normal; margin-top: -8px;">
+                    <p class="empty" style="font-style: normal; margin-top: -6px;">
                         {{ $metric['stat']['gained'] > 0 ? '+' : '' }}{{ number_format($metric['stat']['gained'], $metric['decimals']) }} {{ $metric['unit'] }} desde el primer registro
                     </p>
                 @endif

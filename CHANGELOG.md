@@ -65,16 +65,32 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - **PDF de "Estadísticas": cabecera, franjas horarias y pie de página**.
   La cabecera cambia el texto suelto (nombre + "Generado el...") por
   una tarjeta con el mismo formato que la tarjeta principal del bebé en
-  el dashboard: degradado de marca, nombre + sexo arriba, edad en
-  grande (días mientras no cumple un mes, semanas después - mismo
-  cálculo que `getBabyAge()` en `lib/babyAge.ts`, ahora también en PHP)
-  y fecha de nacimiento debajo. Las franjas horarias (Madrugada/Mañana/
-  Tarde/Noche) pasan de 4 filas a todo lo ancho con la cifra apretada al
-  final a una rejilla de 2 por fila (`pdf/partials/bucket-grid.blade.php`,
+  el dashboard: nombre + sexo arriba, edad en grande (días mientras no
+  cumple un mes, semanas después - mismo cálculo que `getBabyAge()` en
+  `lib/babyAge.ts`, ahora también en PHP) y fecha de nacimiento debajo,
+  sobre un fondo de color de marca (un degradado como el de la propia
+  tarjeta en pantalla no se renderizaba de forma fiable en esta versión
+  de dompdf - color sólido en su lugar). Bug real encontrado al revisar
+  un PDF de muestra renderizado a imagen (Ghostscript, ya que no hay
+  forma de ver un PDF generado en el navegador durante el desarrollo):
+  la tarjeta no aparecía en absoluto, ni siquiera sin estilo - el
+  selector `table.baby-card > tr > td` (combinador `>`) no empareja
+  nada en dompdf, así que la regla entera se ignoraba y la tabla quedaba
+  sin fondo/padding con los que calcular su propia altura. Cambiado a
+  `table.baby-card td` (sin `>`), igual que el resto de selectores de
+  esta plantilla. Las franjas horarias (Madrugada/Mañana/Tarde/Noche)
+  pasan de 4 filas a todo lo ancho con la cifra apretada al final a una
+  rejilla de 2 por fila (`pdf/partials/bucket-grid.blade.php`,
   reutilizado por Tomas/Sueño/Pis/Caca), mismo estilo de ficha que ya
-  usan los bloques de arriba. El pie de página (logo + "PequeDex ·
-  Estadísticas" en cada página) ya seguía el mismo patrón que el de
-  Contracciones - sin cambios ahí.
+  usan los bloques de arriba; cada medición de "Crecimiento" (antes una
+  fila de tabla por medición) pasa al mismo criterio con un segundo
+  partial, `pdf/partials/growth-points-grid.blade.php`. El pie de
+  página (logo + "PequeDex · Estadísticas" en cada página) ya seguía el
+  mismo patrón que el de Contracciones - sin cambios ahí.
+- **Botón de descargar PDF de "Estadísticas" sin sonido ni vibración al
+  pulsarlo** - le faltaba `v-press` (la directiva que ya cubre el resto
+  de botones primarios de la app), así que se quedaba fuera del
+  interruptor de "Sonido y vibración al interactuar".
 - **Marca de tiempo trasera de "Línea temporal" a dos líneas, ambas del
   mismo tamaño** en un sueño finalizado o una toma de pecho con
   duración cargada: arriba la hora en la que termina/finaliza, abajo la

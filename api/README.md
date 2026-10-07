@@ -421,7 +421,22 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   (`pdf/partials/bucket-grid.blade.php`, 2 por fila en vez de 4 filas a
   todo lo ancho) que recibe un closure `format` por sección - cada una
   formatea el valor crudo de la franja a su manera ("3 tomas", "1h
-  20min", o un número suelto para pis/caca).
+  20min", o un número suelto para pis/caca). Cada medición de
+  "Crecimiento" (antes una fila de tabla por medición, con el
+  percentil apretado al final) sigue el mismo criterio con un segundo
+  partial, `pdf/partials/growth-points-grid.blade.php` (2 mediciones
+  por fila, fecha+valor como título de la ficha, percentil debajo en
+  texto pequeño).
+  Bug real de dompdf encontrado al revisar un PDF generado renderizado
+  a imagen con Ghostscript (`gswin64c -sDEVICE=png16m`, única forma de
+  verlo durante el desarrollo - no hay navegador que lo muestre antes
+  de pedirlo a la API real): la tarjeta de cabecera no aparecía en
+  absoluto, ni siquiera sin estilo. El selector
+  `table.baby-card > tr > td` (combinador `>`) no empareja nada en esta
+  versión de dompdf, así que la regla entera se ignoraba silenciosamente
+  y la tabla se quedaba sin fondo/padding con los que calcular su
+  propia altura - cambiado a `table.baby-card td`, igual que el resto
+  de selectores descendientes de esta plantilla.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

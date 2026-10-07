@@ -1410,7 +1410,16 @@ en camelCase, no snake_case - ver el comentario del propio archivo) y
 mismo motivo por el que el resto de "Estadísticas" ya evita los
 endpoints de predicción para esto. Devuelve el PDF como blob
 autenticado por Bearer token (igual que Contracciones), no un enlace
-directo.
+directo. Lleva `v-press` (el botón de Contracciones no, ninguno de los
+dos entraba en el barrido original de ~20 botones de "Sonido y
+vibración al interactuar" - este se añadió después), así que suena/
+vibra al pulsarlo igual que el resto de botones primarios.
+
+El PDF en sí (`api/resources/views/pdf/stats.blade.php`, ver
+`api/README.md` para el detalle completo) tiene cabecera con el mismo
+formato que la tarjeta principal del bebé en el dashboard, franjas
+horarias y mediciones de crecimiento en rejilla de 2 por fila, y el
+mismo pie de página que ya usa Contracciones.
 
 ## Despliegue
 

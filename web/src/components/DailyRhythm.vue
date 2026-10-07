@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
-import { parseDateOnly } from '@/lib/localDate'
+import { parseDateOnly, formatWeekdayDateLabel } from '@/lib/localDate'
 import { useFeedback } from '@/composables/useFeedback'
 
 const props = defineProps<{
@@ -52,12 +52,7 @@ interface RhythmData {
   hasData: boolean
 }
 
-const dayLabel = computed(() =>
-  parseDateOnly(props.day).toLocaleDateString(props.dateLocale, {
-    day: 'numeric',
-    month: 'long',
-  }),
-)
+const dayLabel = computed(() => formatWeekdayDateLabel(parseDateOnly(props.day), props.dateLocale))
 
 const title = computed(() => (props.isToday ? t('dashboard.rhythm.title') : dayLabel.value))
 

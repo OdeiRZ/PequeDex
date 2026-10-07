@@ -24,3 +24,17 @@ export function addDays(dateOnly: string, delta: number): string {
   date.setDate(date.getDate() + delta)
   return toDateOnlyString(date)
 }
+
+// "Martes 5 de octubre" - el nombre del día entra delante de todo, no
+// detrás como un dato suelto. `Intl` en es-ES devuelve el día de la
+// semana en minúscula y con una coma ("martes, 5 de octubre"); se
+// quita la coma y se capitaliza en vez de montar la cadena a mano
+// campo a campo, para que el mismo código sirva igual con el inglés
+// (que ya llega capitalizado). Compartido entre "Ritmo"
+// (`DailyRhythm.vue`) y "Línea temporal" (`DashboardView.vue`).
+export function formatWeekdayDateLabel(date: Date, locale?: string): string {
+  const raw = date
+    .toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
+    .replace(',', '')
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}

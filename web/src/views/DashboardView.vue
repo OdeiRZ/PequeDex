@@ -42,7 +42,12 @@ import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
-import { addDays, parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
+import {
+  addDays,
+  formatWeekdayDateLabel,
+  parseDateOnly,
+  todayDateOnlyString,
+} from '@/lib/localDate'
 import { extractValidationMessage } from '@/lib/api'
 
 const auth = useAuthStore()
@@ -142,19 +147,6 @@ type TimelineListItem =
   | { kind: 'separator'; key: string; label: string }
   | { kind: 'entry'; key: string; entry: TimelineEntry }
 
-// "Martes 6 de octubre" - el nombre del día entra delante de todo, no
-// detrás como un dato suelto. `toLocaleDateString` con `weekday` en
-// es-ES devuelve "martes, 6 de octubre" (minúscula + coma); se quita la
-// coma y se capitaliza en vez de ensamblar la cadena a mano, para que
-// siga funcionando igual con el inglés ("Tuesday, 6 October" ya viene
-// capitalizado, la coma se quita igual).
-function formatDaySeparatorLabel(at: Date): string {
-  const raw = at
-    .toLocaleDateString(dateLocale.value, { weekday: 'long', day: 'numeric', month: 'long' })
-    .replace(',', '')
-  return raw.charAt(0).toUpperCase() + raw.slice(1)
-}
-
 const groupedTimeline = computed<TimelineListItem[]>(() => {
   const items: TimelineListItem[] = []
   let previousDayKey: string | null = null
@@ -166,7 +158,7 @@ const groupedTimeline = computed<TimelineListItem[]>(() => {
       items.push({
         kind: 'separator',
         key: `day-${dayKey}`,
-        label: formatDaySeparatorLabel(at),
+        label: formatWeekdayDateLabel(at, dateLocale.value),
       })
       previousDayKey = dayKey
     }

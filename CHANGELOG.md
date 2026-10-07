@@ -67,7 +67,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   hora en la que termina/finaliza, abajo la hora en la que empieza/
   inicia - antes solo mostraba la hora de inicio.
 - **Separador de día de "Línea temporal" con el nombre de la semana**:
-  "6 de octubre de 2026" pasa a "Martes 6 de octubre".
+  "6 de octubre de 2026" pasa a "Martes 6 de octubre". El selector de
+  día de "Ritmo" (`DailyRhythm.vue`) gana el mismo formato - nuevo
+  `formatWeekdayDateLabel()` en `lib/localDate.ts`, compartido entre
+  ambos en vez de duplicar la misma lógica dos veces.
 - **"Estadísticas" usaba un simple "Cargando" de texto** mientras el
   resto de la app ya usa la animación de la marca de PequeDex para su
   pantalla de carga (`DashboardView.vue`) - ahora usa la misma. El

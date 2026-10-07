@@ -28,6 +28,7 @@ export interface User {
   // `TodaySummary.vue`.
   sounds_enabled: boolean
   stats_enabled: boolean
+  milestones_enabled: boolean
 }
 
 interface RegisterPayload {
@@ -184,6 +185,11 @@ export const useAuthStore = defineStore('auth', {
 
     async updateStatsEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/stats', { stats_enabled: enabled })
+      this.user = data
+    },
+
+    async updateMilestonesEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/milestones', { milestones_enabled: enabled })
       this.user = data
     },
 

@@ -9,6 +9,12 @@ const props = withDefaults(
     category: Category
     title: string
     meta: string
+    /** Hora de fin, cuando aplica (sueño finalizado, toma de pecho con
+     * duración cargada) - junto con `badge`, convierte la marca de
+     * tiempo trasera de una línea a dos: arriba la hora en la que
+     * termina/finaliza, abajo la hora en la que empieza/inicia (`meta`).
+     * Undefined mantiene la marca de una sola línea de siempre. */
+    metaEnd?: string | null
     description?: string | null
     badge?: string | null
     /** A small droplet icon next to the title, filled with this color -
@@ -240,7 +246,14 @@ function onRowClick() {
           </div>
 
           <span
-            v-if="badge"
+            v-if="badge && metaEnd"
+            class="mr-3 flex shrink-0 flex-col items-end tabular-nums text-text-muted"
+          >
+            <span class="text-sm font-bold leading-tight">{{ metaEnd }}</span>
+            <span class="text-xs leading-tight">{{ meta }}</span>
+          </span>
+          <span
+            v-else-if="badge"
             class="mr-3 shrink-0 text-center text-sm font-bold tabular-nums text-text-muted"
           >
             {{ meta }}

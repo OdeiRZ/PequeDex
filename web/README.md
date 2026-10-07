@@ -416,6 +416,13 @@ al icono. Las secciones del dashboard ligadas a una categoría
 desactivada (predicción y semana de sueño, lista de crecimiento,
 hitos) también dejan de renderizarse, igual que su acceso rápido.
 
+"Hito" es la única de las 5 categorías que además tiene su propio
+interruptor maestro (`milestones_enabled`, ver más abajo) - cuando
+está apagado, `enabledCategories` en `DashboardView.vue` lo filtra por
+encima de lo que diga esta selección, y el propio icono desaparece de
+este selector (`AccountSheet.vue`) para no ofrecer una opción que no
+tendría ningún efecto visible.
+
 ## Predicciones
 
 Las tarjetas de próxima toma/próximo sueño (`feedPredictionLabel`/
@@ -1106,6 +1113,35 @@ verse bien en una captura:
   bebé ya creado. La hoja sube a un nivel disponible en cualquier
   estado del onboarding, y ambos botones pasan a depender solo de
   `auth.user`.
+- **Marca de tiempo trasera de "Línea temporal" a dos líneas** en un
+  sueño finalizado o una toma de pecho con duración cargada: antes
+  mostraba solo la hora de inicio (`item.entry.at`, que siempre es
+  `started_at`, usada para ordenar la lista). Nueva prop opcional
+  `metaEnd` en `EntryCard.vue` — cuando llega junto a `badge` (la
+  propia duración, mismo `v-if` que ya decide si hay algo que mostrar
+  ahí), la marca pasa de una línea a dos: arriba la hora en la que
+  termina/finaliza (`metaEnd`, negrita), abajo la hora en la que
+  empieza/inicia (`meta`, más pequeña) - sin `metaEnd`, sigue siendo la
+  única hora de siempre. `entryEndTime()` en `DashboardView.vue` usa la
+  misma condición exacta que `entryDuration()` (su propio badge), así
+  que las dos aparecen y desaparecen juntas.
+- **Separador de día con el nombre de la semana** en "Línea temporal"
+  (`groupedTimeline`, `DashboardView.vue`): "6 de octubre de 2026" pasa
+  a "Martes 6 de octubre" — `weekday: 'long'` delante en vez de
+  `year: 'numeric'` detrás. `Intl` en es-ES devuelve el día de la
+  semana en minúscula y con una coma ("martes, 6 de octubre");
+  `formatDaySeparatorLabel()` quita la coma y capitaliza la primera
+  letra en vez de montar la cadena a mano campo a campo, para que el
+  mismo código sirva igual con el inglés (que ya llega capitalizado).
+- **"Estadísticas" (`StatsView.vue`)**: la carga pasa de un simple
+  "Cargando" de texto a la misma animación de marca que ya usaba
+  `DashboardView.vue` (`<AppMark full wiggle-toes beat-heart :size="72" />`
+  sobre el texto) - quedaba fuera de tono frente al resto de la app.
+  El `<main>` pasa de `pb-28` a `pb-10`: ese relleno inferior compensa
+  en Contracciones/Dashboard una barra fija al fondo (el temporizador,
+  la barra de accesos) que "Estadísticas" nunca ha tenido, así que se
+  quedaba como un hueco de sobra sin nada que despejar - mismo valor
+  que ya usa `SoundsView.vue`, la otra página sin barra fija.
 
 ## Marca de la pestaña
 

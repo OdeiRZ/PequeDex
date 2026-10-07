@@ -280,6 +280,22 @@ it('turns the stats link off and back on, defaulting to enabled', function () {
     expect($user->refresh()->stats_enabled)->toBeTrue();
 });
 
+it('turns the milestones link off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->milestones_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/milestones', ['milestones_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('milestones_enabled', false);
+    expect($user->refresh()->milestones_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/milestones', ['milestones_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('milestones_enabled', true);
+    expect($user->refresh()->milestones_enabled)->toBeTrue();
+});
+
 it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user', ['name' => 'Odei', 'email' => 'odei@example.com'])->assertUnauthorized();
     $this->putJson('/api/user/password', [])->assertUnauthorized();
@@ -294,4 +310,5 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 20])->assertUnauthorized();
     $this->putJson('/api/user/sounds', ['sounds_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/stats', ['stats_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/milestones', ['milestones_enabled' => false])->assertUnauthorized();
 });

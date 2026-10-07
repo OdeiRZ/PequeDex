@@ -101,6 +101,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   simple de `updateInteractionFeedbackEnabled()` - quinta y sexta copia
   - y solo controlan si se ve la tarjeta de enlace correspondiente en
   el dashboard, no si la ruta en sí es accesible, ver `web/README.md`.
+  `updateMilestonesEnabled()` (columna `milestones_enabled`,
+  `default(true)`, `PUT /user/milestones`) es la séptima copia - a
+  diferencia de sounds/stats, "hitos" es una de las 5 categorías de la
+  barra de accesos personalizable (`action_bar_categories`), así que
+  este interruptor actúa por encima de esa selección en el frontend, no
+  como una tarjeta de enlace aparte, ver `web/README.md`.
 - `app/Models/Baby.php` / `app/Policies/BabyPolicy.php` — el recurso
   compartido entre cuidadores (tabla pivote `baby_user`, sin distinción
   admin/no-admin: cualquier cuidador vinculado tiene acceso total de

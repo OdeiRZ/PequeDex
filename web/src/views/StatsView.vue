@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useFeedback } from '@/composables/useFeedback'
+import AppMark from '@/components/AppMark.vue'
 import HourBucketChart from '@/components/HourBucketChart.vue'
 import GrowthLineChart from '@/components/GrowthLineChart.vue'
 import {
@@ -167,7 +168,7 @@ async function onExportPdf() {
 </script>
 
 <template>
-  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-28">
+  <main class="flex flex-1 flex-col gap-5 px-4 py-5 pb-10">
     <div class="flex items-center justify-between">
       <RouterLink
         :to="{ name: 'dashboard' }"
@@ -225,7 +226,11 @@ async function onExportPdf() {
       </button>
     </div>
 
-    <div v-if="loading" class="flex flex-1 items-center justify-center text-text-muted">
+    <div
+      v-if="loading"
+      class="flex flex-1 flex-col items-center justify-center gap-4 text-text-muted"
+    >
+      <AppMark full wiggle-toes beat-heart :size="72" />
       {{ t('common.loading') }}
     </div>
 

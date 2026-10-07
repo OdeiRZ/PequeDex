@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Auth\UpdateDefaultDiaperSizeRequest;
 use App\Http\Requests\Auth\UpdateDefaultFeedDurationRequest;
 use App\Http\Requests\Auth\UpdateInteractionFeedbackEnabledRequest;
+use App\Http\Requests\Auth\UpdateMilestonesEnabledRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdatePredictionsEnabledRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
@@ -126,6 +127,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['stats_enabled' => $request->validated('stats_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateMilestonesEnabled(UpdateMilestonesEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['milestones_enabled' => $request->validated('milestones_enabled')]);
 
         return response()->json($user);
     }

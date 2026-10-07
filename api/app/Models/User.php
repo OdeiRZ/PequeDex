@@ -36,6 +36,7 @@ class User extends Authenticatable
         'default_feed_duration_minutes',
         'sounds_enabled',
         'stats_enabled',
+        'milestones_enabled',
     ];
 
     /**
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'default_feed_duration_minutes' => 'integer',
             'sounds_enabled' => 'boolean',
             'stats_enabled' => 'boolean',
+            'milestones_enabled' => 'boolean',
         ];
     }
 

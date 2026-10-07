@@ -161,13 +161,19 @@ async function onRemoveAvatar() {
 
 const actionBarSelection = ref<Category[]>([...ALL_CATEGORIES])
 
-const actionBarToggleOptions = computed(() => [
-  { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
-  { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
-  { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
-  { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
-  { category: 'milestone' as const, label: t('dashboard.quickLog.milestone') },
-])
+// 'milestone' se filtra mientras el interruptor de "Hitos" de arriba
+// esté apagado - elegirlo aquí no tendría ningún efecto visible en el
+// dashboard (ver `enabledCategories` en DashboardView.vue, que aplica
+// ese mismo apagado por encima de esta selección).
+const actionBarToggleOptions = computed(() =>
+  [
+    { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
+    { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
+    { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
+    { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
+    { category: 'milestone' as const, label: t('dashboard.quickLog.milestone') },
+  ].filter((option) => option.category !== 'milestone' || milestonesEnabled.value),
+)
 
 // Guardado al vuelo (como el selector de idioma), no un formulario con
 // botón "Guardar" aparte. El toggle en sí es instantáneo (sin deshabilitar
@@ -308,6 +314,31 @@ async function onToggleInteractionFeedback() {
   }
 }
 
+// --- Ajustes: hitos ---
+
+// Mismo patrón guardado-al-vuelo que los demás interruptores de esta
+// familia - activado por defecto (ver migración): los hitos ya eran
+// visibles para todo el mundo antes de que existiera este ajuste.
+const milestonesEnabled = ref(true)
+let milestonesEnabledSaveToken = 0
+
+async function onToggleMilestones() {
+  const previous = milestonesEnabled.value
+  const next = !previous
+  milestonesEnabled.value = next
+  feedback.tap()
+
+  const token = ++milestonesEnabledSaveToken
+  try {
+    await auth.updateMilestonesEnabled(next)
+  } catch {
+    if (token === milestonesEnabledSaveToken) {
+      milestonesEnabled.value = previous
+      toast.show(t('profile.milestonesEnabled.saveError'), 'error')
+    }
+  }
+}
+
 // --- Ajustes: talla de pañal por defecto ---
 
 // A diferencia de los interruptores de arriba, esto no es un booleano
@@ -439,6 +470,7 @@ watch(
     defaultFeedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
     soundsEnabled.value = auth.user?.sounds_enabled ?? true
     statsEnabled.value = auth.user?.stats_enabled ?? true
+    milestonesEnabled.value = auth.user?.milestones_enabled ?? true
   },
 )
 </script>
@@ -539,6 +571,27 @@ watch(
         :options="localeOptions"
         @update:model-value="onSelectLocale"
       />
+    </div>
+
+    <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
+      <div>
+        <span class="field-label">{{ t('profile.milestonesEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="milestonesEnabled"
+        :aria-label="t('profile.milestonesEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleMilestones"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: milestonesEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
     </div>
 
     <div class="mt-6 border-t border-border pt-5">

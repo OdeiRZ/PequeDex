@@ -7,8 +7,73 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- **Exportar "Estadísticas" a PDF**, mismo flujo que ya existía en
+  Contracciones: botón en la cabecera (`StatsView.vue`) que descarga
+  `estadisticas.pdf` con los cuatro bloques (tomas, sueño, pañales,
+  crecimiento). Igual que el resto de "Estadísticas", el cálculo
+  (franjas horarias, medias por día) sigue siendo cosa del frontend -
+  Laravel no puede saber la zona horaria real del cuidador -, así que
+  el nuevo endpoint `POST /babies/{baby}/stats/export`
+  (`StatsExportController`) no recalcula nada: solo valida la forma del
+  payload ya calculado (`ExportStatsRequest`, con el mismo `present`
+  en vez de `required` para los `points` de crecimiento que pueden
+  venir vacíos) y lo pasa a una plantilla Blade
+  (`resources/views/pdf/stats.blade.php`) con dompdf, mismo lenguaje
+  visual que `pdf/contractions.blade.php`.
+- **Interruptor "Hitos" en "Tu cuenta"** (`milestones_enabled`,
+  séptima copia del patrón de Predicciones/Borrar con swipe/Tarjetas
+  resumen/Sonido al interactuar/Sonidos/Estadísticas), lo más alto del
+  perfil, justo debajo del selector de idioma. A diferencia de
+  Sonidos/Estadísticas (una tarjeta de enlace aparte), "hito" ya era
+  una de las 5 categorías de la barra de accesos personalizable, así
+  que este interruptor actúa por encima de esa selección: con los
+  hitos desactivados, tanto la sección del dashboard como su acceso
+  rápido desaparecen sin importar lo que diga `action_bar_categories`,
+  y el propio icono deja de ofrecerse en el selector de accesos.
+- **Intervalos de sueño y de tomas, y tres estadísticas más no pedidas
+  explícitamente** en "Estadísticas" (`lib/stats.ts`): tiempo despierto
+  medio entre un sueño y el siguiente, y tiempo medio entre tomas -
+  mismo cálculo y mismos umbrales de "ruido" que ya usan
+  `SleepPatternPredictor.php`/`FeedPatternPredictor.php` en el backend
+  (`MAX_WAKE_WINDOW_HOURS = 6`, `MAX_GAP_HOURS = 8`: un hueco más largo
+  es casi siempre un tramo nocturno, no un patrón real, y falsearía la
+  media), reimplementados en el frontend sobre el historial completo
+  en vez de reutilizar los predictores (que miran solo las últimas 20
+  entradas, pensados para "cuándo será la próxima", no para un
+  resumen histórico). De propina, sobre los mismos datos ya cargados:
+  tomas al día de media, cambios de pañal al día de media (ambos vía
+  `averagePerDay()`, por día de calendario sobre el rango real que
+  cubren los datos) - la pregunta natural una vez "cada cuánto" ya
+  está en pantalla, sin ningún fetch adicional.
+- **Sonidos para dormir y Estadísticas, visibles u ocultos desde "Tu
+  cuenta"** (`api`: columnas `sounds_enabled`/`stats_enabled`
+  booleanas, `default(true)`, dos rutas `PUT /user/sounds`/
+  `PUT /user/stats`, quinta y sexta copia del mismo patrón
+  guardado-al-vuelo que `interaction_feedback_enabled` y el resto de
+  esta familia. `web`: dos interruptores nuevos en `AccountSheet.vue`,
+  activados por defecto. Solo muestran/ocultan la tarjeta de enlace
+  correspondiente en el dashboard (`SoundsLinkCard.vue`/
+  `StatsLinkCard.vue`) - no bloquean la ruta en sí, `/sonidos` y
+  `/estadisticas` siguen accesibles directamente si alguien ya tiene
+  el enlace guardado, mismo alcance que ya tenía
+  `today_summary_enabled` sobre `TodaySummary.vue`.
+
 ### Corregido
 
+- **Marca de tiempo trasera de "Línea temporal" a dos líneas** en un
+  sueño finalizado o una toma de pecho con duración cargada: arriba la
+  hora en la que termina/finaliza, abajo la hora en la que empieza/
+  inicia - antes solo mostraba la hora de inicio.
+- **Separador de día de "Línea temporal" con el nombre de la semana**:
+  "6 de octubre de 2026" pasa a "Martes 6 de octubre".
+- **"Estadísticas" usaba un simple "Cargando" de texto** mientras el
+  resto de la app ya usa la animación de la marca de PequeDex para su
+  pantalla de carga (`DashboardView.vue`) - ahora usa la misma. El
+  `<main>` también tenía un relleno inferior pensado para una barra
+  fija al fondo (temporizador/barra de accesos) que esta página nunca
+  ha tenido, dejando un hueco de sobra tras el bloque de Crecimiento.
 - **"Ritmo" dejaba retroceder a días anteriores al nacimiento del
   bebé** (`DailyRhythm.vue`/`DashboardView.vue`): la flecha "anterior"
   no tenía ningún tope, igual que "siguiente" ya lo tiene en "hoy"
@@ -64,46 +129,6 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
-- **Exportar "Estadísticas" a PDF**, mismo flujo que ya existía en
-  Contracciones: botón en la cabecera (`StatsView.vue`) que descarga
-  `estadisticas.pdf` con los cuatro bloques (tomas, sueño, pañales,
-  crecimiento). Igual que el resto de "Estadísticas", el cálculo
-  (franjas horarias, medias por día) sigue siendo cosa del frontend -
-  Laravel no puede saber la zona horaria real del cuidador -, así que
-  el nuevo endpoint `POST /babies/{baby}/stats/export`
-  (`StatsExportController`) no recalcula nada: solo valida la forma del
-  payload ya calculado (`ExportStatsRequest`, con el mismo `present`
-  en vez de `required` para los `points` de crecimiento que pueden
-  venir vacíos) y lo pasa a una plantilla Blade
-  (`resources/views/pdf/stats.blade.php`) con dompdf, mismo lenguaje
-  visual que `pdf/contractions.blade.php`.
-- **Intervalos de sueño y de tomas, y tres estadísticas más no pedidas
-  explícitamente** en "Estadísticas" (`lib/stats.ts`): tiempo despierto
-  medio entre un sueño y el siguiente, y tiempo medio entre tomas -
-  mismo cálculo y mismos umbrales de "ruido" que ya usan
-  `SleepPatternPredictor.php`/`FeedPatternPredictor.php` en el backend
-  (`MAX_WAKE_WINDOW_HOURS = 6`, `MAX_GAP_HOURS = 8`: un hueco más largo
-  es casi siempre un tramo nocturno, no un patrón real, y falsearía la
-  media), reimplementados en el frontend sobre el historial completo
-  en vez de reutilizar los predictores (que miran solo las últimas 20
-  entradas, pensados para "cuándo será la próxima", no para un
-  resumen histórico). De propina, sobre los mismos datos ya cargados:
-  tomas al día de media, cambios de pañal al día de media (ambos vía
-  `averagePerDay()`, por día de calendario sobre el rango real que
-  cubren los datos) - la pregunta natural una vez "cada cuánto" ya
-  está en pantalla, sin ningún fetch adicional.
-- **Sonidos para dormir y Estadísticas, visibles u ocultos desde "Tu
-  cuenta"** (`api`: columnas `sounds_enabled`/`stats_enabled`
-  booleanas, `default(true)`, dos rutas `PUT /user/sounds`/
-  `PUT /user/stats`, quinta y sexta copia del mismo patrón
-  guardado-al-vuelo que `interaction_feedback_enabled` y el resto de
-  esta familia. `web`: dos interruptores nuevos en `AccountSheet.vue`,
-  activados por defecto. Solo muestran/ocultan la tarjeta de enlace
-  correspondiente en el dashboard (`SoundsLinkCard.vue`/
-  `StatsLinkCard.vue`) - no bloquean la ruta en sí, `/sonidos` y
-  `/estadisticas` siguen accesibles directamente si alguien ya tiene
-  el enlace guardado, mismo alcance que ya tenía
-  `today_summary_enabled` sobre `TodaySummary.vue`.
 - **Los bloques de "Estadísticas" respetan los accesos activados en el
   perfil, y van en el mismo orden que la barra de accesos** (tomas,
   sueño, pañal, medidas): un cuidador que desactivó sueño de la barra

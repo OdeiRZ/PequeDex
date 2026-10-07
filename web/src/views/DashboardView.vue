@@ -142,6 +142,19 @@ type TimelineListItem =
   | { kind: 'separator'; key: string; label: string }
   | { kind: 'entry'; key: string; entry: TimelineEntry }
 
+// "Martes 6 de octubre" - el nombre del día entra delante de todo, no
+// detrás como un dato suelto. `toLocaleDateString` con `weekday` en
+// es-ES devuelve "martes, 6 de octubre" (minúscula + coma); se quita la
+// coma y se capitaliza en vez de ensamblar la cadena a mano, para que
+// siga funcionando igual con el inglés ("Tuesday, 6 October" ya viene
+// capitalizado, la coma se quita igual).
+function formatDaySeparatorLabel(at: Date): string {
+  const raw = at
+    .toLocaleDateString(dateLocale.value, { weekday: 'long', day: 'numeric', month: 'long' })
+    .replace(',', '')
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
 const groupedTimeline = computed<TimelineListItem[]>(() => {
   const items: TimelineListItem[] = []
   let previousDayKey: string | null = null
@@ -153,11 +166,7 @@ const groupedTimeline = computed<TimelineListItem[]>(() => {
       items.push({
         kind: 'separator',
         key: `day-${dayKey}`,
-        label: at.toLocaleDateString(dateLocale.value, {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }),
+        label: formatDaySeparatorLabel(at),
       })
       previousDayKey = dayKey
     }
@@ -385,9 +394,18 @@ function cancelSheet() {
 
 // null en el usuario = las 5 visibles (valor por defecto, sin
 // personalizar) - el mismo significado que usa el backend.
-const enabledCategories = computed<Category[]>(
-  () => auth.user?.action_bar_categories ?? [...ALL_CATEGORIES],
-)
+// `milestones_enabled` apaga el apartado entero (sección "Hitos" +
+// acceso rápido), por encima de lo que diga `action_bar_categories` -
+// mismo nivel que sounds_enabled/stats_enabled sobre sus propias
+// tarjetas de enlace, pero aplicado aquí porque milestone, a
+// diferencia de Sonidos/Estadísticas, sí es una de las 5 categorías de
+// la barra de accesos personalizable.
+const enabledCategories = computed<Category[]>(() => {
+  const stored = auth.user?.action_bar_categories ?? [...ALL_CATEGORIES]
+  return auth.user?.milestones_enabled === false
+    ? stored.filter((category) => category !== 'milestone')
+    : stored
+})
 
 const actionBarItems = computed(() => {
   const allItems: { category: Category; label: string }[] = [
@@ -915,6 +933,25 @@ function formatDuration(startedAt: string, endedAt: string | null): string {
 // sin ended_at (no se indicó duración, o es biberón/sólido, que no la
 // llevan) simplemente no hay badge. "h"/"min" sin traducir, mismo
 // criterio que "ml"/"kg"/"cm" en el resto de la app: unidades, no texto.
+function formatTime(at: string): string {
+  return new Date(at).toLocaleTimeString(dateLocale.value, { hour: '2-digit', minute: '2-digit' })
+}
+
+// Misma condición exacta que entryDuration() de abajo (su badge) - la
+// marca de tiempo trasera solo pasa a dos líneas (fin arriba, inicio
+// abajo) cuando ya hay un ended_at real que mostrar; mientras no lo
+// haya (sueño en curso, toma sin duración cargada), sigue siendo la
+// única hora de siempre.
+function entryEndTime(entry: (typeof babies.timeline)[number]): string | undefined {
+  if (entry.type === 'sleep' && entry.data.ended_at) {
+    return formatTime(entry.data.ended_at)
+  }
+  if (entry.type === 'feed' && entry.data.type === 'pecho' && entry.data.ended_at) {
+    return formatTime(entry.data.ended_at)
+  }
+  return undefined
+}
+
 function entryDuration(entry: (typeof babies.timeline)[number]): string | undefined {
   if (entry.type === 'sleep' && entry.data.ended_at) {
     return formatDuration(entry.data.started_at, entry.data.ended_at)
@@ -1920,12 +1957,8 @@ const sleepPredictionDue = computed(() => {
                     v-else
                     :category="entryCategory(item.entry)"
                     :title="entryTitle(item.entry)"
-                    :meta="
-                      new Date(item.entry.at).toLocaleTimeString(dateLocale, {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    "
+                    :meta="formatTime(item.entry.at)"
+                    :meta-end="entryEndTime(item.entry)"
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"

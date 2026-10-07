@@ -410,6 +410,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.
+  `StatsExportController::babyAgeHeadline()` calcula la edad en días
+  (mientras no cumple un mes) o semanas (después) con el mismo criterio
+  que `getBabyAge()` en `lib/babyAge.ts` - días mientras
+  `now() < birth_date->addMonth()`, semanas (`intdiv($days, 7)`)
+  después -, para que la cabecera del PDF (tarjeta con el mismo formato
+  que la tarjeta principal del bebé en el dashboard) muestre el mismo
+  número que ya ve el cuidador en pantalla. Las franjas horarias de
+  cada sección se renderizan con un partial compartido
+  (`pdf/partials/bucket-grid.blade.php`, 2 por fila en vez de 4 filas a
+  todo lo ancho) que recibe un closure `format` por sección - cada una
+  formatea el valor crudo de la franja a su manera ("3 tomas", "1h
+  20min", o un número suelto para pis/caca).
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

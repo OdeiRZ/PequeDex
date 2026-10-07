@@ -62,10 +62,25 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
-- **Marca de tiempo trasera de "Línea temporal" a dos líneas** en un
-  sueño finalizado o una toma de pecho con duración cargada: arriba la
-  hora en la que termina/finaliza, abajo la hora en la que empieza/
-  inicia - antes solo mostraba la hora de inicio.
+- **PDF de "Estadísticas": cabecera, franjas horarias y pie de página**.
+  La cabecera cambia el texto suelto (nombre + "Generado el...") por
+  una tarjeta con el mismo formato que la tarjeta principal del bebé en
+  el dashboard: degradado de marca, nombre + sexo arriba, edad en
+  grande (días mientras no cumple un mes, semanas después - mismo
+  cálculo que `getBabyAge()` en `lib/babyAge.ts`, ahora también en PHP)
+  y fecha de nacimiento debajo. Las franjas horarias (Madrugada/Mañana/
+  Tarde/Noche) pasan de 4 filas a todo lo ancho con la cifra apretada al
+  final a una rejilla de 2 por fila (`pdf/partials/bucket-grid.blade.php`,
+  reutilizado por Tomas/Sueño/Pis/Caca), mismo estilo de ficha que ya
+  usan los bloques de arriba. El pie de página (logo + "PequeDex ·
+  Estadísticas" en cada página) ya seguía el mismo patrón que el de
+  Contracciones - sin cambios ahí.
+- **Marca de tiempo trasera de "Línea temporal" a dos líneas, ambas del
+  mismo tamaño** en un sueño finalizado o una toma de pecho con
+  duración cargada: arriba la hora en la que termina/finaliza, abajo la
+  hora en la que empieza/inicia - antes solo mostraba la hora de
+  inicio, y la primera versión de las dos líneas usaba un tamaño más
+  pequeño para la de abajo.
 - **Separador de día de "Línea temporal" con el nombre de la semana**:
   "6 de octubre de 2026" pasa a "Martes 6 de octubre". El selector de
   día de "Ritmo" (`DailyRhythm.vue`) gana el mismo formato - nuevo

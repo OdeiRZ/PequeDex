@@ -9,9 +9,23 @@
            (franja de color por categoría junto al título de cada
            sección, pastillas de cifra tipo "stats-bar"). */
         body { font-family: sans-serif; font-size: 14px; color: #2b2420; }
-        h1 { font-size: 26px; margin-bottom: 2px; color: #1a1a1a; }
-        .subtitle { color: #7a6f66; margin-bottom: 4px; font-size: 15px; }
-        .meta { color: #a3968a; font-size: 11px; margin-bottom: 18px; }
+        h1 { font-size: 26px; margin-bottom: 10px; color: #1a1a1a; }
+
+        /* Mismo formato que la tarjeta principal del bebé en el dashboard
+           (DashboardView.vue): degradado de marca, nombre + sexo arriba,
+           edad en grande + fecha de nacimiento debajo. dompdf 3.x soporta
+           background-image con gradientes lineales. */
+        table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+        table.baby-card > tr > td { background-color: #a65a6b; background-image: linear-gradient(155deg, #a65a6b 0%, #2f6e68 130%); color: #ffffff; padding: 14px 18px; border-radius: 14px; }
+        table.baby-card-inner { width: 100%; border-collapse: collapse; }
+        table.baby-card-inner td { background: none; padding: 0; color: #ffffff; }
+        .baby-card-name { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
+        .baby-card-sex { font-size: 12px; font-weight: bold; background: rgba(255,255,255,0.2); border-radius: 10px; padding: 3px 10px; }
+        .baby-card-age { font-size: 28px; font-weight: bold; }
+        .baby-card-age span { font-size: 15px; font-weight: bold; }
+        .baby-card-born { font-size: 12px; opacity: 0.9; }
+
+        .meta { color: #a3968a; font-size: 11px; margin: 6px 0 18px; }
 
         h2 { font-size: 17px; margin: 22px 0 10px; padding-left: 10px; border-left: 5px solid #a3968a; }
         h2.feed { border-left-color: #c98a3e; }
@@ -26,10 +40,11 @@
         .stats-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; margin-bottom: 4px; }
         .stats-value { display: block; font-size: 17px; font-weight: bold; color: #2b2420; }
 
-        table.bucket-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; margin-bottom: 14px; }
-        table.bucket-table td { background: #f3ece4; padding: 6px 10px; }
-        table.bucket-table td:first-child { border-radius: 8px 0 0 8px; color: #7a6f66; }
-        table.bucket-table td:last-child { border-radius: 0 8px 8px 0; text-align: right; font-weight: bold; }
+        /* Las 4 franjas horarias (Madrugada/Mañana/Tarde/Noche) ocupaban
+           4 filas a todo lo ancho con la mayor parte del espacio vacío -
+           2 por fila en vez de 1, mismo estilo de ficha que .stats-bar. */
+        table.bucket-grid { width: 100%; border-collapse: separate; border-spacing: 8px 8px; margin: 0 0 14px -8px; }
+        table.bucket-grid td { width: 50%; background: #f3ece4; border-radius: 8px; padding: 8px 12px; text-align: center; }
 
         table.growth-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; margin-bottom: 14px; }
         table.growth-table th { text-align: right; padding: 4px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; }
@@ -47,7 +62,35 @@
 </head>
 <body>
     <h1>Estadísticas</h1>
-    <p class="subtitle">{{ $baby->name ?: 'Bebé' }}</p>
+
+    <table class="baby-card">
+        <tr>
+            <td>
+                <table class="baby-card-inner">
+                    <tr>
+                        <td style="text-align: left;">
+                            <span class="baby-card-name">{{ $baby->name ?: 'Bebé' }}</span>
+                        </td>
+                        <td style="text-align: right; width: 30%;">
+                            @if ($baby->sex?->value === 'nino')
+                                <span class="baby-card-sex">Niño</span>
+                            @elseif ($baby->sex?->value === 'nina')
+                                <span class="baby-card-sex">Niña</span>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; padding-top: 4px;">
+                            <span class="baby-card-age">{{ $babyAge['value'] }} <span>{{ $babyAge['unit'] }}</span></span>
+                        </td>
+                        <td style="text-align: right; vertical-align: bottom;">
+                            <span class="baby-card-born">Nació el {{ \Carbon\CarbonImmutable::parse($baby->birth_date)->translatedFormat('j \d\e F \d\e Y') }}</span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
     <p class="meta">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</p>
 
     {{-- Tomas --}}
@@ -99,14 +142,11 @@
             </table>
         @endif
 
-        <table class="bucket-table">
-            @foreach ($feed['by_hour_bucket'] as $bucket)
-                <tr>
-                    <td>{{ $hourBucketLabels[$bucket['key']] }}</td>
-                    <td>{{ (int) round($bucket['value']) }} tomas</td>
-                </tr>
-            @endforeach
-        </table>
+        @include('pdf.partials.bucket-grid', [
+            'buckets' => $feed['by_hour_bucket'],
+            'labels' => $hourBucketLabels,
+            'format' => fn ($value) => (int) round($value).' tomas',
+        ])
     @endif
 
     {{-- Sueño --}}
@@ -133,14 +173,11 @@
             </tr>
         </table>
 
-        <table class="bucket-table">
-            @foreach ($sleep['by_hour_bucket'] as $bucket)
-                <tr>
-                    <td>{{ $hourBucketLabels[$bucket['key']] }}</td>
-                    <td>{{ intdiv((int) round($bucket['value']), 60) }}h {{ (int) round($bucket['value']) % 60 }}min</td>
-                </tr>
-            @endforeach
-        </table>
+        @include('pdf.partials.bucket-grid', [
+            'buckets' => $sleep['by_hour_bucket'],
+            'labels' => $hourBucketLabels,
+            'format' => fn ($value) => intdiv((int) round($value), 60).'h '.((int) round($value) % 60).'min',
+        ])
     @endif
 
     {{-- Pañales --}}
@@ -185,24 +222,18 @@
         @endif
 
         <p class="stats-label" style="margin-bottom: 4px;">Pis por franja</p>
-        <table class="bucket-table">
-            @foreach ($diaper['pee_by_hour_bucket'] as $bucket)
-                <tr>
-                    <td>{{ $hourBucketLabels[$bucket['key']] }}</td>
-                    <td>{{ (int) round($bucket['value']) }}</td>
-                </tr>
-            @endforeach
-        </table>
+        @include('pdf.partials.bucket-grid', [
+            'buckets' => $diaper['pee_by_hour_bucket'],
+            'labels' => $hourBucketLabels,
+            'format' => fn ($value) => (string) (int) round($value),
+        ])
 
         <p class="stats-label" style="margin-bottom: 4px;">Caca por franja</p>
-        <table class="bucket-table">
-            @foreach ($diaper['poop_by_hour_bucket'] as $bucket)
-                <tr>
-                    <td>{{ $hourBucketLabels[$bucket['key']] }}</td>
-                    <td>{{ (int) round($bucket['value']) }}</td>
-                </tr>
-            @endforeach
-        </table>
+        @include('pdf.partials.bucket-grid', [
+            'buckets' => $diaper['poop_by_hour_bucket'],
+            'labels' => $hourBucketLabels,
+            'format' => fn ($value) => (string) (int) round($value),
+        ])
     @endif
 
     {{-- Crecimiento --}}

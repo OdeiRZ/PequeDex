@@ -250,7 +250,7 @@ function onRowClick() {
             class="mr-3 flex shrink-0 flex-col items-end tabular-nums text-text-muted"
           >
             <span class="text-sm font-bold leading-tight">{{ metaEnd }}</span>
-            <span class="text-xs leading-tight">{{ meta }}</span>
+            <span class="text-sm font-bold leading-tight">{{ meta }}</span>
           </span>
           <span
             v-else-if="badge"

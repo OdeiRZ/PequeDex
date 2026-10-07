@@ -1120,11 +1120,14 @@ verse bien en una captura:
   `metaEnd` en `EntryCard.vue` — cuando llega junto a `badge` (la
   propia duración, mismo `v-if` que ya decide si hay algo que mostrar
   ahí), la marca pasa de una línea a dos: arriba la hora en la que
-  termina/finaliza (`metaEnd`, negrita), abajo la hora en la que
-  empieza/inicia (`meta`, más pequeña) - sin `metaEnd`, sigue siendo la
-  única hora de siempre. `entryEndTime()` en `DashboardView.vue` usa la
-  misma condición exacta que `entryDuration()` (su propio badge), así
-  que las dos aparecen y desaparecen juntas.
+  termina/finaliza (`metaEnd`), abajo la hora en la que empieza/inicia
+  (`meta`) - sin `metaEnd`, sigue siendo la única hora de siempre.
+  `entryEndTime()` en `DashboardView.vue` usa la misma condición exacta
+  que `entryDuration()` (su propio badge), así que las dos aparecen y
+  desaparecen juntas. Ambas líneas usan el mismo tamaño y peso
+  (`text-sm font-bold`) - la primera versión hacía la de abajo más
+  pequeña, pero con dos horas una al lado de la otra no hay una
+  "principal" que deba destacar más que la otra.
 - **Separador de día con el nombre de la semana** en "Línea temporal"
   (`groupedTimeline`, `DashboardView.vue`): "6 de octubre de 2026" pasa
   a "Martes 6 de octubre" — `weekday: 'long'` delante en vez de

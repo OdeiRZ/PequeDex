@@ -142,3 +142,25 @@ it('passes the baby and sleep/feed/diaper sections through unchanged', function 
     expect($data['feed'])->toBe($payload['feed']);
     expect($data['diaper'])->toBe($payload['diaper']);
 });
+
+it('headlines the baby age in days while under one month old', function () {
+    $this->travelTo(now()->setTime(12, 0));
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => now()->subDays(10)->toDateString()]);
+    $baby->users()->attach($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['babyAge'])->toBe(['value' => 10, 'unit' => 'días']);
+});
+
+it('headlines the baby age in weeks once a month has passed', function () {
+    $this->travelTo(now()->setTime(12, 0));
+    $user = actingAsUser();
+    $baby = Baby::factory()->create(['birth_date' => now()->subWeeks(10)->toDateString()]);
+    $baby->users()->attach($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['babyAge'])->toBe(['value' => 10, 'unit' => 'semanas']);
+});

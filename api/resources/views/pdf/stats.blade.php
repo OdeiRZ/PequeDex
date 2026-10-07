@@ -152,6 +152,25 @@
             </table>
         @endif
 
+        @if ($feed['typical_first_feed_time'] !== null || $feed['typical_last_feed_time'] !== null)
+            <table class="stats-bar">
+                <tr>
+                    @if ($feed['typical_first_feed_time'] !== null)
+                        <td style="width: 50%;">
+                            <span class="stats-label">Primera toma del día</span>
+                            <span class="stats-value">{{ sprintf('%02d:%02d', $feed['typical_first_feed_time']['hours'], $feed['typical_first_feed_time']['minutes']) }}</span>
+                        </td>
+                    @endif
+                    @if ($feed['typical_last_feed_time'] !== null)
+                        <td style="width: 50%;">
+                            <span class="stats-label">Última toma del día</span>
+                            <span class="stats-value">{{ sprintf('%02d:%02d', $feed['typical_last_feed_time']['hours'], $feed['typical_last_feed_time']['minutes']) }}</span>
+                        </td>
+                    @endif
+                </tr>
+            </table>
+        @endif
+
         @include('pdf.partials.bucket-grid', [
             'buckets' => $feed['by_hour_bucket'],
             'labels' => $hourBucketLabels,
@@ -182,6 +201,25 @@
                 @endif
             </tr>
         </table>
+
+        @if ($sleep['typical_bedtime'] !== null || $sleep['typical_wake_time'] !== null)
+            <table class="stats-bar">
+                <tr>
+                    @if ($sleep['typical_bedtime'] !== null)
+                        <td style="width: 50%;">
+                            <span class="stats-label">Hora habitual de acostarse</span>
+                            <span class="stats-value">{{ sprintf('%02d:%02d', $sleep['typical_bedtime']['hours'], $sleep['typical_bedtime']['minutes']) }}</span>
+                        </td>
+                    @endif
+                    @if ($sleep['typical_wake_time'] !== null)
+                        <td style="width: 50%;">
+                            <span class="stats-label">Hora habitual de despertar</span>
+                            <span class="stats-value">{{ sprintf('%02d:%02d', $sleep['typical_wake_time']['hours'], $sleep['typical_wake_time']['minutes']) }}</span>
+                        </td>
+                    @endif
+                </tr>
+            </table>
+        @endif
 
         @include('pdf.partials.bucket-grid', [
             'buckets' => $sleep['by_hour_bucket'],

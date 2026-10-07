@@ -42,6 +42,8 @@ class ExportStatsRequest extends FormRequest
             'sleep.by_hour_bucket' => ['required', 'array', 'size:4'],
             'sleep.by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'sleep.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
+            ...$this->clockTimeRules('sleep.typical_bedtime'),
+            ...$this->clockTimeRules('sleep.typical_wake_time'),
 
             'feed' => ['required', 'array'],
             'feed.has_enough_data' => ['required', 'boolean'],
@@ -59,6 +61,8 @@ class ExportStatsRequest extends FormRequest
             'feed.by_hour_bucket' => ['required', 'array', 'size:4'],
             'feed.by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'feed.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
+            ...$this->clockTimeRules('feed.typical_first_feed_time'),
+            ...$this->clockTimeRules('feed.typical_last_feed_time'),
 
             'diaper' => ['required', 'array'],
             'diaper.has_enough_data' => ['required', 'boolean'],
@@ -79,6 +83,27 @@ class ExportStatsRequest extends FormRequest
             ...$this->growthMetricRules('growth.weight_kg'),
             ...$this->growthMetricRules('growth.height_cm'),
             ...$this->growthMetricRules('growth.head_circumference_cm'),
+        ];
+    }
+
+    /**
+     * "Horarios habituales" - una hora de reloj (`{hours, minutes}`),
+     * no una fecha, calculada con una media circular sobre varios días
+     * (ver `lib/stats.ts`). `nullable` en el propio array: por debajo
+     * de 3 días distintos con dato no hay "hora típica" que mostrar -
+     * mismo motivo por el que el resto de medias de esta plantilla
+     * también son `nullable`. `required_with` en los dos campos
+     * internos en vez de volverlos `nullable` también: si el array
+     * llega, tiene que traer una hora real, no una mitad.
+     *
+     * @return array<string, mixed>
+     */
+    private function clockTimeRules(string $prefix): array
+    {
+        return [
+            "$prefix" => ['nullable', 'array'],
+            "$prefix.hours" => ["required_with:$prefix", 'integer', 'min:0', 'max:23'],
+            "$prefix.minutes" => ["required_with:$prefix", 'integer', 'min:0', 'max:59'],
         ];
     }
 

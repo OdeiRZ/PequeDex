@@ -172,6 +172,8 @@ export default {
       totalLabel: 'Sueños registrados',
       averageLabel: 'Duración media',
       wakeWindowLabel: 'Tiempo despierto entre sueños',
+      typicalBedtimeLabel: 'Hora habitual de acostarse',
+      typicalWakeLabel: 'Hora habitual de despertar',
       byHourLabel: 'Minutos dormidos por franja',
     },
     feed: {
@@ -182,6 +184,8 @@ export default {
       bottleAmountLabel: 'Cantidad media (biberón)',
       gapLabel: 'Cada cuánto come',
       perDayLabel: 'Tomas al día',
+      typicalFirstLabel: 'Primera toma del día',
+      typicalLastLabel: 'Última toma del día',
       byHourLabel: 'Tomas por franja',
     },
     diaper: {

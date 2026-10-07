@@ -35,6 +35,53 @@ function average(values: number[]): number | null {
   return values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null
 }
 
+/** A clock time of day, local - not a `Date` (no particular calendar
+ * day attached), the result of averaging several real timestamps down
+ * to "what time does this usually happen". */
+export interface ClockTime {
+  hours: number
+  minutes: number
+}
+
+export function formatClockTime(time: ClockTime): string {
+  return `${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}`
+}
+
+// "Horarios habituales" - a qué hora de reloj suele pasar algo
+// (acostarse, despertar, la primera/última toma del día). La media
+// aritmética normal no sirve para horas: 23:00 y 01:00 promediarían a
+// las 12:00 si se tratan como números sueltos, cuando la hora "típica"
+// real está sobre la medianoche. La media CIRCULAR sí - cada hora del
+// día es un ángulo sobre un reloj de 24h (360°), se promedian como
+// vectores (seno/coseno) y se vuelve a leer el ángulo resultante como
+// hora. Estándar para "promediar horas del día" en estadística
+// circular, no una invención de esta app.
+function circularMeanTimeOfDay(dates: Date[]): ClockTime | null {
+  if (dates.length === 0) return null
+
+  let sumSin = 0
+  let sumCos = 0
+  for (const date of dates) {
+    const minutesOfDay = date.getHours() * 60 + date.getMinutes()
+    const angle = (minutesOfDay / 1440) * 2 * Math.PI
+    sumSin += Math.sin(angle)
+    sumCos += Math.cos(angle)
+  }
+
+  let meanAngle = Math.atan2(sumSin / dates.length, sumCos / dates.length)
+  if (meanAngle < 0) meanAngle += 2 * Math.PI
+
+  const meanMinutes = Math.round((meanAngle / (2 * Math.PI)) * 1440) % 1440
+  return { hours: Math.floor(meanMinutes / 60), minutes: meanMinutes % 60 }
+}
+
+// Clave de día de calendario LOCAL (no UTC, no un string de fecha que
+// dependa del idioma) - solo para agrupar entradas por "qué día es
+// esto", nunca mostrada.
+function localDayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
 // Entries per calendar day across the whole span the data covers, not
 // per 24h rolling window - the span is inclusive of both the first and
 // last day an entry fell on (`+ 1`), so a single day's worth of
@@ -78,6 +125,45 @@ export interface SleepStats {
    * wake window (see `MAX_WAKE_WINDOW_HOURS`). */
   averageWakeWindowMinutes: number | null
   byHourBucket: HourBucketStat[]
+  /** Hora de reloj típica a la que empieza el sueño más largo de cada
+   * día (el de la noche, no una siesta - ver `typicalSleepTimes()`).
+   * `null` por debajo de `MIN_SAMPLE_SIZE` días distintos con un sueño
+   * completado, no solo `MIN_SAMPLE_SIZE` sueños sueltos. */
+  typicalBedtime: ClockTime | null
+  /** Misma idea, el final de ese mismo sueño más largo del día. */
+  typicalWakeTime: ClockTime | null
+}
+
+// El sueño más largo de cada día de calendario (del `started_at`) es,
+// con mucho, la apuesta más fiable para "el sueño de la noche" frente
+// a una siesta, sin necesitar que el cuidador marque nada aparte - una
+// siesta rara vez supera en duración al sueño nocturno real. Un umbral
+// de MIN_SAMPLE_SIZE días (no sueños sueltos) antes de promediar: con
+// menos días, "la hora típica" diría más de lo que los datos
+// realmente sostienen, mismo criterio que el resto de "Estadísticas".
+function typicalSleepTimes(completed: Sleep[]): {
+  bedtime: ClockTime | null
+  wakeTime: ClockTime | null
+} {
+  const longestPerDay = new Map<string, Sleep>()
+  for (const sleep of completed) {
+    const key = localDayKey(new Date(sleep.started_at))
+    const durationMs =
+      new Date(sleep.ended_at as string).getTime() - new Date(sleep.started_at).getTime()
+    const existing = longestPerDay.get(key)
+    const existingDurationMs = existing
+      ? new Date(existing.ended_at as string).getTime() - new Date(existing.started_at).getTime()
+      : -1
+    if (durationMs > existingDurationMs) longestPerDay.set(key, sleep)
+  }
+
+  const longest = [...longestPerDay.values()]
+  if (longest.length < MIN_SAMPLE_SIZE) return { bedtime: null, wakeTime: null }
+
+  return {
+    bedtime: circularMeanTimeOfDay(longest.map((s) => new Date(s.started_at))),
+    wakeTime: circularMeanTimeOfDay(longest.map((s) => new Date(s.ended_at as string))),
+  }
 }
 
 // Bucketed by the hour each sleep STARTS, not a proportional split
@@ -98,6 +184,8 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
       averageDurationMinutes: null,
       averageWakeWindowMinutes: null,
       byHourBucket: emptyBuckets(),
+      typicalBedtime: null,
+      typicalWakeTime: null,
     }
   }
 
@@ -126,12 +214,16 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
     if (bucket) bucket.value += minutes
   }
 
+  const { bedtime, wakeTime } = typicalSleepTimes(completed)
+
   return {
     hasEnoughData: true,
     totalCompleted: completed.length,
     averageDurationMinutes: average(durations),
     averageWakeWindowMinutes: average(wakeWindows),
     byHourBucket: buckets,
+    typicalBedtime: bedtime,
+    typicalWakeTime: wakeTime,
   }
 }
 
@@ -158,6 +250,32 @@ export interface FeedStats {
    * everything else here. */
   averagePerDay: number | null
   byHourBucket: HourBucketStat[]
+  /** Hora de reloj típica de la primera toma de cada día - `null` por
+   * debajo de `MIN_SAMPLE_SIZE` días distintos con alguna toma. */
+  typicalFirstFeedTime: ClockTime | null
+  /** Misma idea, la última toma de cada día. */
+  typicalLastFeedTime: ClockTime | null
+}
+
+// `sorted` ya viene ordenado ascendente por started_at (ver más abajo),
+// así que basta con quedarse con la primera vez que se ve cada día
+// (primera toma) y pisar `last` en cada una siguiente del mismo día
+// (la última, sin necesitar comparar manualmente).
+function typicalFeedTimes(sorted: Feed[]): { first: ClockTime | null; last: ClockTime | null } {
+  const firstPerDay = new Map<string, Feed>()
+  const lastPerDay = new Map<string, Feed>()
+  for (const feed of sorted) {
+    const key = localDayKey(new Date(feed.started_at))
+    if (!firstPerDay.has(key)) firstPerDay.set(key, feed)
+    lastPerDay.set(key, feed)
+  }
+
+  if (firstPerDay.size < MIN_SAMPLE_SIZE) return { first: null, last: null }
+
+  return {
+    first: circularMeanTimeOfDay([...firstPerDay.values()].map((f) => new Date(f.started_at))),
+    last: circularMeanTimeOfDay([...lastPerDay.values()].map((f) => new Date(f.started_at))),
+  }
 }
 
 export function summarizeFeedStats(feeds: Feed[]): FeedStats {
@@ -203,6 +321,8 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
       averageGapMinutes: null,
       averagePerDay: null,
       byHourBucket: emptyBuckets(),
+      typicalFirstFeedTime: null,
+      typicalLastFeedTime: null,
     }
   }
 
@@ -217,6 +337,8 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     }
   }
 
+  const { first, last } = typicalFeedTimes(sorted)
+
   return {
     hasEnoughData: true,
     total: sorted.length,
@@ -227,6 +349,8 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     averageGapMinutes: average(gaps),
     averagePerDay: averagePerDay(sorted.map((f) => f.started_at)),
     byHourBucket: buckets,
+    typicalFirstFeedTime: first,
+    typicalLastFeedTime: last,
   }
 }
 
@@ -387,6 +511,8 @@ export interface StatsExportPayload {
     average_duration_minutes: number | null
     average_wake_window_minutes: number | null
     by_hour_bucket: HourBucketStat[]
+    typical_bedtime: ClockTime | null
+    typical_wake_time: ClockTime | null
   }
   feed: {
     has_enough_data: boolean
@@ -398,6 +524,8 @@ export interface StatsExportPayload {
     average_gap_minutes: number | null
     average_per_day: number | null
     by_hour_bucket: HourBucketStat[]
+    typical_first_feed_time: ClockTime | null
+    typical_last_feed_time: ClockTime | null
   }
   diaper: {
     has_enough_data: boolean
@@ -446,6 +574,8 @@ export function buildStatsExportPayload(
       average_duration_minutes: sleep.averageDurationMinutes,
       average_wake_window_minutes: sleep.averageWakeWindowMinutes,
       by_hour_bucket: sleep.byHourBucket,
+      typical_bedtime: sleep.typicalBedtime,
+      typical_wake_time: sleep.typicalWakeTime,
     },
     feed: {
       has_enough_data: feed.hasEnoughData,
@@ -457,6 +587,8 @@ export function buildStatsExportPayload(
       average_gap_minutes: feed.averageGapMinutes,
       average_per_day: feed.averagePerDay,
       by_hour_bucket: feed.byHourBucket,
+      typical_first_feed_time: feed.typicalFirstFeedTime,
+      typical_last_feed_time: feed.typicalLastFeedTime,
     },
     diaper: {
       has_enough_data: diaper.hasEnoughData,

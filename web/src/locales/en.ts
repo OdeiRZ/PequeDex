@@ -171,6 +171,8 @@ export default {
       totalLabel: 'Sleeps logged',
       averageLabel: 'Average duration',
       wakeWindowLabel: 'Awake time between sleeps',
+      typicalBedtimeLabel: 'Usual bedtime',
+      typicalWakeLabel: 'Usual wake-up time',
       byHourLabel: 'Minutes asleep per time slot',
     },
     feed: {
@@ -181,6 +183,8 @@ export default {
       bottleAmountLabel: 'Average amount (bottle)',
       gapLabel: 'Time between feeds',
       perDayLabel: 'Feeds per day',
+      typicalFirstLabel: 'First feed of the day',
+      typicalLastLabel: 'Last feed of the day',
       byHourLabel: 'Feeds per time slot',
     },
     diaper: {

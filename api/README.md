@@ -430,6 +430,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   bebé sin ninguna medición de una métrica concreta es un estado válido
   (array vacío, no clave ausente), así que la regla se cambió a
   `present|array`, que solo exige que la clave exista.
+  `clockTimeRules()` valida los cuatro campos de "horarios habituales"
+  (`sleep.typical_bedtime`/`typical_wake_time`,
+  `feed.typical_first_feed_time`/`typical_last_feed_time`) - el propio
+  array es `nullable` (por debajo de `MIN_SAMPLE_SIZE` días en
+  `lib/stats.ts`, `null`), pero si llega, `hours`/`minutes` son
+  `required_with` + rango (`0-23`/`0-59`): una hora a medias no es un
+  estado válido, a diferencia de los `points` de crecimiento de arriba.
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.
@@ -446,7 +453,10 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   percentil apretado al final) sigue el mismo criterio con un segundo
   partial, `pdf/partials/growth-points-grid.blade.php` (2 mediciones
   por fila, fecha+valor como título de la ficha, percentil debajo en
-  texto pequeño).
+  texto pequeño). Las fichas de "horarios habituales" (hora de reloj,
+  `sprintf('%02d:%02d', ...)`, no un closure `format` compartido como
+  las franjas - solo dos fichas por sección, no merecía el partial)
+  solo se muestran cuando el valor no es `null`.
   Bug real de dompdf encontrado al revisar un PDF generado renderizado
   a imagen con Ghostscript (`gswin64c -sDEVICE=png16m`, única forma de
   verlo durante el desarrollo - no hay navegador que lo muestre antes

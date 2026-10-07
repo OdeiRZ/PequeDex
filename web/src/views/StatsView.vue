@@ -14,6 +14,7 @@ import {
   summarizeDiaperStats,
   summarizeGrowthStats,
   buildStatsExportPayload,
+  formatClockTime,
 } from '@/lib/stats'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import type { DiaperSize } from '@/stores/babies'
@@ -294,6 +295,18 @@ async function onExportPdf() {
                 {{ feedStats.averagePerDay.toFixed(1) }}
               </div>
             </div>
+            <div v-if="feedStats.typicalFirstFeedTime" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.feed.typicalFirstLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatClockTime(feedStats.typicalFirstFeedTime) }}
+              </div>
+            </div>
+            <div v-if="feedStats.typicalLastFeedTime" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.feed.typicalLastLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatClockTime(feedStats.typicalLastFeedTime) }}
+              </div>
+            </div>
           </div>
           <div
             v-if="feedStats.byType.pecho > 0"
@@ -346,6 +359,18 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.sleep.wakeWindowLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ formatMinutes(sleepStats.averageWakeWindowMinutes) }}
+              </div>
+            </div>
+            <div v-if="sleepStats.typicalBedtime" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.typicalBedtimeLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatClockTime(sleepStats.typicalBedtime) }}
+              </div>
+            </div>
+            <div v-if="sleepStats.typicalWakeTime" class="rounded-xl bg-surface-sunken p-3">
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.typicalWakeLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatClockTime(sleepStats.typicalWakeTime) }}
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import {
   summarizeFeedStats,
   summarizeDiaperStats,
   summarizeGrowthStats,
+  formatClockTime,
 } from '@/lib/stats'
 import type { DiaperChange, Feed, GrowthMeasurement, Sleep } from '@/stores/babies'
 
@@ -105,6 +106,48 @@ describe('summarizeSleepStats', () => {
   })
 })
 
+describe('summarizeSleepStats - typicalBedtime / typicalWakeTime', () => {
+  it('reports null below 3 distinct days with a completed sleep', () => {
+    // Un solo día, aunque tenga de sobra sueños completados (sigue sin
+    // haber ningún otro día con el que promediar "la hora típica").
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 13), local(2026, 8, 7, 13, 30)),
+      sleep(local(2026, 8, 7, 20), local(2026, 8, 7, 22)),
+      sleep(local(2026, 8, 7, 23), local(2026, 8, 8, 1)),
+    ])
+    expect(result.typicalBedtime).toBeNull()
+    expect(result.typicalWakeTime).toBeNull()
+  })
+
+  it('picks the LONGEST sleep of each day (the night one), ignoring naps', () => {
+    const result = summarizeSleepStats([
+      // Día 1: siesta corta + sueño nocturno largo
+      sleep(local(2026, 8, 7, 13), local(2026, 8, 7, 13, 30)),
+      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6)),
+      // Día 2: igual
+      sleep(local(2026, 8, 8, 14), local(2026, 8, 8, 14, 45)),
+      sleep(local(2026, 8, 8, 22), local(2026, 8, 9, 6)),
+      // Día 3: igual
+      sleep(local(2026, 8, 9, 12), local(2026, 8, 9, 13)),
+      sleep(local(2026, 8, 9, 22), local(2026, 8, 10, 6)),
+    ])
+    expect(result.typicalBedtime).toEqual({ hours: 22, minutes: 0 })
+    expect(result.typicalWakeTime).toEqual({ hours: 6, minutes: 0 })
+  })
+
+  it('averages clock times circularly, not arithmetically, across midnight', () => {
+    // 23:00, 00:00 y 01:00 - una media aritmética normal de las horas
+    // (23+0+1)/3 daría las 08:00, un sinsentido; la media circular real
+    // da medianoche, el centro real de esas tres horas.
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 23), local(2026, 8, 7, 23, 10)),
+      sleep(local(2026, 8, 8, 0), local(2026, 8, 8, 0, 10)),
+      sleep(local(2026, 8, 9, 1), local(2026, 8, 9, 1, 10)),
+    ])
+    expect(result.typicalBedtime).toEqual({ hours: 0, minutes: 0 })
+  })
+})
+
 describe('summarizeFeedStats', () => {
   it('reports not enough data below the minimum sample size', () => {
     const result = summarizeFeedStats([feed(), feed()])
@@ -175,6 +218,47 @@ describe('summarizeFeedStats', () => {
     ])
     // 4 feeds across 2 calendar days (7th and 8th, inclusive).
     expect(result.averagePerDay).toBe(2)
+  })
+})
+
+describe('summarizeFeedStats - typicalFirstFeedTime / typicalLastFeedTime', () => {
+  it('reports null below 3 distinct days with a feed', () => {
+    const result = summarizeFeedStats([
+      feed({ started_at: local(2026, 8, 7, 7) }),
+      feed({ started_at: local(2026, 8, 7, 12) }),
+      feed({ started_at: local(2026, 8, 7, 20) }),
+    ])
+    expect(result.typicalFirstFeedTime).toBeNull()
+    expect(result.typicalLastFeedTime).toBeNull()
+  })
+
+  it('tracks the earliest and latest feed of each day separately', () => {
+    const result = summarizeFeedStats([
+      feed({ started_at: local(2026, 8, 7, 7) }),
+      feed({ started_at: local(2026, 8, 7, 12) }),
+      feed({ started_at: local(2026, 8, 7, 20) }),
+      feed({ started_at: local(2026, 8, 8, 7) }),
+      feed({ started_at: local(2026, 8, 8, 20) }),
+      feed({ started_at: local(2026, 8, 9, 7) }),
+      feed({ started_at: local(2026, 8, 9, 12) }),
+      feed({ started_at: local(2026, 8, 9, 20) }),
+    ])
+    expect(result.typicalFirstFeedTime).toEqual({ hours: 7, minutes: 0 })
+    expect(result.typicalLastFeedTime).toEqual({ hours: 20, minutes: 0 })
+  })
+})
+
+describe('formatClockTime', () => {
+  it('pads single-digit hours and minutes', () => {
+    expect(formatClockTime({ hours: 7, minutes: 5 })).toBe('07:05')
+  })
+
+  it('leaves double-digit hours and minutes as they are', () => {
+    expect(formatClockTime({ hours: 22, minutes: 30 })).toBe('22:30')
+  })
+
+  it('formats midnight as 00:00', () => {
+    expect(formatClockTime({ hours: 0, minutes: 0 })).toBe('00:00')
   })
 })
 

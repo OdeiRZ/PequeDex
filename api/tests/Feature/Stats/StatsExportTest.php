@@ -38,6 +38,8 @@ function validStatsPayload(): array
             'average_duration_minutes' => 45.5,
             'average_wake_window_minutes' => 120.0,
             'by_hour_bucket' => $emptyBuckets,
+            'typical_bedtime' => ['hours' => 21, 'minutes' => 30],
+            'typical_wake_time' => ['hours' => 7, 'minutes' => 0],
         ],
         'feed' => [
             'has_enough_data' => true,
@@ -49,6 +51,8 @@ function validStatsPayload(): array
             'average_gap_minutes' => 180.0,
             'average_per_day' => 2.5,
             'by_hour_bucket' => $emptyBuckets,
+            'typical_first_feed_time' => ['hours' => 7, 'minutes' => 15],
+            'typical_last_feed_time' => ['hours' => 22, 'minutes' => 45],
         ],
         'diaper' => [
             'has_enough_data' => true,
@@ -104,6 +108,43 @@ it('rejects a malformed payload instead of rendering a broken PDF', function () 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['sleep.by_hour_bucket.0.key', 'sleep.by_hour_bucket']);
+});
+
+it('accepts null typical-time fields - below the 3-day sample, lib/stats.ts sends null', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['sleep']['typical_bedtime'] = null;
+    $payload['sleep']['typical_wake_time'] = null;
+    $payload['feed']['typical_first_feed_time'] = null;
+    $payload['feed']['typical_last_feed_time'] = null;
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('rejects an hour outside 0-23 in a typical-time field', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['sleep']['typical_bedtime'] = ['hours' => 24, 'minutes' => 0];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['sleep.typical_bedtime.hours']);
+});
+
+it('rejects a typical-time field missing its minutes', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    unset($payload['feed']['typical_last_feed_time']['minutes']);
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['feed.typical_last_feed_time.minutes']);
 });
 
 it('rejects unauthenticated access to the export endpoint', function () {

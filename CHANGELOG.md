@@ -9,6 +9,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **"Horarios habituales" en "Estadísticas"** - la fase pendiente desde
+  que se creó la sección ("horarios normativos", anotado en su momento
+  como "para después"): hora de reloj típica a la que el bebé se
+  acuesta y se despierta (`typicalBedtime`/`typicalWakeTime`, el sueño
+  más largo de cada día de calendario, no cualquiera - casi siempre el
+  nocturno, distinto de una siesta, sin que el cuidador tenga que
+  marcar cuál es cuál) y hora típica de la primera y la última toma del
+  día (`typicalFirstFeedTime`/`typicalLastFeedTime`). "Típica" se
+  calcula con una media CIRCULAR en vez de aritmética - promediar horas
+  de reloj sin más falla justo donde más importa: 23:00 y 01:00
+  promediarían al mediodía tratados como números sueltos, cuando la
+  hora real "típica" está sobre la medianoche; la media circular (cada
+  hora como un ángulo sobre un reloj de 24h, promediado como vector)
+  sí da medianoche. Por debajo de 3 días distintos con dato, `null`
+  (mismo criterio MIN_SAMPLE_SIZE que el resto de "Estadísticas") - una
+  "hora típica" con 1-2 días diría más de lo que los datos sostienen.
+  Nuevas fichas en pantalla (Sueño/Tomas) y en el PDF exportado,
+  mismo partial/estilo ya establecido.
 - **PDF de "Contracciones" al día con el de "Estadísticas"**: la
   cabecera cambia el texto suelto (nombre + "Generado el...") por la
   misma tarjeta con degradado de marca que ya lleva Estadísticas, y

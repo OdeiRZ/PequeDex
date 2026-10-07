@@ -1332,9 +1332,9 @@ breve solape de montaje es inofensivo.
 
 ## Estadísticas (`/estadisticas`)
 
-Primera fase de una sección de analítica más amplia ("horarios
-normativos" queda para después; el export a PDF ya está, ver más
-abajo). `StatsView.vue`
+Primera fase de una sección de analítica más amplia - "horarios
+normativos" y el export a PDF, las dos cosas que quedaban pendientes,
+ya están (ver más abajo). `StatsView.vue`
 + `lib/stats.ts` (funciones puras, testeadas sin tocar Pinia - mismo
 criterio que `lib/sleepHistory.ts`/`lib/contractionStats.ts`), accesible
 desde una `StatsLinkCard.vue` en el dashboard (mismo patrón que
@@ -1413,6 +1413,27 @@ sido inconsistente. `averagePerDay()` (tomas/pañales al día de media)
 no estaba pedido explícitamente - sale gratis de los mismos datos ya
 cargados, por día de calendario sobre el rango real que cubren (no
 una ventana de 24h fija).
+
+**Horarios habituales** ("horarios normativos", la fase pendiente
+desde el principio de esta sección) - `typicalBedtime`/`typicalWakeTime`
+(sueño) y `typicalFirstFeedTime`/`typicalLastFeedTime` (tomas), la hora
+de reloj a la que suele pasar algo, no cuántas veces ni cuánto dura.
+Para el sueño, "la hora de acostarse" es el inicio del sueño MÁS LARGO
+de cada día de calendario (no cualquiera) - una apuesta fiable para "el
+sueño de la noche" frente a una siesta sin que el cuidador tenga que
+marcar cuál es cuál, porque una siesta rara vez supera en duración al
+sueño nocturno real; "la hora de despertar" es el final de ese mismo
+sueño. Para las tomas, simplemente la primera y la última de cada día.
+La media de varias horas de reloj no puede ser una media aritmética
+normal - 23:00 y 01:00 promediarían al mediodía tratados como números
+sueltos, cuando la hora "típica" real está sobre la medianoche -, así
+que `circularMeanTimeOfDay()` trata cada hora como un ángulo sobre un
+reloj de 24h y promedia en seno/coseno (estadística circular estándar
+para "promediar horas del día", no una invención de esta app) antes de
+volver a leer el ángulo resultante como hora. Mismo umbral
+`MIN_SAMPLE_SIZE` que el resto de "Estadísticas", pero contando DÍAS
+distintos con dato, no entradas sueltas - con 1-2 días, "la hora
+típica" diría más de lo que los datos realmente sostienen.
 
 **Export a PDF** - botón en la cabecera (icono descargar, mismo patrón
 visual y de estados `exporting`/`justExported` que `ContractionsView.vue`),

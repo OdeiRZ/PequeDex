@@ -62,6 +62,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Sonido genérico de pulsación en "Descargar PDF" de Estadísticas**,
+  en vez de algo que sonara a lo que en realidad pasa: dos eventos
+  nuevos en `useFeedback.ts`, `download` (al pulsar, antes de que el
+  PDF exista siquiera - un barrido descendente que "aterriza" en un
+  tono grave, la sensación de que algo empieza a guardarse) y
+  `downloadDone` (cuando el icono pasa a su tick de confirmación, ya
+  descargado - tres notas ascendentes más brillantes que `success`, que
+  queda reservado a los toasts de guardado genérico). `StatsView.vue`
+  pierde el `v-press` genérico del botón (su sonido/vibración de "tap"
+  no era el punto) y llama a los dos directamente en `onExportPdf()`.
 - **PDF de "Estadísticas": cabecera, franjas horarias y pie de página**.
   La cabecera cambia el texto suelto (nombre + "Generado el...") por
   una tarjeta con el mismo formato que la tarjeta principal del bebé en

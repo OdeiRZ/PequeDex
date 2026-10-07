@@ -1,7 +1,17 @@
 import { useAuthStore } from '@/stores/auth'
 
 export type FeedbackKind =
-  'tap' | 'success' | 'error' | 'cancel' | 'select' | 'nav' | 'navBack' | 'theme' | 'tick'
+  | 'tap'
+  | 'success'
+  | 'error'
+  | 'cancel'
+  | 'select'
+  | 'nav'
+  | 'navBack'
+  | 'theme'
+  | 'tick'
+  | 'download'
+  | 'downloadDone'
 
 // Patrones de vibración, uno por tipo - success/error vienen de lo que ya
 // tenía toast.ts antes de esta feature (10ms / [12, 40, 12]), se mantienen
@@ -24,6 +34,15 @@ const VIBRATION_PATTERNS: Record<FeedbackKind, number | number[]> = {
   navBack: 10,
   theme: 16,
   tick: 3,
+  // 'download' arranca el PDF (pulsar el botón de exportar) - un pulso
+  // doble, distinto del tap único genérico, que se nota como "enviar
+  // algo". 'downloadDone' es el segundo evento, independiente, cuando el
+  // PDF ya está listo y el icono pasa a un tick de confirmación - tres
+  // pulsos cortos, deliberadamente más festivo que 'success' (ya usado
+  // por los toasts), para que se note como un evento propio, no un
+  // guardado genérico más.
+  download: [10, 30],
+  downloadDone: [8, 15, 8],
 }
 
 function vibrate(kind: FeedbackKind): void {
@@ -171,6 +190,24 @@ function playTone(kind: FeedbackKind): void {
       // selector tipo rueda, igual que el "clic" de un dial físico).
       playBlip(ctx, now, 850, 0.07, 0.035)
       break
+    case 'download':
+      // Un barrido descendente que "aterriza" en un tono grave breve -
+      // la sensación de que algo empieza a bajar/guardarse, distinta del
+      // tap genérico. Dispara al pulsar "descargar", antes de que el PDF
+      // exista siquiera - 'downloadDone' de abajo es el segundo evento,
+      // independiente, cuando ya está listo.
+      playSweep(ctx, now, 820, 480, 0.11, 0.1)
+      playBlip(ctx, now + 0.09, 340, 0.1, 0.07)
+      break
+    case 'downloadDone':
+      // Tres notas ascendentes rápidas y brillantes - más "chispa" que
+      // 'success' (reservado a los toasts de guardado genérico), para
+      // que leer "ya está, descargado" se note como su propio momento,
+      // no un guardado más.
+      playBlip(ctx, now, 660, 0.1, 0.05)
+      playBlip(ctx, now + 0.05, 880, 0.1, 0.05)
+      playBlip(ctx, now + 0.1, 1175, 0.13, 0.1)
+      break
   }
 }
 
@@ -197,6 +234,8 @@ export function useFeedback() {
     navBack: () => fire('navBack'),
     theme: () => fire('theme'),
     tick: () => fire('tick'),
+    download: () => fire('download'),
+    downloadDone: () => fire('downloadDone'),
     // Solo vibración, sin tono - para un "preaviso" a mitad de un gesto
     // en curso (el swipe-to-delete de EntryCard.vue). Un sonido ahí, a
     // mitad de un arrastre que el usuario aún puede cancelar, se sentiría

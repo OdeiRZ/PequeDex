@@ -139,6 +139,10 @@ const hasAnyStatsData = computed(
 )
 
 async function onExportPdf() {
+  // Dos eventos de sonido/vibración independientes, no v-press genérico:
+  // "download" al pulsar (empieza a generarse), "downloadDone" cuando el
+  // icono pasa a su tick de confirmación (ya está listo y descargado).
+  feedback.download()
   exporting.value = true
   try {
     const payload = buildStatsExportPayload(
@@ -155,6 +159,7 @@ async function onExportPdf() {
     link.click()
     URL.revokeObjectURL(url)
     justExported.value = true
+    feedback.downloadDone()
     clearTimeout(justExportedTimer)
     justExportedTimer = setTimeout(() => {
       justExported.value = false
@@ -190,7 +195,6 @@ async function onExportPdf() {
       </RouterLink>
       <h1 class="font-display text-lg font-bold">{{ t('stats.title') }}</h1>
       <button
-        v-press
         type="button"
         class="export-btn relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
         :class="[exporting && 'is-exporting', justExported && 'is-done']"

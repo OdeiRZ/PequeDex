@@ -600,18 +600,25 @@ tenga efecto inmediato sin recargar la página:
   lenta), `theme` dos notas superpuestas algo más largas, `tick` un
   único blip muy corto (35ms) y discreto pensado para repetirse varias
   veces seguidas sin solaparse ni sonar a ruido continuo — el clic de
-  un dial físico, no una confirmación puntual. `warnVibrate` no suena
-  — solo vibra.
+  un dial físico, no una confirmación puntual; `download` un barrido
+  descendente (`playSweep`) que "aterriza" en un blip grave — la
+  sensación de que algo empieza a guardarse, no un tap cualquiera —,
+  `downloadDone` tres notas ascendentes más brillantes que `success`
+  (660/880/1175Hz, más agudas y con más ganancia en la última), para
+  que "ya está, descargado" se note como su propio momento y no como un
+  guardado genérico más — los dos exclusivos del botón de exportar PDF
+  de "Estadísticas" (ver esa sección). `warnVibrate` no suena — solo
+  vibra.
 - **Vibración**: `navigator.vibrate()` con feature-detect y
   `try/catch`, un patrón distinto por tipo (`8`ms `tap`, `10`ms
   `success`, `[12, 40, 12]` `error` — estos dos últimos son los que ya
   usaba `toast.ts` en un `hapticBuzz()` local antes de este cambio,
   ahora centralizados aquí — `6`ms `cancel`/`warnVibrate`,
   `[5, 18, 5]` `select`, `14`ms `nav`, `10`ms `navBack`, `16`ms
-  `theme`, `3`ms `tick`). **No existe en PC ni en iOS Safari** — Apple
-  nunca ha implementado la Vibration API ahí y no tiene planes
-  anunciados de hacerlo; en esas plataformas el ajuste solo controla
-  el sonido.
+  `theme`, `3`ms `tick`, `[10, 30]` `download`, `[8, 15, 8]`
+  `downloadDone`). **No existe en PC ni en iOS Safari** — Apple nunca
+  ha implementado la Vibration API ahí y no tiene planes anunciados de
+  hacerlo; en esas plataformas el ajuste solo controla el sonido.
 
 En vez de instrumentar cada botón de la app uno a uno, se engancha en
 los puntos de interacción que ya existían en el código:
@@ -1410,10 +1417,15 @@ en camelCase, no snake_case - ver el comentario del propio archivo) y
 mismo motivo por el que el resto de "Estadísticas" ya evita los
 endpoints de predicción para esto. Devuelve el PDF como blob
 autenticado por Bearer token (igual que Contracciones), no un enlace
-directo. Lleva `v-press` (el botón de Contracciones no, ninguno de los
-dos entraba en el barrido original de ~20 botones de "Sonido y
-vibración al interactuar" - este se añadió después), así que suena/
-vibra al pulsarlo igual que el resto de botones primarios.
+directo. Dos sonidos propios en vez del `v-press` genérico (ninguno de
+los dos export entraba en el barrido original de ~20 botones de
+"Sonido y vibración al interactuar" - este se añadió después, y un
+"tap" cualquiera no decía nada sobre lo que en realidad pasa):
+`feedback.download()` al pulsar, antes de que el PDF exista siquiera, y
+`feedback.downloadDone()` cuando `justExported` se activa - el segundo
+evento real, independiente, de "ya está listo y descargado". Ver
+"Sonido y vibración al interactuar" más abajo para el timbre de cada
+uno.
 
 El PDF en sí (`api/resources/views/pdf/stats.blade.php`, ver
 `api/README.md` para el detalle completo) tiene cabecera con el mismo

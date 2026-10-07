@@ -121,12 +121,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
-- **Sonido `download` (al pulsar "Descargar PDF") no encajaba**, el
-  barrido descendente + golpe grave de la primera versión sonaba
-  apagado. Cambiado a dos notas cortas y nítidas bajando (740→523Hz,
-  mismo criterio de "notas discretas" que ya usan `nav`/`navBack`, no
-  un barrido continuo) - `downloadDone` (el tick de confirmación) se
-  queda igual.
+- **Sonido `download` (al pulsar "Descargar PDF" en Estadísticas y
+  Contracciones), tercer intento** - ni el barrido descendente + golpe
+  grave original (apagado) ni las dos notas discretas bajando que lo
+  sustituyeron (tampoco convencían) encajaban. Ahora es un barrido
+  ASCENDENTE corto y limpio (480→820Hz) - textura de barrido en vez de
+  notas sueltas, hacia arriba en vez de hacia abajo, más parecido al
+  "whoosh" de enviar un mensaje que a una confirmación -
+  `downloadDone` (el tick final) se queda igual, ya convencía.
 - **"Generado el..." del PDF de "Estadísticas" fija en el encabezado
   superior de cada página**, no solo una línea bajo el título en la
   primera - mismo truco que ya usa `.footer` para repetirse al pie de

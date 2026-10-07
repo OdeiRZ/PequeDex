@@ -600,16 +600,17 @@ tenga efecto inmediato sin recargar la página:
   lenta), `theme` dos notas superpuestas algo más largas, `tick` un
   único blip muy corto (35ms) y discreto pensado para repetirse varias
   veces seguidas sin solaparse ni sonar a ruido continuo — el clic de
-  un dial físico, no una confirmación puntual; `download` dos notas
-  cortas y nítidas bajando (740→523Hz, mismo criterio de "notas
-  discretas" que `nav`/`navBack`, no un barrido continuo — una primera
-  versión con `playSweep` sonaba apagada y no encajaba), `downloadDone`
-  tres notas ascendentes más brillantes que `success`
-  (660/880/1175Hz, más agudas y con más ganancia en la última), para
-  que "ya está, descargado" se note como su propio momento y no como un
-  guardado genérico más — los dos exclusivos del botón de exportar PDF
-  de "Estadísticas" (ver esa sección). `warnVibrate` no suena — solo
-  vibra.
+  un dial físico, no una confirmación puntual; `download` un barrido
+  ASCENDENTE corto y limpio (480→820Hz) — tercer intento: una primera
+  versión con `playSweep` descendente + golpe grave sonaba apagada, una
+  segunda con dos notas discretas bajando (740→523Hz) tampoco convencía
+  —, más parecido al "whoosh" de enviar un mensaje que a una
+  confirmación, `downloadDone` tres notas ascendentes más brillantes
+  que `success` (660/880/1175Hz, más agudas y con más ganancia en la
+  última), para que "ya está, descargado" se note como su propio
+  momento y no como un guardado genérico más — los dos usados por los
+  botones de exportar PDF de "Estadísticas" y "Contracciones" (ver esas
+  secciones). `warnVibrate` no suena — solo vibra.
 - **Vibración**: `navigator.vibrate()` con feature-detect y
   `try/catch`, un patrón distinto por tipo (`8`ms `tap`, `10`ms
   `success`, `[12, 40, 12]` `error` — estos dos últimos son los que ya

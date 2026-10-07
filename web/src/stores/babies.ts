@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiClient } from '@/lib/api'
 import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
+import type { StatsExportPayload } from '@/lib/stats'
 
 export type BabySex = 'nino' | 'nina'
 
@@ -754,6 +755,20 @@ export const useBabiesStore = defineStore('babies', {
       this.statsSleeps = sleeps.data.data
       this.statsFeeds = feeds.data.data
       this.statsDiaperChanges = diaperChanges.data.data
+    },
+
+    // Same reasoning as exportContractionsPdf() for returning a Blob
+    // instead of triggering the download itself. Unlike that one, this
+    // is a POST with a body - the export doesn't recompute anything
+    // server-side, it renders exactly what StatsView.vue already
+    // computed (see ExportStatsRequest.php's own docblock on why: the
+    // hour-bucket math needs the caregiver's real local timezone,
+    // which Laravel has no way to know).
+    async exportStatsPdf(payload: StatsExportPayload): Promise<Blob> {
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/stats/export`, payload, {
+        responseType: 'blob',
+      })
+      return data
     },
   },
 })

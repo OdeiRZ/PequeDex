@@ -379,6 +379,31 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   columna de inicio, texto centrado en el resto del ancho) pero en azul
   (`#3f7ea6`) en vez del marrón de marca, para distinguirse como un
   evento aparte.
+- `app/Http/Controllers/Stats/StatsExportController.php`
+  + `app/Http/Requests/Stats/ExportStatsRequest.php`
+  + `resources/views/pdf/stats.blade.php` — exportación a PDF de
+  "Estadísticas" (`POST /babies/{baby}/stats/export`), mismo
+  `barryvdh/laravel-dompdf` y mismo criterio de cabecera/pie que
+  `pdf/contractions.blade.php` (incluido `logoDataUri()`, reutilizado
+  tal cual). A diferencia de Contracciones, este endpoint no consulta
+  nada: todo el cálculo (franjas horarias, medias por día) vive en el
+  frontend desde el principio de "Estadísticas" porque Laravel no
+  puede saber la zona horaria real del cuidador, así que el único
+  trabajo del backend es validar la forma de lo que ya calculó
+  `lib/stats.ts` y pasarlo a la plantilla sin tocarlo -
+  `ExportStatsRequest` valida los cuatro bloques (sueño, tomas,
+  pañales, crecimiento) campo a campo, incluida la enumeración de las
+  cuatro franjas horarias (`Rule::in(['dawn', 'morning', 'afternoon',
+  'night'])`, `size:4`). Bug real encontrado por un test, no por
+  inspección: los `points` de cada métrica de crecimiento
+  (`growth.weight_kg.points` etc.) usaban `required|array`, pero
+  Laravel trata un array vacío como "no relleno" bajo `required` - un
+  bebé sin ninguna medición de una métrica concreta es un estado válido
+  (array vacío, no clave ausente), así que la regla se cambió a
+  `present|array`, que solo exige que la clave exista.
+  `authorize()` comprueba `can('view', $baby)`, no `update` - es un
+  endpoint de solo lectura, mismo patrón que
+  `ContractionsExportController::show()`.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

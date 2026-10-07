@@ -14,6 +14,7 @@ use App\Http\Controllers\GrowthMeasurements\GrowthMeasurementController;
 use App\Http\Controllers\Milestones\MilestoneController;
 use App\Http\Controllers\Sleeps\SleepController;
 use App\Http\Controllers\Sleeps\SleepPredictionController;
+use App\Http\Controllers\Stats\StatsExportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -72,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'destroy']);
     Route::delete('/babies/{baby}/contractions', [ContractionController::class, 'destroyAll']);
     Route::get('/babies/{baby}/contractions/export', [ContractionsExportController::class, 'show']);
+    Route::post('/babies/{baby}/stats/export', [StatsExportController::class, 'store']);
 
     Route::get('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'index']);
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);

@@ -370,3 +370,107 @@ export function summarizeGrowthStats(measurements: GrowthMeasurement[]): GrowthS
     ),
   }
 }
+
+/**
+ * Every other field that ever crosses the API boundary in this app is
+ * snake_case (`started_at`, `weight_grams`...) - these four
+ * `summarize*Stats()` results are the one exception, kept camelCase as
+ * an idiomatic frontend-local convention since they'd never been sent
+ * anywhere until the PDF export. This is the one conversion point,
+ * building exactly the shape `ExportStatsRequest.php` validates -
+ * nothing here is computed, only relabeled.
+ */
+export interface StatsExportPayload {
+  sleep: {
+    has_enough_data: boolean
+    total_completed: number
+    average_duration_minutes: number | null
+    average_wake_window_minutes: number | null
+    by_hour_bucket: HourBucketStat[]
+  }
+  feed: {
+    has_enough_data: boolean
+    total: number
+    by_type: Record<FeedType, number>
+    pecho_side_counts: Record<FeedSide, number>
+    average_bottle_amount_ml: number | null
+    average_pecho_duration_minutes: number | null
+    average_gap_minutes: number | null
+    average_per_day: number | null
+    by_hour_bucket: HourBucketStat[]
+  }
+  diaper: {
+    has_enough_data: boolean
+    total: number
+    by_type: Record<DiaperType, number>
+    by_size: Record<DiaperSize | 'unspecified', number>
+    average_per_day: number | null
+    pee_by_hour_bucket: HourBucketStat[]
+    poop_by_hour_bucket: HourBucketStat[]
+  }
+  growth: {
+    weight_kg: GrowthMetricExportStat
+    height_cm: GrowthMetricExportStat
+    head_circumference_cm: GrowthMetricExportStat
+  }
+}
+
+interface GrowthMetricExportStat {
+  points: GrowthMetricPoint[]
+  latest_value: number | null
+  latest_percentile: number | null
+  gained: number | null
+  count: number
+}
+
+function exportGrowthMetric(stat: GrowthMetricStat): GrowthMetricExportStat {
+  return {
+    points: stat.points,
+    latest_value: stat.latestValue,
+    latest_percentile: stat.latestPercentile,
+    gained: stat.gained,
+    count: stat.count,
+  }
+}
+
+export function buildStatsExportPayload(
+  sleep: SleepStats,
+  feed: FeedStats,
+  diaper: DiaperStats,
+  growth: GrowthStats,
+): StatsExportPayload {
+  return {
+    sleep: {
+      has_enough_data: sleep.hasEnoughData,
+      total_completed: sleep.totalCompleted,
+      average_duration_minutes: sleep.averageDurationMinutes,
+      average_wake_window_minutes: sleep.averageWakeWindowMinutes,
+      by_hour_bucket: sleep.byHourBucket,
+    },
+    feed: {
+      has_enough_data: feed.hasEnoughData,
+      total: feed.total,
+      by_type: feed.byType,
+      pecho_side_counts: feed.pechoSideCounts,
+      average_bottle_amount_ml: feed.averageBottleAmountMl,
+      average_pecho_duration_minutes: feed.averagePechoDurationMinutes,
+      average_gap_minutes: feed.averageGapMinutes,
+      average_per_day: feed.averagePerDay,
+      by_hour_bucket: feed.byHourBucket,
+    },
+    diaper: {
+      has_enough_data: diaper.hasEnoughData,
+      total: diaper.total,
+      by_type: diaper.byType,
+      by_size: diaper.bySize,
+      average_per_day: diaper.averagePerDay,
+      pee_by_hour_bucket: diaper.peeByHourBucket,
+      poop_by_hour_bucket: diaper.poopByHourBucket,
+    },
+    growth: {
+      weight_kg: exportGrowthMetric(growth.weightKg),
+      height_cm: exportGrowthMetric(growth.heightCm),
+      head_circumference_cm: exportGrowthMetric(growth.headCircumferenceCm),
+    },
+  }
+}

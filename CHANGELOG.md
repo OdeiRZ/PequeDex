@@ -64,6 +64,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Exportar "Estadísticas" a PDF**, mismo flujo que ya existía en
+  Contracciones: botón en la cabecera (`StatsView.vue`) que descarga
+  `estadisticas.pdf` con los cuatro bloques (tomas, sueño, pañales,
+  crecimiento). Igual que el resto de "Estadísticas", el cálculo
+  (franjas horarias, medias por día) sigue siendo cosa del frontend -
+  Laravel no puede saber la zona horaria real del cuidador -, así que
+  el nuevo endpoint `POST /babies/{baby}/stats/export`
+  (`StatsExportController`) no recalcula nada: solo valida la forma del
+  payload ya calculado (`ExportStatsRequest`, con el mismo `present`
+  en vez de `required` para los `points` de crecimiento que pueden
+  venir vacíos) y lo pasa a una plantilla Blade
+  (`resources/views/pdf/stats.blade.php`) con dompdf, mismo lenguaje
+  visual que `pdf/contractions.blade.php`.
 - **Intervalos de sueño y de tomas, y tres estadísticas más no pedidas
   explícitamente** en "Estadísticas" (`lib/stats.ts`): tiempo despierto
   medio entre un sueño y el siguiente, y tiempo medio entre tomas -

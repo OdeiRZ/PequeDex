@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore } from '@/stores/babies'
+import { useToastStore } from '@/stores/toast'
 import { useFeedback } from '@/composables/useFeedback'
 import HourBucketChart from '@/components/HourBucketChart.vue'
 import GrowthLineChart from '@/components/GrowthLineChart.vue'
@@ -11,6 +12,7 @@ import {
   summarizeFeedStats,
   summarizeDiaperStats,
   summarizeGrowthStats,
+  buildStatsExportPayload,
 } from '@/lib/stats'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import type { DiaperSize } from '@/stores/babies'
@@ -18,6 +20,7 @@ import type { DiaperSize } from '@/stores/babies'
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const babies = useBabiesStore()
+const toast = useToastStore()
 const feedback = useFeedback()
 
 const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
@@ -117,6 +120,50 @@ const growthMetrics = computed(() => [
 ])
 
 const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.count > 0))
+
+// --- Exportar PDF ---
+// Igual que ContractionsView.vue: el store solo trae el Blob (auth por
+// Bearer token, no cookies, así que un <a href> directo no valdría).
+
+const exporting = ref(false)
+const justExported = ref(false)
+let justExportedTimer: ReturnType<typeof setTimeout> | undefined
+
+const hasAnyStatsData = computed(
+  () =>
+    sleepStats.value.hasEnoughData ||
+    feedStats.value.hasEnoughData ||
+    diaperStats.value.hasEnoughData ||
+    hasAnyGrowthData.value,
+)
+
+async function onExportPdf() {
+  exporting.value = true
+  try {
+    const payload = buildStatsExportPayload(
+      sleepStats.value,
+      feedStats.value,
+      diaperStats.value,
+      growthStats.value,
+    )
+    const blob = await babies.exportStatsPdf(payload)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'estadisticas.pdf'
+    link.click()
+    URL.revokeObjectURL(url)
+    justExported.value = true
+    clearTimeout(justExportedTimer)
+    justExportedTimer = setTimeout(() => {
+      justExported.value = false
+    }, 1400)
+  } catch {
+    toast.show(t('stats.exportError'), 'error')
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -141,7 +188,41 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
         </svg>
       </RouterLink>
       <h1 class="font-display text-lg font-bold">{{ t('stats.title') }}</h1>
-      <span class="h-9 w-9 shrink-0"></span>
+      <button
+        type="button"
+        class="export-btn relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-50"
+        :class="[exporting && 'is-exporting', justExported && 'is-done']"
+        :disabled="exporting || loading || !hasAnyStatsData"
+        :aria-label="t('stats.export')"
+        @click="onExportPdf"
+      >
+        <span class="export-ring" aria-hidden="true"></span>
+        <svg
+          v-if="!justExported"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5M12 15V3" />
+        </svg>
+        <svg
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="export-check h-5 w-5"
+        >
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
     </div>
 
     <div v-if="loading" class="flex flex-1 items-center justify-center text-text-muted">
@@ -404,3 +485,54 @@ const hasAnyGrowthData = computed(() => growthMetrics.value.some((m) => m.stat.c
     </template>
   </main>
 </template>
+
+<style scoped>
+.export-ring {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  border-top-color: var(--brand-teal);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.export-btn.is-exporting .export-ring {
+  opacity: 1;
+  animation: export-ring-spin 0.7s linear infinite;
+}
+
+@keyframes export-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.export-btn.is-done {
+  color: var(--diaper);
+}
+
+.export-check {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: export-check-draw 0.35s ease forwards;
+}
+
+@keyframes export-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-btn.is-exporting .export-ring {
+    animation: none;
+    opacity: 0;
+  }
+
+  .export-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+</style>

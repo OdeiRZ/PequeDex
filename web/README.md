@@ -1273,7 +1273,8 @@ breve solape de montaje es inofensivo.
 ## Estadísticas (`/estadisticas`)
 
 Primera fase de una sección de analítica más amplia ("horarios
-normativos", export a PDF quedan para después). `StatsView.vue`
+normativos" queda para después; el export a PDF ya está, ver más
+abajo). `StatsView.vue`
 + `lib/stats.ts` (funciones puras, testeadas sin tocar Pinia - mismo
 criterio que `lib/sleepHistory.ts`/`lib/contractionStats.ts`), accesible
 desde una `StatsLinkCard.vue` en el dashboard (mismo patrón que
@@ -1352,6 +1353,25 @@ sido inconsistente. `averagePerDay()` (tomas/pañales al día de media)
 no estaba pedido explícitamente - sale gratis de los mismos datos ya
 cargados, por día de calendario sobre el rango real que cubren (no
 una ventana de 24h fija).
+
+**Export a PDF** - botón en la cabecera (icono descargar, mismo patrón
+visual y de estados `exporting`/`justExported` que `ContractionsView.vue`),
+deshabilitado mientras carga o si no hay ningún dato en los cuatro
+bloques (`hasAnyStatsData`). Mantiene la misma regla de "todo el
+cálculo vive en el frontend": en vez de mandar el historial crudo a un
+endpoint nuevo que tendría que volver a calcular franjas/medias con una
+zona horaria adivinada, `buildStatsExportPayload()` (en `lib/stats.ts`)
+reempaqueta los cuatro `summarize*Stats()` que `StatsView.vue` ya tenía
+calculados (único punto del código donde cruzan la frontera de la API
+en camelCase, no snake_case - ver el comentario del propio archivo) y
+`babies.exportStatsPdf()` lo manda por `POST
+/babies/{id}/stats/export`, que solo valida la forma
+(`ExportStatsRequest`) y renderiza (`StatsExportController` +
+`pdf/stats.blade.php`, dompdf) - cero aritmética nueva en el backend,
+mismo motivo por el que el resto de "Estadísticas" ya evita los
+endpoints de predicción para esto. Devuelve el PDF como blob
+autenticado por Bearer token (igual que Contracciones), no un enlace
+directo.
 
 ## Despliegue
 

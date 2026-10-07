@@ -158,6 +158,8 @@ export default {
     linkCardBody: 'Sleep, feeding and diaper patterns.',
     notEnoughData: 'Not enough data yet for this statistic.',
     noDataYet: 'No data in any time slot yet.',
+    export: 'Download PDF',
+    exportError: 'Could not generate the PDF. Please try again.',
     hourBucket: {
       dawn: 'Early morning',
       morning: 'Morning',

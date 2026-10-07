@@ -159,6 +159,8 @@ export default {
     linkCardBody: 'Patrones de sueño, tomas y pañales.',
     notEnoughData: 'Todavía no hay datos suficientes para esta estadística.',
     noDataYet: 'Sin datos en ninguna franja todavía.',
+    export: 'Descargar PDF',
+    exportError: 'No se ha podido generar el PDF. Inténtalo de nuevo.',
     hourBucket: {
       dawn: 'Madrugada',
       morning: 'Mañana',

@@ -1121,6 +1121,19 @@ verse bien en una captura:
   bebé ya creado. La hoja sube a un nivel disponible en cualquier
   estado del onboarding, y ambos botones pasan a depender solo de
   `auth.user`.
+- **`lib/timelineEntry.ts`** — la lógica de presentación de cada fila
+  de "Línea temporal" (qué icono/color/badge le toca, si la marca de
+  tiempo trasera va a una línea o a dos, el recorte a un día local
+  exacto y el agrupado con separadores) sale de `DashboardView.vue` a
+  funciones puras propias, testeadas sin montar el componente ni i18n
+  de verdad. `entryTitle()`/`entryDiaperSizeLabel()` reciben la propia
+  `t()` de vue-i18n como parámetro (y, `entryTitle()`, dos funciones
+  más para resolver la etiqueta de lado/tipo de pañal) en vez de leerla
+  de un closure, precisamente para poder pasarle un mock en los tests.
+  `DashboardView.vue` sigue siendo quien las llama - unas pocas
+  funciones finas (`entryTitleFor`, `formatTimeFor`...) cierran sobre
+  sus propios refs (`t`, `sideLabels`, `dateLocale`...) para que la
+  plantilla no tenga que cambiar.
 - **Marca de tiempo trasera de "Línea temporal" a dos líneas** en un
   sueño finalizado o una toma de pecho con duración cargada: antes
   mostraba solo la hora de inicio (`item.entry.at`, que siempre es

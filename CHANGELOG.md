@@ -9,6 +9,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Tests unitarios para la lógica de "Línea temporal"**
+  (`DashboardView.vue`, con diferencia la vista más grande de la app y
+  hasta ahora sin un solo test propio): las funciones puras que deciden
+  qué icono/color/badge pinta cada fila y cómo se agrupan por día
+  salen a un módulo nuevo, `lib/timelineEntry.ts` -
+  `entryCategory`/`entryPeeDroplet`/`entryPoopColor`/`entrySleepEmoji`/
+  `entrySleepPulsing`/`entryMilkDroplet`/`entryDuration`/`entryEndTime`/
+  `formatDuration`/`formatTime`, más `entryTitle`/`entryDiaperSizeLabel`
+  (reciben `t()` de vue-i18n como parámetro en vez de leerlo del
+  componente, para poder testearlas sin montar i18n de verdad) y
+  `filterTimelineToDay`/`groupTimelineByDay` (el recorte a un día local
+  exacto y el agrupado con separadores que antes vivían como
+  `computed()` en la propia vista). `DashboardView.vue` las importa y
+  las envuelve en unas pocas funciones finas (`entryTitleFor`,
+  `formatTimeFor`...) que cierran sobre sus propios refs, sin cambiar
+  nada de cómo se ve ni se comporta la línea temporal - 32 tests nuevos
+  en `lib/__tests__/timelineEntry.spec.ts`.
 - **Exportar "Estadísticas" a PDF**, mismo flujo que ya existía en
   Contracciones: botón en la cabecera (`StatsView.vue`) que descarga
   `estadisticas.pdf` con los cuatro bloques (tomas, sueño, pañales,

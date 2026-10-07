@@ -42,13 +42,24 @@ import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
-import {
-  addDays,
-  formatWeekdayDateLabel,
-  parseDateOnly,
-  todayDateOnlyString,
-} from '@/lib/localDate'
+import { addDays, formatWeekdayDateLabel, todayDateOnlyString } from '@/lib/localDate'
 import { extractValidationMessage } from '@/lib/api'
+import {
+  entryCategory,
+  entryDiaperSizeLabel,
+  entryDuration,
+  entryEndTime,
+  entryMilkDroplet,
+  entryPeeDroplet,
+  entryPoopColor,
+  entrySleepEmoji,
+  entrySleepPulsing,
+  entryTitle,
+  filterTimelineToDay,
+  formatTime,
+  groupTimelineByDay,
+  type TimelineListItem,
+} from '@/lib/timelineEntry'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
@@ -130,43 +141,15 @@ const rhythmTimeline = computed(() => (isRhythmToday.value ? babies.timeline : b
 // already clips its own bars to `[start, end)` in local time for
 // exactly this reason, but this list rendered the raw response
 // unfiltered. Same clip here.
-const visibleTimeline = computed<TimelineEntry[]>(() => {
-  if (isRhythmToday.value) return rhythmTimeline.value
+const visibleTimeline = computed<TimelineEntry[]>(() =>
+  isRhythmToday.value
+    ? rhythmTimeline.value
+    : filterTimelineToDay(rhythmTimeline.value, rhythmDate.value),
+)
 
-  const dayStart = parseDateOnly(rhythmDate.value)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setHours(23, 59, 59, 999)
-
-  return rhythmTimeline.value.filter((entry) => {
-    const at = new Date(entry.at)
-    return at >= dayStart && at <= dayEnd
-  })
-})
-
-type TimelineListItem =
-  | { kind: 'separator'; key: string; label: string }
-  | { kind: 'entry'; key: string; entry: TimelineEntry }
-
-const groupedTimeline = computed<TimelineListItem[]>(() => {
-  const items: TimelineListItem[] = []
-  let previousDayKey: string | null = null
-
-  for (const entry of visibleTimeline.value) {
-    const at = new Date(entry.at)
-    const dayKey = at.toLocaleDateString('en-CA')
-    if (dayKey !== previousDayKey) {
-      items.push({
-        kind: 'separator',
-        key: `day-${dayKey}`,
-        label: formatWeekdayDateLabel(at, dateLocale.value),
-      })
-      previousDayKey = dayKey
-    }
-    items.push({ kind: 'entry', key: `${entry.type}-${entry.data.id}`, entry })
-  }
-
-  return items
-})
+const groupedTimeline = computed<TimelineListItem[]>(() =>
+  groupTimelineByDay(visibleTimeline.value, (at) => formatWeekdayDateLabel(at, dateLocale.value)),
+)
 
 async function onRhythmPrevDay() {
   if (isRhythmBirthDay.value) return
@@ -863,150 +846,29 @@ const diaperTypeLabels = computed<Record<string, string>>(() => ({
   ambos: t('dashboard.diaperForm.both'),
 }))
 
-function entryCategory(entry: (typeof babies.timeline)[number]): Category {
-  return entry.type === 'diaper_change' ? 'diaper' : entry.type
+// Envoltorios finos sobre las funciones puras de lib/timelineEntry.ts -
+// cierran sobre `t`/las etiquetas/el idioma de este componente para que
+// la plantilla siga llamándolas con un único argumento, igual que
+// antes de extraerlas.
+function entryTitleFor(entry: TimelineEntry): string {
+  return entryTitle(
+    entry,
+    t,
+    (side) => sideLabels.value[side ?? ''] ?? side ?? '',
+    (type) => diaperTypeLabels.value[type] ?? type,
+  )
 }
 
-// A caregiver recognizes a diaper by its icons, not by reading its
-// name (same reasoning as the type/color pickers in "+ Pañal", which
-// these two functions mirror exactly): a pee droplet for
-// "mojado"/"ambos", a poop swirl for "sucio"/"ambos" - a "both" entry
-// gets one of each. `undefined` (not rendered at all) for anything
-// that isn't a diaper change, or the icon that entry's type doesn't
-// call for.
-function entryPeeDroplet(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'diaper_change') return undefined
-  return entry.data.type === 'mojado' || entry.data.type === 'ambos' ? DIAPER_PEE_COLOR : undefined
+function entryDiaperSizeLabelFor(entry: TimelineEntry): string | undefined {
+  return entryDiaperSizeLabel(entry, t)
 }
 
-// Falls back to marrón when no color was noted, same reasoning as
-// `diaperPoopIconColor` in the picker above and `entryMilkDroplet`'s
-// own `leche` fallback below - an inconsistent-looking gap (colored
-// poop on some rows, none on others) reads as more confusing than a
-// sensible default color everywhere.
-function entryPoopColor(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'diaper_change') return undefined
-  if (entry.data.type !== 'sucio' && entry.data.type !== 'ambos') return undefined
-  return DIAPER_RESIDUE_COLOR_HEX[entry.data.residue_color || 'marron']
+function formatTimeFor(at: string): string {
+  return formatTime(at, dateLocale.value)
 }
 
-// 💤 next to a sleep row, same "recognize at a glance" reasoning as
-// the diaper/feed icons above - but a plain emoji here, not a colored
-// SVG, since there's no color to communicate (see EntryCard.vue's own
-// docblock on `emoji`). `entrySleepPulsing()` is what actually tells
-// "still asleep right now" (no `ended_at` yet) apart from "was
-// asleep, already woke up" - the emoji itself is identical either way,
-// `emoji-pulsing` below is what breathes it while true.
-function entrySleepEmoji(entry: (typeof babies.timeline)[number]): string | undefined {
-  return entry.type === 'sleep' ? '💤' : undefined
-}
-
-function entrySleepPulsing(entry: (typeof babies.timeline)[number]): boolean {
-  return entry.type === 'sleep' && entry.data.ended_at === null
-}
-
-function formatDuration(startedAt: string, endedAt: string | null): string {
-  const start = new Date(startedAt).getTime()
-  const end = endedAt ? new Date(endedAt).getTime() : Date.now()
-  const minutes = Math.max(0, Math.round((end - start) / 60_000))
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-
-  return hours > 0 ? `${hours}h ${remainingMinutes}min` : `${remainingMinutes}min`
-}
-
-// Duración como badge a la derecha de la fila - la línea temporal solo
-// mostraba la hora de inicio, sin ninguna pista de cuánto duró sin abrir
-// la entrada a editarla. Un sueño EN CURSO no lleva badge, a propósito -
-// esa fila ya lleva su propio botón "Finalizar" (ver más abajo), y un
-// contador en vivo al lado era ruido de más, no información extra: el
-// badge solo aparece una vez el sueño tiene ended_at de verdad. Una
-// toma, a diferencia del sueño, no tiene ningún concepto de "en curso" -
-// sin ended_at (no se indicó duración, o es biberón/sólido, que no la
-// llevan) simplemente no hay badge. "h"/"min" sin traducir, mismo
-// criterio que "ml"/"kg"/"cm" en el resto de la app: unidades, no texto.
-function formatTime(at: string): string {
-  return new Date(at).toLocaleTimeString(dateLocale.value, { hour: '2-digit', minute: '2-digit' })
-}
-
-// Misma condición exacta que entryDuration() de abajo (su badge) - la
-// marca de tiempo trasera solo pasa a dos líneas (fin arriba, inicio
-// abajo) cuando ya hay un ended_at real que mostrar; mientras no lo
-// haya (sueño en curso, toma sin duración cargada), sigue siendo la
-// única hora de siempre.
-function entryEndTime(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type === 'sleep' && entry.data.ended_at) {
-    return formatTime(entry.data.ended_at)
-  }
-  if (entry.type === 'feed' && entry.data.type === 'pecho' && entry.data.ended_at) {
-    return formatTime(entry.data.ended_at)
-  }
-  return undefined
-}
-
-function entryDuration(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type === 'sleep' && entry.data.ended_at) {
-    return formatDuration(entry.data.started_at, entry.data.ended_at)
-  }
-  if (entry.type === 'feed' && entry.data.type === 'pecho' && entry.data.ended_at) {
-    return formatDuration(entry.data.started_at, entry.data.ended_at)
-  }
-  return undefined
-}
-
-// Mismo hueco de badge que la duración de arriba, pero para un pañal -
-// que no tiene concepto de duración, así que entryDuration() siempre
-// devuelve undefined para él. Solo cuando la talla se indicó al
-// guardar (es opcional, ver `diaperSize` más abajo); sin ella, la fila
-// se queda con solo los iconos de tipo, como ya hacía antes de que
-// existiera este campo.
-function entryDiaperSizeLabel(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'diaper_change' || !entry.data.size) return undefined
-  return t('dashboard.diaperForm.sizeBadge', { size: entry.data.size })
-}
-
-// Same reasoning, applied to a feed's milk - a droplet colored like
-// the real thing next to the row's title. A bottle carries milk too
-// (formula or expressed, both read as white - `milk_type` itself is
-// only ever set for a `pecho` feed, see StoreFeedRequest's
-// `prohibited_unless`, so a bottle has no field to read and just gets
-// `leche`'s color directly). A `pecho` row logged before this field
-// existed has `milk_type: null` in the database forever (nothing
-// backfills old rows) - reported live as some breastfeeds missing
-// their droplet while newer ones had it, an inconsistent-looking gap
-// rather than a real absence of milk. Defaults to `leche` there too,
-// same as a bottle and same as what a new breastfeed already
-// defaults to in the "+ Toma" form. Only a solid feed - not milk at
-// all - renders no droplet.
-function entryMilkDroplet(entry: (typeof babies.timeline)[number]): string | undefined {
-  if (entry.type !== 'feed') return undefined
-  if (entry.data.type === 'biberon') return MILK_TYPE_DROPLET_FILL.leche
-  if (entry.data.type === 'pecho') return MILK_TYPE_DROPLET_FILL[entry.data.milk_type ?? 'leche']
-  return undefined
-}
-
-function entryTitle(entry: (typeof babies.timeline)[number]): string {
-  if (entry.type === 'feed') {
-    if (entry.data.type === 'biberon') {
-      return t('dashboard.timeline.bottleSummary', { amount: entry.data.amount_ml })
-    }
-    if (entry.data.type === 'pecho') {
-      return t('dashboard.timeline.breastSummary', {
-        side: sideLabels.value[entry.data.side ?? ''] ?? entry.data.side,
-      })
-    }
-    return t('dashboard.timeline.solidSummary')
-  }
-
-  if (entry.type === 'sleep') {
-    return entry.data.ended_at
-      ? t('dashboard.timeline.sleepDone')
-      : t('dashboard.timeline.sleepOngoing')
-  }
-
-  return t('dashboard.timeline.diaperSummary', {
-    type: diaperTypeLabels.value[entry.data.type] ?? entry.data.type,
-  })
+function entryEndTimeFor(entry: TimelineEntry): string | undefined {
+  return entryEndTime(entry, dateLocale.value)
 }
 
 async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
@@ -1948,14 +1810,14 @@ const sleepPredictionDue = computed(() => {
                   <EntryCard
                     v-else
                     :category="entryCategory(item.entry)"
-                    :title="entryTitle(item.entry)"
-                    :meta="formatTime(item.entry.at)"
-                    :meta-end="entryEndTime(item.entry)"
+                    :title="entryTitleFor(item.entry)"
+                    :meta="formatTimeFor(item.entry.at)"
+                    :meta-end="entryEndTimeFor(item.entry)"
                     :droplet-color="entryMilkDroplet(item.entry) ?? entryPeeDroplet(item.entry)"
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
-                    :badge="entryDuration(item.entry) ?? entryDiaperSizeLabel(item.entry)"
+                    :badge="entryDuration(item.entry) ?? entryDiaperSizeLabelFor(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"

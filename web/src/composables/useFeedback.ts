@@ -191,13 +191,15 @@ function playTone(kind: FeedbackKind): void {
       playBlip(ctx, now, 850, 0.07, 0.035)
       break
     case 'download':
-      // Un barrido descendente que "aterriza" en un tono grave breve -
-      // la sensación de que algo empieza a bajar/guardarse, distinta del
-      // tap genérico. Dispara al pulsar "descargar", antes de que el PDF
-      // exista siquiera - 'downloadDone' de abajo es el segundo evento,
-      // independiente, cuando ya está listo.
-      playSweep(ctx, now, 820, 480, 0.11, 0.1)
-      playBlip(ctx, now + 0.09, 340, 0.1, 0.07)
+      // Dos notas cortas y nítidas, bajando - "ahí va", un arranque
+      // breve y decidido en vez del barrido+golpe grave de la primera
+      // versión, que sonaba apagado y no encajaba con nada más de la
+      // app. Mismo criterio de "dos notas discretas" que nav/navBack, no
+      // un barrido continuo. Dispara al pulsar "descargar", antes de que
+      // el PDF exista siquiera - 'downloadDone' de abajo es el segundo
+      // evento, independiente, cuando ya está listo.
+      playBlip(ctx, now, 740, 0.12, 0.05)
+      playBlip(ctx, now + 0.045, 523, 0.12, 0.08)
       break
     case 'downloadDone':
       // Tres notas ascendentes rápidas y brillantes - más "chispa" que

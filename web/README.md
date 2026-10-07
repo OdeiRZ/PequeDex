@@ -600,10 +600,11 @@ tenga efecto inmediato sin recargar la página:
   lenta), `theme` dos notas superpuestas algo más largas, `tick` un
   único blip muy corto (35ms) y discreto pensado para repetirse varias
   veces seguidas sin solaparse ni sonar a ruido continuo — el clic de
-  un dial físico, no una confirmación puntual; `download` un barrido
-  descendente (`playSweep`) que "aterriza" en un blip grave — la
-  sensación de que algo empieza a guardarse, no un tap cualquiera —,
-  `downloadDone` tres notas ascendentes más brillantes que `success`
+  un dial físico, no una confirmación puntual; `download` dos notas
+  cortas y nítidas bajando (740→523Hz, mismo criterio de "notas
+  discretas" que `nav`/`navBack`, no un barrido continuo — una primera
+  versión con `playSweep` sonaba apagada y no encajaba), `downloadDone`
+  tres notas ascendentes más brillantes que `success`
   (660/880/1175Hz, más agudas y con más ganancia en la última), para
   que "ya está, descargado" se note como su propio momento y no como un
   guardado genérico más — los dos exclusivos del botón de exportar PDF

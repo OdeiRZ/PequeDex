@@ -436,7 +436,17 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   versión de dompdf, así que la regla entera se ignoraba silenciosamente
   y la tabla se quedaba sin fondo/padding con los que calcular su
   propia altura - cambiado a `table.baby-card td`, igual que el resto
-  de selectores descendientes de esta plantilla.
+  de selectores descendientes de esta plantilla. Segundo bug real, en
+  un primer intento de llevar emoji (💙/🌸 para el sexo, 🎂 para la
+  fecha) a la tarjeta: salían como "?" con la fuente por defecto de
+  dompdf - misma limitación ya documentada en
+  `pdf/contractions.blade.php` para el icono de rayo/el carácter "●" -,
+  así que se quitaron, texto plano en su lugar. Con esos dos arreglos,
+  el degradado (`linear-gradient`) y los dos círculos decorativos
+  traslúcidos que sí lleva la tarjeta en pantalla (`position: absolute`
+  dentro de un contenedor `position: relative`, recortados por el
+  `border-radius` de la tarjeta) renderizan bien en esta versión de
+  dompdf - confirmado con la misma captura con Ghostscript.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

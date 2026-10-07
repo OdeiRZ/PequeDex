@@ -13,20 +13,26 @@
 
         /* Mismo formato que la tarjeta principal del bebé en el dashboard
            (DashboardView.vue): nombre + sexo arriba, edad en grande +
-           fecha de nacimiento debajo, sobre un fondo de color de marca.
-           Un degradado CSS (como el de la propia tarjeta en pantalla) no
-           se renderizaba de forma fiable combinado con border-radius en
-           esta versión de dompdf - color sólido en su lugar, mismo tono
-           de marca que el resto del PDF. */
+           fecha de nacimiento debajo, sobre un degradado de marca con un
+           par de círculos decorativos traslúcidos - mismo truco que la
+           propia tarjeta en pantalla (dos `span` con `rounded-full` y
+           opacidad baja). El bug real de antes (la tarjeta entera no
+           aparecía) era el selector `>` de un commit anterior, no el
+           degradado en sí - confirmado con una captura real del PDF
+           (Ghostscript, `gswin64c -sDEVICE=png16m`, única forma de verlo
+           sin desplegar). */
         table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-        table.baby-card td { background-color: #a65a6b; color: #ffffff; padding: 14px 18px; border-radius: 14px; }
-        table.baby-card-inner { width: 100%; border-collapse: collapse; }
+        table.baby-card td { background-color: #a65a6b; background-image: linear-gradient(135deg, #a65a6b 0%, #2f6e68 140%); color: #ffffff; padding: 0; border-radius: 20px; }
+        .baby-card-wrap { position: relative; padding: 26px 30px; }
+        .baby-card-deco-1 { position: absolute; top: -56px; right: -40px; width: 120px; height: 120px; border-radius: 60px; background: rgba(255,255,255,0.14); }
+        .baby-card-deco-2 { position: absolute; bottom: -30px; left: 100px; width: 56px; height: 56px; border-radius: 28px; background: rgba(255,255,255,0.1); }
+        table.baby-card-inner { position: relative; width: 100%; border-collapse: collapse; }
         table.baby-card-inner td { background: none; padding: 0; color: #ffffff; }
-        .baby-card-name { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
-        .baby-card-sex { font-size: 12px; font-weight: bold; background: rgba(255,255,255,0.2); border-radius: 10px; padding: 3px 10px; }
-        .baby-card-age { font-size: 28px; font-weight: bold; }
-        .baby-card-age span { font-size: 15px; font-weight: bold; }
-        .baby-card-born { font-size: 12px; opacity: 0.9; }
+        .baby-card-name { font-size: 16px; font-weight: bold; letter-spacing: 0.3px; }
+        .baby-card-sex { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.22); border-radius: 12px; padding: 5px 14px; }
+        .baby-card-age { font-size: 46px; font-weight: bold; line-height: 1; }
+        .baby-card-age span { font-size: 19px; font-weight: bold; }
+        .baby-card-born { font-size: 14px; opacity: 0.95; }
 
         .meta { color: #a3968a; font-size: 11px; margin: 6px 0 18px; }
 
@@ -64,28 +70,32 @@
     <table class="baby-card">
         <tr>
             <td>
-                <table class="baby-card-inner">
-                    <tr>
-                        <td style="text-align: left;">
-                            <span class="baby-card-name">{{ $baby->name ?: 'Bebé' }}</span>
-                        </td>
-                        <td style="text-align: right; width: 30%;">
-                            @if ($baby->sex?->value === 'nino')
-                                <span class="baby-card-sex">Niño</span>
-                            @elseif ($baby->sex?->value === 'nina')
-                                <span class="baby-card-sex">Niña</span>
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding-top: 4px;">
-                            <span class="baby-card-age">{{ $babyAge['value'] }} <span>{{ $babyAge['unit'] }}</span></span>
-                        </td>
-                        <td style="text-align: right; vertical-align: bottom;">
-                            <span class="baby-card-born">Nació el {{ \Carbon\CarbonImmutable::parse($baby->birth_date)->translatedFormat('j \d\e F \d\e Y') }}</span>
-                        </td>
-                    </tr>
-                </table>
+                <div class="baby-card-wrap">
+                    <span class="baby-card-deco-1"></span>
+                    <span class="baby-card-deco-2"></span>
+                    <table class="baby-card-inner">
+                        <tr>
+                            <td style="text-align: left;">
+                                <span class="baby-card-name">{{ $baby->name ?: 'Bebé' }}</span>
+                            </td>
+                            <td style="text-align: right; width: 38%;">
+                                @if ($baby->sex?->value === 'nino')
+                                    <span class="baby-card-sex">Niño</span>
+                                @elseif ($baby->sex?->value === 'nina')
+                                    <span class="baby-card-sex">Niña</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: left; padding-top: 10px;">
+                                <span class="baby-card-age">{{ $babyAge['value'] }} <span>{{ $babyAge['unit'] }}</span></span>
+                            </td>
+                            <td style="text-align: right; width: 38%; vertical-align: bottom;">
+                                <span class="baby-card-born">Nació el {{ \Carbon\CarbonImmutable::parse($baby->birth_date)->translatedFormat('j \d\e F \d\e Y') }}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </td>
         </tr>
     </table>

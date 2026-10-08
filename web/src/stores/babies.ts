@@ -427,6 +427,12 @@ export const useBabiesStore = defineStore('babies', {
       const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      // `recentSleeps` feeds WeeklySleep.vue on the dashboard - without
+      // this, a sleep logged for a past day via the "ritmo" view (not
+      // necessarily today) left that chart showing stale data until a
+      // full page reload re-ran fetchRecentSleeps() (only called once,
+      // at dashboard mount). Real bug reported live.
+      this.recentSleeps = upsertByDate(this.recentSleeps, data.data, (s) => s.started_at)
     },
 
     async updateSleep(id: number, payload: CreateSleepPayload) {
@@ -434,6 +440,7 @@ export const useBabiesStore = defineStore('babies', {
       const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      this.recentSleeps = upsertByDate(this.recentSleeps, data.data, (s) => s.started_at)
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
@@ -493,18 +500,21 @@ export const useBabiesStore = defineStore('babies', {
     async deleteSleep(id: number) {
       const previous = this.timeline
       const previousDay = this.dayTimeline
+      const previousRecent = this.recentSleeps
       this.timeline = this.timeline.filter(
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
       this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
+      this.recentSleeps = this.recentSleeps.filter((sleep) => sleep.id !== id)
 
       try {
         await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
       } catch (error) {
         this.timeline = previous
         this.dayTimeline = previousDay
+        this.recentSleeps = previousRecent
         throw error
       }
     },

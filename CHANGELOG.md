@@ -183,6 +183,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **"Sueño esta semana" del Dashboard (`WeeklySleep.vue`) no se
+  actualizaba al registrar/editar/borrar una siesta**, solo al recargar
+  la página entera - lee `babies.recentSleeps`, que únicamente
+  `fetchRecentSleeps()` llenaba, y esa función solo se llama una vez al
+  montar el Dashboard. `createSleep()`/`updateSleep()` ya metían la
+  respuesta en `timeline`/`dayTimeline` sin volver a pedirlos, pero
+  nunca en `recentSleeps` - ahora también, con el mismo `upsertByDate()`
+  que ya usan `growthMeasurements`/`milestones`; `deleteSleep()` lo
+  quita de ahí también (y lo restaura si el borrado falla, igual que ya
+  hacía con `timeline`/`dayTimeline`). Reportado en vivo registrando
+  sueño para un día pasado desde la vista de "ritmo".
 - **Recargar la página de "Estadísticas" (o entrar directo por URL)
   dejaba todo vacío** hasta salir y volver a entrar desde el Dashboard
   - `StatsView.vue` llamaba a `fetchStatsData()`/

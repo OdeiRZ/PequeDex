@@ -196,6 +196,67 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
+  it('folds a created/updated sleep into recentSleeps too, not just timeline/dayTimeline', async () => {
+    // Real bug found live: WeeklySleep.vue (dashboard) reads
+    // `recentSleeps`, which only `fetchRecentSleeps()` ever populated -
+    // called once at dashboard mount - so a sleep logged for a past
+    // day via the "ritmo" view left that chart stale until a full page
+    // reload. `createSleep`/`updateSleep` already folded the response
+    // into `timeline`/`dayTimeline`; they needed to do the same here.
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 9, started_at: '2026-08-25T21:00:00Z', ended_at: null } },
+    })
+    const store = useBabiesStore()
+    await store.create({})
+    store.recentSleeps = [{ id: 3, started_at: '2026-08-29T10:00:00Z', ended_at: null } as never]
+
+    await store.createSleep({ started_at: '2026-08-25T21:00' })
+
+    // Sorted desc by date, same as upsertByDate already does for
+    // growthMeasurements/milestones - the new sleep (25 ago) is older
+    // than the existing one (29 ago), so it lands after it.
+    expect(store.recentSleeps.map((s) => s.id)).toEqual([3, 9])
+
+    vi.mocked(apiClient.put).mockResolvedValueOnce({
+      data: {
+        data: { id: 9, started_at: '2026-08-25T21:00:00Z', ended_at: '2026-08-26T06:00:00Z' },
+      },
+    })
+
+    await store.updateSleep(9, { started_at: '2026-08-25T21:00', ended_at: '2026-08-26T06:00' })
+
+    expect(store.recentSleeps.find((s) => s.id === 9)?.ended_at).toBe('2026-08-26T06:00:00Z')
+  })
+
+  it('deletes a sleep optimistically from recentSleeps too', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
+    vi.mocked(apiClient.delete).mockResolvedValue({})
+    const store = useBabiesStore()
+    await store.create({})
+    store.recentSleeps = [
+      { id: 5, started_at: '2026-08-30T10:00:00Z', ended_at: null } as never,
+      { id: 6, started_at: '2026-08-29T10:00:00Z', ended_at: null } as never,
+    ]
+
+    await store.deleteSleep(5)
+
+    expect(store.recentSleeps.map((s) => s.id)).toEqual([6])
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/sleeps/5')
+  })
+
+  it('restores recentSleeps if the delete request fails', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
+    vi.mocked(apiClient.delete).mockRejectedValue(new Error('network'))
+    const store = useBabiesStore()
+    await store.create({})
+    store.recentSleeps = [{ id: 5, started_at: '2026-08-30T10:00:00Z', ended_at: null } as never]
+
+    await expect(store.deleteSleep(5)).rejects.toThrow('network')
+
+    expect(store.recentSleeps.map((s) => s.id)).toEqual([5])
+  })
+
   it('folds an updated feed into dayTimeline too, not just timeline', async () => {
     // Real bug found live: editing/deleting an entry several days back
     // only patched `timeline` (always "today"), so a past day's visible

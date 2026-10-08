@@ -23,13 +23,35 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     resto de recursos por bebé.
   - Dashboard: tarjeta `VitaminDReminderCard.vue` en 3 estados -
     **pendiente** (destacada con el token de color nuevo `--warning`,
-    distinto de `--danger` para no leerse como un error; menciona
-    explícitamente si ayer tampoco se marcó), **confirmada** (estilo
+    distinto de `--danger` para no leerse como un error; icono de
+    cápsula, no de gota - una gota se lee como agua/sueño, no como
+    medicación; menciona explícitamente si ayer tampoco se marcó;
+    botón "Dar", único - sin un "No dada" junto a él, ya que no marcar
+    nada ya deja el día en pendiente), **confirmada** (estilo
     tranquilo, sigue visible para evitar una segunda dosis por
     despiste) y **oculta** (ajuste desactivado o fuera del rango de
     fechas - al llegar `end_date` se oculta sola sin aviso previo).
-    Activación y corrección retroactiva de los últimos 14 días desde
-    la propia hoja de "Ajustes del bebé".
+    Activación (con `start_date`/`end_date`, precargadas a hoy/+1 año)
+    es un único formulario con el resto de "Ajustes del bebé" (sexo/
+    fecha de nacimiento) - un solo botón "Guardar" para las dos cosas,
+    no dos formularios/botones separados en la misma hoja, que llevaba
+    a confusión sobre qué guardaba cada uno; la pauta de vitamina D
+    solo se envía al backend si de verdad hay algo que crear o editar
+    (`vitaminDEnabled` activo, o ya existía una fila) para no crear una
+    fila de pauta desactivada en la base de datos la primera vez que
+    alguien abre y guarda el formulario sin haber tocado el interruptor.
+    El historial/editor retroactivo
+    de los últimos días vive en su propia hoja aparte, abierta con un
+    enlace "Ver historial" desde la propia tarjeta - mezclarlo con
+    sexo/fecha de nacimiento del bebé llevaba a un fallo de flujo real:
+    cambiar la fecha de inicio y marcar un día anterior en la misma
+    hoja sin guardar antes daba un error de validación confuso. El
+    historial se corta en `start_date` (máximo 14 días, menos si la
+    pauta es más reciente) en vez de mostrar siempre una ventana fija
+    que incluía días de antes de que la pauta existiera; un día sin
+    registro se muestra como "No dada" por defecto (coincide con cómo
+    ya lo cuenta la estadística, que solo suma registros explícitos
+    `given:true`).
   - Estadísticas: nueva sección "Vitamina D" con "dadas/días
     transcurridos desde el inicio" (`summarizeVitaminDStats()` en
     `lib/stats.ts`), incluida también en el PDF exportado

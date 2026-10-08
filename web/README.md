@@ -1358,16 +1358,43 @@ que usan los paneles de confirmación de borrado) cuando además
 `yesterdayAlsoMissing` es verdadero - un pequeño énfasis extra para el
 caso que de verdad importa recordar.
 
-La activación y la corrección retroactiva de los últimos 14 días viven
-en la propia hoja de "Ajustes del bebé" (`DashboardView.vue`, sección
-nueva dentro del `BottomSheet` ya existente de sexo/fecha de
-nacimiento) - al activar por primera vez, `start_date`/`end_date` se
-precargan a hoy/+1 año (la pauta estándar), editables antes de
-guardar. El marcado de cada día es un simple `PUT
-/babies/{baby}/vitamin-d-doses` por fecha (upsert, no un recurso con
-id propio - la clave natural es `baby_id`+`date`), reutilizando
-`upsertByDate()` ya existente en `stores/babies.ts` para mantener
-`vitaminDRecentDoses`/`vitaminDAllDoses` ordenados sin refetch.
+La activación vive en la hoja de "Ajustes del bebé" (`DashboardView.vue`),
+como una sección más dentro del MISMO `<form>` que ya edita sexo/fecha
+de nacimiento - un único "Guardar" para todo el formulario, no un
+segundo formulario/botón aparte: dos "Guardar" en la misma hoja
+confundía sobre qué guardaba cada uno. `onSaveBabySettings()` solo
+manda el `PUT /vitamin-d-schedule` si `vitaminDEnabled` está activo o
+ya existía una pauta - guardar el formulario sin haber tocado nunca el
+interruptor no crea una fila de pauta desactivada en la base de datos
+(que haría que Estadísticas mostrase la sección "Vitamina D" sin que
+el cuidador la hubiera activado nunca, ya que ese chequeo mira si
+existe la fila, no si `enabled` es `true`). Al activar por primera
+vez, `start_date`/`end_date` se precargan a hoy/+1 año (la pauta
+estándar), editables antes de guardar.
+
+El historial/editor retroactivo de los últimos días vive en su propia
+hoja aparte (`vitaminDHistory` en el `Sheet` de `DashboardView.vue`),
+abierta con un enlace "Ver historial" desde la propia tarjeta - no
+dentro de "Ajustes del bebé". Mezclarlo ahí llevaba a un fallo de flujo
+real: cambiar la fecha de inicio y, sin pulsar "Guardar" todavía,
+intentar marcar un día anterior a la fecha vieja (la que el backend
+seguía teniendo) disparaba un error de validación confuso. Al separar
+ambas hojas, el guardado de fechas pasa a ser un paso obligatorio
+antes de poder tocar el historial. `vitaminDRecentDosesByDate`
+(computed en `DashboardView.vue`) corta la lista en `babies
+.vitaminDSchedule.start_date` (máximo 14 días, menos si la pauta es
+más reciente) en vez de mostrar siempre una ventana fija que incluía
+días de antes de que la pauta existiera (y que además fallarían al
+intentar marcarlos). Un día sin registro se pinta como "No dada" por
+defecto (`day.given !== true`, no `=== false`) - coincide con cómo ya
+lo cuenta `summarizeVitaminDStats()`, que solo suma registros
+explícitos `given:true`, así que un día sin marcar ya es "no dada" a
+efectos de la estadística aunque nadie lo haya tocado nunca. El
+marcado de cada día es un simple `PUT /babies/{baby}/vitamin-d-doses`
+por fecha (upsert, no un recurso con id propio - la clave natural es
+`baby_id`+`date`), reutilizando `upsertByDate()` ya existente en
+`stores/babies.ts` para mantener `vitaminDRecentDoses`/
+`vitaminDAllDoses` ordenados sin refetch.
 
 ## Estadísticas (`/estadisticas`)
 

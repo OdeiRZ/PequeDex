@@ -349,7 +349,7 @@ export default {
       pendingToday: "Time to give today's vitamin D dose.",
       missedYesterday: "Yesterday's was missed too, don't forget today.",
       confirmedToday: "Today's vitamin D, given.",
-      markGiven: 'Given',
+      markGiven: 'Give',
       undo: 'Undo',
       markError: 'Could not save. Please try again.',
       historyLink: 'View history',

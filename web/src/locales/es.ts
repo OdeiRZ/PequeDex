@@ -351,7 +351,7 @@ export default {
       pendingToday: 'Toca darle hoy la dosis de vitamina D.',
       missedYesterday: 'Ayer tampoco se marcó, no te olvides hoy.',
       confirmedToday: 'Vitamina D de hoy, dada.',
-      markGiven: 'Dada',
+      markGiven: 'Dar',
       undo: 'Deshacer',
       markError: 'No se ha podido guardar. Inténtalo de nuevo.',
       historyLink: 'Ver historial',

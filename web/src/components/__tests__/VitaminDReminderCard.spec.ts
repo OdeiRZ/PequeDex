@@ -93,7 +93,7 @@ describe('VitaminDReminderCard', () => {
     expect(wrapper.text()).not.toContain('Toca darle hoy')
   })
 
-  it('has no "No dada" button in the pending state - only Dada, plus the history link', () => {
+  it('has no "No dada" button in the pending state - only Dar, plus the history link', () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {
       id: 1,
@@ -106,7 +106,7 @@ describe('VitaminDReminderCard', () => {
     const wrapper = mountCard()
     const buttonTexts = wrapper.findAll('button').map((b) => b.text())
 
-    expect(buttonTexts).toContain('Dada')
+    expect(buttonTexts).toContain('Dar')
     expect(buttonTexts).toContain('Ver historial')
     expect(buttonTexts).not.toContain('No dada')
   })
@@ -128,7 +128,7 @@ describe('VitaminDReminderCard', () => {
     expect(wrapper.emitted('openHistory')).toHaveLength(1)
   })
 
-  it('clicking "Dada" calls the store action for today', async () => {
+  it('clicking "Dar" calls the store action for today', async () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {
       id: 1,
@@ -142,7 +142,7 @@ describe('VitaminDReminderCard', () => {
     })
 
     const wrapper = mountCard()
-    const givenButton = wrapper.findAll('button').find((b) => b.text() === 'Dada')
+    const givenButton = wrapper.findAll('button').find((b) => b.text() === 'Dar')
     await givenButton?.trigger('click')
     await wrapper.vm.$nextTick()
 

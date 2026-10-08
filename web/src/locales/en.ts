@@ -340,9 +340,9 @@ export default {
       milestone: '+ Milestone',
     },
     todaySummary: {
-      feed: 'feeds',
+      feed: 'feed | feeds',
       sleep: 'asleep',
-      diaper: 'diapers',
+      diaper: 'diaper | diapers',
     },
     vitaminD: {
       title: 'Vitamin D',

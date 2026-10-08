@@ -54,7 +54,7 @@ const stats = computed<Stat[]>(() => {
       category: 'feed',
       raw: count,
       value: String(count),
-      label: t('dashboard.todaySummary.feed'),
+      label: t('dashboard.todaySummary.feed', count),
     })
   }
 
@@ -87,7 +87,7 @@ const stats = computed<Stat[]>(() => {
       category: 'diaper',
       raw: count,
       value: String(count),
-      label: t('dashboard.todaySummary.diaper'),
+      label: t('dashboard.todaySummary.diaper', count),
     })
   }
 

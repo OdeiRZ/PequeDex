@@ -342,9 +342,9 @@ export default {
       milestone: '+ Hito',
     },
     todaySummary: {
-      feed: 'tomas',
+      feed: 'toma | tomas',
       sleep: 'de sueño',
-      diaper: 'pañales',
+      diaper: 'pañal | pañales',
     },
     vitaminD: {
       title: 'Vitamina D',

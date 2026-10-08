@@ -9,6 +9,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Singular/plural en las tarjetas resumen del día** - "1 toma"/
+  "1 pañal" en singular, "0 tomas"/"4 pañales" (cualquier número
+  distinto de 1, incluido 0) en plural. Usa la pluralización nativa de
+  vue-i18n (`t(key, count)` con los dos mensajes separados por `|` en
+  `locales/{es,en}.ts`), no una condición a mano.
+
 - **Recordatorio diario de vitamina D, por bebé** - a petición de Odei
   tras la indicación del pediatra de dar una dosis diaria hasta el año.
   - Backend: dos tablas nuevas siguiendo el mismo patrón que

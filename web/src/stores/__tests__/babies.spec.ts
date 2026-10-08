@@ -647,4 +647,98 @@ describe('useBabiesStore', () => {
       water_broke_at: '2026-09-20T17:24:00Z',
     })
   })
+
+  it('fetches the vitamin D schedule and its recent doses', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        data: {
+          id: 1,
+          baby_id: 1,
+          enabled: true,
+          start_date: '2026-10-01',
+          end_date: '2027-10-01',
+        },
+        recent_doses: [{ id: 1, baby_id: 1, date: '2026-10-08', given: true }],
+      },
+    })
+
+    await store.fetchVitaminDSchedule()
+
+    expect(store.vitaminDSchedule?.enabled).toBe(true)
+    expect(store.vitaminDRecentDoses).toEqual([
+      { id: 1, baby_id: 1, date: '2026-10-08', given: true },
+    ])
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/vitamin-d-schedule')
+  })
+
+  it('upserts the vitamin D schedule', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    vi.mocked(apiClient.put).mockResolvedValueOnce({
+      data: {
+        data: {
+          id: 1,
+          baby_id: 1,
+          enabled: false,
+          start_date: '2026-10-01',
+          end_date: '2027-10-01',
+        },
+      },
+    })
+
+    await store.upsertVitaminDSchedule({
+      enabled: false,
+      start_date: '2026-10-01',
+      end_date: '2027-10-01',
+    })
+
+    expect(store.vitaminDSchedule?.enabled).toBe(false)
+    expect(apiClient.put).toHaveBeenCalledWith('/babies/1/vitamin-d-schedule', {
+      enabled: false,
+      start_date: '2026-10-01',
+      end_date: '2027-10-01',
+    })
+  })
+
+  it('upserts a vitamin D dose into both recent and all-doses lists, sorted desc by date', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
+    store.vitaminDAllDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
+
+    vi.mocked(apiClient.put).mockResolvedValueOnce({
+      data: { data: { id: 2, baby_id: 1, date: '2026-10-08', given: false } },
+    })
+
+    await store.upsertVitaminDDose('2026-10-08', false)
+
+    expect(store.vitaminDRecentDoses.map((d) => d.id)).toEqual([2, 1])
+    expect(store.vitaminDAllDoses.map((d) => d.id)).toEqual([2, 1])
+    expect(apiClient.put).toHaveBeenCalledWith('/babies/1/vitamin-d-doses', {
+      date: '2026-10-08',
+      given: false,
+    })
+  })
+
+  it('fetches the full vitamin D dose history, unbounded by the 14-day recent window', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { data: [{ id: 1, baby_id: 1, date: '2026-08-01', given: true }] },
+    })
+
+    await store.fetchAllVitaminDDoses()
+
+    expect(store.vitaminDAllDoses).toEqual([{ id: 1, baby_id: 1, date: '2026-08-01', given: true }])
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/vitamin-d-doses')
+  })
 })

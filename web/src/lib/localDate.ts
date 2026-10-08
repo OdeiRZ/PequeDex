@@ -4,9 +4,9 @@
 // "today"), so these stay in local time throughout, never touching
 // `toISOString()` directly (that's UTC, and would drift the shown day
 // by one near midnight depending on the browser's timezone).
-import { parseDateOnly } from './babyAge'
+import { daysBetween, parseDateOnly } from './babyAge'
 
-export { parseDateOnly }
+export { daysBetween, parseDateOnly }
 
 export function toDateOnlyString(date: Date): string {
   const year = date.getFullYear()

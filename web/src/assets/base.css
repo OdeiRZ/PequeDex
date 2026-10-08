@@ -25,6 +25,9 @@
   --growth: #a65a6b;
   --milestone: #b8952e;
   --danger: #b3453f;
+  /* A pending care reminder (vitamin D) isn't an error - distinct from
+     --danger so it doesn't read as "something went wrong". */
+  --warning: #b8742e;
 
   --sound-white-noise: #6b7280;
   --sound-rain: #3f72a6;
@@ -55,6 +58,7 @@
     --growth: #e08fa0;
     --milestone: #d9b654;
     --danger: #e0837c;
+    --warning: #e0a85c;
 
     --sound-white-noise: #9aa3b2;
     --sound-rain: #7ea8dd;
@@ -176,6 +180,7 @@
   --color-growth: var(--growth);
   --color-milestone: var(--milestone);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
   --color-sound-white-noise: var(--sound-white-noise);
   --color-sound-rain: var(--sound-rain);
   --color-sound-heartbeat: var(--sound-heartbeat);

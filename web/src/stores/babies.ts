@@ -69,6 +69,21 @@ export interface GrowthMeasurement {
   head_circumference_percentile: number | null
 }
 
+export interface VitaminDSchedule {
+  id: number
+  baby_id: number
+  enabled: boolean
+  start_date: string
+  end_date: string
+}
+
+export interface VitaminDDose {
+  id: number
+  baby_id: number
+  date: string
+  given: boolean
+}
+
 export type MilestoneCategory = 'sonrisa' | 'diente' | 'pasos' | 'palabra' | 'otro'
 
 export interface MilestoneLike {
@@ -211,6 +226,13 @@ interface BabiesState {
   statsSleeps: Sleep[]
   statsFeeds: Feed[]
   statsDiaperChanges: DiaperChange[]
+  vitaminDSchedule: VitaminDSchedule | null
+  /** Last 14 days only, embedded in fetchVitaminDSchedule()'s response -
+   * enough for the Dashboard's retroactive editor without a request per
+   * day. Estadísticas needs the full history instead (see
+   * vitaminDAllDoses/fetchAllVitaminDDoses()). */
+  vitaminDRecentDoses: VitaminDDose[]
+  vitaminDAllDoses: VitaminDDose[]
 }
 
 // Inserts (or, if one with the same type+id already exists, replaces
@@ -283,6 +305,9 @@ export const useBabiesStore = defineStore('babies', {
     statsSleeps: [],
     statsFeeds: [],
     statsDiaperChanges: [],
+    vitaminDSchedule: null,
+    vitaminDRecentDoses: [],
+    vitaminDAllDoses: [],
   }),
 
   actions: {
@@ -581,6 +606,49 @@ export const useBabiesStore = defineStore('babies', {
         this.growthMeasurements = previous
         throw error
       }
+    },
+
+    async fetchVitaminDSchedule() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/vitamin-d-schedule`)
+      this.vitaminDSchedule = data.data
+      this.vitaminDRecentDoses = data.recent_doses
+    },
+
+    async upsertVitaminDSchedule(payload: {
+      enabled: boolean
+      start_date: string
+      end_date: string
+    }) {
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/vitamin-d-schedule`,
+        payload,
+      )
+      this.vitaminDSchedule = data.data
+    },
+
+    async upsertVitaminDDose(date: string, given: boolean) {
+      const { data } = await apiClient.put(`/babies/${this.current!.id}/vitamin-d-doses`, {
+        date,
+        given,
+      })
+      this.vitaminDRecentDoses = upsertByDate(this.vitaminDRecentDoses, data.data, (d) => d.date)
+      this.vitaminDAllDoses = upsertByDate(this.vitaminDAllDoses, data.data, (d) => d.date)
+    },
+
+    /** Full history, unbounded by the 14-day window fetchVitaminDSchedule()
+     * embeds - only Estadísticas needs this (for "dadas/días transcurridos"
+     * over the whole pauta, not just the Dashboard's recent editor). */
+    async fetchAllVitaminDDoses() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/vitamin-d-doses`)
+      this.vitaminDAllDoses = data.data
     },
 
     async fetchMilestones() {

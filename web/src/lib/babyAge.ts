@@ -7,7 +7,7 @@ export function parseDateOnly(value: string): Date {
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
 }
 
-function daysBetween(from: Date, to: Date): number {
+export function daysBetween(from: Date, to: Date): number {
   const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate())
   const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate())
   return Math.round((utcTo - utcFrom) / 86_400_000)

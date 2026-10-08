@@ -7,10 +7,19 @@ import {
   summarizeWeeklyTrend,
   summarizeWeekComparison,
   summarizeActivityHeatmap,
+  summarizeVitaminDStats,
+  buildStatsExportPayload,
   formatClockTime,
   type WeeklyTrendPoint,
 } from '@/lib/stats'
-import type { DiaperChange, Feed, GrowthMeasurement, Sleep } from '@/stores/babies'
+import type {
+  DiaperChange,
+  Feed,
+  GrowthMeasurement,
+  Sleep,
+  VitaminDDose,
+  VitaminDSchedule,
+} from '@/stores/babies'
 
 // Built from local Date components, not a hardcoded "...Z" string - a
 // fixed UTC offset would shift which hour bucket a timestamp lands in
@@ -572,5 +581,151 @@ describe('summarizeActivityHeatmap', () => {
     expect(mondayNight?.count).toBe(2)
     expect(fridayMorning?.count).toBe(1)
     expect(result.filter((c) => c.count > 0)).toHaveLength(2)
+  })
+})
+
+describe('summarizeVitaminDStats', () => {
+  function schedule(overrides: Partial<VitaminDSchedule> = {}): VitaminDSchedule {
+    return {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: '2026-09-01',
+      end_date: '2027-09-01',
+      ...overrides,
+    }
+  }
+
+  function dose(date: string, given = true): VitaminDDose {
+    return { id: Math.random(), baby_id: 1, date, given }
+  }
+
+  it('returns hasSchedule:false with no schedule at all', () => {
+    expect(summarizeVitaminDStats(null, [])).toEqual({ hasSchedule: false, given: 0, totalDays: 0 })
+  })
+
+  it('counts totalDays from start_date through today (inclusive) while the pauta is ongoing', () => {
+    const now = new Date(local(2026, 9, 10, 12))
+    const result = summarizeVitaminDStats(schedule({ start_date: '2026-09-01' }), [], now)
+
+    // 1 sep .. 10 sep inclusive = 10 days.
+    expect(result.totalDays).toBe(10)
+  })
+
+  it('counts only given:true doses within [start_date, today] as given', () => {
+    const now = new Date(local(2026, 9, 10, 12))
+    const doses = [
+      dose('2026-09-02', true),
+      dose('2026-09-03', false),
+      dose('2026-08-20', true), // before start_date - out of range
+      dose('2026-09-05', true),
+    ]
+
+    const result = summarizeVitaminDStats(schedule({ start_date: '2026-09-01' }), doses, now)
+
+    expect(result.given).toBe(2)
+  })
+
+  it('caps totalDays at end_date once the pauta has already finished, not still growing with "today"', () => {
+    const now = new Date(local(2026, 12, 1, 12))
+    const result = summarizeVitaminDStats(
+      schedule({ start_date: '2026-09-01', end_date: '2026-09-30' }),
+      [],
+      now,
+    )
+
+    // 1 sep .. 30 sep inclusive = 30 days, not clipped forward to December.
+    expect(result.totalDays).toBe(30)
+  })
+
+  it('ignores doses given after end_date when the pauta already finished', () => {
+    const now = new Date(local(2026, 12, 1, 12))
+    const doses = [dose('2026-09-15', true), dose('2026-10-15', true)]
+
+    const result = summarizeVitaminDStats(
+      schedule({ start_date: '2026-09-01', end_date: '2026-09-30' }),
+      doses,
+      now,
+    )
+
+    expect(result.given).toBe(1)
+  })
+})
+
+describe('buildStatsExportPayload - vitamin_d', () => {
+  const emptyBuckets = [
+    { key: 'dawn' as const, value: 0 },
+    { key: 'morning' as const, value: 0 },
+    { key: 'afternoon' as const, value: 0 },
+    { key: 'night' as const, value: 0 },
+  ]
+  const emptySleep = {
+    hasEnoughData: false,
+    totalCompleted: 0,
+    averageDurationMinutes: null,
+    averageWakeWindowMinutes: null,
+    byHourBucket: emptyBuckets,
+    typicalBedtime: null,
+    typicalWakeTime: null,
+    averageNightSleepMinutes: null,
+    averageNapMinutes: null,
+    averageTotalSleepMinutes: null,
+    longestSleep: null,
+  }
+  const emptyFeed = {
+    hasEnoughData: false,
+    total: 0,
+    byType: { pecho: 0, biberon: 0, solido: 0 },
+    pechoSideCounts: { izquierdo: 0, derecho: 0, ambos: 0 },
+    averageBottleAmountMl: null,
+    averagePechoDurationMinutes: null,
+    averageGapMinutes: null,
+    averagePerDay: null,
+    byHourBucket: emptyBuckets,
+    gapStdDevMinutes: null,
+  }
+  const emptyDiaper = {
+    hasEnoughData: false,
+    total: 0,
+    byType: { mojado: 0, sucio: 0, ambos: 0 },
+    bySize: { '0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6+': 0, unspecified: 0 },
+    averagePerDay: null,
+    averageWetPerDay: null,
+    peeByHourBucket: emptyBuckets,
+    poopByHourBucket: emptyBuckets,
+  }
+  const emptyGrowthMetric = {
+    points: [],
+    latestValue: null,
+    latestPercentile: null,
+    gained: null,
+    weeklyRate: null,
+    count: 0,
+  }
+  const emptyGrowth = {
+    weightKg: emptyGrowthMetric,
+    heightCm: emptyGrowthMetric,
+    headCircumferenceCm: emptyGrowthMetric,
+  }
+
+  it('defaults vitamin_d to has_schedule:false when the 8th argument is omitted - existing call-sites keep working', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
+
+    expect(payload.vitamin_d).toEqual({ has_schedule: false, given: 0, total_days: 0 })
+  })
+
+  it('maps a real VitaminDStats into snake_case', () => {
+    const payload = buildStatsExportPayload(
+      emptySleep,
+      emptyFeed,
+      emptyDiaper,
+      emptyGrowth,
+      null,
+      [],
+      [],
+      { hasSchedule: true, given: 42, totalDays: 50 },
+    )
+
+    expect(payload.vitamin_d).toEqual({ has_schedule: true, given: 42, total_days: 50 })
   })
 })

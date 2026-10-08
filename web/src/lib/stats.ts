@@ -7,8 +7,10 @@ import type {
   FeedType,
   GrowthMeasurement,
   Sleep,
+  VitaminDDose,
+  VitaminDSchedule,
 } from '@/stores/babies'
-import { toDateOnlyString } from '@/lib/localDate'
+import { daysBetween, parseDateOnly, toDateOnlyString } from '@/lib/localDate'
 
 // Mismo umbral que SleepPatternPredictor.php/FeedPatternPredictor.php en
 // el backend (MIN_SAMPLE_SIZE) - por debajo, una media o un reparto por
@@ -748,6 +750,38 @@ export function summarizeActivityHeatmap(
   return cells
 }
 
+export interface VitaminDStats {
+  hasSchedule: boolean
+  given: number
+  totalDays: number
+}
+
+// No MIN_SAMPLE_SIZE gate here - this is an exact count ("92/100"), not
+// an average that needs a minimum sample to mean anything.
+// hasSchedule:false hides the section for "never activated", a
+// different reason than the other stats' "not enough data yet".
+export function summarizeVitaminDStats(
+  schedule: VitaminDSchedule | null,
+  doses: VitaminDDose[],
+  now: Date = new Date(),
+): VitaminDStats {
+  if (!schedule) {
+    return { hasSchedule: false, given: 0, totalDays: 0 }
+  }
+
+  const today = toDateOnlyString(now)
+  const effectiveEnd = schedule.end_date < today ? schedule.end_date : today
+  const totalDays = Math.max(
+    0,
+    daysBetween(parseDateOnly(schedule.start_date), parseDateOnly(effectiveEnd)) + 1,
+  )
+  const given = doses.filter(
+    (d) => d.given && d.date >= schedule.start_date && d.date <= effectiveEnd,
+  ).length
+
+  return { hasSchedule: true, given, totalDays }
+}
+
 /**
  * Every other field that ever crosses the API boundary in this app is
  * snake_case (`started_at`, `weight_grams`...) - these four
@@ -810,6 +844,7 @@ export interface StatsExportPayload {
     diaper_count: number
   }[]
   activity_heatmap: { day_of_week: number; hour: number; count: number }[]
+  vitamin_d: { has_schedule: boolean; given: number; total_days: number }
 }
 
 interface GrowthMetricExportStat {
@@ -840,6 +875,11 @@ export function buildStatsExportPayload(
   weekComparison: WeekComparison | null = null,
   weeklyTrend: WeeklyTrendPoint[] = [],
   activityHeatmap: HeatmapCell[] = [],
+  // 8th positional param, same as the three before it - a refactor to
+  // an options object would touch every existing call-site for no
+  // reason tied to this feature. The next metric added here should be
+  // the one that finally motivates that refactor in its own change.
+  vitaminD: VitaminDStats = { hasSchedule: false, given: 0, totalDays: 0 },
 ): StatsExportPayload {
   return {
     sleep: {
@@ -900,5 +940,10 @@ export function buildStatsExportPayload(
       hour: c.hour,
       count: c.count,
     })),
+    vitamin_d: {
+      has_schedule: vitaminD.hasSchedule,
+      given: vitaminD.given,
+      total_days: vitaminD.totalDays,
+    },
   }
 }

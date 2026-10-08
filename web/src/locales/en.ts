@@ -231,6 +231,11 @@ export default {
       hint: 'Tap a cell to see the detail',
       cellLabel: '{day}, {hour}:00 · {count} events',
     },
+    vitaminD: {
+      title: 'Vitamin D',
+      givenLabel: 'Doses given',
+      empty: 'No vitamin D schedule is active for this baby.',
+    },
   },
   dashboard: {
     onboarding: {
@@ -314,6 +319,18 @@ export default {
       deletingBaby: 'Deleting...',
       deleteBabyError: 'Could not delete the baby.',
       toastDeleted: 'Baby deleted.',
+      vitaminD: {
+        title: 'Vitamin D reminder',
+        description:
+          'A daily Dashboard reminder so the dose never slips, with a log of which days it was given.',
+        enableLabel: 'Turn on reminder',
+        startDateLabel: 'Start date',
+        endDateLabel: 'End date',
+        saveError: 'Could not save the change. Please try again.',
+        recentDosesTitle: 'Recent days',
+        doseGiven: 'Given',
+        doseNotGiven: 'Not given',
+      },
     },
     quickLog: {
       feed: '+ Feed',
@@ -326,6 +343,16 @@ export default {
       feed: 'feeds',
       sleep: 'asleep',
       diaper: 'diapers',
+    },
+    vitaminD: {
+      title: 'Vitamin D',
+      pendingToday: "Time to give today's vitamin D dose.",
+      missedYesterday: "Yesterday's was missed too, don't forget today.",
+      confirmedToday: "Today's vitamin D, given.",
+      markGiven: 'Given',
+      markNotGiven: 'Not given',
+      undo: 'Undo',
+      markError: 'Could not save. Please try again.',
     },
     feedForm: {
       editTitle: 'Edit feed',

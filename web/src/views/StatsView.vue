@@ -18,6 +18,7 @@ import {
   summarizeWeeklyTrend,
   summarizeWeekComparison,
   summarizeActivityHeatmap,
+  summarizeVitaminDStats,
   buildStatsExportPayload,
   formatClockTime,
 } from '@/lib/stats'
@@ -58,7 +59,12 @@ onMounted(async () => {
     if (!babies.current) {
       await babies.fetchCurrent()
     }
-    await Promise.all([babies.fetchStatsData(), babies.fetchGrowthMeasurements()])
+    await Promise.all([
+      babies.fetchStatsData(),
+      babies.fetchGrowthMeasurements(),
+      babies.fetchVitaminDSchedule(),
+      babies.fetchAllVitaminDDoses(),
+    ])
   } finally {
     loading.value = false
   }
@@ -68,6 +74,9 @@ const sleepStats = computed(() => summarizeSleepStats(babies.statsSleeps))
 const feedStats = computed(() => summarizeFeedStats(babies.statsFeeds))
 const diaperStats = computed(() => summarizeDiaperStats(babies.statsDiaperChanges))
 const growthStats = computed(() => summarizeGrowthStats(babies.growthMeasurements))
+const vitaminDStats = computed(() =>
+  summarizeVitaminDStats(babies.vitaminDSchedule, babies.vitaminDAllDoses),
+)
 
 const weeklyTrend = computed(() =>
   summarizeWeeklyTrend(babies.statsSleeps, babies.statsFeeds, babies.statsDiaperChanges),
@@ -219,7 +228,8 @@ const hasAnyStatsData = computed(
     sleepStats.value.hasEnoughData ||
     feedStats.value.hasEnoughData ||
     diaperStats.value.hasEnoughData ||
-    hasAnyGrowthData.value,
+    hasAnyGrowthData.value ||
+    vitaminDStats.value.hasSchedule,
 )
 
 async function onExportPdf() {
@@ -237,6 +247,7 @@ async function onExportPdf() {
       weekComparison.value,
       weeklyTrend.value,
       activityHeatmap.value,
+      vitaminDStats.value,
     )
     const blob = await babies.exportStatsPdf(payload)
     const url = URL.createObjectURL(blob)
@@ -608,6 +619,22 @@ async function onExportPdf() {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.notEnoughData') }}
         </p>
+      </section>
+
+      <!-- Vitamina D - no depende de enabledCategories/ALL_CATEGORIES,
+           no es un tipo de registro intercambiable con feed/sleep/
+           diaper/growth, solo de si hay (o hubo) una pauta activada. -->
+      <section v-if="vitaminDStats.hasSchedule" class="card flex flex-col gap-3 p-4">
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span class="h-4 w-1.5 shrink-0 rounded-full bg-warning"></span>
+          {{ t('stats.vitaminD.title') }}
+        </h2>
+        <div class="rounded-xl bg-surface-sunken p-3">
+          <div class="text-xs text-text-muted">{{ t('stats.vitaminD.givenLabel') }}</div>
+          <div class="text-lg font-bold tabular-nums">
+            {{ vitaminDStats.given }}/{{ vitaminDStats.totalDays }}
+          </div>
+        </div>
       </section>
 
       <!-- Crecimiento -->

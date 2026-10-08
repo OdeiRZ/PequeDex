@@ -35,6 +35,7 @@ import SegmentedControl from '@/components/SegmentedControl.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
 import SoundsLinkCard from '@/components/SoundsLinkCard.vue'
 import StatsLinkCard from '@/components/StatsLinkCard.vue'
+import VitaminDReminderCard from '@/components/VitaminDReminderCard.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
 import { DIAPER_PEE_COLOR, DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
@@ -99,6 +100,7 @@ async function loadBabyData() {
       babies.fetchSleepPrediction(),
       babies.fetchFeedPrediction(),
       babies.fetchRecentSleeps(),
+      babies.fetchVitaminDSchedule(),
     ])
   } finally {
     loading.value = false
@@ -345,6 +347,13 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     babyBirthDate.value = babies.current?.birth_date ?? ''
     confirmingLeave.value = false
     leaveError.value = null
+    // Pre-filled from the existing schedule when editing one, or
+    // today/+1 year (the standard pauta length) when activating for
+    // the first time - both editable before saving.
+    vitaminDEnabled.value = babies.vitaminDSchedule?.enabled ?? false
+    vitaminDStartDate.value = babies.vitaminDSchedule?.start_date ?? todayDateOnlyString()
+    vitaminDEndDate.value = babies.vitaminDSchedule?.end_date ?? addDays(todayDateOnlyString(), 365)
+    vitaminDSaveError.value = null
   } else if (sheet === 'addBaby') {
     addBabyWizardRef.value?.reset()
     inviteCodeInput.value = ''
@@ -993,6 +1002,55 @@ const leaving = ref(false)
 const leaveError = ref<string | null>(null)
 const deletingBaby = ref(false)
 const deleteBabyError = ref<string | null>(null)
+
+// --- Recordatorio de vitamina D: activación/edición de la pauta y
+// corrección retroactiva de los últimos días, dentro de la misma hoja
+// de ajustes del bebé. ---
+
+const vitaminDEnabled = ref(false)
+const vitaminDStartDate = ref('')
+const vitaminDEndDate = ref('')
+const savingVitaminDSchedule = ref(false)
+const vitaminDSaveError = ref<string | null>(null)
+const savingVitaminDDoseDate = ref<string | null>(null)
+
+async function onSaveVitaminDSchedule() {
+  savingVitaminDSchedule.value = true
+  vitaminDSaveError.value = null
+  try {
+    await babies.upsertVitaminDSchedule({
+      enabled: vitaminDEnabled.value,
+      start_date: vitaminDStartDate.value,
+      end_date: vitaminDEndDate.value,
+    })
+    toast.show(t('dashboard.babySettings.toastSaved'))
+  } catch {
+    vitaminDSaveError.value = t('dashboard.babySettings.vitaminD.saveError')
+  } finally {
+    savingVitaminDSchedule.value = false
+  }
+}
+
+async function onToggleVitaminDDose(date: string, given: boolean) {
+  savingVitaminDDoseDate.value = date
+  try {
+    await babies.upsertVitaminDDose(date, given)
+  } catch {
+    toast.show(t('dashboard.babySettings.vitaminD.saveError'), 'error')
+  } finally {
+    savingVitaminDDoseDate.value = null
+  }
+}
+
+const vitaminDRecentDosesByDate = computed(() => {
+  const byDate = new Map(babies.vitaminDRecentDoses.map((d) => [d.date, d.given]))
+  const days: { date: string; given: boolean | null }[] = []
+  for (let i = 0; i < 14; i++) {
+    const date = addDays(todayDateOnlyString(), -i)
+    days.push({ date, given: byDate.get(date) ?? null })
+  }
+  return days
+})
 
 const babySexOptions = computed(() => [
   { value: '' as const, label: t('dashboard.babySettings.sexUnknown') },
@@ -1707,6 +1765,7 @@ const sleepPredictionDue = computed(() => {
           />
 
           <template v-if="isBorn">
+            <VitaminDReminderCard class="dash-enter" />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"
@@ -2545,6 +2604,106 @@ const sleepPredictionDue = computed(() => {
                 {{ t('common.save') }}
               </button>
             </div>
+          </form>
+
+          <form
+            class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
+            @submit.prevent="onSaveVitaminDSchedule"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="field-label mb-0">{{
+                  t('dashboard.babySettings.vitaminD.title')
+                }}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="vitaminDEnabled"
+                  :aria-label="t('dashboard.babySettings.vitaminD.enableLabel')"
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="vitaminDEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+                  @click="vitaminDEnabled = !vitaminDEnabled"
+                >
+                  <span
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
+                    :style="{ left: vitaminDEnabled ? '22px' : '2px' }"
+                  />
+                </button>
+              </div>
+              <p class="mt-1 text-xs text-text-muted">
+                {{ t('dashboard.babySettings.vitaminD.description') }}
+              </p>
+            </div>
+
+            <template v-if="vitaminDEnabled">
+              <div class="flex gap-3">
+                <div class="flex-1">
+                  <label for="vitamin-d-start" class="field-label">{{
+                    t('dashboard.babySettings.vitaminD.startDateLabel')
+                  }}</label>
+                  <input
+                    id="vitamin-d-start"
+                    v-model="vitaminDStartDate"
+                    type="date"
+                    class="field-input"
+                  />
+                </div>
+                <div class="flex-1">
+                  <label for="vitamin-d-end" class="field-label">{{
+                    t('dashboard.babySettings.vitaminD.endDateLabel')
+                  }}</label>
+                  <input
+                    id="vitamin-d-end"
+                    v-model="vitaminDEndDate"
+                    type="date"
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <div v-if="babies.vitaminDSchedule">
+                <span class="field-label">{{
+                  t('dashboard.babySettings.vitaminD.recentDosesTitle')
+                }}</span>
+                <div class="flex flex-col gap-1.5">
+                  <div
+                    v-for="day in vitaminDRecentDosesByDate"
+                    :key="day.date"
+                    class="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-1.5 text-sm"
+                  >
+                    <span>{{ day.date }}</span>
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
+                        :class="day.given === true ? 'bg-growth text-white' : 'text-text-muted'"
+                        :disabled="savingVitaminDDoseDate === day.date"
+                        @click="onToggleVitaminDDose(day.date, true)"
+                      >
+                        {{ t('dashboard.babySettings.vitaminD.doseGiven') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
+                        :class="day.given === false ? 'bg-danger text-white' : 'text-text-muted'"
+                        :disabled="savingVitaminDDoseDate === day.date"
+                        @click="onToggleVitaminDDose(day.date, false)"
+                      >
+                        {{ t('dashboard.babySettings.vitaminD.doseNotGiven') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <p v-if="vitaminDSaveError" role="alert" class="text-sm font-medium text-danger">
+              {{ vitaminDSaveError }}
+            </p>
+
+            <button v-press type="submit" :disabled="savingVitaminDSchedule" class="btn-primary">
+              {{ t('common.save') }}
+            </button>
           </form>
 
           <div class="mt-6 flex flex-col gap-3 border-t border-border pt-5">

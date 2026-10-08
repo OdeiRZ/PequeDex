@@ -232,6 +232,11 @@ export default {
       hint: 'Toca una celda para ver el detalle',
       cellLabel: '{day}, {hour}:00 · {count} eventos',
     },
+    vitaminD: {
+      title: 'Vitamina D',
+      givenLabel: 'Tomas dadas',
+      empty: 'No hay una pauta de vitamina D activada para este bebé.',
+    },
   },
   dashboard: {
     onboarding: {
@@ -316,6 +321,18 @@ export default {
       deletingBaby: 'Eliminando...',
       deleteBabyError: 'No se ha podido eliminar el bebé.',
       toastDeleted: 'Bebé eliminado.',
+      vitaminD: {
+        title: 'Recordatorio de vitamina D',
+        description:
+          'Un aviso diario en el Dashboard para no olvidar la dosis, con registro de qué días se ha dado.',
+        enableLabel: 'Activar recordatorio',
+        startDateLabel: 'Fecha de inicio',
+        endDateLabel: 'Fecha de fin',
+        saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+        recentDosesTitle: 'Últimos días',
+        doseGiven: 'Dada',
+        doseNotGiven: 'No dada',
+      },
     },
     quickLog: {
       feed: '+ Toma',
@@ -328,6 +345,16 @@ export default {
       feed: 'tomas',
       sleep: 'de sueño',
       diaper: 'pañales',
+    },
+    vitaminD: {
+      title: 'Vitamina D',
+      pendingToday: 'Toca darle hoy la dosis de vitamina D.',
+      missedYesterday: 'Ayer tampoco se marcó, no te olvides hoy.',
+      confirmedToday: 'Vitamina D de hoy, dada.',
+      markGiven: 'Dada',
+      markNotGiven: 'No dada',
+      undo: 'Deshacer',
+      markError: 'No se ha podido guardar. Inténtalo de nuevo.',
     },
     feedForm: {
       editTitle: 'Editar toma',

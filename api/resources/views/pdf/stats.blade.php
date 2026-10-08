@@ -44,6 +44,7 @@
         h2.diaper { border-left-color: #6e9080; }
         h2.growth { border-left-color: #a65a6b; }
         h2.trend { border-left-color: #2f6e68; }
+        h2.vitamind { border-left-color: #b8742e; }
 
         .empty { color: #a3968a; font-style: italic; margin: 0 0 10px; }
 
@@ -391,6 +392,20 @@
             'heatmapGrid' => $heatmapGrid,
             'heatmapMax' => $heatmapMax,
         ])
+    @endif
+
+    {{-- Vitamina D - no depende de un umbral de muestra, solo de si hay
+         (o hubo) una pauta activada para este bebé. --}}
+    @if ($vitaminD['has_schedule'])
+        <h2 class="vitamind">Vitamina D</h2>
+        <table class="stats-bar">
+            <tr>
+                <td>
+                    <span class="stats-label">Tomas dadas</span>
+                    <span class="stats-value">{{ $vitaminD['given'] }}/{{ $vitaminD['total_days'] }}</span>
+                </td>
+            </tr>
+        </table>
     @endif
 
     {{-- Crecimiento --}}

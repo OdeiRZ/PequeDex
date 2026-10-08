@@ -120,6 +120,15 @@ class ExportStatsRequest extends FormRequest
             'activity_heatmap.*.day_of_week' => ['required', 'integer', 'min:0', 'max:6'],
             'activity_heatmap.*.hour' => ['required', 'integer', 'min:0', 'max:23'],
             'activity_heatmap.*.count' => ['required', 'integer', 'min:0'],
+
+            // `required` (not just `present`): buildStatsExportPayload()
+            // always sends this object, with has_schedule:false standing
+            // in for "never activated" - unlike weekly_trend/
+            // activity_heatmap above, this is never an empty array.
+            'vitamin_d' => ['required', 'array'],
+            'vitamin_d.has_schedule' => ['required', 'boolean'],
+            'vitamin_d.given' => ['required', 'integer', 'min:0'],
+            'vitamin_d.total_days' => ['required', 'integer', 'min:0'],
         ];
     }
 

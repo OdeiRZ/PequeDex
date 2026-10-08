@@ -49,6 +49,7 @@ class StatsExportController extends Controller
             'diaperTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['diaper_count']),
             'heatmapGrid' => $this->heatmapGrid($data['activity_heatmap']),
             'heatmapMax' => collect($data['activity_heatmap'])->max('count') ?? 0,
+            'vitaminD' => $data['vitamin_d'],
             'growthMetrics' => [
                 ['label' => 'Peso', 'unit' => 'kg', 'decimals' => 1, 'stat' => $data['growth']['weight_kg']],
                 ['label' => 'Talla', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['height_cm']],

@@ -86,6 +86,7 @@ function validStatsPayload(): array
             ['day_of_week' => 0, 'hour' => 22, 'count' => 3],
             ['day_of_week' => 4, 'hour' => 8, 'count' => 1],
         ],
+        'vitamin_d' => ['has_schedule' => true, 'given' => 42, 'total_days' => 50],
     ];
 }
 
@@ -254,6 +255,27 @@ it('defaults heatmapMax to 0 with an empty activity_heatmap', function () {
     $data = app(StatsExportController::class)->buildViewData($baby, $payload);
 
     expect($data['heatmapMax'])->toBe(0);
+});
+
+it('passes vitamin_d through unchanged, same as the other sections', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['vitaminD'])->toBe(['has_schedule' => true, 'given' => 42, 'total_days' => 50]);
+});
+
+it('rejects a vitamin_d missing has_schedule', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    unset($payload['vitamin_d']['has_schedule']);
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vitamin_d.has_schedule']);
 });
 
 it('passes the baby and sleep/feed/diaper sections through unchanged', function () {

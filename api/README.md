@@ -450,7 +450,20 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   de solo el total acumulado). `week_comparison` (array `nullable` en
   bloque, `null` con menos de dos semanas ISO ya completas con dato -
   ver `summarizeWeekComparison()` en `lib/stats.ts`) añade una sección
-  propia al PDF, "Esta semana frente a la anterior".
+  propia al PDF, "Esta semana frente a la anterior". `weekly_trend`
+  (array `present`, puede venir vacío - un bebé recién creado sin
+  historial) y `activity_heatmap` (168 entradas `day_of_week`/`hour`/
+  `count`, también `present`) alimentan las dos secciones que antes
+  solo existían en pantalla - dompdf no tiene flexbox/grid para
+  replicar el gráfico de barras verticales ni el grid con opacidad
+  CSS tal cual, así que `StatsExportController::weeklyTrendPoints()`
+  reshapea cada semana a un punto etiquetado por métrica (consumido
+  por `pdf/partials/weekly-trend-bars.blade.php`, una barra
+  HORIZONTAL por semana vía `width` en %, reutilizado 3 veces) y
+  `heatmapGrid()` convierte la lista plana en una rejilla 7×24 densa
+  (consumida por `pdf/partials/activity-heatmap-grid.blade.php`, una
+  tabla con el color de fondo de cada celda según la densidad) - mismo
+  criterio de reshape que ya usaba `growthMetrics` más arriba.
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.

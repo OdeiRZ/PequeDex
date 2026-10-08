@@ -104,6 +104,22 @@ class ExportStatsRequest extends FormRequest
             'week_comparison.diaper_count' => ['required_with:week_comparison', 'array'],
             'week_comparison.diaper_count.current' => ['required_with:week_comparison', 'integer', 'min:0'],
             'week_comparison.diaper_count.delta' => ['required_with:week_comparison', 'numeric'],
+
+            // "Tendencia semanal" y "Mapa de actividad" en el PDF -
+            // mismos arrays que ya pinta WeeklyTrendChart.vue/
+            // ActivityHeatmap.vue en pantalla (`present`, no `required`:
+            // un bebé recién creado, sin historial, manda un array
+            // vacío - un estado válido, no una clave ausente).
+            'weekly_trend' => ['present', 'array'],
+            'weekly_trend.*.week_start' => ['required', 'date'],
+            'weekly_trend.*.sleep_hours' => ['nullable', 'numeric', 'min:0'],
+            'weekly_trend.*.feed_count' => ['required', 'integer', 'min:0'],
+            'weekly_trend.*.diaper_count' => ['required', 'integer', 'min:0'],
+
+            'activity_heatmap' => ['present', 'array'],
+            'activity_heatmap.*.day_of_week' => ['required', 'integer', 'min:0', 'max:6'],
+            'activity_heatmap.*.hour' => ['required', 'integer', 'min:0', 'max:23'],
+            'activity_heatmap.*.count' => ['required', 'integer', 'min:0'],
         ];
     }
 

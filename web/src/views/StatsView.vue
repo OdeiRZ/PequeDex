@@ -48,6 +48,16 @@ const loading = ref(true)
 onMounted(async () => {
   loading.value = true
   try {
+    // Al navegar desde el Dashboard, `babies.current` ya está cargado
+    // (el propio Dashboard llama a `fetchCurrent()` en su `onMounted`).
+    // Pero entrando directo aquí (recarga de página, enlace compartido),
+    // el store de Pinia arranca desde cero y `fetchStatsData()`/
+    // `fetchGrowthMeasurements()` se cortan en seco (dependen de
+    // `babies.current`) si nadie lo ha pedido todavía - mismo motivo por
+    // el que ContractionsView.vue hace este mismo chequeo.
+    if (!babies.current) {
+      await babies.fetchCurrent()
+    }
     await Promise.all([babies.fetchStatsData(), babies.fetchGrowthMeasurements()])
   } finally {
     loading.value = false
@@ -225,6 +235,8 @@ async function onExportPdf() {
       diaperStats.value,
       growthStats.value,
       weekComparison.value,
+      weeklyTrend.value,
+      activityHeatmap.value,
     )
     const blob = await babies.exportStatsPdf(payload)
     const url = URL.createObjectURL(blob)

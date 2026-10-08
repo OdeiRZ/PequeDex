@@ -44,6 +44,11 @@ class StatsExportController extends Controller
             'feed' => $data['feed'],
             'diaper' => $data['diaper'],
             'weekComparison' => $data['week_comparison'] ?? null,
+            'sleepTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['sleep_hours']),
+            'feedTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['feed_count']),
+            'diaperTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['diaper_count']),
+            'heatmapGrid' => $this->heatmapGrid($data['activity_heatmap']),
+            'heatmapMax' => collect($data['activity_heatmap'])->max('count') ?? 0,
             'growthMetrics' => [
                 ['label' => 'Peso', 'unit' => 'kg', 'decimals' => 1, 'stat' => $data['growth']['weight_kg']],
                 ['label' => 'Talla', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['height_cm']],
@@ -52,6 +57,50 @@ class StatsExportController extends Controller
             'hourBucketLabels' => self::HOUR_BUCKET_LABELS,
             'logo' => $this->logoDataUri(),
         ];
+    }
+
+    /**
+     * dompdf has no flexbox/grid to grow a bar's height like
+     * WeeklyTrendChart.vue does on screen - `pdf/partials/
+     * weekly-trend-bars.blade.php` draws a HORIZONTAL bar per week
+     * instead (a `<div>` with a percentage `width`, which plain CSS2
+     * handles fine), one call per metric so each gets its own scale.
+     * `$value` stays `null` for a week with no completed sleep (dashed
+     * placeholder in the partial, same meaning as the empty-grid mark
+     * on screen), never silently turned into a 0.
+     *
+     * @param  array<int, array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}>  $weeklyTrend
+     * @param  callable(array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}): (float|int|null)  $value
+     * @return array<int, array{label: string, value: float|int|null}>
+     */
+    private function weeklyTrendPoints(array $weeklyTrend, callable $value): array
+    {
+        return collect($weeklyTrend)
+            ->map(fn (array $week) => [
+                'label' => CarbonImmutable::parse($week['week_start'])->translatedFormat('j M'),
+                'value' => $value($week),
+            ])
+            ->all();
+    }
+
+    /**
+     * Reshapes the flat `activity_heatmap` list (168 entries, one per
+     * day×hour) into a dense 7×24 nested array - `0` where nothing
+     * happened, same as `summarizeActivityHeatmap()` already guarantees
+     * on the frontend, so the blade partial never has to fill gaps.
+     *
+     * @param  array<int, array{day_of_week: int, hour: int, count: int}>  $activityHeatmap
+     * @return array<int, array<int, int>>
+     */
+    private function heatmapGrid(array $activityHeatmap): array
+    {
+        $grid = array_fill(0, 7, array_fill(0, 24, 0));
+
+        foreach ($activityHeatmap as $cell) {
+            $grid[$cell['day_of_week']][$cell['hour']] = $cell['count'];
+        }
+
+        return $grid;
     }
 
     /** Same logo as ContractionsExportController - kept in sync by hand

@@ -1532,13 +1532,15 @@ cada una):
   (2024-01-01, un lunes de verdad, nunca mostrada) en vez de una
   tabla de traducciones a mano.
 
-El gráfico de barras de tendencia semanal y el mapa de actividad no
-tienen equivalente en el PDF exportado - un gráfico de líneas/barras o
-una rejilla 7×24 no tienen una forma razonable de dibujarse en una
-plantilla dompdf, a diferencia de las fichas numéricas de arriba (día/
-noche, récord, regularidad, mojados/día, velocidad de crecimiento),
-que sí se exportan. La comparativa "esta semana frente a la anterior"
-sí se exporta, como una sección propia (`week_comparison` en
+El gráfico de barras de tendencia semanal y el mapa de actividad
+también se exportan al PDF, adaptados a lo que dompdf puede dibujar
+sin flexbox/grid: la tendencia como una barra HORIZONTAL por semana
+(`width` en % en vez de la altura dinámica de `WeeklyTrendChart.vue`)
+y el mapa como una tabla 7×24 con el color de fondo de cada celda
+según la densidad, en vez del grid con opacidad CSS de pantalla - ver
+`StatsExportController::weeklyTrendPoints()`/`heatmapGrid()` del lado
+backend. La comparativa "esta semana frente a la anterior" también se
+exporta, como una sección propia (`week_comparison` en
 `buildStatsExportPayload()`).
 
 Bajo el título de "Mapa de actividad" hay un subtítulo corto que

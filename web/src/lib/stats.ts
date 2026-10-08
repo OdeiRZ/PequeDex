@@ -803,6 +803,13 @@ export interface StatsExportPayload {
     feed_count: { current: number; delta: number }
     diaper_count: { current: number; delta: number }
   } | null
+  weekly_trend: {
+    week_start: string
+    sleep_hours: number | null
+    feed_count: number
+    diaper_count: number
+  }[]
+  activity_heatmap: { day_of_week: number; hour: number; count: number }[]
 }
 
 interface GrowthMetricExportStat {
@@ -831,6 +838,8 @@ export function buildStatsExportPayload(
   diaper: DiaperStats,
   growth: GrowthStats,
   weekComparison: WeekComparison | null = null,
+  weeklyTrend: WeeklyTrendPoint[] = [],
+  activityHeatmap: HeatmapCell[] = [],
 ): StatsExportPayload {
   return {
     sleep: {
@@ -880,5 +889,16 @@ export function buildStatsExportPayload(
           diaper_count: weekComparison.diaperCount,
         }
       : null,
+    weekly_trend: weeklyTrend.map((w) => ({
+      week_start: w.weekStart,
+      sleep_hours: w.sleepHours,
+      feed_count: w.feedCount,
+      diaper_count: w.diaperCount,
+    })),
+    activity_heatmap: activityHeatmap.map((c) => ({
+      day_of_week: c.dayOfWeek,
+      hour: c.hour,
+      count: c.count,
+    })),
   }
 }

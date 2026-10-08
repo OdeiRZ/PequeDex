@@ -45,12 +45,9 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     mucho más fino que las 4 franjas de 6h ya existentes y sin mezclar
     días distintos entre sí.
 
-  Las dos únicas piezas sin equivalente en el PDF exportado (el
-  gráfico de tendencia y el mapa de actividad no tienen una forma
-  razonable de dibujarse en dompdf, a diferencia de las fichas
-  numéricas de arriba, que sí se exportan) - pantalla únicamente. La
-  comparativa "esta semana frente a la anterior" sí se exporta (ver
-  más abajo).
+  El gráfico de tendencia y el mapa de actividad también se exportan
+  al PDF, como una representación adaptada a dompdf (ver más abajo) -
+  en un principio se dejaron solo en pantalla.
 - **Comparativa semanal también en el PDF de "Estadísticas"**
   (`week_comparison` en el payload de exportación, nueva sección
   "Esta semana frente a la anterior" en `pdf/stats.blade.php`) -
@@ -61,6 +58,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   bajo el título aclarando qué muestra el mapa (cuándo suele haber más
   tomas/pañales/sueño por día y hora), tras detectar que no quedaba
   claro solo con el título y la pista de "toca una celda".
+- **Tendencia semanal y mapa de actividad también en el PDF de
+  "Estadísticas"** - antes solo en pantalla, descartados por no tener
+  una forma directa de dibujarse en dompdf (sin flexbox ni grid), pero
+  sí la tienen con CSS2 llano: la tendencia semanal se dibuja como una
+  barra HORIZONTAL por semana (`width` en %, en vez de la altura
+  dinámica de `WeeklyTrendChart.vue`), una semana sin sueño completado
+  se marca con un borde discontinuo igual que en pantalla; el mapa de
+  actividad se dibuja como una tabla 7×24 con el color de fondo de
+  cada celda según la densidad, en vez de un grid con opacidad CSS.
+  Dos partials nuevos (`pdf/partials/weekly-trend-bars.blade.php`,
+  reutilizado 3 veces, y `pdf/partials/activity-heatmap-grid.blade.php`),
+  `StatsExportController::weeklyTrendPoints()`/`heatmapGrid()` hacen el
+  mismo reshape que ya hacía `buildViewData()` para `growthMetrics`.
 - **"Horarios habituales" en "Estadísticas"** - la fase pendiente desde
   que se creó la sección ("horarios normativos", anotado en su momento
   como "para después"): hora de reloj típica a la que el bebé se
@@ -173,6 +183,28 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Recargar la página de "Estadísticas" (o entrar directo por URL)
+  dejaba todo vacío** hasta salir y volver a entrar desde el Dashboard
+  - `StatsView.vue` llamaba a `fetchStatsData()`/
+  `fetchGrowthMeasurements()` sin antes pedir `babies.fetchCurrent()`,
+  así que al recargar (el store de Pinia arranca de cero) ambas
+  funciones se cortaban en seco (dependen de `babies.current`, todavía
+  `null` en ese momento). Navegando desde el Dashboard sí funcionaba
+  porque el propio Dashboard ya llama a `fetchCurrent()` en su
+  `onMounted`. Mismo chequeo que ya hacía `ContractionsView.vue`.
+- **Fichas de "esta semana frente a la anterior" se quedaban pegadas a
+  la izquierda** cuando una de las tres no tenía dato que mostrar (p.
+  ej. sin sueño completado en alguna de las dos semanas comparadas) -
+  usaban una rejilla fija de 3 columnas que dejaba la columna vacía en
+  vez de repartir el hueco; ahora es un `flex` con `flex-1`, así que
+  las que haya se centran y reparten el ancho entre ellas.
+- **Gráfico de barras de tendencia semanal con hueco vacío a la
+  derecha** cuando había pocas semanas de historial - las barras
+  tenían un ancho fijo pensado para cuando hay muchas (con scroll
+  horizontal), así que con 3-4 semanas dejaban la mayor parte de la
+  tarjeta sin usar. Ahora cada barra tiene un ancho mínimo pero crece
+  para repartirse el hueco sobrante, y solo activa el scroll cuando de
+  verdad no caben.
 - **Comparativa semanal de "Estadísticas" siempre salía en negativo
   en tomas y pañales** - comparaba la semana EN CURSO (todavía sin
   terminar, con menos días transcurridos que una completa) contra la

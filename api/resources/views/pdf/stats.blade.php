@@ -355,6 +355,44 @@
         </table>
     @endif
 
+    {{-- Tendencia semanal - mismos puntos que WeeklyTrendChart.vue,
+         dibujados como barra horizontal (ver el partial) en vez de
+         vertical, ya que dompdf no tiene flexbox para crecer una
+         altura dinámica. --}}
+    @if (count($sleepTrendPoints) > 0)
+        <h2 class="trend">Tendencia semanal</h2>
+        <p class="stats-label" style="margin-bottom: 4px;">Sueño</p>
+        @include('pdf.partials.weekly-trend-bars', [
+            'points' => $sleepTrendPoints,
+            'color' => '#5b5a8c',
+            'format' => fn ($value) => number_format($value, 1).'h',
+        ])
+        <p class="stats-label" style="margin-bottom: 4px;">Tomas</p>
+        @include('pdf.partials.weekly-trend-bars', [
+            'points' => $feedTrendPoints,
+            'color' => '#c98a3e',
+            'format' => fn ($value) => (int) round($value),
+        ])
+        <p class="stats-label" style="margin-bottom: 4px;">Pañales</p>
+        @include('pdf.partials.weekly-trend-bars', [
+            'points' => $diaperTrendPoints,
+            'color' => '#6e9080',
+            'format' => fn ($value) => (int) round($value),
+        ])
+    @endif
+
+    {{-- Mapa de actividad - misma rejilla 7x24 que ActivityHeatmap.vue,
+         sin umbral de muestra mínima (igual que en pantalla): toda
+         semana con algo de dato ya es información real. --}}
+    @if ($heatmapMax > 0)
+        <h2 class="trend">Mapa de actividad</h2>
+        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuándo suele haber más tomas, cambios de pañal y sueño a lo largo de la semana.</p>
+        @include('pdf.partials.activity-heatmap-grid', [
+            'heatmapGrid' => $heatmapGrid,
+            'heatmapMax' => $heatmapMax,
+        ])
+    @endif
+
     {{-- Crecimiento --}}
     <h2 class="growth">Crecimiento</h2>
     @php

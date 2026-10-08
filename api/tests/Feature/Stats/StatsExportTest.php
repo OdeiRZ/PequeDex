@@ -78,6 +78,14 @@ function validStatsPayload(): array
             'feed_count' => ['current' => 48, 'delta' => -2],
             'diaper_count' => ['current' => 40, 'delta' => 1],
         ],
+        'weekly_trend' => [
+            ['week_start' => '2026-07-27', 'sleep_hours' => 50.0, 'feed_count' => 20, 'diaper_count' => 15],
+            ['week_start' => '2026-08-03', 'sleep_hours' => null, 'feed_count' => 22, 'diaper_count' => 16],
+        ],
+        'activity_heatmap' => [
+            ['day_of_week' => 0, 'hour' => 22, 'count' => 3],
+            ['day_of_week' => 4, 'hour' => 8, 'count' => 1],
+        ],
     ];
 }
 
@@ -134,6 +142,18 @@ it('accepts null typical-time and day/night fields - below the sample threshold,
     $payload['feed']['gap_std_dev_minutes'] = null;
     $payload['diaper']['average_wet_per_day'] = null;
     $payload['week_comparison'] = null;
+    $payload['weekly_trend'][0]['sleep_hours'] = null;
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('accepts an empty weekly_trend/activity_heatmap - a brand new baby with no history yet', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['weekly_trend'] = [];
+    $payload['activity_heatmap'] = [];
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
 });
@@ -196,6 +216,44 @@ it('reshapes the three growth metrics into a labeled list for the template', fun
     expect($data['growthMetrics'][0]['unit'])->toBe('kg');
     expect($data['growthMetrics'][1]['label'])->toBe('Talla');
     expect($data['growthMetrics'][2]['label'])->toBe('Perímetro craneal');
+});
+
+it('turns weekly_trend into a labeled point list per metric, keeping null sleep weeks as null', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['sleepTrendPoints'])->toHaveCount(2);
+    expect($data['sleepTrendPoints'][0]['value'])->toBe(50.0);
+    expect($data['sleepTrendPoints'][1]['value'])->toBeNull();
+    expect($data['feedTrendPoints'][0])->toBe(['label' => '27 jul.', 'value' => 20]);
+    expect($data['diaperTrendPoints'][1])->toBe(['label' => '3 ago.', 'value' => 16]);
+});
+
+it('reshapes the flat activity_heatmap list into a dense 7x24 grid', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['heatmapGrid'])->toHaveCount(7);
+    expect($data['heatmapGrid'][0])->toHaveCount(24);
+    expect($data['heatmapGrid'][0][22])->toBe(3);
+    expect($data['heatmapGrid'][4][8])->toBe(1);
+    expect($data['heatmapGrid'][1][0])->toBe(0);
+    expect($data['heatmapMax'])->toBe(3);
+});
+
+it('defaults heatmapMax to 0 with an empty activity_heatmap', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+    $payload = validStatsPayload();
+    $payload['activity_heatmap'] = [];
+
+    $data = app(StatsExportController::class)->buildViewData($baby, $payload);
+
+    expect($data['heatmapMax'])->toBe(0);
 });
 
 it('passes the baby and sleep/feed/diaper sections through unchanged', function () {

@@ -1773,7 +1773,10 @@ const sleepPredictionDue = computed(() => {
           />
 
           <template v-if="isBorn">
-            <VitaminDReminderCard class="dash-enter" @open-history="openSheet('vitaminDHistory')" />
+            <VitaminDReminderCard
+              class="dash-enter -mb-2"
+              @open-history="openSheet('vitaminDHistory')"
+            />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"

@@ -51,7 +51,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     que incluía días de antes de que la pauta existiera; un día sin
     registro se muestra como "No dada" por defecto (coincide con cómo
     ya lo cuenta la estadística, que solo suma registros explícitos
-    `given:true`).
+    `given:true`). Hueco con la tarjeta de arriba y la de abajo
+    igualado a 16px (`-mb-2`, mismo recorte que ya aplicaba la tarjeta
+    principal del bebé) - antes tenía 16px arriba (heredado de esa
+    tarjeta) pero 24px abajo (el `gap-6` por defecto sin recortar),
+    una asimetría real confirmada midiendo el DOM, no a ojo.
   - Estadísticas: nueva sección "Vitamina D" con "dadas/días
     transcurridos desde el inicio" (`summarizeVitaminDStats()` en
     `lib/stats.ts`), incluida también en el PDF exportado

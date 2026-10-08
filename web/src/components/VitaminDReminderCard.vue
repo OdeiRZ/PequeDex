@@ -39,11 +39,11 @@ async function onUndo() {
   <Transition name="confirm-warn">
     <div
       v-if="cardState === 'pending'"
-      class="flex items-center gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-4"
+      class="flex items-center gap-2.5 rounded-2xl border border-warning/40 bg-warning/10 p-3"
       role="status"
     >
       <span
-        class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-warning/20 text-warning"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/20 text-warning"
       >
         <svg
           viewBox="0 0 24 24"
@@ -52,7 +52,7 @@ async function onUndo() {
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="h-5 w-5"
+          class="h-[1.05rem] w-[1.05rem]"
         >
           <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
           <path d="m8.5 8.5 7 7" />
@@ -66,14 +66,14 @@ async function onUndo() {
               ? t('dashboard.vitaminD.missedYesterday')
               : t('dashboard.vitaminD.pendingToday')
           }}
+          <button
+            type="button"
+            class="ml-1.5 inline-block border-0 p-0 align-top font-semibold leading-none underline"
+            @click="emit('openHistory')"
+          >
+            {{ t('dashboard.vitaminD.historyLink') }}
+          </button>
         </div>
-        <button
-          type="button"
-          class="mt-0.5 text-xs font-semibold text-text-muted underline"
-          @click="emit('openHistory')"
-        >
-          {{ t('dashboard.vitaminD.historyLink') }}
-        </button>
       </div>
       <button
         type="button"
@@ -86,12 +86,10 @@ async function onUndo() {
     </div>
     <div
       v-else-if="cardState === 'confirmed'"
-      class="flex items-center gap-3 rounded-2xl bg-surface-sunken p-4"
+      class="flex items-center gap-2.5 rounded-2xl bg-surface-sunken p-3"
       role="status"
     >
-      <span
-        class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-growth/15 text-growth"
-      >
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-growth/15 text-growth">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -99,7 +97,7 @@ async function onUndo() {
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="h-5 w-5"
+          class="h-[1.05rem] w-[1.05rem]"
         >
           <path d="M20 6L9 17l-5-5" />
         </svg>
@@ -108,7 +106,7 @@ async function onUndo() {
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
         <button
           type="button"
-          class="mt-0.5 text-xs font-semibold text-text-muted underline"
+          class="mt-0.5 inline-block border-0 p-0 text-xs font-semibold leading-none text-text-muted underline"
           @click="emit('openHistory')"
         >
           {{ t('dashboard.vitaminD.historyLink') }}
@@ -116,7 +114,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="shrink-0 text-xs font-semibold text-text-muted underline disabled:opacity-60"
+        class="shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
         :disabled="saving"
         @click="onUndo"
       >

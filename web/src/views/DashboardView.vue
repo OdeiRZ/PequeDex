@@ -2770,7 +2770,7 @@ const sleepPredictionDue = computed(() => {
                 <button
                   type="button"
                   class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
-                  :class="day.given === false ? 'bg-danger text-white' : 'text-text-muted'"
+                  :class="day.given !== true ? 'bg-danger text-white' : 'text-text-muted'"
                   :disabled="savingVitaminDDoseDate === day.date"
                   @click="onToggleVitaminDDose(day.date, false)"
                 >

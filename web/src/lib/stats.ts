@@ -8,6 +8,7 @@ import type {
   GrowthMeasurement,
   Sleep,
 } from '@/stores/babies'
+import { toDateOnlyString } from '@/lib/localDate'
 
 // Mismo umbral que SleepPatternPredictor.php/FeedPatternPredictor.php en
 // el backend (MIN_SAMPLE_SIZE) - por debajo, una media o un reparto por
@@ -33,6 +34,13 @@ function bucketForHour(hour: number): HourBucketKey {
 
 function average(values: number[]): number | null {
   return values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null
+}
+
+function standardDeviation(values: number[]): number | null {
+  if (values.length < 2) return null
+  const mean = average(values) as number
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length
+  return Math.sqrt(variance)
 }
 
 /** A clock time of day, local - not a `Date` (no particular calendar
@@ -132,38 +140,103 @@ export interface SleepStats {
   typicalBedtime: ClockTime | null
   /** Misma idea, el final de ese mismo sueño más largo del día. */
   typicalWakeTime: ClockTime | null
+  /** Minutos de media al día en el sueño más largo del día (el de la
+   * noche) frente al resto (siestas) - "¿cuánto duerme de noche frente
+   * a de día?", no solo una hora de reloj suelta. Mismo umbral de días
+   * distintos que `typicalBedtime`/`typicalWakeTime`. */
+  averageNightSleepMinutes: number | null
+  averageNapMinutes: number | null
+  /** Suma de los dos anteriores - el total de sueño al día, la
+   * pregunta más directa de todas ("¿duerme lo que toca?"). */
+  averageTotalSleepMinutes: number | null
+  /** El sueño individual más largo jamás registrado, con su fecha - un
+   * dato de "récord", no una media; útil como ficha destacada aparte. */
+  longestSleep: { minutes: number; date: string } | null
+}
+
+function sleepDurationMs(sleep: Sleep): number {
+  return new Date(sleep.ended_at as string).getTime() - new Date(sleep.started_at).getTime()
 }
 
 // El sueño más largo de cada día de calendario (del `started_at`) es,
 // con mucho, la apuesta más fiable para "el sueño de la noche" frente
 // a una siesta, sin necesitar que el cuidador marque nada aparte - una
-// siesta rara vez supera en duración al sueño nocturno real. Un umbral
-// de MIN_SAMPLE_SIZE días (no sueños sueltos) antes de promediar: con
-// menos días, "la hora típica" diría más de lo que los datos
-// realmente sostienen, mismo criterio que el resto de "Estadísticas".
-function typicalSleepTimes(completed: Sleep[]): {
+// siesta rara vez supera en duración al sueño nocturno real. Agrupa
+// una vez, reutilizado tanto por `typicalSleepTimes()` (la hora a la
+// que ese sueño empieza/acaba) como por `dailySleepSplit()` (cuántos
+// minutos es ese sueño frente al resto del día).
+function longestSleepPerDay(completed: Sleep[]): Map<string, Sleep[]> {
+  const byDay = new Map<string, Sleep[]>()
+  for (const sleep of completed) {
+    const key = localDayKey(new Date(sleep.started_at))
+    const existing = byDay.get(key)
+    if (existing) {
+      existing.push(sleep)
+    } else {
+      byDay.set(key, [sleep])
+    }
+  }
+  return byDay
+}
+
+// Un umbral de MIN_SAMPLE_SIZE días (no sueños sueltos) antes de
+// promediar: con menos días, "la hora típica" diría más de lo que los
+// datos realmente sostienen, mismo criterio que el resto de
+// "Estadísticas".
+function typicalSleepTimes(byDay: Map<string, Sleep[]>): {
   bedtime: ClockTime | null
   wakeTime: ClockTime | null
 } {
-  const longestPerDay = new Map<string, Sleep>()
-  for (const sleep of completed) {
-    const key = localDayKey(new Date(sleep.started_at))
-    const durationMs =
-      new Date(sleep.ended_at as string).getTime() - new Date(sleep.started_at).getTime()
-    const existing = longestPerDay.get(key)
-    const existingDurationMs = existing
-      ? new Date(existing.ended_at as string).getTime() - new Date(existing.started_at).getTime()
-      : -1
-    if (durationMs > existingDurationMs) longestPerDay.set(key, sleep)
-  }
+  if (byDay.size < MIN_SAMPLE_SIZE) return { bedtime: null, wakeTime: null }
 
-  const longest = [...longestPerDay.values()]
-  if (longest.length < MIN_SAMPLE_SIZE) return { bedtime: null, wakeTime: null }
+  const longestPerDay = [...byDay.values()].map((daySleeps) =>
+    daySleeps.reduce((a, b) => (sleepDurationMs(b) > sleepDurationMs(a) ? b : a)),
+  )
 
   return {
-    bedtime: circularMeanTimeOfDay(longest.map((s) => new Date(s.started_at))),
-    wakeTime: circularMeanTimeOfDay(longest.map((s) => new Date(s.ended_at as string))),
+    bedtime: circularMeanTimeOfDay(longestPerDay.map((s) => new Date(s.started_at))),
+    wakeTime: circularMeanTimeOfDay(longestPerDay.map((s) => new Date(s.ended_at as string))),
   }
+}
+
+// "¿Cuánto duerme de noche frente a de día?" - el sueño más largo de
+// cada día (ver más arriba) cuenta como sueño de noche, el resto (una
+// o varias siestas) como sueño de día; se suman los minutos de cada
+// grupo por día y se promedia across días, no se mezclan sueños
+// sueltos de días distintos.
+function dailySleepSplit(byDay: Map<string, Sleep[]>): {
+  nightMinutes: number | null
+  napMinutes: number | null
+  totalMinutes: number | null
+} {
+  if (byDay.size < MIN_SAMPLE_SIZE)
+    return { nightMinutes: null, napMinutes: null, totalMinutes: null }
+
+  const nightPerDay: number[] = []
+  const napPerDay: number[] = []
+  for (const daySleeps of byDay.values()) {
+    const longest = daySleeps.reduce((a, b) => (sleepDurationMs(b) > sleepDurationMs(a) ? b : a))
+    let napMs = 0
+    for (const sleep of daySleeps) {
+      if (sleep !== longest) napMs += sleepDurationMs(sleep)
+    }
+    nightPerDay.push(sleepDurationMs(longest) / 60_000)
+    napPerDay.push(napMs / 60_000)
+  }
+
+  const nightMinutes = average(nightPerDay)
+  const napMinutes = average(napPerDay)
+  return {
+    nightMinutes,
+    napMinutes,
+    totalMinutes: nightMinutes !== null && napMinutes !== null ? nightMinutes + napMinutes : null,
+  }
+}
+
+function findLongestSleep(completed: Sleep[]): { minutes: number; date: string } | null {
+  if (completed.length === 0) return null
+  const longest = completed.reduce((a, b) => (sleepDurationMs(b) > sleepDurationMs(a) ? b : a))
+  return { minutes: Math.round(sleepDurationMs(longest) / 60_000), date: longest.started_at }
 }
 
 // Bucketed by the hour each sleep STARTS, not a proportional split
@@ -186,6 +259,10 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
       byHourBucket: emptyBuckets(),
       typicalBedtime: null,
       typicalWakeTime: null,
+      averageNightSleepMinutes: null,
+      averageNapMinutes: null,
+      averageTotalSleepMinutes: null,
+      longestSleep: findLongestSleep(completed),
     }
   }
 
@@ -214,7 +291,9 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
     if (bucket) bucket.value += minutes
   }
 
-  const { bedtime, wakeTime } = typicalSleepTimes(completed)
+  const byDay = longestSleepPerDay(completed)
+  const { bedtime, wakeTime } = typicalSleepTimes(byDay)
+  const { nightMinutes, napMinutes, totalMinutes } = dailySleepSplit(byDay)
 
   return {
     hasEnoughData: true,
@@ -224,6 +303,10 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
     byHourBucket: buckets,
     typicalBedtime: bedtime,
     typicalWakeTime: wakeTime,
+    averageNightSleepMinutes: nightMinutes,
+    averageNapMinutes: napMinutes,
+    averageTotalSleepMinutes: totalMinutes,
+    longestSleep: findLongestSleep(completed),
   }
 }
 
@@ -250,32 +333,11 @@ export interface FeedStats {
    * everything else here. */
   averagePerDay: number | null
   byHourBucket: HourBucketStat[]
-  /** Hora de reloj típica de la primera toma de cada día - `null` por
-   * debajo de `MIN_SAMPLE_SIZE` días distintos con alguna toma. */
-  typicalFirstFeedTime: ClockTime | null
-  /** Misma idea, la última toma de cada día. */
-  typicalLastFeedTime: ClockTime | null
-}
-
-// `sorted` ya viene ordenado ascendente por started_at (ver más abajo),
-// así que basta con quedarse con la primera vez que se ve cada día
-// (primera toma) y pisar `last` en cada una siguiente del mismo día
-// (la última, sin necesitar comparar manualmente).
-function typicalFeedTimes(sorted: Feed[]): { first: ClockTime | null; last: ClockTime | null } {
-  const firstPerDay = new Map<string, Feed>()
-  const lastPerDay = new Map<string, Feed>()
-  for (const feed of sorted) {
-    const key = localDayKey(new Date(feed.started_at))
-    if (!firstPerDay.has(key)) firstPerDay.set(key, feed)
-    lastPerDay.set(key, feed)
-  }
-
-  if (firstPerDay.size < MIN_SAMPLE_SIZE) return { first: null, last: null }
-
-  return {
-    first: circularMeanTimeOfDay([...firstPerDay.values()].map((f) => new Date(f.started_at))),
-    last: circularMeanTimeOfDay([...lastPerDay.values()].map((f) => new Date(f.started_at))),
-  }
+  /** Cuánto varía el intervalo entre tomas (desviación típica de los
+   * mismos huecos que promedia `averageGapMinutes`) - "qué tan regular
+   * es el horario", no solo "cada cuánto". `null` con menos de dos
+   * huecos útiles, igual que `averageGapMinutes`. */
+  gapStdDevMinutes: number | null
 }
 
 export function summarizeFeedStats(feeds: Feed[]): FeedStats {
@@ -321,8 +383,7 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
       averageGapMinutes: null,
       averagePerDay: null,
       byHourBucket: emptyBuckets(),
-      typicalFirstFeedTime: null,
-      typicalLastFeedTime: null,
+      gapStdDevMinutes: null,
     }
   }
 
@@ -337,8 +398,6 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     }
   }
 
-  const { first, last } = typicalFeedTimes(sorted)
-
   return {
     hasEnoughData: true,
     total: sorted.length,
@@ -349,8 +408,7 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     averageGapMinutes: average(gaps),
     averagePerDay: averagePerDay(sorted.map((f) => f.started_at)),
     byHourBucket: buckets,
-    typicalFirstFeedTime: first,
-    typicalLastFeedTime: last,
+    gapStdDevMinutes: standardDeviation(gaps),
   }
 }
 
@@ -362,6 +420,10 @@ export interface DiaperStats {
   /** Changes per calendar day across the whole logged span - "cuántos
    * pañales al día de media". */
   averagePerDay: number | null
+  /** Pañales mojados (o "ambos") al día de media - un indicador real
+   * que usan los pediatras para valorar si el bebé come suficiente,
+   * sobre todo en recién nacidos, no solo "cuántos pañales en total". */
+  averageWetPerDay: number | null
   peeByHourBucket: HourBucketStat[]
   poopByHourBucket: HourBucketStat[]
 }
@@ -403,10 +465,15 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
       byType,
       bySize,
       averagePerDay: null,
+      averageWetPerDay: null,
       peeByHourBucket: emptyBuckets(),
       poopByHourBucket: emptyBuckets(),
     }
   }
+
+  const wetTimestamps = changes
+    .filter((c) => c.type === 'mojado' || c.type === 'ambos')
+    .map((c) => c.changed_at)
 
   return {
     hasEnoughData: true,
@@ -414,6 +481,7 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     byType,
     bySize,
     averagePerDay: averagePerDay(changes.map((c) => c.changed_at)),
+    averageWetPerDay: averagePerDay(wetTimestamps),
     peeByHourBucket,
     poopByHourBucket,
   }
@@ -433,6 +501,12 @@ export interface GrowthMetricStat {
    * fewer than two points, where "gained" isn't a trend yet, just a
    * single reading. */
   gained: number | null
+  /** `gained`, normalizado a "por semana" sobre el tiempo real entre el
+   * primer y el último registro - la velocidad de crecimiento, no solo
+   * el total acumulado (que crece sin más con el tiempo aunque el
+   * ritmo real se haya frenado). `null` igual que `gained`, o si el
+   * primer y el último registro caen el mismo día (nada que dividir). */
+  weeklyRate: number | null
   count: number
 }
 
@@ -447,17 +521,30 @@ function growthMetricStat(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   if (points.length === 0) {
-    return { points: [], latestValue: null, latestPercentile: null, gained: null, count: 0 }
+    return {
+      points: [],
+      latestValue: null,
+      latestPercentile: null,
+      gained: null,
+      weeklyRate: null,
+      count: 0,
+    }
   }
 
   const first = points[0] as GrowthMetricPoint
   const latest = points[points.length - 1] as GrowthMetricPoint
+  const gained = points.length > 1 ? latest.value - first.value : null
+  const daysBetween =
+    points.length > 1
+      ? (new Date(latest.date).getTime() - new Date(first.date).getTime()) / 86_400_000
+      : 0
 
   return {
     points,
     latestValue: latest.value,
     latestPercentile: latest.percentile,
-    gained: points.length > 1 ? latest.value - first.value : null,
+    gained,
+    weeklyRate: gained !== null && daysBetween > 0 ? (gained / daysBetween) * 7 : null,
     count: points.length,
   }
 }
@@ -495,6 +582,122 @@ export function summarizeGrowthStats(measurements: GrowthMeasurement[]): GrowthS
   }
 }
 
+// --- Tendencia semanal y mapa de actividad ---
+// Las dos únicas piezas de "Estadísticas" que no cruzan nunca al PDF -
+// un gráfico de líneas/barras y una rejilla 7x24 no tienen un
+// equivalente razonable en una plantilla dompdf (ver el resto de esta
+// sección: hasta las franjas horarias, mucho más simples, ya salen como
+// fichas de texto, no un gráfico dibujado). Pantalla únicamente.
+
+export interface WeeklyTrendPoint {
+  /** "YYYY-MM-DD" del lunes de esa semana (semana ISO, lunes-domingo) -
+   * clave estable para ordenar y para usar como `:key` de lista. */
+  weekStart: string
+  /** Horas totales de sueño completado esa semana - `null`, no `0`,
+   * cuando no hubo ningún sueño completado, para no leer "no hay
+   * registro" como "no durmió nada". */
+  sleepHours: number | null
+  feedCount: number
+  diaperCount: number
+}
+
+function mondayOf(date: Date): Date {
+  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const day = result.getDay() // 0=domingo..6=sábado
+  const diff = day === 0 ? -6 : 1 - day
+  result.setDate(result.getDate() + diff)
+  return result
+}
+
+// Sin umbral MIN_SAMPLE_SIZE, a diferencia del resto de esta sección -
+// es un gráfico de tendencia, no una media/reparto puntual; una semana
+// con poco dato simplemente se ve más baja/vacía en el propio gráfico,
+// eso ya es información (igual que el gráfico de Crecimiento, que
+// tampoco exige un mínimo de mediciones).
+export function summarizeWeeklyTrend(
+  sleeps: Sleep[],
+  feeds: Feed[],
+  diaperChanges: DiaperChange[],
+): WeeklyTrendPoint[] {
+  const weeks = new Map<
+    string,
+    { sleepMinutes: number; hasSleep: boolean; feedCount: number; diaperCount: number }
+  >()
+
+  function weekOf(date: Date): {
+    sleepMinutes: number
+    hasSleep: boolean
+    feedCount: number
+    diaperCount: number
+  } {
+    const key = toDateOnlyString(mondayOf(date))
+    let week = weeks.get(key)
+    if (!week) {
+      week = { sleepMinutes: 0, hasSleep: false, feedCount: 0, diaperCount: 0 }
+      weeks.set(key, week)
+    }
+    return week
+  }
+
+  for (const sleep of sleeps) {
+    if (!sleep.ended_at) continue
+    const week = weekOf(new Date(sleep.started_at))
+    week.sleepMinutes +=
+      (new Date(sleep.ended_at).getTime() - new Date(sleep.started_at).getTime()) / 60_000
+    week.hasSleep = true
+  }
+  for (const feed of feeds) weekOf(new Date(feed.started_at)).feedCount++
+  for (const change of diaperChanges) weekOf(new Date(change.changed_at)).diaperCount++
+
+  return [...weeks.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([weekStart, w]) => ({
+      weekStart,
+      sleepHours: w.hasSleep ? w.sleepMinutes / 60 : null,
+      feedCount: w.feedCount,
+      diaperCount: w.diaperCount,
+    }))
+}
+
+export interface HeatmapCell {
+  /** 0=lunes .. 6=domingo - mismo criterio de "la semana empieza en
+   * lunes" que `mondayOf()` de arriba, no el 0=domingo nativo de
+   * `Date#getDay()`. */
+  dayOfWeek: number
+  hour: number
+  count: number
+}
+
+// Densidad combinada de toma+sueño+pañal por día de la semana/hora -
+// "¿cuándo pasan cosas de verdad?", mucho más fino que las 4 franjas de
+// 6h de `HOUR_BUCKETS` y sin mezclar días distintos entre sí (al
+// contrario que esas franjas, que sí agregan todos los días juntos).
+export function summarizeActivityHeatmap(
+  sleeps: Sleep[],
+  feeds: Feed[],
+  diaperChanges: DiaperChange[],
+): HeatmapCell[] {
+  const grid: number[][] = Array.from({ length: 7 }, () => new Array(24).fill(0) as number[])
+
+  function mark(date: Date): void {
+    const dayOfWeek = (date.getDay() + 6) % 7
+    const row = grid[dayOfWeek] as number[]
+    row[date.getHours()] = (row[date.getHours()] ?? 0) + 1
+  }
+
+  for (const sleep of sleeps) mark(new Date(sleep.started_at))
+  for (const feed of feeds) mark(new Date(feed.started_at))
+  for (const change of diaperChanges) mark(new Date(change.changed_at))
+
+  const cells: HeatmapCell[] = []
+  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+    for (let hour = 0; hour < 24; hour++) {
+      cells.push({ dayOfWeek, hour, count: (grid[dayOfWeek] as number[])[hour] ?? 0 })
+    }
+  }
+  return cells
+}
+
 /**
  * Every other field that ever crosses the API boundary in this app is
  * snake_case (`started_at`, `weight_grams`...) - these four
@@ -513,6 +716,10 @@ export interface StatsExportPayload {
     by_hour_bucket: HourBucketStat[]
     typical_bedtime: ClockTime | null
     typical_wake_time: ClockTime | null
+    average_night_sleep_minutes: number | null
+    average_nap_minutes: number | null
+    average_total_sleep_minutes: number | null
+    longest_sleep: { minutes: number; date: string } | null
   }
   feed: {
     has_enough_data: boolean
@@ -524,8 +731,7 @@ export interface StatsExportPayload {
     average_gap_minutes: number | null
     average_per_day: number | null
     by_hour_bucket: HourBucketStat[]
-    typical_first_feed_time: ClockTime | null
-    typical_last_feed_time: ClockTime | null
+    gap_std_dev_minutes: number | null
   }
   diaper: {
     has_enough_data: boolean
@@ -533,6 +739,7 @@ export interface StatsExportPayload {
     by_type: Record<DiaperType, number>
     by_size: Record<DiaperSize | 'unspecified', number>
     average_per_day: number | null
+    average_wet_per_day: number | null
     pee_by_hour_bucket: HourBucketStat[]
     poop_by_hour_bucket: HourBucketStat[]
   }
@@ -548,6 +755,7 @@ interface GrowthMetricExportStat {
   latest_value: number | null
   latest_percentile: number | null
   gained: number | null
+  weekly_rate: number | null
   count: number
 }
 
@@ -557,6 +765,7 @@ function exportGrowthMetric(stat: GrowthMetricStat): GrowthMetricExportStat {
     latest_value: stat.latestValue,
     latest_percentile: stat.latestPercentile,
     gained: stat.gained,
+    weekly_rate: stat.weeklyRate,
     count: stat.count,
   }
 }
@@ -576,6 +785,10 @@ export function buildStatsExportPayload(
       by_hour_bucket: sleep.byHourBucket,
       typical_bedtime: sleep.typicalBedtime,
       typical_wake_time: sleep.typicalWakeTime,
+      average_night_sleep_minutes: sleep.averageNightSleepMinutes,
+      average_nap_minutes: sleep.averageNapMinutes,
+      average_total_sleep_minutes: sleep.averageTotalSleepMinutes,
+      longest_sleep: sleep.longestSleep,
     },
     feed: {
       has_enough_data: feed.hasEnoughData,
@@ -587,8 +800,7 @@ export function buildStatsExportPayload(
       average_gap_minutes: feed.averageGapMinutes,
       average_per_day: feed.averagePerDay,
       by_hour_bucket: feed.byHourBucket,
-      typical_first_feed_time: feed.typicalFirstFeedTime,
-      typical_last_feed_time: feed.typicalLastFeedTime,
+      gap_std_dev_minutes: feed.gapStdDevMinutes,
     },
     diaper: {
       has_enough_data: diaper.hasEnoughData,
@@ -596,6 +808,7 @@ export function buildStatsExportPayload(
       by_type: diaper.byType,
       by_size: diaper.bySize,
       average_per_day: diaper.averagePerDay,
+      average_wet_per_day: diaper.averageWetPerDay,
       pee_by_hour_bucket: diaper.peeByHourBucket,
       poop_by_hour_bucket: diaper.poopByHourBucket,
     },

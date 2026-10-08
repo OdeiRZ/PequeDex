@@ -1471,6 +1471,67 @@ formato que la tarjeta principal del bebé en el dashboard, franjas
 horarias y mediciones de crecimiento en rejilla de 2 por fila, y el
 mismo pie de página que ya usa Contracciones.
 
+**Siete estadísticas nuevas**, sustituyendo "primera/última toma del
+día" (decían "a qué hora" pero no "qué tan bien" ni "cómo
+evoluciona" - ver el propio `CHANGELOG.md` para el porqué completo de
+cada una):
+
+- **Reparto día/noche de sueño** - el sueño más largo de cada día
+  cuenta como el de noche (sin que el cuidador marque nada, una siesta
+  rara vez lo supera en duración), el resto como siestas. Una barra de
+  progreso (`<span>` con `width` en %, no un gráfico aparte) con el
+  total al día y el reparto debajo, en la propia tarjeta de Sueño.
+- **Sueño más largo registrado** - un dato de récord, visible aunque
+  no haya datos suficientes para el resto de la sección (no depende de
+  `hasEnoughData`, es un hecho puntual, no una media).
+- **Regularidad del horario de tomas** - la desviación típica de los
+  mismos huecos que ya promedia "cada cuánto come", traducida a "Muy
+  regular"/"Regular"/"Variable" (`formatRegularity()`, umbrales
+  orientativos de 30/60 min, no un estándar clínico) en vez de un
+  número de minutos que no dice nada por sí solo.
+- **Pañales mojados al día** - un indicador real que usan los
+  pediatras para valorar si el bebé come suficiente.
+- **Velocidad de crecimiento** - lo ganado normalizado a "por semana"
+  sobre el tiempo real entre el primer y el último registro
+  (`weeklyRate`), junto al total acumulado que ya había.
+- **Tendencia semanal** (`summarizeWeeklyTrend()`, agrupa por semana
+  ISO - lunes a domingo, vía `mondayOf()`) - horas de sueño, tomas y
+  pañales por semana en `WeeklyTrendChart.vue`, un gráfico de barras
+  genérico (recibe `points`/`category`/`format-value` como props,
+  reutilizado 3 veces en vez de triplicar el componente) con scroll
+  horizontal - a diferencia de las 4 franjas horarias, el número de
+  semanas crece con el historial real y no tiene un tope razonable.
+  Una semana sin ningún sueño completado se distingue de "0 horas"
+  (`sleepHours: null`, barra rayada en el gráfico) - no hay registro,
+  no es que no durmiera nada. Sin umbral `MIN_SAMPLE_SIZE`, a
+  diferencia del resto de "Estadísticas" - es un gráfico de tendencia,
+  no una media puntual; una semana con poco dato se ve más baja/vacía
+  en el propio gráfico, eso ya es información (mismo criterio que el
+  gráfico de Crecimiento). Una comparativa "esta semana frente a la
+  anterior" (`weekComparison`, calculado en `StatsView.vue` a partir
+  de los dos últimos puntos de la tendencia, no una función aparte en
+  `lib/stats.ts`) con flecha de color según suba o baje.
+- **Mapa de actividad semanal** (`summarizeActivityHeatmap()`) -
+  rejilla 7×24 con la densidad combinada de toma+sueño+pañal,
+  `ActivityHeatmap.vue`. Siempre devuelve las 168 celdas (una por
+  día×hora, aunque estén a 0) para que el componente no tenga que
+  rellenar huecos; cada celda es un `<button>` con su propia opacidad
+  (mínimo 0.12, no 0, para que una celda con poca actividad real siga
+  siendo visible frente a una vacía) - tocarla muestra el detalle
+  exacto debajo de la rejilla en vez de una burbuja flotante (más
+  simple de implementar de forma fiable, sin preocuparse de que se
+  salga del borde de la tarjeta). Día de la semana en formato "narrow"
+  (L/M/X/J/V/S/D) sacado vía `Intl` a partir de una fecha ancla real
+  (2024-01-01, un lunes de verdad, nunca mostrada) en vez de una
+  tabla de traducciones a mano.
+
+Ninguna de las dos últimas (tendencia semanal, mapa de actividad)
+tiene equivalente en el PDF exportado - un gráfico de líneas/barras o
+una rejilla 7×24 no tienen una forma razonable de dibujarse en una
+plantilla dompdf, a diferencia de las fichas numéricas de arriba (día/
+noche, récord, regularidad, mojados/día, velocidad de crecimiento),
+que sí se exportan.
+
 ## Despliegue
 
 En producción ([odeirz.github.io/PequeDex](https://odeirz.github.io/PequeDex/)):

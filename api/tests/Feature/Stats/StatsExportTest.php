@@ -28,6 +28,7 @@ function validStatsPayload(): array
         'latest_value' => null,
         'latest_percentile' => null,
         'gained' => null,
+        'weekly_rate' => null,
         'count' => 0,
     ];
 
@@ -40,6 +41,10 @@ function validStatsPayload(): array
             'by_hour_bucket' => $emptyBuckets,
             'typical_bedtime' => ['hours' => 21, 'minutes' => 30],
             'typical_wake_time' => ['hours' => 7, 'minutes' => 0],
+            'average_night_sleep_minutes' => 480.0,
+            'average_nap_minutes' => 40.0,
+            'average_total_sleep_minutes' => 520.0,
+            'longest_sleep' => ['minutes' => 480, 'date' => '2026-08-07T22:00:00.000Z'],
         ],
         'feed' => [
             'has_enough_data' => true,
@@ -51,8 +56,7 @@ function validStatsPayload(): array
             'average_gap_minutes' => 180.0,
             'average_per_day' => 2.5,
             'by_hour_bucket' => $emptyBuckets,
-            'typical_first_feed_time' => ['hours' => 7, 'minutes' => 15],
-            'typical_last_feed_time' => ['hours' => 22, 'minutes' => 45],
+            'gap_std_dev_minutes' => 25.0,
         ],
         'diaper' => [
             'has_enough_data' => true,
@@ -60,6 +64,7 @@ function validStatsPayload(): array
             'by_type' => ['mojado' => 4, 'sucio' => 2, 'ambos' => 2],
             'by_size' => ['0' => 0, '1' => 3, '2' => 0, '3' => 0, '4' => 0, '5' => 0, '6+' => 0, 'unspecified' => 5],
             'average_per_day' => 2.0,
+            'average_wet_per_day' => 1.5,
             'pee_by_hour_bucket' => $emptyBuckets,
             'poop_by_hour_bucket' => $emptyBuckets,
         ],
@@ -110,15 +115,19 @@ it('rejects a malformed payload instead of rendering a broken PDF', function () 
         ->assertJsonValidationErrors(['sleep.by_hour_bucket.0.key', 'sleep.by_hour_bucket']);
 });
 
-it('accepts null typical-time fields - below the 3-day sample, lib/stats.ts sends null', function () {
+it('accepts null typical-time and day/night fields - below the sample threshold, lib/stats.ts sends null', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);
 
     $payload = validStatsPayload();
     $payload['sleep']['typical_bedtime'] = null;
     $payload['sleep']['typical_wake_time'] = null;
-    $payload['feed']['typical_first_feed_time'] = null;
-    $payload['feed']['typical_last_feed_time'] = null;
+    $payload['sleep']['average_night_sleep_minutes'] = null;
+    $payload['sleep']['average_nap_minutes'] = null;
+    $payload['sleep']['average_total_sleep_minutes'] = null;
+    $payload['sleep']['longest_sleep'] = null;
+    $payload['feed']['gap_std_dev_minutes'] = null;
+    $payload['diaper']['average_wet_per_day'] = null;
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
 });
@@ -140,11 +149,23 @@ it('rejects a typical-time field missing its minutes', function () {
     $baby = babyForStatsExportTest($user);
 
     $payload = validStatsPayload();
-    unset($payload['feed']['typical_last_feed_time']['minutes']);
+    unset($payload['sleep']['typical_wake_time']['minutes']);
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['feed.typical_last_feed_time.minutes']);
+        ->assertJsonValidationErrors(['sleep.typical_wake_time.minutes']);
+});
+
+it('rejects a longest_sleep missing its date', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    unset($payload['sleep']['longest_sleep']['date']);
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['sleep.longest_sleep.date']);
 });
 
 it('rejects unauthenticated access to the export endpoint', function () {

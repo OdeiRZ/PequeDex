@@ -4,6 +4,8 @@ import {
   summarizeFeedStats,
   summarizeDiaperStats,
   summarizeGrowthStats,
+  summarizeWeeklyTrend,
+  summarizeActivityHeatmap,
   formatClockTime,
 } from '@/lib/stats'
 import type { DiaperChange, Feed, GrowthMeasurement, Sleep } from '@/stores/babies'
@@ -148,6 +150,58 @@ describe('summarizeSleepStats - typicalBedtime / typicalWakeTime', () => {
   })
 })
 
+describe('summarizeSleepStats - day/night split', () => {
+  it('reports null below 3 distinct days with a completed sleep', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 13), local(2026, 8, 7, 13, 30)),
+      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6)),
+    ])
+    expect(result.averageNightSleepMinutes).toBeNull()
+    expect(result.averageNapMinutes).toBeNull()
+    expect(result.averageTotalSleepMinutes).toBeNull()
+  })
+
+  it('splits each day into the longest sleep (night) and the rest (naps), averaged separately', () => {
+    const result = summarizeSleepStats([
+      // Día 1: 2 siestas de 30min (60 total) + 8h de noche (480min)
+      sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 10, 30)),
+      sleep(local(2026, 8, 7, 14), local(2026, 8, 7, 14, 30)),
+      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6)),
+      // Día 2: 1 siesta de 60min + 8h de noche
+      sleep(local(2026, 8, 8, 14), local(2026, 8, 8, 15)),
+      sleep(local(2026, 8, 8, 22), local(2026, 8, 9, 6)),
+      // Día 3: sin siesta, solo 8h de noche
+      sleep(local(2026, 8, 9, 22), local(2026, 8, 10, 6)),
+    ])
+    expect(result.averageNightSleepMinutes).toBe(480)
+    // (60 + 60 + 0) / 3 = 40
+    expect(result.averageNapMinutes).toBe(40)
+    expect(result.averageTotalSleepMinutes).toBe(520)
+  })
+})
+
+describe('summarizeSleepStats - longestSleep', () => {
+  it('is null with no completed sleeps', () => {
+    expect(summarizeSleepStats([]).longestSleep).toBeNull()
+  })
+
+  it('finds the single longest completed sleep, even below the sample threshold', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 5)), // 7h - the longest
+      sleep(local(2026, 8, 8, 13), local(2026, 8, 8, 13, 30)), // 30min
+    ])
+    expect(result.longestSleep).toEqual({ minutes: 420, date: local(2026, 8, 7, 22) })
+  })
+
+  it('ignores an ongoing sleep (no ended_at) when picking the record', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 10, 30)), // 30min, completed
+      sleep(local(2026, 8, 8, 22), null), // ongoing - excluded
+    ])
+    expect(result.longestSleep).toEqual({ minutes: 30, date: local(2026, 8, 7, 10) })
+  })
+})
+
 describe('summarizeFeedStats', () => {
   it('reports not enough data below the minimum sample size', () => {
     const result = summarizeFeedStats([feed(), feed()])
@@ -221,30 +275,28 @@ describe('summarizeFeedStats', () => {
   })
 })
 
-describe('summarizeFeedStats - typicalFirstFeedTime / typicalLastFeedTime', () => {
-  it('reports null below 3 distinct days with a feed', () => {
-    const result = summarizeFeedStats([
-      feed({ started_at: local(2026, 8, 7, 7) }),
-      feed({ started_at: local(2026, 8, 7, 12) }),
-      feed({ started_at: local(2026, 8, 7, 20) }),
-    ])
-    expect(result.typicalFirstFeedTime).toBeNull()
-    expect(result.typicalLastFeedTime).toBeNull()
+describe('summarizeFeedStats - gapStdDevMinutes', () => {
+  it('is null below the minimum sample size', () => {
+    const result = summarizeFeedStats([feed(), feed()])
+    expect(result.gapStdDevMinutes).toBeNull()
   })
 
-  it('tracks the earliest and latest feed of each day separately', () => {
+  it('is 0 when every gap is identical (perfectly regular)', () => {
     const result = summarizeFeedStats([
-      feed({ started_at: local(2026, 8, 7, 7) }),
-      feed({ started_at: local(2026, 8, 7, 12) }),
-      feed({ started_at: local(2026, 8, 7, 20) }),
-      feed({ started_at: local(2026, 8, 8, 7) }),
-      feed({ started_at: local(2026, 8, 8, 20) }),
-      feed({ started_at: local(2026, 8, 9, 7) }),
-      feed({ started_at: local(2026, 8, 9, 12) }),
-      feed({ started_at: local(2026, 8, 9, 20) }),
+      feed({ started_at: local(2026, 8, 7, 8) }),
+      feed({ started_at: local(2026, 8, 7, 11) }), // gap 180min
+      feed({ started_at: local(2026, 8, 7, 14) }), // gap 180min
     ])
-    expect(result.typicalFirstFeedTime).toEqual({ hours: 7, minutes: 0 })
-    expect(result.typicalLastFeedTime).toEqual({ hours: 20, minutes: 0 })
+    expect(result.gapStdDevMinutes).toBe(0)
+  })
+
+  it('is greater than 0 when gaps vary (irregular schedule)', () => {
+    const result = summarizeFeedStats([
+      feed({ started_at: local(2026, 8, 7, 8) }),
+      feed({ started_at: local(2026, 8, 7, 9) }), // gap 60min
+      feed({ started_at: local(2026, 8, 7, 13) }), // gap 240min
+    ])
+    expect(result.gapStdDevMinutes).toBeGreaterThan(0)
   })
 })
 
@@ -305,6 +357,16 @@ describe('summarizeDiaperStats', () => {
     // 3 changes, all on the same calendar day.
     expect(result.averagePerDay).toBe(3)
   })
+
+  it('averages only wet ("mojado" or "ambos") changes per day, not every change', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 14) }),
+      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 20) }), // not wet
+    ])
+    // 2 wet changes (mojado + ambos), same calendar day.
+    expect(result.averageWetPerDay).toBe(2)
+  })
 })
 
 function growthMeasurement(overrides: Partial<GrowthMeasurement> = {}): GrowthMeasurement {
@@ -332,6 +394,7 @@ describe('summarizeGrowthStats', () => {
       latestValue: null,
       latestPercentile: null,
       gained: null,
+      weeklyRate: null,
       count: 0,
     })
   })
@@ -363,6 +426,13 @@ describe('summarizeGrowthStats', () => {
     expect(result.weightKg.latestValue).toBe(4.2)
     expect(result.weightKg.latestPercentile).toBe(50)
     expect(result.weightKg.gained).toBeCloseTo(0.7)
+    // 0.7kg en 31 días (7 ago -> 7 sep) * 7 = ritmo semanal.
+    expect(result.weightKg.weeklyRate).toBeCloseTo((0.7 / 31) * 7, 5)
+  })
+
+  it('reports no weekly rate with only a single reading (nothing to divide)', () => {
+    const result = summarizeGrowthStats([growthMeasurement({ weight_grams: 3500 })])
+    expect(result.weightKg.weeklyRate).toBeNull()
   })
 
   it('tracks weight/height/head independently, skipping a metric nobody logged', () => {
@@ -374,5 +444,71 @@ describe('summarizeGrowthStats', () => {
     expect(result.heightCm.gained).toBe(4)
     expect(result.weightKg.count).toBe(0)
     expect(result.headCircumferenceCm.count).toBe(0)
+  })
+})
+
+// 2026-08-10 es lunes; 2026-08-07 (viernes) y 2026-08-09 (domingo) caen
+// en la semana ISO anterior (lunes 2026-08-03).
+describe('summarizeWeeklyTrend', () => {
+  it('groups entries into ISO weeks (Monday start), one point per week', () => {
+    const result = summarizeWeeklyTrend(
+      [sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6))], // viernes -> semana del 3
+      [
+        feed({ started_at: local(2026, 8, 9, 10) }), // domingo -> semana del 3
+        feed({ started_at: local(2026, 8, 11, 10) }), // martes -> semana del 10
+      ],
+      [diaperChange({ changed_at: local(2026, 8, 11, 12) })], // martes -> semana del 10
+    )
+
+    expect(result.map((w) => w.weekStart)).toEqual(['2026-08-03', '2026-08-10'])
+    expect(result[0]).toEqual({
+      weekStart: '2026-08-03',
+      sleepHours: 8,
+      feedCount: 1,
+      diaperCount: 0,
+    })
+    expect(result[1]).toEqual({
+      weekStart: '2026-08-10',
+      sleepHours: null,
+      feedCount: 1,
+      diaperCount: 1,
+    })
+  })
+
+  it('returns an empty list with no data at all', () => {
+    expect(summarizeWeeklyTrend([], [], [])).toEqual([])
+  })
+
+  it('ignores an ongoing sleep (no ended_at) when summing hours for the week', () => {
+    const result = summarizeWeeklyTrend(
+      [
+        sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 2)), // 4h, completed
+        sleep(local(2026, 8, 7, 23), null), // ongoing, excluded
+      ],
+      [],
+      [],
+    )
+    expect(result[0]?.sleepHours).toBe(4)
+  })
+})
+
+describe('summarizeActivityHeatmap', () => {
+  it('always returns a dense 7x24 grid (168 cells), zero where nothing happened', () => {
+    const result = summarizeActivityHeatmap([], [], [])
+    expect(result).toHaveLength(168)
+    expect(result.every((cell) => cell.count === 0)).toBe(true)
+  })
+
+  it('buckets by LOCAL day-of-week (Monday=0) and hour, combining all three categories', () => {
+    const result = summarizeActivityHeatmap(
+      [sleep(local(2026, 8, 10, 22), local(2026, 8, 11, 6))], // lunes 22h
+      [feed({ started_at: local(2026, 8, 10, 22, 30) })], // lunes 22h, misma celda
+      [diaperChange({ changed_at: local(2026, 8, 7, 8) })], // viernes 8h
+    )
+    const mondayNight = result.find((c) => c.dayOfWeek === 0 && c.hour === 22)
+    const fridayMorning = result.find((c) => c.dayOfWeek === 4 && c.hour === 8)
+    expect(mondayNight?.count).toBe(2)
+    expect(fridayMorning?.count).toBe(1)
+    expect(result.filter((c) => c.count > 0)).toHaveLength(2)
   })
 })

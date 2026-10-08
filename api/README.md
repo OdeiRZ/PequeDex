@@ -430,13 +430,24 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   bebé sin ninguna medición de una métrica concreta es un estado válido
   (array vacío, no clave ausente), así que la regla se cambió a
   `present|array`, que solo exige que la clave exista.
-  `clockTimeRules()` valida los cuatro campos de "horarios habituales"
-  (`sleep.typical_bedtime`/`typical_wake_time`,
-  `feed.typical_first_feed_time`/`typical_last_feed_time`) - el propio
-  array es `nullable` (por debajo de `MIN_SAMPLE_SIZE` días en
-  `lib/stats.ts`, `null`), pero si llega, `hours`/`minutes` son
-  `required_with` + rango (`0-23`/`0-59`): una hora a medias no es un
-  estado válido, a diferencia de los `points` de crecimiento de arriba.
+  `clockTimeRules()` valida los dos campos de "horarios habituales"
+  (`sleep.typical_bedtime`/`typical_wake_time`) - el propio array es
+  `nullable` (por debajo de `MIN_SAMPLE_SIZE` días en `lib/stats.ts`,
+  `null`), pero si llega, `hours`/`minutes` son `required_with` + rango
+  (`0-23`/`0-59`): una hora a medias no es un estado válido, a
+  diferencia de los `points` de crecimiento de arriba. Siete campos
+  más, añadidos cuando "primera/última toma del día" (decían "a qué
+  hora" pero no mucho más) se sustituyeron por estadísticas más
+  útiles: `sleep.average_night_sleep_minutes`/`average_nap_minutes`/
+  `average_total_sleep_minutes` (`nullable|numeric|min:0`, el reparto
+  día/noche), `sleep.longest_sleep` (array `nullable`, mismo criterio
+  `required_with` que `clockTimeRules()` para `minutes`/`date` - un
+  dato de récord, no gated por `MIN_SAMPLE_SIZE`),
+  `feed.gap_std_dev_minutes` (regularidad del horario),
+  `diaper.average_wet_per_day` (pañales mojados al día, un indicador
+  real que usan los pediatras) y `weekly_rate` dentro de
+  `growthMetricRules()` (velocidad de crecimiento, "por semana" en vez
+  de solo el total acumulado).
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.

@@ -44,6 +44,12 @@ class ExportStatsRequest extends FormRequest
             'sleep.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
             ...$this->clockTimeRules('sleep.typical_bedtime'),
             ...$this->clockTimeRules('sleep.typical_wake_time'),
+            'sleep.average_night_sleep_minutes' => ['nullable', 'numeric', 'min:0'],
+            'sleep.average_nap_minutes' => ['nullable', 'numeric', 'min:0'],
+            'sleep.average_total_sleep_minutes' => ['nullable', 'numeric', 'min:0'],
+            'sleep.longest_sleep' => ['nullable', 'array'],
+            'sleep.longest_sleep.minutes' => ['required_with:sleep.longest_sleep', 'integer', 'min:0'],
+            'sleep.longest_sleep.date' => ['required_with:sleep.longest_sleep', 'date'],
 
             'feed' => ['required', 'array'],
             'feed.has_enough_data' => ['required', 'boolean'],
@@ -61,8 +67,7 @@ class ExportStatsRequest extends FormRequest
             'feed.by_hour_bucket' => ['required', 'array', 'size:4'],
             'feed.by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'feed.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
-            ...$this->clockTimeRules('feed.typical_first_feed_time'),
-            ...$this->clockTimeRules('feed.typical_last_feed_time'),
+            'feed.gap_std_dev_minutes' => ['nullable', 'numeric', 'min:0'],
 
             'diaper' => ['required', 'array'],
             'diaper.has_enough_data' => ['required', 'boolean'],
@@ -72,6 +77,7 @@ class ExportStatsRequest extends FormRequest
             'diaper.by_type.ambos' => ['required', 'integer', 'min:0'],
             'diaper.by_size' => ['required', 'array'],
             'diaper.average_per_day' => ['nullable', 'numeric'],
+            'diaper.average_wet_per_day' => ['nullable', 'numeric'],
             'diaper.pee_by_hour_bucket' => ['required', 'array', 'size:4'],
             'diaper.pee_by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'diaper.pee_by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
@@ -129,6 +135,7 @@ class ExportStatsRequest extends FormRequest
             "$prefix.latest_value" => ['nullable', 'numeric'],
             "$prefix.latest_percentile" => ['nullable', 'numeric'],
             "$prefix.gained" => ['nullable', 'numeric'],
+            "$prefix.weekly_rate" => ['nullable', 'numeric'],
             "$prefix.count" => ['required', 'integer', 'min:0'],
         ];
     }

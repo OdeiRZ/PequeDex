@@ -9,6 +9,46 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Siete estadísticas nuevas en "Estadísticas"**, sustituyendo las dos
+  fichas de "primera/última toma del día" (poco útiles de verdad - decían
+  "a qué hora" pero no "qué tan bien" ni "cómo evoluciona"):
+  - **Reparto día/noche de sueño** (`averageNightSleepMinutes`/
+    `averageNapMinutes`/`averageTotalSleepMinutes` en `SleepStats`) -
+    el sueño más largo de cada día de calendario cuenta como sueño de
+    noche (una apuesta fiable frente a una siesta, sin que el cuidador
+    tenga que marcar nada), el resto como siestas; barra de progreso
+    con el total y el reparto en la propia tarjeta de Sueño.
+  - **Sueño más largo registrado** (`longestSleep`) - un dato de récord,
+    no una media, visible aunque no haya datos suficientes para el
+    resto de la sección.
+  - **Regularidad del horario de tomas** (`gapStdDevMinutes`, la
+    desviación típica de los mismos huecos que ya promedia
+    `averageGapMinutes`) - traducida a "Muy regular"/"Regular"/
+    "Variable" en vez de un número de minutos que no dice nada por sí
+    solo.
+  - **Pañales mojados al día** (`averageWetPerDay`) - un indicador real
+    que usan los pediatras para valorar si el bebé come suficiente,
+    no solo "cuántos pañales en total".
+  - **Velocidad de crecimiento** (`weeklyRate` en `GrowthMetricStat`) -
+    lo ganado normalizado a "por semana" sobre el tiempo real entre el
+    primer y el último registro, junto al total acumulado que ya había.
+  - **Tendencia semanal** (`summarizeWeeklyTrend()`) - horas de sueño/
+    tomas/pañales por semana en un gráfico de barras nuevo
+    (`WeeklyTrendChart.vue`, genérico, reutilizado 3 veces), más una
+    comparativa "esta semana frente a la anterior" con flecha de
+    tendencia. Sin umbral de muestra mínima, a diferencia del resto de
+    la sección - una semana con poco dato se ve más vacía en el propio
+    gráfico, eso ya es información.
+  - **Mapa de actividad semanal** (`summarizeActivityHeatmap()`) -
+    rejilla 7 días × 24 horas con la densidad combinada de toma+sueño+
+    pañal (`ActivityHeatmap.vue`, celdas tocables con el detalle),
+    mucho más fino que las 4 franjas de 6h ya existentes y sin mezclar
+    días distintos entre sí.
+
+  Las dos únicas piezas sin equivalente en el PDF exportado (el
+  gráfico de tendencia y el mapa de actividad no tienen una forma
+  razonable de dibujarse en dompdf, a diferencia de las fichas
+  numéricas de arriba, que sí se exportan) - pantalla únicamente.
 - **"Horarios habituales" en "Estadísticas"** - la fase pendiente desde
   que se creó la sección ("horarios normativos", anotado en su momento
   como "para después"): hora de reloj típica a la que el bebé se

@@ -8,11 +8,15 @@ import { useFeedback } from '@/composables/useFeedback'
 import AppMark from '@/components/AppMark.vue'
 import HourBucketChart from '@/components/HourBucketChart.vue'
 import GrowthLineChart from '@/components/GrowthLineChart.vue'
+import WeeklyTrendChart from '@/components/WeeklyTrendChart.vue'
+import ActivityHeatmap from '@/components/ActivityHeatmap.vue'
 import {
   summarizeSleepStats,
   summarizeFeedStats,
   summarizeDiaperStats,
   summarizeGrowthStats,
+  summarizeWeeklyTrend,
+  summarizeActivityHeatmap,
   buildStatsExportPayload,
   formatClockTime,
 } from '@/lib/stats'
@@ -54,6 +58,75 @@ const feedStats = computed(() => summarizeFeedStats(babies.statsFeeds))
 const diaperStats = computed(() => summarizeDiaperStats(babies.statsDiaperChanges))
 const growthStats = computed(() => summarizeGrowthStats(babies.growthMeasurements))
 
+const weeklyTrend = computed(() =>
+  summarizeWeeklyTrend(babies.statsSleeps, babies.statsFeeds, babies.statsDiaperChanges),
+)
+const activityHeatmap = computed(() =>
+  summarizeActivityHeatmap(babies.statsSleeps, babies.statsFeeds, babies.statsDiaperChanges),
+)
+
+// "6 ago" - corto a propósito, son muchas etiquetas seguidas en una
+// fila con scroll horizontal, no una sola fecha destacada.
+function weekLabel(weekStart: string): string {
+  return new Date(`${weekStart}T00:00:00`).toLocaleDateString(dateLocale.value, {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+const sleepWeeklyPoints = computed(() =>
+  weeklyTrend.value.map((w) => ({
+    label: weekLabel(w.weekStart),
+    value: w.sleepHours !== null ? Math.round(w.sleepHours * 10) / 10 : null,
+  })),
+)
+const feedWeeklyPoints = computed(() =>
+  weeklyTrend.value.map((w) => ({ label: weekLabel(w.weekStart), value: w.feedCount })),
+)
+const diaperWeeklyPoints = computed(() =>
+  weeklyTrend.value.map((w) => ({ label: weekLabel(w.weekStart), value: w.diaperCount })),
+)
+
+function formatHours(value: number): string {
+  return `${value}h`
+}
+
+// Compara las dos últimas semanas con datos (no necesariamente las dos
+// últimas del calendario - si la semana en curso todavía no tiene
+// nada, compararla contra la anterior solo diría "0 frente a X", ruido
+// en vez de contexto real). `null` con menos de dos semanas con dato.
+interface WeekDelta {
+  sleepHours: { current: number; delta: number } | null
+  feedCount: { current: number; delta: number }
+  diaperCount: { current: number; delta: number }
+}
+
+const weekComparison = computed<WeekDelta | null>(() => {
+  const weeks = weeklyTrend.value
+  if (weeks.length < 2) return null
+  const current = weeks[weeks.length - 1]
+  const previous = weeks[weeks.length - 2]
+  if (!current || !previous) return null
+
+  return {
+    sleepHours:
+      current.sleepHours !== null && previous.sleepHours !== null
+        ? { current: current.sleepHours, delta: current.sleepHours - previous.sleepHours }
+        : null,
+    feedCount: { current: current.feedCount, delta: current.feedCount - previous.feedCount },
+    diaperCount: {
+      current: current.diaperCount,
+      delta: current.diaperCount - previous.diaperCount,
+    },
+  }
+})
+
+function formatDelta(delta: number, decimals = 0): string {
+  const rounded = Math.abs(delta) < 0.05 ? 0 : delta
+  const sign = rounded > 0 ? '+' : ''
+  return `${sign}${rounded.toFixed(decimals)}`
+}
+
 function formatMinutes(minutes: number): string {
   const rounded = Math.round(minutes)
   const hours = Math.floor(rounded / 60)
@@ -68,6 +141,33 @@ function formatCount(count: number): string {
 function formatGain(value: number, decimals: number, unit: string): string {
   const sign = value > 0 ? '+' : ''
   return `${sign}${value.toFixed(decimals)} ${unit}`
+}
+
+// Qué parte de la barra de reparto día/noche pinta de color sólido -
+// un entero 0-100 para usar directo en `width: X%`, con el propio
+// reparto ya protegido de división por cero por el `v-if` del template
+// (solo se pinta con `averageTotalSleepMinutes !== null`, que implica
+// que ambas partes son números reales, aunque alguna sea 0).
+const nightSleepSharePercent = computed(() => {
+  const night = sleepStats.value.averageNightSleepMinutes ?? 0
+  const total = sleepStats.value.averageTotalSleepMinutes ?? 0
+  return total > 0 ? Math.round((night / total) * 100) : 100
+})
+
+// Traduce la desviación típica en minutos (un número que no dice nada
+// por sí solo) a una lectura cualitativa - "qué tan regular es el
+// horario", la pregunta real detrás del dato. Umbrales orientativos,
+// no un estándar clínico: menos de media hora de variación entre
+// tomas se lee como "muy regular", menos de una hora como "regular",
+// más como "variable".
+function formatRegularity(stdDevMinutes: number): string {
+  if (stdDevMinutes < 30) return t('stats.regularity.veryRegular')
+  if (stdDevMinutes < 60) return t('stats.regularity.regular')
+  return t('stats.regularity.variable')
+}
+
+function formatLongestSleepDate(at: string): string {
+  return new Date(at).toLocaleDateString(dateLocale.value, { day: 'numeric', month: 'long' })
 }
 
 // Mismo orden que ya usa la pastilla de la línea temporal (ver
@@ -295,16 +395,13 @@ async function onExportPdf() {
                 {{ feedStats.averagePerDay.toFixed(1) }}
               </div>
             </div>
-            <div v-if="feedStats.typicalFirstFeedTime" class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.feed.typicalFirstLabel') }}</div>
+            <div
+              v-if="feedStats.gapStdDevMinutes !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.feed.regularityLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ formatClockTime(feedStats.typicalFirstFeedTime) }}
-              </div>
-            </div>
-            <div v-if="feedStats.typicalLastFeedTime" class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.feed.typicalLastLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ formatClockTime(feedStats.typicalLastFeedTime) }}
+                {{ formatRegularity(feedStats.gapStdDevMinutes) }}
               </div>
             </div>
           </div>
@@ -374,6 +471,43 @@ async function onExportPdf() {
               </div>
             </div>
           </div>
+
+          <!-- Reparto día/noche: la pregunta real es "¿duerme lo que
+               toca?", no solo a qué hora. -->
+          <div
+            v-if="sleepStats.averageTotalSleepMinutes !== null"
+            class="rounded-xl bg-surface-sunken p-3"
+          >
+            <div class="mb-1.5 flex items-center justify-between">
+              <span class="text-xs text-text-muted">{{ t('stats.sleep.dayNightLabel') }}</span>
+              <span class="text-sm font-bold tabular-nums">
+                {{ formatMinutes(sleepStats.averageTotalSleepMinutes) }}
+                <span class="font-normal text-text-muted">{{ t('stats.sleep.dailyTotal') }}</span>
+              </span>
+            </div>
+            <div class="flex h-2.5 overflow-hidden rounded-full bg-surface">
+              <span
+                class="bg-sleep"
+                :style="{ width: nightSleepSharePercent + '%' }"
+                :aria-label="t('stats.sleep.nightShareLabel')"
+              ></span>
+              <span
+                class="bg-sleep/40"
+                :style="{ width: 100 - nightSleepSharePercent + '%' }"
+              ></span>
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-xs text-text-muted">
+              <span
+                >{{ t('stats.sleep.nightLabel') }} ·
+                {{ formatMinutes(sleepStats.averageNightSleepMinutes ?? 0) }}</span
+              >
+              <span
+                >{{ t('stats.sleep.napsLabel') }} ·
+                {{ formatMinutes(sleepStats.averageNapMinutes ?? 0) }}</span
+              >
+            </div>
+          </div>
+
           <div>
             <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
             <HourBucketChart
@@ -386,6 +520,24 @@ async function onExportPdf() {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.notEnoughData') }}
         </p>
+
+        <!-- Récord: aparece siempre que haya al menos un sueño
+             completado, sin depender de hasEnoughData - es un dato
+             puntual, no una media. -->
+        <div
+          v-if="sleepStats.longestSleep"
+          class="flex items-center justify-between rounded-xl bg-surface-sunken p-3"
+        >
+          <div>
+            <div class="text-xs text-text-muted">{{ t('stats.sleep.longestLabel') }}</div>
+            <div class="text-xs text-text-muted">
+              {{ formatLongestSleepDate(sleepStats.longestSleep.date) }}
+            </div>
+          </div>
+          <div class="text-lg font-bold tabular-nums text-sleep">
+            {{ formatMinutes(sleepStats.longestSleep.minutes) }}
+          </div>
+        </div>
       </section>
 
       <!-- Pañales -->
@@ -419,6 +571,15 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.diaper.perDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ diaperStats.averagePerDay.toFixed(1) }}
+              </div>
+            </div>
+            <div
+              v-if="diaperStats.averageWetPerDay !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.diaper.wetPerDayLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ diaperStats.averageWetPerDay.toFixed(1) }}
               </div>
             </div>
           </div>
@@ -506,6 +667,13 @@ async function onExportPdf() {
                     {{ t('stats.growth.sinceFirst') }}
                   </span>
                 </div>
+                <div
+                  v-if="metric.stat.weeklyRate !== null"
+                  class="mt-0.5 text-right text-xs text-text-muted"
+                >
+                  {{ formatGain(metric.stat.weeklyRate, metric.decimals, metric.unit) }}
+                  {{ t('stats.growth.perWeek') }}
+                </div>
               </template>
               <div v-else class="text-lg font-bold tabular-nums">
                 {{ metric.stat.latestValue?.toFixed(metric.decimals) }} {{ metric.unit }}
@@ -516,6 +684,109 @@ async function onExportPdf() {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.growth.empty') }}
         </p>
+      </section>
+
+      <!-- Tendencia semanal - "¿mejora o empeora el patrón?", no solo
+           una media puntual. Sin umbral de datos mínimos (como
+           Crecimiento): una semana con poco dato se ve más vacía en el
+           propio gráfico, eso ya es información. -->
+      <section
+        v-if="
+          enabledCategories.includes('sleep') ||
+          enabledCategories.includes('feed') ||
+          enabledCategories.includes('diaper')
+        "
+        class="card flex flex-col gap-4 p-4"
+      >
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span
+            class="h-4 w-1.5 shrink-0 rounded-full"
+            style="background: linear-gradient(180deg, var(--brand), var(--brand-teal))"
+          ></span>
+          {{ t('stats.trend.title') }}
+        </h2>
+
+        <div v-if="weekComparison" class="grid grid-cols-3 gap-2 text-center">
+          <div
+            v-if="weekComparison.sleepHours && enabledCategories.includes('sleep')"
+            class="rounded-xl bg-surface-sunken p-2"
+          >
+            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
+            <div
+              class="text-sm font-bold tabular-nums"
+              :class="weekComparison.sleepHours.delta >= 0 ? 'text-sleep' : 'text-text-muted'"
+            >
+              {{ formatDelta(weekComparison.sleepHours.delta, 1) }}h
+            </div>
+          </div>
+          <div v-if="enabledCategories.includes('feed')" class="rounded-xl bg-surface-sunken p-2">
+            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
+            <div
+              class="text-sm font-bold tabular-nums"
+              :class="weekComparison.feedCount.delta >= 0 ? 'text-feed' : 'text-text-muted'"
+            >
+              {{ formatDelta(weekComparison.feedCount.delta) }}
+            </div>
+          </div>
+          <div v-if="enabledCategories.includes('diaper')" class="rounded-xl bg-surface-sunken p-2">
+            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
+            <div
+              class="text-sm font-bold tabular-nums"
+              :class="weekComparison.diaperCount.delta >= 0 ? 'text-diaper' : 'text-text-muted'"
+            >
+              {{ formatDelta(weekComparison.diaperCount.delta) }}
+            </div>
+          </div>
+        </div>
+        <p v-if="weekComparison" class="-mt-2 text-center text-[0.65rem] text-text-muted">
+          {{ t('stats.trend.comparisonHint') }}
+        </p>
+
+        <div v-if="enabledCategories.includes('sleep')">
+          <div class="mb-1 text-xs text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
+          <WeeklyTrendChart
+            :points="sleepWeeklyPoints"
+            category="sleep"
+            :format-value="formatHours"
+          />
+        </div>
+        <div v-if="enabledCategories.includes('feed')">
+          <div class="mb-1 text-xs text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
+          <WeeklyTrendChart
+            :points="feedWeeklyPoints"
+            category="feed"
+            :format-value="formatCount"
+          />
+        </div>
+        <div v-if="enabledCategories.includes('diaper')">
+          <div class="mb-1 text-xs text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
+          <WeeklyTrendChart
+            :points="diaperWeeklyPoints"
+            category="diaper"
+            :format-value="formatCount"
+          />
+        </div>
+      </section>
+
+      <!-- Mapa de actividad - cuándo pasan cosas de verdad, por día de
+           la semana y hora, más fino que las 4 franjas de 6h de cada
+           bloque. -->
+      <section
+        v-if="
+          enabledCategories.includes('sleep') ||
+          enabledCategories.includes('feed') ||
+          enabledCategories.includes('diaper')
+        "
+        class="card flex flex-col gap-3 p-4"
+      >
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span
+            class="h-4 w-1.5 shrink-0 rounded-full"
+            style="background: linear-gradient(180deg, var(--brand), var(--brand-teal))"
+          ></span>
+          {{ t('stats.heatmap.title') }}
+        </h2>
+        <ActivityHeatmap :cells="activityHeatmap" :date-locale="dateLocale" />
       </section>
     </template>
   </main>

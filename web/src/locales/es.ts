@@ -352,9 +352,9 @@ export default {
       missedYesterday: 'Ayer tampoco se marcó, no te olvides hoy.',
       confirmedToday: 'Vitamina D de hoy, dada.',
       markGiven: 'Dada',
-      markNotGiven: 'No dada',
       undo: 'Deshacer',
       markError: 'No se ha podido guardar. Inténtalo de nuevo.',
+      historyLink: 'Ver historial',
     },
     feedForm: {
       editTitle: 'Editar toma',

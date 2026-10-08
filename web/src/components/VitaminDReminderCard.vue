@@ -4,16 +4,29 @@ import { useI18n } from 'vue-i18n'
 import { useToastStore } from '@/stores/toast'
 import { useVitaminDReminder } from '@/composables/useVitaminDReminder'
 
+const emit = defineEmits<{ openHistory: [] }>()
+
 const { t } = useI18n()
 const toast = useToastStore()
 const { cardState, yesterdayAlsoMissing, markToday } = useVitaminDReminder()
 
 const saving = ref(false)
 
-async function onMark(given: boolean) {
+async function onMarkGiven() {
   saving.value = true
   try {
-    await markToday(given)
+    await markToday(true)
+  } catch {
+    toast.show(t('dashboard.vitaminD.markError'), 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function onUndo() {
+  saving.value = true
+  try {
+    await markToday(false)
   } catch {
     toast.show(t('dashboard.vitaminD.markError'), 'error')
   } finally {
@@ -41,7 +54,8 @@ async function onMark(given: boolean) {
           stroke-linejoin="round"
           class="h-5 w-5"
         >
-          <path d="M12 2c3.5 4.5 6 8.09 6 11a6 6 0 0 1-12 0c0-2.91 2.5-6.5 6-11z" />
+          <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+          <path d="m8.5 8.5 7 7" />
         </svg>
       </span>
       <div class="min-w-0 flex-1">
@@ -53,25 +67,22 @@ async function onMark(given: boolean) {
               : t('dashboard.vitaminD.pendingToday')
           }}
         </div>
-      </div>
-      <div class="flex shrink-0 gap-2">
         <button
           type="button"
-          class="rounded-xl bg-warning px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
-          :disabled="saving"
-          @click="onMark(true)"
+          class="mt-0.5 text-xs font-semibold text-text-muted underline"
+          @click="emit('openHistory')"
         >
-          {{ t('dashboard.vitaminD.markGiven') }}
-        </button>
-        <button
-          type="button"
-          class="rounded-xl px-2 py-2 text-xs font-semibold text-text-muted disabled:opacity-60"
-          :disabled="saving"
-          @click="onMark(false)"
-        >
-          {{ t('dashboard.vitaminD.markNotGiven') }}
+          {{ t('dashboard.vitaminD.historyLink') }}
         </button>
       </div>
+      <button
+        type="button"
+        class="shrink-0 rounded-xl bg-warning px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+        :disabled="saving"
+        @click="onMarkGiven"
+      >
+        {{ t('dashboard.vitaminD.markGiven') }}
+      </button>
     </div>
     <div
       v-else-if="cardState === 'confirmed'"
@@ -93,14 +104,21 @@ async function onMark(given: boolean) {
           <path d="M20 6L9 17l-5-5" />
         </svg>
       </span>
-      <div class="min-w-0 flex-1 text-sm font-semibold">
-        {{ t('dashboard.vitaminD.confirmedToday') }}
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
+        <button
+          type="button"
+          class="mt-0.5 text-xs font-semibold text-text-muted underline"
+          @click="emit('openHistory')"
+        >
+          {{ t('dashboard.vitaminD.historyLink') }}
+        </button>
       </div>
       <button
         type="button"
         class="shrink-0 text-xs font-semibold text-text-muted underline disabled:opacity-60"
         :disabled="saving"
-        @click="onMark(false)"
+        @click="onUndo"
       >
         {{ t('dashboard.vitaminD.undo') }}
       </button>

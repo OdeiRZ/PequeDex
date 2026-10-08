@@ -350,9 +350,9 @@ export default {
       missedYesterday: "Yesterday's was missed too, don't forget today.",
       confirmedToday: "Today's vitamin D, given.",
       markGiven: 'Given',
-      markNotGiven: 'Not given',
       undo: 'Undo',
       markError: 'Could not save. Please try again.',
+      historyLink: 'View history',
     },
     feedForm: {
       editTitle: 'Edit feed',

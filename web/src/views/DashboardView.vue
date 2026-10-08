@@ -293,7 +293,7 @@ onUnmounted(() => {
 // --- Hojas inferiores: una por cada botón de la barra de acciones, más
 // el ajuste de sexo/fecha de nacimiento del bebé. ---
 
-type Sheet = Category | 'settings' | 'addBaby' | null
+type Sheet = Category | 'settings' | 'addBaby' | 'vitaminDHistory' | null
 const activeSheet = ref<Sheet>(null)
 
 function openSheet(sheet: Exclude<Sheet, null>) {
@@ -1765,7 +1765,7 @@ const sleepPredictionDue = computed(() => {
           />
 
           <template v-if="isBorn">
-            <VitaminDReminderCard class="dash-enter" />
+            <VitaminDReminderCard class="dash-enter" @open-history="openSheet('vitaminDHistory')" />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"
@@ -2660,41 +2660,6 @@ const sleepPredictionDue = computed(() => {
                   />
                 </div>
               </div>
-
-              <div v-if="babies.vitaminDSchedule">
-                <span class="field-label">{{
-                  t('dashboard.babySettings.vitaminD.recentDosesTitle')
-                }}</span>
-                <div class="flex flex-col gap-1.5">
-                  <div
-                    v-for="day in vitaminDRecentDosesByDate"
-                    :key="day.date"
-                    class="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-1.5 text-sm"
-                  >
-                    <span>{{ day.date }}</span>
-                    <div class="flex gap-2">
-                      <button
-                        type="button"
-                        class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
-                        :class="day.given === true ? 'bg-growth text-white' : 'text-text-muted'"
-                        :disabled="savingVitaminDDoseDate === day.date"
-                        @click="onToggleVitaminDDose(day.date, true)"
-                      >
-                        {{ t('dashboard.babySettings.vitaminD.doseGiven') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
-                        :class="day.given === false ? 'bg-danger text-white' : 'text-text-muted'"
-                        :disabled="savingVitaminDDoseDate === day.date"
-                        @click="onToggleVitaminDDose(day.date, false)"
-                      >
-                        {{ t('dashboard.babySettings.vitaminD.doseNotGiven') }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </template>
 
             <p v-if="vitaminDSaveError" role="alert" class="text-sm font-medium text-danger">
@@ -2772,6 +2737,41 @@ const sleepPredictionDue = computed(() => {
                 </template>
               </div>
             </Transition>
+          </div>
+        </BottomSheet>
+
+        <BottomSheet :open="activeSheet === 'vitaminDHistory'" @update:open="closeSheet">
+          <h3 class="mb-4 font-display text-base font-bold">
+            {{ t('dashboard.babySettings.vitaminD.recentDosesTitle') }}
+          </h3>
+          <div class="flex flex-col gap-1.5">
+            <div
+              v-for="day in vitaminDRecentDosesByDate"
+              :key="day.date"
+              class="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-1.5 text-sm"
+            >
+              <span>{{ day.date }}</span>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
+                  :class="day.given === true ? 'bg-growth text-white' : 'text-text-muted'"
+                  :disabled="savingVitaminDDoseDate === day.date"
+                  @click="onToggleVitaminDDose(day.date, true)"
+                >
+                  {{ t('dashboard.babySettings.vitaminD.doseGiven') }}
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
+                  :class="day.given === false ? 'bg-danger text-white' : 'text-text-muted'"
+                  :disabled="savingVitaminDDoseDate === day.date"
+                  @click="onToggleVitaminDDose(day.date, false)"
+                >
+                  {{ t('dashboard.babySettings.vitaminD.doseNotGiven') }}
+                </button>
+              </div>
+            </div>
           </div>
         </BottomSheet>
 

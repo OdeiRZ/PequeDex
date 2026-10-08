@@ -93,6 +93,41 @@ describe('VitaminDReminderCard', () => {
     expect(wrapper.text()).not.toContain('Toca darle hoy')
   })
 
+  it('has no "No dada" button in the pending state - only Dada, plus the history link', () => {
+    const babies = useBabiesStore()
+    babies.vitaminDSchedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: addDays(today, -10),
+      end_date: addDays(today, 355),
+    }
+
+    const wrapper = mountCard()
+    const buttonTexts = wrapper.findAll('button').map((b) => b.text())
+
+    expect(buttonTexts).toContain('Dada')
+    expect(buttonTexts).toContain('Ver historial')
+    expect(buttonTexts).not.toContain('No dada')
+  })
+
+  it('emits openHistory when the history link is clicked', async () => {
+    const babies = useBabiesStore()
+    babies.vitaminDSchedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: addDays(today, -10),
+      end_date: addDays(today, 355),
+    }
+
+    const wrapper = mountCard()
+    const historyLink = wrapper.findAll('button').find((b) => b.text() === 'Ver historial')
+    await historyLink?.trigger('click')
+
+    expect(wrapper.emitted('openHistory')).toHaveLength(1)
+  })
+
   it('clicking "Dada" calls the store action for today', async () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {

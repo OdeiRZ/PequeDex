@@ -353,7 +353,6 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     vitaminDEnabled.value = babies.vitaminDSchedule?.enabled ?? false
     vitaminDStartDate.value = babies.vitaminDSchedule?.start_date ?? todayDateOnlyString()
     vitaminDEndDate.value = babies.vitaminDSchedule?.end_date ?? addDays(todayDateOnlyString(), 365)
-    vitaminDSaveError.value = null
   } else if (sheet === 'addBaby') {
     addBabyWizardRef.value?.reset()
     inviteCodeInput.value = ''
@@ -1010,26 +1009,7 @@ const deleteBabyError = ref<string | null>(null)
 const vitaminDEnabled = ref(false)
 const vitaminDStartDate = ref('')
 const vitaminDEndDate = ref('')
-const savingVitaminDSchedule = ref(false)
-const vitaminDSaveError = ref<string | null>(null)
 const savingVitaminDDoseDate = ref<string | null>(null)
-
-async function onSaveVitaminDSchedule() {
-  savingVitaminDSchedule.value = true
-  vitaminDSaveError.value = null
-  try {
-    await babies.upsertVitaminDSchedule({
-      enabled: vitaminDEnabled.value,
-      start_date: vitaminDStartDate.value,
-      end_date: vitaminDEndDate.value,
-    })
-    toast.show(t('dashboard.babySettings.toastSaved'))
-  } catch {
-    vitaminDSaveError.value = t('dashboard.babySettings.vitaminD.saveError')
-  } finally {
-    savingVitaminDSchedule.value = false
-  }
-}
 
 async function onToggleVitaminDDose(date: string, given: boolean) {
   savingVitaminDDoseDate.value = date
@@ -1201,12 +1181,34 @@ async function onSaveBabySettings() {
   savingBabySettings.value = true
 
   try {
-    await babies.updateBaby({
-      sex: babySex.value || null,
-      birth_date: babyBirthDate.value || null,
-    })
+    const saves = [
+      babies.updateBaby({
+        sex: babySex.value || null,
+        birth_date: babyBirthDate.value || null,
+      }),
+    ]
+    // Only upserts a schedule row when there's actually one to create or
+    // update - saving this form while vitaminDEnabled has always been
+    // false (a baby that never had the reminder turned on) would
+    // otherwise create a dormant baby_vitamin_d_schedules row, making
+    // Estadisticas' "hasSchedule" check (presence of the row, not
+    // `enabled`) show a "Vitamina D" section the caregiver never asked
+    // for.
+    if (vitaminDEnabled.value || babies.vitaminDSchedule) {
+      saves.push(
+        babies.upsertVitaminDSchedule({
+          enabled: vitaminDEnabled.value,
+          start_date: vitaminDStartDate.value,
+          end_date: vitaminDEndDate.value,
+        }),
+      )
+    }
+
+    await Promise.all(saves)
     closeSheet()
     toast.show(t('dashboard.babySettings.toastSaved'))
+  } catch {
+    toast.show(t('dashboard.saveError'), 'error')
   } finally {
     savingBabySettings.value = false
   }
@@ -2597,26 +2599,8 @@ const sleepPredictionDue = computed(() => {
               }}</label>
               <input id="baby-birth-date" v-model="babyBirthDate" type="date" class="field-input" />
             </div>
-            <div class="mt-1 flex gap-3">
-              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                v-press
-                type="submit"
-                :disabled="savingBabySettings"
-                class="btn-primary flex-1"
-              >
-                {{ t('common.save') }}
-              </button>
-            </div>
-          </form>
 
-          <form
-            class="mt-6 flex flex-col gap-4 border-t border-border pt-5"
-            @submit.prevent="onSaveVitaminDSchedule"
-          >
-            <div>
+            <div class="border-t border-border pt-4">
               <div class="flex items-center justify-between gap-3">
                 <span class="field-label mb-0">{{
                   t('dashboard.babySettings.vitaminD.title')
@@ -2641,40 +2625,44 @@ const sleepPredictionDue = computed(() => {
               </p>
             </div>
 
-            <template v-if="vitaminDEnabled">
-              <div class="flex gap-3">
-                <div class="flex-1">
-                  <label for="vitamin-d-start" class="field-label">{{
-                    t('dashboard.babySettings.vitaminD.startDateLabel')
-                  }}</label>
-                  <input
-                    id="vitamin-d-start"
-                    v-model="vitaminDStartDate"
-                    type="date"
-                    class="field-input"
-                  />
-                </div>
-                <div class="flex-1">
-                  <label for="vitamin-d-end" class="field-label">{{
-                    t('dashboard.babySettings.vitaminD.endDateLabel')
-                  }}</label>
-                  <input
-                    id="vitamin-d-end"
-                    v-model="vitaminDEndDate"
-                    type="date"
-                    class="field-input"
-                  />
-                </div>
+            <div v-if="vitaminDEnabled" class="flex gap-3">
+              <div class="flex-1">
+                <label for="vitamin-d-start" class="field-label">{{
+                  t('dashboard.babySettings.vitaminD.startDateLabel')
+                }}</label>
+                <input
+                  id="vitamin-d-start"
+                  v-model="vitaminDStartDate"
+                  type="date"
+                  class="field-input"
+                />
               </div>
-            </template>
+              <div class="flex-1">
+                <label for="vitamin-d-end" class="field-label">{{
+                  t('dashboard.babySettings.vitaminD.endDateLabel')
+                }}</label>
+                <input
+                  id="vitamin-d-end"
+                  v-model="vitaminDEndDate"
+                  type="date"
+                  class="field-input"
+                />
+              </div>
+            </div>
 
-            <p v-if="vitaminDSaveError" role="alert" class="text-sm font-medium text-danger">
-              {{ vitaminDSaveError }}
-            </p>
-
-            <button v-press type="submit" :disabled="savingVitaminDSchedule" class="btn-primary">
-              {{ t('common.save') }}
-            </button>
+            <div class="mt-1 flex gap-3">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                v-press
+                type="submit"
+                :disabled="savingBabySettings"
+                class="btn-primary flex-1"
+              >
+                {{ t('common.save') }}
+              </button>
+            </div>
           </form>
 
           <div class="mt-6 flex flex-col gap-3 border-t border-border pt-5">

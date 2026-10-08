@@ -226,6 +226,8 @@ export default {
     },
     heatmap: {
       title: 'Activity map',
+      subtitle:
+        'When feeds, diaper changes, and sleep tend to happen most during the week, so you can spot patterns by day and hour.',
       hint: 'Tap a cell to see the detail',
       cellLabel: '{day}, {hour}:00 · {count} events',
     },

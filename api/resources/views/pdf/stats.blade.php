@@ -43,6 +43,7 @@
         h2.sleep { border-left-color: #5b5a8c; }
         h2.diaper { border-left-color: #6e9080; }
         h2.growth { border-left-color: #a65a6b; }
+        h2.trend { border-left-color: #2f6e68; }
 
         .empty { color: #a3968a; font-style: italic; margin: 0 0 10px; }
 
@@ -321,6 +322,37 @@
             'labels' => $hourBucketLabels,
             'format' => fn ($value) => (string) (int) round($value),
         ])
+    @endif
+
+    {{-- Comparativa semanal - última semana completa frente a la anterior
+         (ver summarizeWeekComparison() en lib/stats.ts); null con menos de
+         dos semanas completas con dato. --}}
+    @if ($weekComparison !== null)
+        <h2 class="trend">Esta semana frente a la anterior</h2>
+        <table class="stats-bar">
+            <tr>
+                @if ($weekComparison['sleep_hours'] !== null)
+                    <td style="width: 33%;">
+                        <span class="stats-label">Sueño</span>
+                        <span class="stats-value">
+                            {{ $weekComparison['sleep_hours']['delta'] > 0 ? '+' : '' }}{{ number_format($weekComparison['sleep_hours']['delta'], 1) }}h
+                        </span>
+                    </td>
+                @endif
+                <td style="width: 33%;">
+                    <span class="stats-label">Tomas</span>
+                    <span class="stats-value">
+                        {{ $weekComparison['feed_count']['delta'] > 0 ? '+' : '' }}{{ (int) round($weekComparison['feed_count']['delta']) }}
+                    </span>
+                </td>
+                <td style="width: 33%;">
+                    <span class="stats-label">Pañales</span>
+                    <span class="stats-value">
+                        {{ $weekComparison['diaper_count']['delta'] > 0 ? '+' : '' }}{{ (int) round($weekComparison['diaper_count']['delta']) }}
+                    </span>
+                </td>
+            </tr>
+        </table>
     @endif
 
     {{-- Crecimiento --}}

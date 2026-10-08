@@ -227,6 +227,8 @@ export default {
     },
     heatmap: {
       title: 'Mapa de actividad',
+      subtitle:
+        'Cuándo suele haber más tomas, cambios de pañal y sueño a lo largo de la semana, para detectar patrones por día y hora.',
       hint: 'Toca una celda para ver el detalle',
       cellLabel: '{day}, {hour}:00 · {count} eventos',
     },

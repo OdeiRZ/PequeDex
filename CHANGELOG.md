@@ -48,7 +48,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   Las dos únicas piezas sin equivalente en el PDF exportado (el
   gráfico de tendencia y el mapa de actividad no tienen una forma
   razonable de dibujarse en dompdf, a diferencia de las fichas
-  numéricas de arriba, que sí se exportan) - pantalla únicamente.
+  numéricas de arriba, que sí se exportan) - pantalla únicamente. La
+  comparativa "esta semana frente a la anterior" sí se exporta (ver
+  más abajo).
+- **Comparativa semanal también en el PDF de "Estadísticas"**
+  (`week_comparison` en el payload de exportación, nueva sección
+  "Esta semana frente a la anterior" en `pdf/stats.blade.php`) -
+  faltaba desde que se introdujo la tendencia semanal; las 3 fichas
+  (sueño/tomas/pañales) también pasan a ocupar todo el ancho de la
+  tarjeta en pantalla (antes, pequeñas y apretadas en 3 columnas).
+- **Subtítulo explicativo en "Mapa de actividad"** - una frase corta
+  bajo el título aclarando qué muestra el mapa (cuándo suele haber más
+  tomas/pañales/sueño por día y hora), tras detectar que no quedaba
+  claro solo con el título y la pista de "toca una celda".
 - **"Horarios habituales" en "Estadísticas"** - la fase pendiente desde
   que se creó la sección ("horarios normativos", anotado en su momento
   como "para después"): hora de reloj típica a la que el bebé se
@@ -161,6 +173,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Comparativa semanal de "Estadísticas" siempre salía en negativo
+  en tomas y pañales** - comparaba la semana EN CURSO (todavía sin
+  terminar, con menos días transcurridos que una completa) contra la
+  semana anterior completa, así que casi siempre parecía "bajar"
+  aunque no hubiera cambiado nada de verdad. Nueva
+  `summarizeWeekComparison()` en `lib/stats.ts` (sustituye el
+  `computed` que vivía suelto en `StatsView.vue`) compara solo
+  semanas YA completas (la del domingo ya pasado) contra la anterior
+  a esa, nunca la que sigue en marcha.
 - **Sonido `download` (al pulsar "Descargar PDF" en Estadísticas y
   Contracciones), tercer intento** - ni el barrido descendente + golpe
   grave original (apagado) ni las dos notas discretas bajando que lo

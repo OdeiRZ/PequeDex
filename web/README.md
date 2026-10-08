@@ -1508,9 +1508,16 @@ cada una):
   no una media puntual; una semana con poco dato se ve más baja/vacía
   en el propio gráfico, eso ya es información (mismo criterio que el
   gráfico de Crecimiento). Una comparativa "esta semana frente a la
-  anterior" (`weekComparison`, calculado en `StatsView.vue` a partir
-  de los dos últimos puntos de la tendencia, no una función aparte en
-  `lib/stats.ts`) con flecha de color según suba o baje.
+  anterior" (`summarizeWeekComparison()` en `lib/stats.ts`, 3 fichas a
+  todo el ancho de la tarjeta - sueño, tomas y pañales) compara solo
+  semanas ISO YA COMPLETAS (la del domingo ya pasado) contra la
+  anterior a esa, nunca la semana en curso: compararla contra una
+  semana completa habría salido casi siempre "a la baja" solo por
+  tener menos días transcurridos, no porque el patrón real hubiera
+  cambiado (bug real, corregido tras un reporte - la versión anterior
+  sí comparaba contra la semana en curso y las tomas/pañales de la
+  semana salían en negativo sistemáticamente). `null` con menos de dos
+  semanas completas con dato.
 - **Mapa de actividad semanal** (`summarizeActivityHeatmap()`) -
   rejilla 7×24 con la densidad combinada de toma+sueño+pañal,
   `ActivityHeatmap.vue`. Siempre devuelve las 168 celdas (una por
@@ -1525,12 +1532,20 @@ cada una):
   (2024-01-01, un lunes de verdad, nunca mostrada) en vez de una
   tabla de traducciones a mano.
 
-Ninguna de las dos últimas (tendencia semanal, mapa de actividad)
-tiene equivalente en el PDF exportado - un gráfico de líneas/barras o
+El gráfico de barras de tendencia semanal y el mapa de actividad no
+tienen equivalente en el PDF exportado - un gráfico de líneas/barras o
 una rejilla 7×24 no tienen una forma razonable de dibujarse en una
 plantilla dompdf, a diferencia de las fichas numéricas de arriba (día/
 noche, récord, regularidad, mojados/día, velocidad de crecimiento),
-que sí se exportan.
+que sí se exportan. La comparativa "esta semana frente a la anterior"
+sí se exporta, como una sección propia (`week_comparison` en
+`buildStatsExportPayload()`).
+
+Bajo el título de "Mapa de actividad" hay un subtítulo corto que
+explica qué muestra la rejilla (cuándo suele haber más tomas/pañales/
+sueño por día y hora) - sin él, el título solo más la pista "toca una
+celda" no dejaba claro para qué sirve a un cuidador que lo ve por
+primera vez.
 
 ## Despliegue
 

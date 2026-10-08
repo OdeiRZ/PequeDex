@@ -659,6 +659,56 @@ export function summarizeWeeklyTrend(
     }))
 }
 
+export interface WeekComparisonMetric {
+  current: number
+  delta: number
+}
+
+export interface WeekComparison {
+  weekStart: string
+  sleepHours: WeekComparisonMetric | null
+  feedCount: WeekComparisonMetric
+  diaperCount: WeekComparisonMetric
+}
+
+// "Esta semana frente a la anterior" - comparar la semana EN CURSO
+// (todavía sin terminar, con menos días transcurridos que una semana
+// completa) contra la anterior casi siempre saldría "a la baja" solo
+// por el calendario, no porque nada haya cambiado de verdad (un
+// martes, la semana en curso lleva 2 días de tomas frente a los 7 de
+// la semana completa anterior). Se compara la ÚLTIMA SEMANA YA
+// COMPLETA (su domingo ya pasado) contra la anterior a esa, nunca la
+// que todavía está en marcha.
+export function summarizeWeekComparison(
+  trend: WeeklyTrendPoint[],
+  now: Date = new Date(),
+): WeekComparison | null {
+  const complete = trend.filter((w) => {
+    const sunday = new Date(`${w.weekStart}T00:00:00`)
+    sunday.setDate(sunday.getDate() + 6)
+    sunday.setHours(23, 59, 59, 999)
+    return sunday.getTime() < now.getTime()
+  })
+
+  if (complete.length < 2) return null
+
+  const current = complete[complete.length - 1] as WeeklyTrendPoint
+  const previous = complete[complete.length - 2] as WeeklyTrendPoint
+
+  return {
+    weekStart: current.weekStart,
+    sleepHours:
+      current.sleepHours !== null && previous.sleepHours !== null
+        ? { current: current.sleepHours, delta: current.sleepHours - previous.sleepHours }
+        : null,
+    feedCount: { current: current.feedCount, delta: current.feedCount - previous.feedCount },
+    diaperCount: {
+      current: current.diaperCount,
+      delta: current.diaperCount - previous.diaperCount,
+    },
+  }
+}
+
 export interface HeatmapCell {
   /** 0=lunes .. 6=domingo - mismo criterio de "la semana empieza en
    * lunes" que `mondayOf()` de arriba, no el 0=domingo nativo de
@@ -748,6 +798,11 @@ export interface StatsExportPayload {
     height_cm: GrowthMetricExportStat
     head_circumference_cm: GrowthMetricExportStat
   }
+  week_comparison: {
+    sleep_hours: { current: number; delta: number } | null
+    feed_count: { current: number; delta: number }
+    diaper_count: { current: number; delta: number }
+  } | null
 }
 
 interface GrowthMetricExportStat {
@@ -775,6 +830,7 @@ export function buildStatsExportPayload(
   feed: FeedStats,
   diaper: DiaperStats,
   growth: GrowthStats,
+  weekComparison: WeekComparison | null = null,
 ): StatsExportPayload {
   return {
     sleep: {
@@ -817,5 +873,12 @@ export function buildStatsExportPayload(
       height_cm: exportGrowthMetric(growth.heightCm),
       head_circumference_cm: exportGrowthMetric(growth.headCircumferenceCm),
     },
+    week_comparison: weekComparison
+      ? {
+          sleep_hours: weekComparison.sleepHours,
+          feed_count: weekComparison.feedCount,
+          diaper_count: weekComparison.diaperCount,
+        }
+      : null,
   }
 }

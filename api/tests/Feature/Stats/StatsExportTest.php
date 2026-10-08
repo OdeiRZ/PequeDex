@@ -73,6 +73,11 @@ function validStatsPayload(): array
             'height_cm' => $emptyGrowthMetric,
             'head_circumference_cm' => $emptyGrowthMetric,
         ],
+        'week_comparison' => [
+            'sleep_hours' => ['current' => 52.0, 'delta' => 3.5],
+            'feed_count' => ['current' => 48, 'delta' => -2],
+            'diaper_count' => ['current' => 40, 'delta' => 1],
+        ],
     ];
 }
 
@@ -128,6 +133,7 @@ it('accepts null typical-time and day/night fields - below the sample threshold,
     $payload['sleep']['longest_sleep'] = null;
     $payload['feed']['gap_std_dev_minutes'] = null;
     $payload['diaper']['average_wet_per_day'] = null;
+    $payload['week_comparison'] = null;
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
 });
@@ -203,6 +209,18 @@ it('passes the baby and sleep/feed/diaper sections through unchanged', function 
     expect($data['sleep'])->toBe($payload['sleep']);
     expect($data['feed'])->toBe($payload['feed']);
     expect($data['diaper'])->toBe($payload['diaper']);
+    expect($data['weekComparison'])->toBe($payload['week_comparison']);
+});
+
+it('defaults weekComparison to null when the payload omits it', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+    $payload = validStatsPayload();
+    $payload['week_comparison'] = null;
+
+    $data = app(StatsExportController::class)->buildViewData($baby, $payload);
+
+    expect($data['weekComparison'])->toBeNull();
 });
 
 it('headlines the baby age in days while under one month old', function () {

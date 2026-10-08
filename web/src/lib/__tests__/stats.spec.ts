@@ -5,8 +5,10 @@ import {
   summarizeDiaperStats,
   summarizeGrowthStats,
   summarizeWeeklyTrend,
+  summarizeWeekComparison,
   summarizeActivityHeatmap,
   formatClockTime,
+  type WeeklyTrendPoint,
 } from '@/lib/stats'
 import type { DiaperChange, Feed, GrowthMeasurement, Sleep } from '@/stores/babies'
 
@@ -489,6 +491,66 @@ describe('summarizeWeeklyTrend', () => {
       [],
     )
     expect(result[0]?.sleepHours).toBe(4)
+  })
+})
+
+// 2026-07-27, 2026-08-03 y 2026-08-10 son los tres lunes consecutivos
+// usados también en `summarizeWeeklyTrend` arriba.
+describe('summarizeWeekComparison', () => {
+  function point(weekStart: string, overrides: Partial<WeeklyTrendPoint> = {}): WeeklyTrendPoint {
+    return { weekStart, sleepHours: null, feedCount: 0, diaperCount: 0, ...overrides }
+  }
+
+  it('returns null with fewer than two COMPLETE weeks, even with 2+ weeks of raw data', () => {
+    // Solo 2026-07-27 está completa (su domingo, 08-02, ya pasó); la
+    // semana del 08-03 todavía no ha terminado el 2026-08-05.
+    const trend = [point('2026-07-27'), point('2026-08-03')]
+    expect(summarizeWeekComparison(trend, new Date(local(2026, 8, 5, 12)))).toBeNull()
+  })
+
+  it('bug regression: never compares the in-progress current week against a complete one', () => {
+    // Antes del fix, con "hoy" a mitad de la semana del 08-10 (solo 3
+    // días de dato todavía), el código viejo comparaba esa semana
+    // incompleta contra la del 08-03 (completa, 7 días) y siempre salía
+    // en negativo aunque no hubiera bajado nada de verdad.
+    const trend = [
+      point('2026-07-27', { feedCount: 20, diaperCount: 15 }),
+      point('2026-08-03', { feedCount: 25, diaperCount: 18 }),
+      point('2026-08-10', { feedCount: 6, diaperCount: 4 }), // en curso, pocos días
+    ]
+
+    const result = summarizeWeekComparison(trend, new Date(local(2026, 8, 12, 9)))
+
+    expect(result?.weekStart).toBe('2026-08-03')
+    expect(result?.feedCount).toEqual({ current: 25, delta: 5 })
+    expect(result?.diaperCount).toEqual({ current: 18, delta: 3 })
+  })
+
+  it('compares the two most recent complete weeks once both have fully passed', () => {
+    const trend = [
+      point('2026-07-27', { sleepHours: 50, feedCount: 20, diaperCount: 15 }),
+      point('2026-08-03', { sleepHours: 54, feedCount: 18, diaperCount: 16 }),
+    ]
+
+    const result = summarizeWeekComparison(trend, new Date(local(2026, 8, 10, 0)))
+
+    expect(result).toEqual({
+      weekStart: '2026-08-03',
+      sleepHours: { current: 54, delta: 4 },
+      feedCount: { current: 18, delta: -2 },
+      diaperCount: { current: 16, delta: 1 },
+    })
+  })
+
+  it('returns null sleepHours when either complete week has no sleep data', () => {
+    const trend = [
+      point('2026-07-27', { sleepHours: null, feedCount: 10, diaperCount: 10 }),
+      point('2026-08-03', { sleepHours: 40, feedCount: 12, diaperCount: 11 }),
+    ]
+
+    const result = summarizeWeekComparison(trend, new Date(local(2026, 8, 10, 0)))
+
+    expect(result?.sleepHours).toBeNull()
   })
 })
 

@@ -16,6 +16,7 @@ import {
   summarizeDiaperStats,
   summarizeGrowthStats,
   summarizeWeeklyTrend,
+  summarizeWeekComparison,
   summarizeActivityHeatmap,
   buildStatsExportPayload,
   formatClockTime,
@@ -91,35 +92,7 @@ function formatHours(value: number): string {
   return `${value}h`
 }
 
-// Compara las dos últimas semanas con datos (no necesariamente las dos
-// últimas del calendario - si la semana en curso todavía no tiene
-// nada, compararla contra la anterior solo diría "0 frente a X", ruido
-// en vez de contexto real). `null` con menos de dos semanas con dato.
-interface WeekDelta {
-  sleepHours: { current: number; delta: number } | null
-  feedCount: { current: number; delta: number }
-  diaperCount: { current: number; delta: number }
-}
-
-const weekComparison = computed<WeekDelta | null>(() => {
-  const weeks = weeklyTrend.value
-  if (weeks.length < 2) return null
-  const current = weeks[weeks.length - 1]
-  const previous = weeks[weeks.length - 2]
-  if (!current || !previous) return null
-
-  return {
-    sleepHours:
-      current.sleepHours !== null && previous.sleepHours !== null
-        ? { current: current.sleepHours, delta: current.sleepHours - previous.sleepHours }
-        : null,
-    feedCount: { current: current.feedCount, delta: current.feedCount - previous.feedCount },
-    diaperCount: {
-      current: current.diaperCount,
-      delta: current.diaperCount - previous.diaperCount,
-    },
-  }
-})
+const weekComparison = computed(() => summarizeWeekComparison(weeklyTrend.value))
 
 function formatDelta(delta: number, decimals = 0): string {
   const rounded = Math.abs(delta) < 0.05 ? 0 : delta
@@ -251,6 +224,7 @@ async function onExportPdf() {
       feedStats.value,
       diaperStats.value,
       growthStats.value,
+      weekComparison.value,
     )
     const blob = await babies.exportStatsPdf(payload)
     const url = URL.createObjectURL(blob)
@@ -706,39 +680,39 @@ async function onExportPdf() {
           {{ t('stats.trend.title') }}
         </h2>
 
-        <div v-if="weekComparison" class="grid grid-cols-3 gap-2 text-center">
+        <div v-if="weekComparison" class="grid grid-cols-3 gap-3 text-center">
           <div
             v-if="weekComparison.sleepHours && enabledCategories.includes('sleep')"
-            class="rounded-xl bg-surface-sunken p-2"
+            class="rounded-xl bg-surface-sunken p-3"
           >
-            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
+            <div class="text-xs text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
             <div
-              class="text-sm font-bold tabular-nums"
+              class="text-lg font-bold tabular-nums"
               :class="weekComparison.sleepHours.delta >= 0 ? 'text-sleep' : 'text-text-muted'"
             >
               {{ formatDelta(weekComparison.sleepHours.delta, 1) }}h
             </div>
           </div>
-          <div v-if="enabledCategories.includes('feed')" class="rounded-xl bg-surface-sunken p-2">
-            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
+          <div v-if="enabledCategories.includes('feed')" class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
             <div
-              class="text-sm font-bold tabular-nums"
+              class="text-lg font-bold tabular-nums"
               :class="weekComparison.feedCount.delta >= 0 ? 'text-feed' : 'text-text-muted'"
             >
               {{ formatDelta(weekComparison.feedCount.delta) }}
             </div>
           </div>
-          <div v-if="enabledCategories.includes('diaper')" class="rounded-xl bg-surface-sunken p-2">
-            <div class="text-[0.65rem] text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
+          <div v-if="enabledCategories.includes('diaper')" class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
             <div
-              class="text-sm font-bold tabular-nums"
+              class="text-lg font-bold tabular-nums"
               :class="weekComparison.diaperCount.delta >= 0 ? 'text-diaper' : 'text-text-muted'"
             >
               {{ formatDelta(weekComparison.diaperCount.delta) }}
             </div>
           </div>
         </div>
-        <p v-if="weekComparison" class="-mt-2 text-center text-[0.65rem] text-text-muted">
+        <p v-if="weekComparison" class="-mt-1 text-center text-xs text-text-muted">
           {{ t('stats.trend.comparisonHint') }}
         </p>
 
@@ -786,6 +760,7 @@ async function onExportPdf() {
           ></span>
           {{ t('stats.heatmap.title') }}
         </h2>
+        <p class="-mt-2 text-xs text-text-muted">{{ t('stats.heatmap.subtitle') }}</p>
         <ActivityHeatmap :cells="activityHeatmap" :date-locale="dateLocale" />
       </section>
     </template>

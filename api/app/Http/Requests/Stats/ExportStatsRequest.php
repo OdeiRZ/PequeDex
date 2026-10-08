@@ -89,6 +89,21 @@ class ExportStatsRequest extends FormRequest
             ...$this->growthMetricRules('growth.weight_kg'),
             ...$this->growthMetricRules('growth.height_cm'),
             ...$this->growthMetricRules('growth.head_circumference_cm'),
+
+            // "Esta semana completa frente a la anterior" - `nullable`
+            // en el propio array: con menos de dos semanas completas
+            // con dato (ver `summarizeWeekComparison()` en
+            // `lib/stats.ts`) no hay comparación que mostrar.
+            'week_comparison' => ['nullable', 'array'],
+            'week_comparison.sleep_hours' => ['nullable', 'array'],
+            'week_comparison.sleep_hours.current' => ['required_with:week_comparison.sleep_hours', 'numeric'],
+            'week_comparison.sleep_hours.delta' => ['required_with:week_comparison.sleep_hours', 'numeric'],
+            'week_comparison.feed_count' => ['required_with:week_comparison', 'array'],
+            'week_comparison.feed_count.current' => ['required_with:week_comparison', 'integer', 'min:0'],
+            'week_comparison.feed_count.delta' => ['required_with:week_comparison', 'numeric'],
+            'week_comparison.diaper_count' => ['required_with:week_comparison', 'array'],
+            'week_comparison.diaper_count.current' => ['required_with:week_comparison', 'integer', 'min:0'],
+            'week_comparison.diaper_count.delta' => ['required_with:week_comparison', 'numeric'],
         ];
     }
 

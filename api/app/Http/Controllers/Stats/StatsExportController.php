@@ -43,6 +43,7 @@ class StatsExportController extends Controller
             'sleep' => $data['sleep'],
             'feed' => $data['feed'],
             'diaper' => $data['diaper'],
+            'weekComparison' => $data['week_comparison'] ?? null,
             'growthMetrics' => [
                 ['label' => 'Peso', 'unit' => 'kg', 'decimals' => 1, 'stat' => $data['growth']['weight_kg']],
                 ['label' => 'Talla', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['height_cm']],

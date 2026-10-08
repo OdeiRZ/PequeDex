@@ -176,23 +176,25 @@ onUnmounted(() => {
 <template>
   <div
     v-if="stats.length > 0"
-    class="grid gap-2.5"
+    class="grid gap-2"
     :style="{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }"
   >
     <div
       v-for="stat in stats"
       :key="stat.category"
-      class="card-interactive flex min-w-0 items-center gap-2.5 rounded-2xl p-3"
+      class="card-interactive flex min-w-0 items-center gap-1.5 rounded-2xl p-2.5"
       :class="[categorySolidBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
     >
-      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/25 text-white">
-        <CategoryIcon :category="stat.category" class="h-[1.05rem] w-[1.05rem]" />
+      <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25 text-white">
+        <CategoryIcon :category="stat.category" class="h-[0.9rem] w-[0.9rem]" />
       </span>
       <div class="min-w-0 leading-tight text-white">
-        <div class="font-display text-xl font-bold tabular-nums">
+        <div class="font-display text-lg font-bold tabular-nums">
           {{ displayValue[stat.category] ?? stat.value }}
         </div>
-        <div class="truncate text-[0.68rem] font-semibold text-white/85">{{ stat.label }}</div>
+        <div class="whitespace-normal text-[0.63rem] font-semibold leading-tight text-white/85">
+          {{ stat.label }}
+        </div>
       </div>
     </div>
   </div>

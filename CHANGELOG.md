@@ -237,6 +237,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Las tarjetas resumen del día (`TodaySummary.vue`) cortaban la
+  etiqueta con "..." en móviles normales (~360px)** - "de sueño" y
+  "pañales" no cabían junto al icono y el número con el tamaño
+  anterior cuando las 3 tarjetas (tomas/sueño/pañales) se mostraban a
+  la vez. Icono, padding y separación reducidos, y la etiqueta ya no
+  lleva `truncate` (envuelve a dos líneas si hace falta en vez de
+  cortarse).
+
 - **"Sueño esta semana" del Dashboard (`WeeklySleep.vue`) no se
   actualizaba al registrar/editar/borrar una siesta**, solo al recargar
   la página entera - lee `babies.recentSleeps`, que únicamente

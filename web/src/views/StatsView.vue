@@ -680,10 +680,10 @@ async function onExportPdf() {
           {{ t('stats.trend.title') }}
         </h2>
 
-        <div v-if="weekComparison" class="grid grid-cols-3 gap-3 text-center">
+        <div v-if="weekComparison" class="flex gap-3 text-center">
           <div
             v-if="weekComparison.sleepHours && enabledCategories.includes('sleep')"
-            class="rounded-xl bg-surface-sunken p-3"
+            class="flex-1 rounded-xl bg-surface-sunken p-3"
           >
             <div class="text-xs text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
             <div
@@ -693,7 +693,10 @@ async function onExportPdf() {
               {{ formatDelta(weekComparison.sleepHours.delta, 1) }}h
             </div>
           </div>
-          <div v-if="enabledCategories.includes('feed')" class="rounded-xl bg-surface-sunken p-3">
+          <div
+            v-if="enabledCategories.includes('feed')"
+            class="flex-1 rounded-xl bg-surface-sunken p-3"
+          >
             <div class="text-xs text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
             <div
               class="text-lg font-bold tabular-nums"
@@ -702,7 +705,10 @@ async function onExportPdf() {
               {{ formatDelta(weekComparison.feedCount.delta) }}
             </div>
           </div>
-          <div v-if="enabledCategories.includes('diaper')" class="rounded-xl bg-surface-sunken p-3">
+          <div
+            v-if="enabledCategories.includes('diaper')"
+            class="flex-1 rounded-xl bg-surface-sunken p-3"
+          >
             <div class="text-xs text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
             <div
               class="text-lg font-bold tabular-nums"

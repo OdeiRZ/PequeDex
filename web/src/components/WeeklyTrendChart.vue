@@ -30,15 +30,19 @@ function barHeightPercent(value: number | null): number {
 
 <template>
   <template v-if="hasData">
-    <!-- Scroll horizontal, no recorte de barras - a diferencia de las
-         4 franjas horarias (siempre caben), el número de semanas
-         crece con el historial real del bebé y no tiene un tope fijo
-         razonable. -->
+    <!-- Cada barra tiene un ancho mínimo (`min-w-9`) pero crece
+         (`flex-1`) para repartirse el hueco sobrante cuando hay pocas
+         semanas, en vez de dejarlas apelotonadas a la izquierda. Con
+         más semanas de las que caben a ese ancho mínimo, el navegador
+         ya no puede encogerlas más y aparece el scroll horizontal -
+         a diferencia de las 4 franjas horarias (siempre caben), el
+         número de semanas crece con el historial real del bebé y no
+         tiene un tope fijo razonable. -->
     <div class="flex h-20 items-end gap-2 overflow-x-auto pb-1">
       <div
         v-for="(point, index) in points"
         :key="point.label + index"
-        class="flex h-full w-9 shrink-0 flex-col items-center justify-end gap-1"
+        class="flex h-full w-9 min-w-9 flex-1 flex-col items-center justify-end gap-1"
       >
         <span class="text-[0.6rem] tabular-nums text-text-muted">
           {{ point.value !== null && point.value > 0 ? formatValue(point.value) : '' }}

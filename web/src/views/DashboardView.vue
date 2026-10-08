@@ -1044,9 +1044,15 @@ async function onToggleVitaminDDose(date: string, given: boolean) {
 
 const vitaminDRecentDosesByDate = computed(() => {
   const byDate = new Map(babies.vitaminDRecentDoses.map((d) => [d.date, d.given]))
+  const startDate = babies.vitaminDSchedule?.start_date ?? todayDateOnlyString()
   const days: { date: string; given: boolean | null }[] = []
+  // At most 14 days back, but never further than start_date - a pauta
+  // active for less than 14 days shouldn't list days before it began
+  // (marking one would fail validation anyway, and it read as an
+  // unbounded list with no visible stopping point).
   for (let i = 0; i < 14; i++) {
     const date = addDays(todayDateOnlyString(), -i)
+    if (date < startDate) break
     days.push({ date, given: byDate.get(date) ?? null })
   }
   return days

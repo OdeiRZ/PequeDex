@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Baby extends Model
 {
@@ -108,5 +109,21 @@ class Baby extends Model
     public function contractions(): HasMany
     {
         return $this->hasMany(Contraction::class);
+    }
+
+    /**
+     * @return HasOne<VitaminDSchedule, $this>
+     */
+    public function vitaminDSchedule(): HasOne
+    {
+        return $this->hasOne(VitaminDSchedule::class);
+    }
+
+    /**
+     * @return HasMany<VitaminDDose, $this>
+     */
+    public function vitaminDDoses(): HasMany
+    {
+        return $this->hasMany(VitaminDDose::class);
     }
 }

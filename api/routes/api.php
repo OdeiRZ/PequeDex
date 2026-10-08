@@ -15,6 +15,8 @@ use App\Http\Controllers\Milestones\MilestoneController;
 use App\Http\Controllers\Sleeps\SleepController;
 use App\Http\Controllers\Sleeps\SleepPredictionController;
 use App\Http\Controllers\Stats\StatsExportController;
+use App\Http\Controllers\VitaminD\VitaminDDoseController;
+use App\Http\Controllers\VitaminD\VitaminDScheduleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +87,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/{baby}/growth-measurements', [GrowthMeasurementController::class, 'store']);
     Route::put('/babies/{baby}/growth-measurements/{growthMeasurement}', [GrowthMeasurementController::class, 'update']);
     Route::delete('/babies/{baby}/growth-measurements/{growthMeasurement}', [GrowthMeasurementController::class, 'destroy']);
+
+    Route::get('/babies/{baby}/vitamin-d-schedule', [VitaminDScheduleController::class, 'show']);
+    Route::put('/babies/{baby}/vitamin-d-schedule', [VitaminDScheduleController::class, 'upsert']);
+    Route::get('/babies/{baby}/vitamin-d-doses', [VitaminDDoseController::class, 'index']);
+    Route::put('/babies/{baby}/vitamin-d-doses', [VitaminDDoseController::class, 'upsert']);
 
     Route::get('/babies/{baby}/milestones', [MilestoneController::class, 'index']);
     Route::post('/babies/{baby}/milestones', [MilestoneController::class, 'store']);

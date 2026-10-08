@@ -1331,6 +1331,44 @@ parpadeo del contenido viejo). Cada intervalo de sondeo en
 Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
 breve solape de montaje es inofensivo.
 
+## Recordatorio de vitamina D
+
+`VitaminDReminderCard.vue` + `composables/useVitaminDReminder.ts` - un
+aviso diario en el Dashboard para no olvidar la dosis que el pediatra
+indica dar hasta el año, por bebé (no un ajuste del usuario, como los
+toggles de perfil - cada bebé puede tener su propia pauta). El
+composable deriva un `cardState: 'pending' | 'confirmed' | 'hidden'`
+puro a partir de `babies.vitaminDSchedule`/`vitaminDRecentDoses`, sin
+tocar el DOM, para poder testearlo sin montar el componente:
+`hidden` si el ajuste está desactivado o la fecha de hoy cae fuera de
+`[start_date, end_date]` (al llegar `end_date` se oculta sola, sin
+aviso previo - el resultado final queda en Estadísticas); si no,
+`pending` u `confirmed` según si ya hay una dosis de hoy con
+`given:true`. `yesterdayAlsoMissing` refuerza el mensaje solo cuando
+la pauta ya estaba corriendo ayer también (una pauta activada hoy
+mismo no tiene "ayer" que haya podido fallar).
+
+Color de alerta: token nuevo `--warning` (`web/src/assets/base.css`,
+mismo patrón claro/oscuro que `--danger`) en vez de reutilizar
+`--danger` - `--danger` ya está cargado como "algo ha ido mal/acción
+destructiva" (botones de borrar), y un recordatorio de cuidado
+pendiente no debería leerse como un error. El estado `pending` entra
+con la transición `confirm-warn` ya existente (el mismo "shake" sutil
+que usan los paneles de confirmación de borrado) cuando además
+`yesterdayAlsoMissing` es verdadero - un pequeño énfasis extra para el
+caso que de verdad importa recordar.
+
+La activación y la corrección retroactiva de los últimos 14 días viven
+en la propia hoja de "Ajustes del bebé" (`DashboardView.vue`, sección
+nueva dentro del `BottomSheet` ya existente de sexo/fecha de
+nacimiento) - al activar por primera vez, `start_date`/`end_date` se
+precargan a hoy/+1 año (la pauta estándar), editables antes de
+guardar. El marcado de cada día es un simple `PUT
+/babies/{baby}/vitamin-d-doses` por fecha (upsert, no un recurso con
+id propio - la clave natural es `baby_id`+`date`), reutilizando
+`upsertByDate()` ya existente en `stores/babies.ts` para mantener
+`vitaminDRecentDoses`/`vitaminDAllDoses` ordenados sin refetch.
+
 ## Estadísticas (`/estadisticas`)
 
 Primera fase de una sección de analítica más amplia - "horarios
@@ -1463,7 +1501,13 @@ evento real, independiente, de "ya está listo y descargado". El botón
 de exportar de `ContractionsView.vue` (que nunca había llevado ni
 `v-press`) gana exactamente los mismos dos, en el mismo punto de su
 propio `onExportPdf()`. Ver "Sonido y vibración al interactuar" más
-abajo para el timbre de cada uno.
+abajo para el timbre de cada uno. `buildStatsExportPayload()` recibe
+el `VitaminDStats` de `summarizeVitaminDStats()` como 8º parámetro
+posicional opcional (con valor por defecto "sin pauta", para no romper
+las llamadas existentes) - ver "Recordatorio de vitamina D" más arriba
+para el resto de esa feature; un comentario junto a la función deja
+anotado que la próxima estadística exportable sí debería motivar el
+cambio a un objeto de opciones en vez de seguir acumulando posicionales.
 
 El PDF en sí (`api/resources/views/pdf/stats.blade.php`, ver
 `api/README.md` para el detalle completo) tiene cabecera con el mismo

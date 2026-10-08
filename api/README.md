@@ -503,7 +503,36 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   traslúcidos que sí lleva la tarjeta en pantalla (`position: absolute`
   dentro de un contenedor `position: relative`, recortados por el
   `border-radius` de la tarjeta) renderizan bien en esta versión de
-  dompdf - confirmado con la misma captura con Ghostscript.
+  dompdf - confirmado con la misma captura con Ghostscript. `vitamin_d`
+  (`has_schedule`/`given`/`total_days`, `required|array` - a diferencia
+  de `weekly_trend`/`activity_heatmap`, siempre llega relleno, nunca un
+  array vacío: `has_schedule:false` es el estado "nunca activado") se
+  añadió igual, sección propia en el PDF entre la comparativa semanal
+  y "Crecimiento" - ver `VitaminDScheduleController`/
+  `VitaminDDoseController` más abajo para el resto de la feature.
+- `app/Http/Controllers/VitaminD/VitaminDScheduleController.php` +
+  `VitaminDDoseController.php` — recordatorio diario de vitamina D,
+  por bebé (`PUT /babies/{baby}/vitamin-d-schedule`,
+  `GET`/`PUT /babies/{baby}/vitamin-d-doses`). Dos tablas separadas en
+  vez de una, mismo criterio que `growth_measurements`/`milestones`:
+  `baby_vitamin_d_schedules` es la configuración vigente, una fila por
+  bebé (`baby_id` `unique()`, reutilizada vía `updateOrCreate()` al
+  reactivar/reeditar en vez de crear una nueva fila), mientras que
+  `baby_vitamin_d_doses` es el histórico real, `unique(['baby_id',
+  'date'])` como clave natural - marcar o corregir un día es el mismo
+  `updateOrCreate()`, nunca una fila duplicada. El histórico nunca se
+  borra, ni al desactivar el recordatorio ni al pasar `end_date`: es
+  lo que luego lee `summarizeVitaminDStats()` en el frontend para la
+  sección "Vitamina D" de Estadísticas/PDF, incluso de una pauta ya
+  terminada. `VitaminDScheduleController::show()` devuelve también
+  `recent_doses` (últimos 14 días embebidos en la misma respuesta,
+  para que el editor retroactivo del Dashboard no tenga que pedir cada
+  día suelto); `GET /vitamin-d-doses` (sin el recorte) es solo para
+  Estadísticas, que necesita el histórico completo para calcular
+  "dadas/días transcurridos". `UpsertVitaminDDoseRequest` valida en
+  `withValidator()` (no una regla de cadena simple) que exista una
+  pauta activa y que la fecha no sea anterior a `start_date` -
+  depende del propio `Baby` de la ruta, no de otro campo del payload.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

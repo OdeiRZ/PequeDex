@@ -9,6 +9,34 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Recordatorio diario de vitamina D, por bebé** - a petición de Odei
+  tras la indicación del pediatra de dar una dosis diaria hasta el año.
+  - Backend: dos tablas nuevas siguiendo el mismo patrón que
+    `growth_measurements`/`milestones` - `baby_vitamin_d_schedules`
+    (una fila por bebé, `enabled`+`start_date`+`end_date`, reutilizada
+    al reactivar en vez de crear una nueva) y `baby_vitamin_d_doses`
+    (histórico real, una fila por día marcado, nunca se borra - es lo
+    que alimenta la estadística aunque la pauta ya haya terminado).
+    Rutas nuevas bajo `/babies/{baby}/vitamin-d-schedule` y
+    `/vitamin-d-doses` (`VitaminDScheduleController`/
+    `VitaminDDoseController`), mismo `AuthorizesBabyAccess` que el
+    resto de recursos por bebé.
+  - Dashboard: tarjeta `VitaminDReminderCard.vue` en 3 estados -
+    **pendiente** (destacada con el token de color nuevo `--warning`,
+    distinto de `--danger` para no leerse como un error; menciona
+    explícitamente si ayer tampoco se marcó), **confirmada** (estilo
+    tranquilo, sigue visible para evitar una segunda dosis por
+    despiste) y **oculta** (ajuste desactivado o fuera del rango de
+    fechas - al llegar `end_date` se oculta sola sin aviso previo).
+    Activación y corrección retroactiva de los últimos 14 días desde
+    la propia hoja de "Ajustes del bebé".
+  - Estadísticas: nueva sección "Vitamina D" con "dadas/días
+    transcurridos desde el inicio" (`summarizeVitaminDStats()` en
+    `lib/stats.ts`), incluida también en el PDF exportado
+    (`buildStatsExportPayload()` gana un 8º parámetro opcional, mismo
+    patrón posicional que `weekComparison`/`weeklyTrend`/
+    `activityHeatmap`).
+
 - **Siete estadísticas nuevas en "Estadísticas"**, sustituyendo las dos
   fichas de "primera/última toma del día" (poco útiles de verdad - decían
   "a qué hora" pero no "qué tan bien" ni "cómo evoluciona"):

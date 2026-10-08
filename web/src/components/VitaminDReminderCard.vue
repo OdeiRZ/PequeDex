@@ -58,7 +58,7 @@ async function onUndo() {
           <path d="m8.5 8.5 7 7" />
         </svg>
       </span>
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 max-w-[11.5rem]">
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.title') }}</div>
         <div class="text-xs text-text-muted">
           {{
@@ -77,7 +77,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="ml-auto shrink-0 rounded-xl bg-warning px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+        class="shrink-0 rounded-xl bg-warning px-3 py-2 text-sm font-bold text-white disabled:opacity-60"
         :disabled="saving"
         @click="onMarkGiven"
       >

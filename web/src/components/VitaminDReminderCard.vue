@@ -102,7 +102,7 @@ async function onUndo() {
           <path d="M20 6L9 17l-5-5" />
         </svg>
       </span>
-      <div class="min-w-0 max-w-[11.5rem]">
+      <div class="min-w-0 max-w-[16.5rem]">
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
         <button
           type="button"

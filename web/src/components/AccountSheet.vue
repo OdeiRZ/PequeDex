@@ -577,34 +577,15 @@ watch(
          antes estaban partidos en dos grupos separados por los
          selectores de talla/duración de en medio, sin ningún motivo
          real para no estar juntos (mismo patrón de interacción los
-         7). Ordenados por qué controlan: primero los que deciden qué
-         se ve en el Dashboard (Hitos, Predicciones, Tarjetas resumen,
-         enlaces a Sonidos/Estadísticas - en ese orden, Hitos primero
-         porque "Barra de accesos" justo debajo depende de él), luego
-         los que cambian cómo se comporta la interacción (swipe para
-         borrar, sonido/vibración). -->
+         6 que quedan aquí - "Hitos" se mudó dentro de "Barra de
+         accesos" más abajo, ver el comentario de esa sección: no era
+         un ajuste genérico, era específico de esa otra sección).
+         Ordenados por qué controlan: primero los que deciden qué se
+         ve en el Dashboard (Predicciones, Tarjetas resumen, enlaces a
+         Sonidos/Estadísticas), luego los que cambian cómo se
+         comporta la interacción (swipe para borrar, sonido/
+         vibración). -->
     <div class="mt-6 flex items-start justify-between gap-4 border-t border-border pt-5">
-      <div>
-        <span class="field-label">{{ t('profile.milestonesEnabled.title') }}</span>
-        <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        :aria-checked="milestonesEnabled"
-        :aria-label="t('profile.milestonesEnabled.title')"
-        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
-        :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
-        @click="onToggleMilestones"
-      >
-        <span
-          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
-          :style="{ left: milestonesEnabled ? '22px' : '2px' }"
-        ></span>
-      </button>
-    </div>
-
-    <div class="mt-4 flex items-start justify-between gap-4">
       <div>
         <span class="field-label">{{ t('profile.predictions.title') }}</span>
         <p class="text-xs text-text-muted">{{ t('profile.predictions.description') }}</p>
@@ -730,15 +711,41 @@ watch(
       </button>
     </div>
 
-    <!-- Justo después de los interruptores que de verdad deciden qué
-         puede salir aquí (Hitos sobre todo - ver el filtro en
-         actionBarToggleOptions) en vez de antes, donde leerlo no
-         explicaba todavía por qué a veces faltaba un icono. -->
     <div class="mt-6 border-t border-border pt-5">
       <span class="field-label">{{ t('profile.actionBar.title') }}</span>
       <p class="mb-3 text-xs text-text-muted">
         {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
       </p>
+
+      <!-- "Hitos" vive aquí, no en el bloque de interruptores de
+           arriba - a diferencia de esos (Sonidos/Estadísticas
+           incluidos, que controlan una tarjeta de enlace aparte),
+           "hito" ya es una de las 5 categorías de esta misma selección;
+           este interruptor actúa por encima de ella (con los hitos
+           desactivados, el propio icono deja de ofrecerse abajo, no
+           solo queda sin marcar) - un ajuste de esta sección, no uno
+           genérico más de la lista. -->
+      <div class="mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface-sunken p-3">
+        <div>
+          <span class="text-sm font-semibold">{{ t('profile.milestonesEnabled.title') }}</span>
+          <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="milestonesEnabled"
+          :aria-label="t('profile.milestonesEnabled.title')"
+          class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+          :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+          @click="onToggleMilestones"
+        >
+          <span
+            class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+            :style="{ left: milestonesEnabled ? '22px' : '2px' }"
+          ></span>
+        </button>
+      </div>
+
       <div class="flex flex-wrap gap-3">
         <button
           v-for="option in actionBarToggleOptions"

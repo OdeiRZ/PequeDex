@@ -1100,20 +1100,32 @@ verse bien en una captura:
   `getBabyAge()` clasificaba antes ese segundo caso como "nacido, día
   0" en vez de "en camino".
 - **`WeeklySleep.vue`** — una barra por cada uno de los últimos 7 días
-  de calendario con las horas de sueño totales de ese día, justo bajo
-  el "Ritmo de hoy": ver el patrón de la semana de un vistazo, no solo
-  el día suelto. `src/lib/sleepHistory.ts` (con tests propios) hace el
-  reparto: un sueño que cruza la medianoche se cuenta en ambos días
-  proporcionalmente a lo que ocupó en cada uno, no entero en el día en
-  que empezó, y uno en curso se recorta a "ahora" en vez de extenderse
-  al resto del día. La altura de las barras se escala contra el propio
-  máximo de la semana (con un suelo de 8h) para que una semana
-  tranquila no salga toda "llena" contra un techo arbitrario.
-  `babies.fetchRecentSleeps()` pide solo una ventana de 9 días (no todo
-  el historial) vía el nuevo `?since=` de `SleepController::index` (ver
-  `api/README.md`) — 2 días de margen sobre los 7 que se muestran, para
-  que un sueño que cruza al primer día del gráfico no se quede cortado
-  en el propio límite de la petición.
+  de calendario con las horas de sueño totales de ese día. Vivía en el
+  Dashboard, justo bajo el "Ritmo de hoy"; se movió a Estadísticas
+  (sección "Sueño", ver más abajo) por duplicar casi del todo
+  "Tendencia semanal" mientras competía por espacio con el registro
+  rápido del día a día. `src/lib/sleepHistory.ts` (con tests propios)
+  hace el reparto: un sueño que cruza la medianoche se cuenta en ambos
+  días proporcionalmente a lo que ocupó en cada uno, no entero en el
+  día en que empezó, y uno en curso se recorta a "ahora" en vez de
+  extenderse al resto del día. La altura de las barras se escala contra
+  el propio máximo de la semana (con un suelo de 8h) para que una
+  semana tranquila no salga toda "llena" contra un techo arbitrario. El
+  componente en sí no cambió al moverlo - solo quién lo alimenta:
+  `babies.statsSleeps` (el histórico completo que `StatsView.vue` ya
+  tenía cargado) en vez de `babies.recentSleeps`, una ventana de 9 días
+  que existía solo para esto. Sin ningún otro consumidor,
+  `recentSleeps`/`fetchRecentSleeps()` y su sincronización en
+  `createSleep`/`updateSleep`/`deleteSleep` se eliminaron del store.
+  El export a PDF, que antes no incluía este bloque en absoluto, ahora
+  sí - `StatsView.vue` recalcula los mismos 7 días con
+  `summarizeSleepByDay(babies.statsSleeps, 7)` (la misma función pura
+  que usa el propio componente) y los manda como `dailySleep` en
+  `buildStatsExportPayload()`; el backend los etiqueta por día de la
+  semana (`CarbonImmutable::translatedFormat('D')`, "lun.") y
+  reutiliza el partial `weekly-trend-bars.blade.php` que ya pintaba
+  "Tendencia semanal" - mismo tipo de barra horizontal, sin necesidad
+  de un partial nuevo.
 - **Onboarding sin cuenta accesible** — un usuario recién registrado
   sin bebé todavía no tenía forma de cerrar sesión ni de abrir "Tu
   cuenta": ambos botones de `AppHeader.vue` exigían
@@ -1413,7 +1425,7 @@ endpoints que ya existían (`GET /babies/{id}/sleeps`, `/feeds`,
 `babies.fetchStatsData()` (nuevo, en `stores/babies.ts`) solo necesitó
 traer los tres en paralelo a tres arrays dedicados (`statsSleeps`/
 `statsFeeds`/`statsDiaperChanges`) - separados de `timeline`/
-`dayTimeline`/`recentSleeps` para no interferir con lo que ya leen esos.
+`dayTimeline` para no interferir con lo que ya leen esos.
 Agregar por franja horaria en el propio backend habría exigido que
 Laravel supiera la zona horaria real de quien mira la app, algo que no
 puede saber - el mismo motivo por el que `WeeklySleep.vue`/
@@ -1529,12 +1541,14 @@ de exportar de `ContractionsView.vue` (que nunca había llevado ni
 `v-press`) gana exactamente los mismos dos, en el mismo punto de su
 propio `onExportPdf()`. Ver "Sonido y vibración al interactuar" más
 abajo para el timbre de cada uno. `buildStatsExportPayload()` recibe
-el `VitaminDStats` de `summarizeVitaminDStats()` como 8º parámetro
-posicional opcional (con valor por defecto "sin pauta", para no romper
-las llamadas existentes) - ver "Recordatorio de vitamina D" más arriba
-para el resto de esa feature; un comentario junto a la función deja
-anotado que la próxima estadística exportable sí debería motivar el
-cambio a un objeto de opciones en vez de seguir acumulando posicionales.
+un objeto `StatsExportOptions` (`weekComparison`/`weeklyTrend`/
+`activityHeatmap`/`vitaminD`/`dailySleep`, todos opcionales con su
+propio valor por defecto) como único argumento tras los cuatro bloques
+siempre presentes (sueño/tomas/pañales/crecimiento) - sustituye a la
+cadena de hasta 8 parámetros posicionales que tenía antes; quedó
+anotado en el propio código que la siguiente estadística exportable
+(`dailySleep`, la gráfica de "Sueño esta semana" - ver más abajo) era
+el punto natural para hacer ese cambio, y así ha sido.
 
 El PDF en sí (`api/resources/views/pdf/stats.blade.php`, ver
 `api/README.md` para el detalle completo) tiene cabecera con el mismo

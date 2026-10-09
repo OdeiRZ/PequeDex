@@ -7,6 +7,27 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambiado
+
+- **"Sueño esta semana" movido del Dashboard a Estadísticas** - vivía
+  como tarjeta propia en la pantalla principal (`WeeklySleep.vue`),
+  pero "Tendencia semanal" en Estadísticas ya cubre prácticamente lo
+  mismo (sueño por semana), así que era contenido duplicado compitiendo
+  por espacio con el registro rápido del día a día. El componente en sí
+  no cambió - se monta ahora en `StatsView.vue` con `babies.statsSleeps`
+  (histórico completo) en vez de `babies.recentSleeps` (una ventana de
+  9 días que solo existía para alimentar este gráfico); como ya no
+  tenía ningún otro consumidor, `recentSleeps`/`fetchRecentSleeps()` y
+  su sincronización en `createSleep`/`updateSleep`/`deleteSleep` se han
+  eliminado del store por quedar muertos.
+  - El PDF exportado ahora incluye la misma gráfica con los mismos
+    datos que el bloque en pantalla - antes no existía en absoluto.
+    `buildStatsExportPayload()` se refactoriza de 8 parámetros
+    posicionales a un objeto de opciones (quedó anotado como el punto
+    donde tocaría hacerlo al añadir la métrica de vitamina D; esta es
+    esa métrica) para no seguir acumulando posicionales con cada nueva
+    estadística exportable.
+
 ### Añadido
 
 - **Singular/plural en las tarjetas resumen del día** - "1 toma"/

@@ -167,13 +167,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   instantes que ya usaba `Sleep`.
 - `SleepController::index` admite un parámetro opcional `?since=` para
   acotar a una ventana reciente en vez de traer el historial completo
-  del bebé — lo usa el gráfico semanal de sueño del frontend (ver
-  `web/README.md`), que no necesita más que los últimos días. Antes no
-  tenía ningún límite (a diferencia de `TimelineController`, que ya
-  acotaba sus tres subconsultas desde el principio). El filtro
-  comprueba `started_at`, `ended_at` o `ended_at IS NULL` — no solo
-  `started_at` — para no perder un sueño que empezó antes de la
-  ventana pero sigue en curso o terminó dentro de ella.
+  del bebé. Añadido originalmente para el gráfico semanal de sueño del
+  frontend; ese gráfico se movió a Estadísticas y pasó a alimentarse
+  del historial completo que esa página ya cargaba (`babies.statsSleeps`,
+  ver `web/README.md`), así que hoy ningún caller del frontend manda
+  `since` — se deja el filtro en el endpoint (nullable, sin romper nada
+  al omitirlo) como capacidad general del recurso, no código muerto que
+  haya que retirar. El filtro comprueba `started_at`, `ended_at` o
+  `ended_at IS NULL` — no solo `started_at` — para no perder un sueño
+  que empezó antes de la ventana pero sigue en curso o terminó dentro
+  de ella.
 - `Baby::generateInviteCode()` — código de 8 caracteres sin `0`/`O`/`1`/`I`
   (se escriben/leen a mano, esos pares se confunden fácilmente), con
   comprobación de colisión real en vez de asumir que el espacio de
@@ -510,6 +513,20 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   añadió igual, sección propia en el PDF entre la comparativa semanal
   y "Crecimiento" - ver `VitaminDScheduleController`/
   `VitaminDDoseController` más abajo para el resto de la feature.
+  `weekly_sleep_by_day` (7 entradas fijas `date`+`hours`, `present` no
+  `required` en el array exterior pero cada campo interno sí
+  `required` - siempre las 7, nunca una lista vacía, a diferencia de
+  `weekly_trend`/`activity_heatmap`) alimenta "Sueño esta semana" -
+  movido aquí desde el Dashboard (`WeeklySleep.vue`, ver
+  `web/README.md`), por lo que el PDF pasó a necesitar estos datos que
+  antes no exportaba en absoluto. `StatsExportController::dailySleepPoints()`
+  etiqueta cada día por su nombre corto (`CarbonImmutable::translatedFormat('D')`,
+  "lun.") y reutiliza el mismo partial `weekly-trend-bars.blade.php` de
+  "Tendencia semanal" - ningún partial nuevo. `buildStatsExportPayload()`
+  pasó de 8 parámetros posicionales a un único objeto de opciones
+  (`StatsExportOptions`) con esta feature - quedó anotado en el propio
+  código del frontend que la siguiente estadística exportable era el
+  punto natural para ese cambio.
 - `app/Http/Controllers/VitaminD/VitaminDScheduleController.php` +
   `VitaminDDoseController.php` — recordatorio diario de vitamina D,
   por bebé (`PUT /babies/{baby}/vitamin-d-schedule`,

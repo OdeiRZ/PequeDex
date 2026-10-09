@@ -102,7 +102,7 @@ async function onUndo() {
           <path d="M20 6L9 17l-5-5" />
         </svg>
       </span>
-      <div class="min-w-0 max-w-[16.5rem]">
+      <div class="min-w-0 flex-1">
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
         <button
           type="button"
@@ -114,7 +114,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
+        class="mr-5 shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
         :disabled="saving"
         @click="onUndo"
       >

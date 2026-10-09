@@ -129,6 +129,15 @@ class ExportStatsRequest extends FormRequest
             'vitamin_d.has_schedule' => ['required', 'boolean'],
             'vitamin_d.given' => ['required', 'integer', 'min:0'],
             'vitamin_d.total_days' => ['required', 'integer', 'min:0'],
+
+            // Antes vivía en el Dashboard (WeeklySleep.vue) - siempre 7
+            // días de calendario, `present` no `required`: un bebé sin
+            // ningún sueño registrado todavía manda igualmente las 7
+            // entradas, solo con `hours: 0` cada una (nunca un array
+            // vacío, a diferencia de weekly_trend/activity_heatmap).
+            'weekly_sleep_by_day' => ['present', 'array'],
+            'weekly_sleep_by_day.*.date' => ['required', 'date'],
+            'weekly_sleep_by_day.*.hours' => ['required', 'numeric', 'min:0'],
         ];
     }
 

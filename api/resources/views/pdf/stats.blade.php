@@ -258,6 +258,20 @@
         </table>
     @endif
 
+    {{-- Sueño esta semana - antes vivía en el Dashboard, mismos 7 días
+         de calendario que WeeklySleep.vue, reutilizando el mismo
+         partial de barra horizontal que ya usa "Tendencia semanal" más
+         abajo (misma limitación de dompdf: sin flexbox para crecer una
+         barra vertical). Sin condición de "hay datos" - un día sin
+         sueño registrado es él mismo un dato (barra en 0h), igual que
+         en pantalla. --}}
+    <p class="stats-label" style="margin-bottom: 4px;">Sueño esta semana</p>
+    @include('pdf.partials.weekly-trend-bars', [
+        'points' => $dailySleepPoints,
+        'color' => '#5b5a8c',
+        'format' => fn ($value) => number_format($value, 1).'h',
+    ])
+
     {{-- Pañales --}}
     <h2 class="diaper">Pañales</h2>
     @if (! $diaper['has_enough_data'])

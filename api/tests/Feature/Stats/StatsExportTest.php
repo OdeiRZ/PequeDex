@@ -87,6 +87,15 @@ function validStatsPayload(): array
             ['day_of_week' => 4, 'hour' => 8, 'count' => 1],
         ],
         'vitamin_d' => ['has_schedule' => true, 'given' => 42, 'total_days' => 50],
+        'weekly_sleep_by_day' => [
+            ['date' => '2026-08-24', 'hours' => 6.5],
+            ['date' => '2026-08-25', 'hours' => 0],
+            ['date' => '2026-08-26', 'hours' => 8.0],
+            ['date' => '2026-08-27', 'hours' => 7.25],
+            ['date' => '2026-08-28', 'hours' => 0],
+            ['date' => '2026-08-29', 'hours' => 9.0],
+            ['date' => '2026-08-30', 'hours' => 5.5],
+        ],
     ];
 }
 
@@ -276,6 +285,41 @@ it('rejects a vitamin_d missing has_schedule', function () {
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['vitamin_d.has_schedule']);
+});
+
+it('turns weekly_sleep_by_day into a weekday-labeled point list, 0h days included as real bars', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['dailySleepPoints'])->toHaveCount(7);
+    expect($data['dailySleepPoints'][0])->toBe(['label' => 'lun.', 'value' => 6.5]);
+    expect($data['dailySleepPoints'][1]['value'])->toEqual(0);
+});
+
+it('rejects a weekly_sleep_by_day entry missing hours', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    unset($payload['weekly_sleep_by_day'][0]['hours']);
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['weekly_sleep_by_day.0.hours']);
+});
+
+it('rejects a malformed weekly_sleep_by_day instead of rendering a broken PDF', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['weekly_sleep_by_day'][0]['date'] = 'not-a-date';
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['weekly_sleep_by_day.0.date']);
 });
 
 it('passes the baby and sleep/feed/diaper sections through unchanged', function () {

@@ -50,6 +50,7 @@ class StatsExportController extends Controller
             'heatmapGrid' => $this->heatmapGrid($data['activity_heatmap']),
             'heatmapMax' => collect($data['activity_heatmap'])->max('count') ?? 0,
             'vitaminD' => $data['vitamin_d'],
+            'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
                 ['label' => 'Peso', 'unit' => 'kg', 'decimals' => 1, 'stat' => $data['growth']['weight_kg']],
                 ['label' => 'Talla', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['height_cm']],
@@ -80,6 +81,27 @@ class StatsExportController extends Controller
             ->map(fn (array $week) => [
                 'label' => CarbonImmutable::parse($week['week_start'])->translatedFormat('j M'),
                 'value' => $value($week),
+            ])
+            ->all();
+    }
+
+    /**
+     * "Sueño esta semana" - same shape/partial as weeklyTrendPoints()
+     * above (reused in the blade template, `pdf.partials.weekly-trend-
+     * bars`), but labeled by weekday ("lun.") instead of a week-start
+     * date, and `value` is never null - every one of the 7 calendar
+     * days has a real hours figure (possibly 0), unlike a week with no
+     * completed sleep.
+     *
+     * @param  array<int, array{date: string, hours: float}>  $dailySleep
+     * @return array<int, array{label: string, value: float}>
+     */
+    private function dailySleepPoints(array $dailySleep): array
+    {
+        return collect($dailySleep)
+            ->map(fn (array $day) => [
+                'label' => CarbonImmutable::parse($day['date'])->translatedFormat('D'),
+                'value' => $day['hours'],
             ])
             ->all();
     }

@@ -16,7 +16,17 @@ class UpsertVitaminDDoseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => ['required', 'date', 'before_or_equal:today'],
+            // `before_or_equal:tomorrow`, not `:today` - the server runs
+            // in UTC (`config('app.timezone')`), but "today" is the
+            // caregiver's own local calendar day, which can already be
+            // ahead of the server's UTC date (e.g. just after local
+            // midnight in Madrid, UTC is still "yesterday"). A day of
+            // slack comfortably covers every real-world UTC offset
+            // (max +14) without letting someone mark a day genuinely far
+            // in the future. Found live: a 422 right after local
+            // midnight, swallowed by the frontend into a generic
+            // "No se ha podido guardar" toast.
+            'date' => ['required', 'date', 'before_or_equal:tomorrow'],
             'given' => ['required', 'boolean'],
         ];
     }

@@ -42,14 +42,28 @@ it('correcting the same day updates the row instead of duplicating it', function
     $this->assertDatabaseCount('baby_vitamin_d_doses', 1);
 });
 
-it('rejects a future date', function () {
+it('rejects a date clearly in the future', function () {
+    $user = actingAsUser();
+    $baby = babyWithVitaminDScheduleTest($user);
+
+    $this->putJson("/api/babies/{$baby->id}/vitamin-d-doses", [
+        'date' => now()->addDays(2)->toDateString(),
+        'given' => true,
+    ])->assertUnprocessable()->assertJsonValidationErrors('date');
+});
+
+it('accepts "tomorrow" in server UTC terms - the caregiver\'s local today just after midnight', function () {
+    // The server runs in UTC; a caregiver's local calendar day can
+    // already be ahead of the server's UTC date (e.g. just after local
+    // midnight in Madrid). before_or_equal:tomorrow gives a day of
+    // slack for exactly this - real bug found live at 00:41 local time.
     $user = actingAsUser();
     $baby = babyWithVitaminDScheduleTest($user);
 
     $this->putJson("/api/babies/{$baby->id}/vitamin-d-doses", [
         'date' => now()->addDay()->toDateString(),
         'given' => true,
-    ])->assertUnprocessable()->assertJsonValidationErrors('date');
+    ])->assertOk();
 });
 
 it('rejects a date before the schedule start_date', function () {

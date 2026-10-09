@@ -36,7 +36,6 @@ import TodaySummary from '@/components/TodaySummary.vue'
 import SoundsLinkCard from '@/components/SoundsLinkCard.vue'
 import StatsLinkCard from '@/components/StatsLinkCard.vue'
 import VitaminDReminderCard from '@/components/VitaminDReminderCard.vue'
-import WeeklySleep from '@/components/WeeklySleep.vue'
 import { ALL_CATEGORIES, categoryBg, categoryText, type Category } from '@/lib/category'
 import { DIAPER_PEE_COLOR, DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
@@ -99,7 +98,6 @@ async function loadBabyData() {
       babies.fetchMilestones(),
       babies.fetchSleepPrediction(),
       babies.fetchFeedPrediction(),
-      babies.fetchRecentSleeps(),
       babies.fetchVitaminDSchedule(),
     ])
   } finally {
@@ -1842,13 +1840,6 @@ const sleepPredictionDue = computed(() => {
               @prev="onRhythmPrevDay"
               @next="onRhythmNextDay"
             />
-            <WeeklySleep
-              v-if="enabledCategories.includes('sleep')"
-              class="dash-enter"
-              :sleeps="babies.recentSleeps"
-              :date-locale="dateLocale"
-            />
-
             <section class="dash-enter flex flex-col gap-2">
               <h2 class="flex items-center gap-2 font-display text-base font-bold">
                 <span

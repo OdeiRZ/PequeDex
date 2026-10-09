@@ -10,6 +10,7 @@ import HourBucketChart from '@/components/HourBucketChart.vue'
 import GrowthLineChart from '@/components/GrowthLineChart.vue'
 import WeeklyTrendChart from '@/components/WeeklyTrendChart.vue'
 import ActivityHeatmap from '@/components/ActivityHeatmap.vue'
+import WeeklySleep from '@/components/WeeklySleep.vue'
 import {
   summarizeSleepStats,
   summarizeFeedStats,
@@ -22,6 +23,7 @@ import {
   buildStatsExportPayload,
   formatClockTime,
 } from '@/lib/stats'
+import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import type { DiaperSize } from '@/stores/babies'
 
@@ -84,6 +86,12 @@ const weeklyTrend = computed(() =>
 const activityHeatmap = computed(() =>
   summarizeActivityHeatmap(babies.statsSleeps, babies.statsFeeds, babies.statsDiaperChanges),
 )
+
+// Últimos 7 días de calendario, no la media del histórico - mismo
+// componente que antes vivía en el Dashboard (WeeklySleep.vue),
+// movido aquí por no aportar nada nuevo frente a "Tendencia semanal"
+// de abajo mientras competía por espacio en la pantalla principal.
+const dailySleep = computed(() => summarizeSleepByDay(babies.statsSleeps, 7))
 
 // "6 ago" - corto a propósito, son muchas etiquetas seguidas en una
 // fila con scroll horizontal, no una sola fecha destacada.
@@ -244,10 +252,13 @@ async function onExportPdf() {
       feedStats.value,
       diaperStats.value,
       growthStats.value,
-      weekComparison.value,
-      weeklyTrend.value,
-      activityHeatmap.value,
-      vitaminDStats.value,
+      {
+        weekComparison: weekComparison.value,
+        weeklyTrend: weeklyTrend.value,
+        activityHeatmap: activityHeatmap.value,
+        vitaminD: vitaminDStats.value,
+        dailySleep: dailySleep.value,
+      },
     )
     const blob = await babies.exportStatsPdf(payload)
     const url = URL.createObjectURL(blob)
@@ -536,6 +547,16 @@ async function onExportPdf() {
           </div>
         </div>
       </section>
+
+      <!-- Antes vivía en el Dashboard - movido aquí, junto al resto de
+           sueño, porque "Tendencia semanal" más abajo ya cubre
+           prácticamente lo mismo (sueño por semana) y competía por
+           espacio con los recordatorios/registro rápido del día a día. -->
+      <WeeklySleep
+        v-if="enabledCategories.includes('sleep')"
+        :sleeps="babies.statsSleeps"
+        :date-locale="dateLocale"
+      />
 
       <!-- Pañales -->
       <section v-if="enabledCategories.includes('diaper')" class="card flex flex-col gap-3 p-4">

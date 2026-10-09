@@ -11,6 +11,7 @@ import type {
   VitaminDSchedule,
 } from '@/stores/babies'
 import { daysBetween, parseDateOnly, toDateOnlyString } from '@/lib/localDate'
+import type { DaySleepTotal } from '@/lib/sleepHistory'
 
 // Mismo umbral que SleepPatternPredictor.php/FeedPatternPredictor.php en
 // el backend (MIN_SAMPLE_SIZE) - por debajo, una media o un reparto por
@@ -845,6 +846,7 @@ export interface StatsExportPayload {
   }[]
   activity_heatmap: { day_of_week: number; hour: number; count: number }[]
   vitamin_d: { has_schedule: boolean; given: number; total_days: number }
+  weekly_sleep_by_day: { date: string; hours: number }[]
 }
 
 interface GrowthMetricExportStat {
@@ -867,20 +869,38 @@ function exportGrowthMetric(stat: GrowthMetricStat): GrowthMetricExportStat {
   }
 }
 
+/**
+ * Everything beyond the four always-present blocks (sleep/feed/diaper/
+ * growth) - optional because an older or simpler caller might not have
+ * them computed, each defaulting to its own "nothing here" shape. This
+ * replaced a growing chain of positional parameters (weekComparison,
+ * weeklyTrend, activityHeatmap, vitaminD...) once a 9th metric
+ * (dailySleep) made that chain unreadable - the options object scales
+ * to new metrics without touching existing call-sites' argument order.
+ */
+export interface StatsExportOptions {
+  weekComparison?: WeekComparison | null
+  weeklyTrend?: WeeklyTrendPoint[]
+  activityHeatmap?: HeatmapCell[]
+  vitaminD?: VitaminDStats
+  dailySleep?: DaySleepTotal[]
+}
+
 export function buildStatsExportPayload(
   sleep: SleepStats,
   feed: FeedStats,
   diaper: DiaperStats,
   growth: GrowthStats,
-  weekComparison: WeekComparison | null = null,
-  weeklyTrend: WeeklyTrendPoint[] = [],
-  activityHeatmap: HeatmapCell[] = [],
-  // 8th positional param, same as the three before it - a refactor to
-  // an options object would touch every existing call-site for no
-  // reason tied to this feature. The next metric added here should be
-  // the one that finally motivates that refactor in its own change.
-  vitaminD: VitaminDStats = { hasSchedule: false, given: 0, totalDays: 0 },
+  options: StatsExportOptions = {},
 ): StatsExportPayload {
+  const {
+    weekComparison = null,
+    weeklyTrend = [],
+    activityHeatmap = [],
+    vitaminD = { hasSchedule: false, given: 0, totalDays: 0 },
+    dailySleep = [],
+  } = options
+
   return {
     sleep: {
       has_enough_data: sleep.hasEnoughData,
@@ -945,5 +965,6 @@ export function buildStatsExportPayload(
       given: vitaminD.given,
       total_days: vitaminD.totalDays,
     },
+    weekly_sleep_by_day: dailySleep.map((d) => ({ date: d.date, hours: d.hours })),
   }
 }

@@ -652,7 +652,7 @@ describe('summarizeVitaminDStats', () => {
   })
 })
 
-describe('buildStatsExportPayload - vitamin_d', () => {
+describe('buildStatsExportPayload - options', () => {
   const emptyBuckets = [
     { key: 'dawn' as const, value: 0 },
     { key: 'morning' as const, value: 0 },
@@ -708,24 +708,53 @@ describe('buildStatsExportPayload - vitamin_d', () => {
     headCircumferenceCm: emptyGrowthMetric,
   }
 
-  it('defaults vitamin_d to has_schedule:false when the 8th argument is omitted - existing call-sites keep working', () => {
+  it('defaults vitamin_d to has_schedule:false when options is omitted entirely - existing call-sites keep working', () => {
     const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
 
     expect(payload.vitamin_d).toEqual({ has_schedule: false, given: 0, total_days: 0 })
   })
 
   it('maps a real VitaminDStats into snake_case', () => {
-    const payload = buildStatsExportPayload(
-      emptySleep,
-      emptyFeed,
-      emptyDiaper,
-      emptyGrowth,
-      null,
-      [],
-      [],
-      { hasSchedule: true, given: 42, totalDays: 50 },
-    )
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth, {
+      vitaminD: { hasSchedule: true, given: 42, totalDays: 50 },
+    })
 
     expect(payload.vitamin_d).toEqual({ has_schedule: true, given: 42, total_days: 50 })
+  })
+
+  it('defaults weekly_sleep_by_day to an empty array when omitted', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
+
+    expect(payload.weekly_sleep_by_day).toEqual([])
+  })
+
+  it('maps dailySleep into snake_case', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth, {
+      dailySleep: [
+        { date: '2026-10-03', hours: 0 },
+        { date: '2026-10-04', hours: 7.5 },
+      ],
+    })
+
+    expect(payload.weekly_sleep_by_day).toEqual([
+      { date: '2026-10-03', hours: 0 },
+      { date: '2026-10-04', hours: 7.5 },
+    ])
+  })
+
+  it('still accepts every option together', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth, {
+      weekComparison: null,
+      weeklyTrend: [],
+      activityHeatmap: [],
+      vitaminD: { hasSchedule: false, given: 0, totalDays: 0 },
+      dailySleep: [],
+    })
+
+    expect(payload.week_comparison).toBeNull()
+    expect(payload.weekly_trend).toEqual([])
+    expect(payload.activity_heatmap).toEqual([])
+    expect(payload.vitamin_d).toEqual({ has_schedule: false, given: 0, total_days: 0 })
+    expect(payload.weekly_sleep_by_day).toEqual([])
   })
 })

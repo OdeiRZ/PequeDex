@@ -215,14 +215,13 @@ interface BabiesState {
   milestones: Milestone[]
   sleepPrediction: SleepPrediction | null
   feedPrediction: FeedPrediction | null
-  recentSleeps: Sleep[]
   contractions: Contraction[]
   /** The baby's whole history of each, for `StatsView.vue` - unlike
    * `timeline`/`dayTimeline` (bounded to "most recent N" or a single
-   * day) or `recentSleeps` (a short rolling window for the weekly
-   * chart), stats like "franja más habitual" need every entry ever
-   * logged, not just a recent slice. Fetched once when the stats page
-   * opens (`fetchStatsData()`), not kept live/polled. */
+   * day), stats like "franja más habitual" (and the weekly sleep chart,
+   * now also on this page) need every entry ever logged, not just a
+   * recent slice. Fetched once when the stats page opens
+   * (`fetchStatsData()`), not kept live/polled. */
   statsSleeps: Sleep[]
   statsFeeds: Feed[]
   statsDiaperChanges: DiaperChange[]
@@ -300,7 +299,6 @@ export const useBabiesStore = defineStore('babies', {
     milestones: [],
     sleepPrediction: null,
     feedPrediction: null,
-    recentSleeps: [],
     contractions: [],
     statsSleeps: [],
     statsFeeds: [],
@@ -452,12 +450,6 @@ export const useBabiesStore = defineStore('babies', {
       const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      // `recentSleeps` feeds WeeklySleep.vue on the dashboard - without
-      // this, a sleep logged for a past day via the "ritmo" view (not
-      // necessarily today) left that chart showing stale data until a
-      // full page reload re-ran fetchRecentSleeps() (only called once,
-      // at dashboard mount). Real bug reported live.
-      this.recentSleeps = upsertByDate(this.recentSleeps, data.data, (s) => s.started_at)
     },
 
     async updateSleep(id: number, payload: CreateSleepPayload) {
@@ -465,7 +457,6 @@ export const useBabiesStore = defineStore('babies', {
       const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      this.recentSleeps = upsertByDate(this.recentSleeps, data.data, (s) => s.started_at)
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
@@ -525,21 +516,18 @@ export const useBabiesStore = defineStore('babies', {
     async deleteSleep(id: number) {
       const previous = this.timeline
       const previousDay = this.dayTimeline
-      const previousRecent = this.recentSleeps
       this.timeline = this.timeline.filter(
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
       this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
-      this.recentSleeps = this.recentSleeps.filter((sleep) => sleep.id !== id)
 
       try {
         await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
       } catch (error) {
         this.timeline = previous
         this.dayTimeline = previousDay
-        this.recentSleeps = previousRecent
         throw error
       }
     },
@@ -791,26 +779,6 @@ export const useBabiesStore = defineStore('babies', {
         responseType: 'blob',
       })
       return data
-    },
-
-    // `days` is a lookback window, not the number of days the chart ends
-    // up showing (see summarizeSleepByDay) - a couple of days' buffer so
-    // an overnight sleep that started just before the chart's own first
-    // day still gets counted, instead of being cut off at the fetch
-    // boundary.
-    async fetchRecentSleeps(days = 9) {
-      if (!this.current) {
-        return
-      }
-
-      const since = new Date()
-      since.setDate(since.getDate() - days)
-      const sinceParam = since.toISOString().slice(0, 10)
-
-      const { data } = await apiClient.get(`/babies/${this.current.id}/sleeps`, {
-        params: { since: sinceParam },
-      })
-      this.recentSleeps = data.data
     },
 
     // The full history of each, for StatsView.vue - `feeds`/

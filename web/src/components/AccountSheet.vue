@@ -717,36 +717,53 @@ watch(
         {{ t('profile.actionBar.description', { min: MIN_ACTION_BAR_CATEGORIES }) }}
       </p>
 
-      <!-- "Hitos" vive aquí, no en el bloque de interruptores de
-           arriba - a diferencia de esos (Sonidos/Estadísticas
-           incluidos, que controlan una tarjeta de enlace aparte),
-           "hito" ya es una de las 5 categorías de esta misma selección;
-           este interruptor actúa por encima de ella (con los hitos
-           desactivados, el propio icono deja de ofrecerse abajo, no
-           solo queda sin marcar) - un ajuste de esta sección, no uno
-           genérico más de la lista. -->
-      <div class="mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface-sunken p-3">
-        <div>
-          <span class="text-sm font-semibold">{{ t('profile.milestonesEnabled.title') }}</span>
-          <p class="text-xs text-text-muted">{{ t('profile.milestonesEnabled.description') }}</p>
-        </div>
+      <div class="flex flex-wrap gap-3">
+        <!-- "Hitos" como un chip más, mismo formato exacto que las
+             categorías de abajo (icono circular + check), no un
+             interruptor con pinta distinta - a diferencia de esas
+             (que solo deciden si aparecen en la barra), este actúa
+             por encima: con los hitos desactivados, el propio icono
+             deja de ofrecerse como opción más abajo, no solo queda
+             sin marcar. -->
         <button
           type="button"
-          role="switch"
-          :aria-checked="milestonesEnabled"
+          :aria-pressed="milestonesEnabled"
           :aria-label="t('profile.milestonesEnabled.title')"
-          class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
-          :class="milestonesEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+          class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold"
+          :class="milestonesEnabled ? 'text-text' : 'text-text-muted'"
           @click="onToggleMilestones"
         >
-          <span
-            class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
-            :style="{ left: milestonesEnabled ? '22px' : '2px' }"
-          ></span>
+          <span class="relative">
+            <span
+              class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90"
+              :class="
+                milestonesEnabled
+                  ? [categorySolidBg.milestone, 'border-transparent text-white']
+                  : 'border-border bg-surface text-text-muted group-hover:border-text-muted'
+              "
+            >
+              <CategoryIcon category="milestone" class="h-5 w-5" />
+            </span>
+            <span
+              v-if="milestonesEnabled"
+              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3.5"
+                class="h-2 w-2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+          </span>
+          {{ t('profile.milestonesEnabled.title') }}
         </button>
-      </div>
 
-      <div class="flex flex-wrap gap-3">
+        <span class="my-1 w-px self-stretch bg-border" aria-hidden="true"></span>
+
         <button
           v-for="option in actionBarToggleOptions"
           :key="option.category"

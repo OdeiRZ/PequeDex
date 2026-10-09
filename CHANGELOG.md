@@ -289,6 +289,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Marcar una dosis de vitamina D fallaba justo después de medianoche
+  en hora local** (`UpsertVitaminDDoseRequest`) - el servidor corre en
+  UTC (`config('app.timezone')`) y validaba la fecha contra su propio
+  "hoy" (`before_or_equal:today`), pero "hoy" es el día de calendario
+  del cuidador, no el del servidor: justo después de medianoche en
+  Madrid, en UTC todavía era el día anterior, así que la fecha local
+  de hoy se rechazaba como "fecha futura" con un 422 que el frontend
+  mostraba como un toast genérico ("No se ha podido guardar"). Reportado
+  en vivo al pulsar "Dar" a las 00:41 del 10/10 (confirmado consultando
+  `now()` del servidor: seguía en 09/10 22:42 UTC). Cambiado a
+  `before_or_equal:tomorrow` - un día de margen cubre cualquier huso
+  horario real (máximo UTC+14) sin dejar marcar un día genuinamente
+  lejano en el futuro.
 - **Las tarjetas resumen del día (`TodaySummary.vue`) cortaban la
   etiqueta con "..." en móviles normales (~360px)** - "de sueño" y
   "pañales" no cabían junto al icono y el número con el tamaño

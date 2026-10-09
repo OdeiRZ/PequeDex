@@ -550,6 +550,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `withValidator()` (no una regla de cadena simple) que exista una
   pauta activa y que la fecha no sea anterior a `start_date` -
   depende del propio `Baby` de la ruta, no de otro campo del payload.
+  `date` usa `before_or_equal:tomorrow`, no `:today` - el servidor
+  corre en UTC (`config('app.timezone')`), y "hoy" es el día de
+  calendario del cuidador, no el del servidor; justo después de
+  medianoche en España, en UTC todavía es el día anterior, así que
+  comparar contra el "hoy" del servidor rechazaba como "fecha futura"
+  la fecha de hoy real del cuidador (bug real encontrado en vivo,
+  confirmado consultando `now()` del servidor en el momento exacto del
+  fallo). Un día de margen cubre cualquier huso horario real (máximo
+  UTC+14) sin abrir la puerta a marcar un día genuinamente lejano.
 - `ContractionController@destroyAll` — `DELETE
   /babies/{baby}/contractions` (sin el segmento `{contraction}` del
   borrado individual), autorizado igual que `destroy()`. Borra todas

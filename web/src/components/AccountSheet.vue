@@ -161,19 +161,18 @@ async function onRemoveAvatar() {
 
 const actionBarSelection = ref<Category[]>([...ALL_CATEGORIES])
 
-// 'milestone' se filtra mientras el interruptor de "Hitos" de arriba
-// esté apagado - elegirlo aquí no tendría ningún efecto visible en el
-// dashboard (ver `enabledCategories` en DashboardView.vue, que aplica
-// ese mismo apagado por encima de esta selección).
-const actionBarToggleOptions = computed(() =>
-  [
-    { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
-    { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
-    { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
-    { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
-    { category: 'milestone' as const, label: t('dashboard.quickLog.milestone') },
-  ].filter((option) => option.category !== 'milestone' || milestonesEnabled.value),
-)
+// 'milestone' no vive en esta lista - se pinta aparte, justo después
+// en la plantilla (mismo chip, misma posición al final), pero con su
+// propio estado/click ligados a `milestonesEnabled` en vez de a esta
+// selección: es el interruptor maestro de Hitos, no una preferencia
+// más de "qué icono muestro en la barra" (ver `onToggleMilestones` más
+// abajo).
+const actionBarToggleOptions = computed(() => [
+  { category: 'feed' as const, label: t('dashboard.quickLog.feed') },
+  { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
+  { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
+  { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
+])
 
 // Guardado al vuelo (como el selector de idioma), no un formulario con
 // botón "Guardar" aparte. El toggle en sí es instantáneo (sin deshabilitar
@@ -718,52 +717,6 @@ watch(
       </p>
 
       <div class="flex flex-wrap gap-3">
-        <!-- "Hitos" como un chip más, mismo formato exacto que las
-             categorías de abajo (icono circular + check), no un
-             interruptor con pinta distinta - a diferencia de esas
-             (que solo deciden si aparecen en la barra), este actúa
-             por encima: con los hitos desactivados, el propio icono
-             deja de ofrecerse como opción más abajo, no solo queda
-             sin marcar. -->
-        <button
-          type="button"
-          :aria-pressed="milestonesEnabled"
-          :aria-label="t('profile.milestonesEnabled.title')"
-          class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold"
-          :class="milestonesEnabled ? 'text-text' : 'text-text-muted'"
-          @click="onToggleMilestones"
-        >
-          <span class="relative">
-            <span
-              class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90"
-              :class="
-                milestonesEnabled
-                  ? [categorySolidBg.milestone, 'border-transparent text-white']
-                  : 'border-border bg-surface text-text-muted group-hover:border-text-muted'
-              "
-            >
-              <CategoryIcon category="milestone" class="h-5 w-5" />
-            </span>
-            <span
-              v-if="milestonesEnabled"
-              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3.5"
-                class="h-2 w-2"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </span>
-          </span>
-          {{ t('profile.milestonesEnabled.title') }}
-        </button>
-
-        <span class="my-1 w-px self-stretch bg-border" aria-hidden="true"></span>
-
         <button
           v-for="option in actionBarToggleOptions"
           :key="option.category"
@@ -805,6 +758,49 @@ watch(
             </span>
           </span>
           {{ option.label }}
+        </button>
+
+        <!-- "Hitos" - mismo chip, mismo nombre, al final como el resto,
+             pero ligado a `milestonesEnabled` (el interruptor maestro)
+             en vez de a `actionBarSelection`: no es "quiero este icono
+             en la barra", es "uso esta función en absoluto" - de ahí
+             que tampoco lleve el límite de MIN_ACTION_BAR_CATEGORIES,
+             que es cosa de la otra selección. -->
+        <button
+          type="button"
+          :aria-pressed="milestonesEnabled"
+          :aria-label="t('dashboard.quickLog.milestone')"
+          class="group flex select-none flex-col items-center gap-1.5 text-[0.65rem] font-semibold"
+          :class="milestonesEnabled ? 'text-text' : 'text-text-muted'"
+          @click="onToggleMilestones"
+        >
+          <span class="relative">
+            <span
+              class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90"
+              :class="
+                milestonesEnabled
+                  ? [categorySolidBg.milestone, 'border-transparent text-white']
+                  : 'border-border bg-surface text-text-muted group-hover:border-text-muted'
+              "
+            >
+              <CategoryIcon category="milestone" class="h-5 w-5" />
+            </span>
+            <span
+              v-if="milestonesEnabled"
+              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3.5"
+                class="h-2 w-2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+          </span>
+          {{ t('dashboard.quickLog.milestone') }}
         </button>
       </div>
     </div>

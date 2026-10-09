@@ -586,8 +586,6 @@ export default {
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
     milestonesEnabled: {
-      title: 'Hitos',
-      description: 'Muestra el apartado de hitos y su acceso rápido en el dashboard.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
   },

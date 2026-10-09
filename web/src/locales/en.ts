@@ -580,8 +580,6 @@ export default {
       saveError: 'Could not save the change. Please try again.',
     },
     milestonesEnabled: {
-      title: 'Milestones',
-      description: 'Show the milestones section and its quick-log shortcut on the dashboard.',
       saveError: 'Could not save the change. Please try again.',
     },
   },

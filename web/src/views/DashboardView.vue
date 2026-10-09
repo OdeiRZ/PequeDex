@@ -1036,6 +1036,16 @@ const vitaminDRecentDosesByDate = computed(() => {
   return days
 })
 
+// "YYYY-MM-DD" (clave interna, formato SQL) -> "DD/MM/AAAA" - formato
+// fijo con el que un cuidador reconoce una fecha a simple vista en
+// español, no una repetida de la clave interna; distinto a propósito
+// de `dateLocale`/`toLocaleDateString()` (que siguen el idioma elegido
+// en vez de este formato concreto siempre con barras).
+function formatDoseDate(dateOnly: string): string {
+  const [year, month, day] = dateOnly.split('-')
+  return `${day}/${month}/${year}`
+}
+
 const babySexOptions = computed(() => [
   { value: '' as const, label: t('dashboard.babySettings.sexUnknown') },
   { value: 'nino' as const, label: t('dashboard.babySettings.sexBoy') },
@@ -2738,7 +2748,7 @@ const sleepPredictionDue = computed(() => {
               :key="day.date"
               class="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-1.5 text-sm"
             >
-              <span>{{ day.date }}</span>
+              <span>{{ formatDoseDate(day.date) }}</span>
               <div class="flex gap-2">
                 <button
                   type="button"

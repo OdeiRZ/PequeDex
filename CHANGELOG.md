@@ -9,6 +9,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **"Tu cuenta" reorganizado para agrupar controles del mismo tipo** -
+  los 7 interruptores on/off del perfil (Hitos, Predicciones, Tarjetas
+  resumen del día, enlaces a Sonidos/Estadísticas, Borrar con swipe,
+  Sonido y vibración al interactuar) estaban partidos en dos bloques
+  separados por los selectores de talla de pañal/duración de toma por
+  defecto, sin motivo real para no estar juntos. Ahora son un único
+  bloque continuo, ordenado primero por lo que controlan (qué se ve en
+  el Dashboard, luego cómo se comporta la interacción). El resto de la
+  hoja también se reordenó: perfil (nombre/email) → idioma →
+  interruptores → barra de accesos personalizable (ahora después de
+  "Hitos", de quien depende qué iconos puede mostrar) → valores por
+  defecto (talla de pañal, duración de toma) → cambiar contraseña, al
+  final por ser lo que menos se toca.
+- **Botón "Deshacer" de la tarjeta de vitamina D movido un poco a la
+  izquierda** - mismo ajuste que ya se le hizo al botón "Dar" (el
+  bloque de texto deja de forzar un `flex-1` que lo empujaba hasta el
+  borde derecho de la tarjeta).
+
 - **"Sueño esta semana" movido del Dashboard a Estadísticas** - vivía
   como tarjeta propia en la pantalla principal (`WeeklySleep.vue`),
   pero "Tendencia semanal" en Estadísticas ya cubre prácticamente lo

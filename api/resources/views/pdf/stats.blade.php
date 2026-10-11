@@ -401,43 +401,6 @@
         ])
     @endif
 
-    {{-- Mapa de actividad - misma rejilla 7x24 que ActivityHeatmap.vue,
-         sin umbral de muestra mínima (igual que en pantalla): toda
-         semana con algo de dato ya es información real. --}}
-    @if ($heatmapMax > 0)
-        <h2 class="trend">Mapa de actividad</h2>
-        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuántas tomas, cambios de pañal y sueños empiezan a cada hora de cada día de la semana, sumando todo el historial. Cada casilla indica el número de eventos; cuanto más oscura, más actividad.</p>
-        @if ($heatmapSummary !== null)
-            <table class="stats-bar">
-                <tr>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Momento más activo</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['peak']['day'] }}, {{ sprintf('%02d:00', $heatmapSummary['peak']['hour']) }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['peak']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Día más activo</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['busiestDay']['day'] }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestDay']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Hora más activa</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ sprintf('%02d:00-%02d:00', $heatmapSummary['busiestHour']['hour'], ($heatmapSummary['busiestHour']['hour'] + 1) % 24) }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestHour']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Eventos en total</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['total'] }}</span>
-                    </td>
-                </tr>
-            </table>
-        @endif
-        @include('pdf.partials.activity-heatmap-grid', [
-            'heatmapGrid' => $heatmapGrid,
-            'heatmapMax' => $heatmapMax,
-        ])
-    @endif
-
     {{-- Vitamina D - no depende de un umbral de muestra, solo de si hay
          (o hubo) una pauta activada para este bebé. --}}
     @if ($vitaminD['has_schedule'])
@@ -478,6 +441,43 @@
                 @endif
             @endif
         @endforeach
+    @endif
+
+    {{-- Mapa de actividad - misma rejilla 7x24 que ActivityHeatmap.vue,
+         sin umbral de muestra mínima (igual que en pantalla): toda
+         semana con algo de dato ya es información real. --}}
+    @if ($heatmapMax > 0)
+        <h2 class="trend">Mapa de actividad</h2>
+        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuántas tomas, cambios de pañal y sueños empiezan a cada hora de cada día de la semana, sumando todo el historial. Cada casilla indica el número de eventos; cuanto más oscura, más actividad.</p>
+        @if ($heatmapSummary !== null)
+            <table class="stats-bar">
+                <tr>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Momento más activo</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['peak']['day'] }}, {{ sprintf('%02d:00', $heatmapSummary['peak']['hour']) }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['peak']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Día más activo</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['busiestDay']['day'] }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestDay']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Hora más activa</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ sprintf('%02d:00-%02d:00', $heatmapSummary['busiestHour']['hour'], ($heatmapSummary['busiestHour']['hour'] + 1) % 24) }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestHour']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Eventos en total</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['total'] }}</span>
+                    </td>
+                </tr>
+            </table>
+        @endif
+        @include('pdf.partials.activity-heatmap-grid', [
+            'heatmapGrid' => $heatmapGrid,
+            'heatmapMax' => $heatmapMax,
+        ])
     @endif
 
     <div class="footer"><img src="{{ $logo }}" alt="" />PequeDex · Estadísticas</div>

@@ -422,6 +422,16 @@ export default {
       hour: 'hora',
       minute: 'minuto',
     },
+    alerts: {
+      noPoop: 'Lleva {days} días sin caca',
+      noPoopAtLeast: 'Lleva al menos {days} días sin caca',
+      noPoopHint:
+        'Con lactancia materna puede ser normal a partir de las primeras semanas. Si te preocupa, consulta con tu pediatra.',
+      fewWet: 'Hoy solo {count} pañal con pis | Hoy solo {count} pañales con pis',
+      fewWetHint:
+        'Lo habitual a partir de la primera semana son unos 5-6 al día. Si te preocupa, consulta con tu pediatra.',
+      dismiss: 'Ocultar hoy',
+    },
     temperatureCard: {
       title: 'Temperatura',
       window: 'últimas 48 h',
@@ -653,6 +663,12 @@ export default {
     statsEnabled: {
       title: 'Estadísticas',
       description: 'Muestra el acceso a las estadísticas en el dashboard.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
+    alertsEnabled: {
+      title: 'Avisos',
+      description:
+        'Avisos suaves en el dashboard, como varios días sin caca o pocos pañales con pis.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
     milestonesEnabled: {

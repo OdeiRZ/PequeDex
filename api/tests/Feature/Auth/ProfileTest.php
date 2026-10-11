@@ -304,6 +304,21 @@ it('turns the stats link off and back on, defaulting to enabled', function () {
     expect($user->refresh()->stats_enabled)->toBeTrue();
 });
 
+it('turns the daily alerts off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->alerts_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/alerts', ['alerts_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('alerts_enabled', false);
+    expect($user->refresh()->alerts_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/alerts', ['alerts_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('alerts_enabled', true);
+});
+
 it('turns the milestones link off and back on, defaulting to enabled', function () {
     $user = actingAsUser();
 

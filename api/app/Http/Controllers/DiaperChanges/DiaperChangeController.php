@@ -7,14 +7,25 @@ use App\Http\Requests\DiaperChanges\StoreDiaperChangeRequest;
 use App\Http\Requests\DiaperChanges\UpdateDiaperChangeRequest;
 use App\Models\Baby;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DiaperChangeController extends Controller
 {
-    public function index(Baby $baby): JsonResponse
+    public function index(Request $request, Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
 
-        return response()->json(['data' => $baby->diaperChanges()->orderByDesc('changed_at')->get()]);
+        // `since` opcional: los avisos del Dashboard solo necesitan los
+        // últimos días, no el historial entero (Estadísticas sí lo pide
+        // completo, sin `since`).
+        $since = $request->validate(['since' => ['nullable', 'date']])['since'] ?? null;
+
+        $query = $baby->diaperChanges()->orderByDesc('changed_at');
+        if ($since !== null) {
+            $query->where('changed_at', '>=', $since);
+        }
+
+        return response()->json(['data' => $query->get()]);
     }
 
     // StoreDiaperChangeRequest/UpdateDiaperChangeRequest authorize

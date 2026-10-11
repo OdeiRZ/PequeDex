@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/default-feed-duration', [ProfileController::class, 'updateDefaultFeedDuration']);
     Route::put('/user/sounds', [ProfileController::class, 'updateSoundsEnabled']);
     Route::put('/user/stats', [ProfileController::class, 'updateStatsEnabled']);
+    Route::put('/user/alerts', [ProfileController::class, 'updateAlertsEnabled']);
     Route::put('/user/milestones', [ProfileController::class, 'updateMilestonesEnabled']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:6,1');
     Route::post('/user/avatar', [ProfileController::class, 'updateAvatar'])->middleware('throttle:6,1');

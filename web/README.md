@@ -1355,6 +1355,32 @@ parpadeo del contenido viejo). Cada intervalo de sondeo en
 Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
 breve solape de montaje es inofensivo.
 
+## Avisos suaves
+
+`DailyAlertsCard.vue` + `lib/dailyAlerts.ts` - avisos en el Dashboard
+que nunca diagnostican: solo señalan algo que conviene mirar y acaban
+en "si te preocupa, consulta con tu pediatra". Mismo color "warning"
+que el recordatorio de vitamina D, no el rojo de error. Dos, con
+umbrales conservadores:
+
+- **Varios días sin caca**: 3 días o más desde el último pañal sucio o
+  "ambos". Solo si se ha registrado algún pañal en las últimas 48 h (si
+  no, saltaría a quien simplemente no apunta); sin ninguna caca en los
+  7 días que se piden, dice "al menos N días". El texto aclara que con
+  lactancia materna puede ser normal.
+- **Pocos pañales con pis hoy**: menos de 4 a partir de las 18:00, solo
+  con bebés de 5 días o más y si los 3 días anteriores se registraban
+  de media al menos 4 pañales al día (señal de que se apuntan todos).
+
+Los datos salen de `babies.recentDiaperChanges` (`GET
+/diaper-changes?since=`, los últimos 7 días; `timeline` solo trae las
+50 entradas más recientes) mezclado con los pañales de `timeline`, que
+son los más frescos gracias al sondeo de 5 s. Cada aviso se puede
+**ocultar hasta el día siguiente** (localStorage, por bebé y día; si
+no hay almacenamiento, solo hasta recargar), y todos se apagan con el
+interruptor "Avisos" de "Tu cuenta" (`alerts_enabled`, activado por
+defecto).
+
 ## Temperatura
 
 Un tipo de registro más, para cuando el bebé está malito. **"+

@@ -29,6 +29,8 @@ export interface User {
   // `TodaySummary.vue`.
   sounds_enabled: boolean
   stats_enabled: boolean
+  /** Avisos suaves del Dashboard (DailyAlertsCard.vue). */
+  alerts_enabled: boolean
   milestones_enabled: boolean
 }
 
@@ -188,6 +190,11 @@ export const useAuthStore = defineStore('auth', {
 
     async updateSoundsEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/sounds', { sounds_enabled: enabled })
+      this.user = data
+    },
+
+    async updateAlertsEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/alerts', { alerts_enabled: enabled })
       this.user = data
     },
 

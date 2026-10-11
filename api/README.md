@@ -131,6 +131,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   (`PUT /user/default-temperature-method`, nullable, mismo enum) guarda
   el lugar preferido que el frontend preselecciona al crear, igual que
   `default_diaper_size`.
+- Avisos suaves del Dashboard: `GET /babies/{baby}/diaper-changes`
+  acepta un `since` opcional (fecha) para pedir solo los últimos días
+  en vez del historial entero, y `users.alerts_enabled` (`PUT
+  /user/alerts`, booleano, activado por defecto) los apaga. El cálculo
+  de los avisos vive entero en el frontend (`web/src/lib/dailyAlerts.ts`),
+  por la misma razón que Estadísticas: depende de la hora local.
 - `BabyController@destroy` — `DELETE /babies/{baby}`, borrado
   permanente del bebé y cuanto cuelga de él. `leave()` (desvincular al
   usuario actual, dejando el bebé para el resto) ya rechazaba salir

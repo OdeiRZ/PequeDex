@@ -3,6 +3,7 @@ import { apiClient } from '@/lib/api'
 import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
 import type { StatsExportPayload } from '@/lib/stats'
 import type { GrowthReferenceCurves } from '@/lib/growthReference'
+import { ALERTS_WINDOW_DAYS } from '@/lib/dailyAlerts'
 
 export type BabySex = 'nino' | 'nina'
 
@@ -256,6 +257,10 @@ interface BabiesState {
    * las 50 entradas más recientes de todo y en un día ajetreado podría
    * dejar fuera alguna medición). Pocas filas por naturaleza. */
   temperatures: Temperature[]
+  /** Pañales de los últimos `ALERTS_WINDOW_DAYS` días, para los avisos
+   * del Dashboard ("lleva 3 días sin caca" necesita ir más atrás que
+   * las 50 entradas de `timeline`). */
+  recentDiaperChanges: DiaperChange[]
   vitaminDSchedule: VitaminDSchedule | null
   /** Last 14 days only, embedded in fetchVitaminDSchedule()'s response -
    * enough for the Dashboard's retroactive editor without a request per
@@ -337,6 +342,7 @@ export const useBabiesStore = defineStore('babies', {
     statsDiaperChanges: [],
     statsTemperatures: [],
     temperatures: [],
+    recentDiaperChanges: [],
     vitaminDSchedule: null,
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
@@ -502,6 +508,11 @@ export const useBabiesStore = defineStore('babies', {
       }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      this.recentDiaperChanges = upsertByDate(
+        this.recentDiaperChanges,
+        data.data,
+        (c) => c.changed_at,
+      )
     },
 
     async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
@@ -516,6 +527,23 @@ export const useBabiesStore = defineStore('babies', {
       }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      this.recentDiaperChanges = upsertByDate(
+        this.recentDiaperChanges,
+        data.data,
+        (c) => c.changed_at,
+      )
+    },
+
+    async fetchRecentDiaperChanges() {
+      if (!this.current) {
+        return
+      }
+
+      const since = new Date(Date.now() - ALERTS_WINDOW_DAYS * 86_400_000).toISOString()
+      const { data } = await apiClient.get(`/babies/${this.current.id}/diaper-changes`, {
+        params: { since },
+      })
+      this.recentDiaperChanges = data.data
     },
 
     async fetchTemperatures() {
@@ -625,18 +653,21 @@ export const useBabiesStore = defineStore('babies', {
     async deleteDiaperChange(id: number) {
       const previous = this.timeline
       const previousDay = this.dayTimeline
+      const previousRecent = this.recentDiaperChanges
       this.timeline = this.timeline.filter(
         (entry) => !(entry.type === 'diaper_change' && entry.data.id === id),
       )
       this.dayTimeline = this.dayTimeline.filter(
         (entry) => !(entry.type === 'diaper_change' && entry.data.id === id),
       )
+      this.recentDiaperChanges = this.recentDiaperChanges.filter((c) => c.id !== id)
 
       try {
         await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
       } catch (error) {
         this.timeline = previous
         this.dayTimeline = previousDay
+        this.recentDiaperChanges = previousRecent
         throw error
       }
     },

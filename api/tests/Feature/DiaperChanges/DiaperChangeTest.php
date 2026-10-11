@@ -141,6 +141,21 @@ it('deletes a diaper change', function () {
     $this->assertDatabaseMissing('diaper_changes', ['id' => $diaperChange->id]);
 });
 
+it('lists only diaper changes since a given date when asked', function () {
+    $user = actingAsUser();
+    $baby = babyForDiaperTest($user);
+    $old = DiaperChange::factory()->for($baby)->for($user, 'loggedBy')->create(['changed_at' => '2026-08-20 10:00:00']);
+    $recent = DiaperChange::factory()->for($baby)->for($user, 'loggedBy')->create(['changed_at' => '2026-08-29 10:00:00']);
+
+    $this->getJson("/api/babies/{$baby->id}/diaper-changes?since=2026-08-25")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $recent->id);
+
+    $this->getJson("/api/babies/{$baby->id}/diaper-changes")->assertOk()->assertJsonCount(2, 'data');
+    expect($old->id)->not->toBe($recent->id);
+});
+
 it('rejects any access to diaper changes for a baby the user is not linked to', function () {
     actingAsUser();
     $other = User::factory()->create();

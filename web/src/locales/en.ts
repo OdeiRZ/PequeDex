@@ -420,6 +420,16 @@ export default {
       hour: 'hour',
       minute: 'minute',
     },
+    alerts: {
+      noPoop: 'No dirty diaper for {days} days',
+      noPoopAtLeast: 'No dirty diaper for at least {days} days',
+      noPoopHint:
+        'With breastfeeding this can be normal after the first weeks. If you are worried, check with your paediatrician.',
+      fewWet: 'Only {count} wet diaper today | Only {count} wet diapers today',
+      fewWetHint:
+        'From the first week, around 5-6 a day is usual. If you are worried, check with your paediatrician.',
+      dismiss: 'Hide today',
+    },
     temperatureCard: {
       title: 'Temperature',
       window: 'last 48 h',
@@ -646,6 +656,11 @@ export default {
     statsEnabled: {
       title: 'Statistics',
       description: 'Show the statistics link on the dashboard.',
+      saveError: 'Could not save the change. Please try again.',
+    },
+    alertsEnabled: {
+      title: 'Alerts',
+      description: 'Gentle alerts on the dashboard, such as several days without a dirty diaper.',
       saveError: 'Could not save the change. Please try again.',
     },
     milestonesEnabled: {

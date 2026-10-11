@@ -9,6 +9,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Avisos suaves en el Dashboard** - "Lleva N días sin caca" (3 días
+  o más, solo si se están registrando pañales) y "Hoy solo N pañales
+  con pis" (menos de 4 a partir de las 18:00, en bebés de 5 días o más
+  y solo si los días anteriores se registraban todos los pañales). No
+  diagnostican: explican qué es lo habitual y remiten al pediatra si
+  preocupa. Cada aviso se puede ocultar hasta mañana, y todos se
+  desactivan con el interruptor "Avisos" de "Tu cuenta".
+
 - **Registro de temperatura** - nuevo acceso "+ Temperatura" en la
   barra de accesos, desactivado por defecto (se activa en "Tu cuenta →
   Barra de accesos"). Grados con un decimal y botones de ±0,1 °C, dónde

@@ -27,6 +27,7 @@ import AppMark from '@/components/AppMark.vue'
 import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
+import DailyAlertsCard from '@/components/DailyAlertsCard.vue'
 import DailyRhythm from '@/components/DailyRhythm.vue'
 import DateTimeWheel from '@/components/DateTimeWheel.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
@@ -46,10 +47,12 @@ import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCate
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
+import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import {
   addDays,
   formatWeekdayDateLabel,
   parseDateOnly,
+  toDateOnlyString,
   todayDateOnlyString,
 } from '@/lib/localDate'
 import { extractValidationMessage } from '@/lib/api'
@@ -112,6 +115,7 @@ async function loadBabyData() {
       babies.fetchFeedPrediction(),
       babies.fetchVitaminDSchedule(),
       babies.fetchTemperatures(),
+      babies.fetchRecentDiaperChanges(),
     ])
   } finally {
     loading.value = false
@@ -869,6 +873,67 @@ async function onSubmitDiaper() {
 // temporal) para que una medición salga sola de la ventana de 48 h.
 const now = ref(new Date())
 const lastTemperatures = computed(() => recentTemperatures(babies.temperatures, now.value))
+// --- Avisos suaves (lib/dailyAlerts.ts) ---
+
+// Pañales de los últimos días + los de `timeline` (más frescos: traen
+// lo que registra el otro cuidador gracias al sondeo de 5 s), sin
+// duplicar por id.
+const alertDiaperChanges = computed(() => {
+  const byId = new Map<number, DiaperChange>()
+  for (const change of babies.recentDiaperChanges) byId.set(change.id, change)
+  for (const entry of babies.timeline) {
+    if (entry.type === 'diaper_change') byId.set(entry.data.id, entry.data)
+  }
+  return [...byId.values()]
+})
+
+const dailyAlerts = computed(() =>
+  auth.user?.alerts_enabled === false
+    ? []
+    : computeDailyAlerts(alertDiaperChanges.value, babies.current?.birth_date, now.value),
+)
+
+// "Ocultar" vale para el resto del día, por bebé, en este dispositivo -
+// conveniencia local, no un dato que deba compartirse. Envuelto en
+// try/catch: el almacenamiento puede no estar disponible (modo privado).
+const dismissedAlerts = ref<string[]>([])
+
+function dismissedAlertsKey(): string | null {
+  return babies.current
+    ? `pequedex.dismissedAlerts.${babies.current.id}.${todayDateOnlyString()}`
+    : null
+}
+
+function loadDismissedAlerts() {
+  const key = dismissedAlertsKey()
+  try {
+    dismissedAlerts.value = key ? JSON.parse(localStorage.getItem(key) ?? '[]') : []
+  } catch {
+    dismissedAlerts.value = []
+  }
+}
+
+function onDismissAlert(alertKey: string) {
+  feedback.tap()
+  dismissedAlerts.value = [...dismissedAlerts.value, alertKey]
+  const key = dismissedAlertsKey()
+  try {
+    if (key) localStorage.setItem(key, JSON.stringify(dismissedAlerts.value))
+  } catch {
+    // sin almacenamiento: se oculta solo hasta recargar
+  }
+}
+
+const visibleAlerts = computed(() =>
+  dailyAlerts.value.filter((alert) => !dismissedAlerts.value.includes(alert.key)),
+)
+
+watch(
+  () => [babies.current?.id, toDateOnlyString(now.value)],
+  () => loadDismissedAlerts(),
+  { immediate: true },
+)
+
 const babyUnderThreeMonths = computed(() => isUnderThreeMonths(babies.current?.birth_date))
 
 // String, no número: es lo que da el <input type="number">, y así un
@@ -1899,6 +1964,12 @@ const sleepPredictionDue = computed(() => {
               :date-locale="dateLocale"
               :under-three-months="babyUnderThreeMonths"
               @add="openSheet('temperature')"
+            />
+            <DailyAlertsCard
+              v-if="visibleAlerts.length > 0"
+              class="dash-enter"
+              :alerts="visibleAlerts"
+              @dismiss="onDismissAlert"
             />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"

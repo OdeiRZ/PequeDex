@@ -475,6 +475,27 @@ async function onToggleStatsEnabled() {
   }
 }
 
+// Avisos suaves del Dashboard (DailyAlertsCard.vue) - mismo patrón.
+const alertsEnabled = ref(true)
+let alertsEnabledSaveToken = 0
+
+async function onToggleAlertsEnabled() {
+  const previous = alertsEnabled.value
+  const next = !previous
+  alertsEnabled.value = next
+  feedback.tap()
+
+  const token = ++alertsEnabledSaveToken
+  try {
+    await auth.updateAlertsEnabled(next)
+  } catch {
+    if (token === alertsEnabledSaveToken) {
+      alertsEnabled.value = previous
+      toast.show(t('profile.alertsEnabled.saveError'), 'error')
+    }
+  }
+}
+
 // Reset the form fields each time the sheet opens, in response to the
 // shared `ui.accountSheetOpen` flag - not at a call site, since this
 // component has none of its own (AppHeader opens it via the store).
@@ -498,6 +519,7 @@ watch(
     defaultFeedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
     soundsEnabled.value = auth.user?.sounds_enabled ?? true
     statsEnabled.value = auth.user?.stats_enabled ?? true
+    alertsEnabled.value = auth.user?.alerts_enabled ?? true
     milestonesEnabled.value = auth.user?.milestones_enabled ?? true
   },
 )
@@ -693,6 +715,27 @@ watch(
         <span
           class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: statsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.alertsEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">{{ t('profile.alertsEnabled.description') }}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="alertsEnabled"
+        :aria-label="t('profile.alertsEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="alertsEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleAlertsEnabled"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: alertsEnabled ? '22px' : '2px' }"
         ></span>
       </button>
     </div>

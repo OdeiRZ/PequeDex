@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
+use App\Http\Requests\Auth\UpdateAlertsEnabledRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Auth\UpdateDefaultDiaperSizeRequest;
 use App\Http\Requests\Auth\UpdateDefaultFeedDurationRequest;
@@ -138,6 +139,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['stats_enabled' => $request->validated('stats_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateAlertsEnabled(UpdateAlertsEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['alerts_enabled' => $request->validated('alerts_enabled')]);
 
         return response()->json($user);
     }

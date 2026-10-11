@@ -42,7 +42,12 @@ import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
-import { addDays, formatWeekdayDateLabel, todayDateOnlyString } from '@/lib/localDate'
+import {
+  addDays,
+  formatWeekdayDateLabel,
+  parseDateOnly,
+  todayDateOnlyString,
+} from '@/lib/localDate'
 import { extractValidationMessage } from '@/lib/api'
 import {
   entryCategory,
@@ -148,7 +153,11 @@ const visibleTimeline = computed<TimelineEntry[]>(() =>
 )
 
 const groupedTimeline = computed<TimelineListItem[]>(() =>
-  groupTimelineByDay(visibleTimeline.value, (at) => formatWeekdayDateLabel(at, dateLocale.value)),
+  groupTimelineByDay(
+    visibleTimeline.value,
+    (at) => formatWeekdayDateLabel(at, dateLocale.value),
+    isRhythmToday.value ? undefined : parseDateOnly(rhythmDate.value),
+  ),
 )
 
 async function onRhythmPrevDay() {

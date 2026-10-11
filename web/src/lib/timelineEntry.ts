@@ -167,15 +167,37 @@ export function entryTitle(
 // horaria por delante de UTC (Europe/Madrid, UTC+1/+2) esa ventana se
 // traduce a un tramo local que empieza antes y termina después del día
 // pedido - hay que recortarlo al día local exacto antes de pintarlo.
-export function filterTimelineToDay(timeline: TimelineEntry[], day: string): TimelineEntry[] {
+// Una toma/sueño que empieza la víspera y sigue pasada la medianoche
+// también entra: ocupa parte de este día. Solo se usa en días pasados
+// (en "hoy" la lista no se filtra), así que no duplica tarjetas ahí.
+export function filterTimelineToDay(
+  timeline: TimelineEntry[],
+  day: string,
+  now: Date = new Date(),
+): TimelineEntry[] {
   const dayStart = parseDateOnly(day)
   const dayEnd = new Date(dayStart)
   dayEnd.setHours(23, 59, 59, 999)
 
   return timeline.filter((entry) => {
-    const at = new Date(entry.at)
-    return at >= dayStart && at <= dayEnd
+    const start = new Date(entry.at)
+    if (start > dayEnd) return false
+    if (start >= dayStart) return true
+    return entryEnd(entry, now) > dayStart
   })
+}
+
+// Un sueño sin `ended_at` sigue en curso (hasta ahora); una toma sin
+// `ended_at` es puntual (biberón, sin duración registrada), no "en
+// curso"; un pañal siempre es puntual.
+function entryEnd(entry: TimelineEntry, now: Date): Date {
+  if (entry.type === 'sleep') {
+    return entry.data.ended_at ? new Date(entry.data.ended_at) : now
+  }
+  if (entry.type === 'feed' && entry.data.ended_at) {
+    return new Date(entry.data.ended_at)
+  }
+  return new Date(entry.at)
 }
 
 export type TimelineListItem =
@@ -188,16 +210,19 @@ export type TimelineListItem =
 // mucho aparece un separador, haciendo de etiqueta para toda la lista.
 // `en-CA` da una clave de agrupación yyyy-mm-dd estable, independiente
 // del idioma - solo `formatDayLabel` (recibe la fecha real) decide cómo
-// se ve.
+// se ve. `fixedDay` (un día pasado) agrupa todo bajo ese día: una toma/
+// sueño arrastrado de la víspera (ver filterTimelineToDay) no abre una
+// segunda cabecera con el día anterior.
 export function groupTimelineByDay(
   timeline: TimelineEntry[],
   formatDayLabel: (at: Date) => string,
+  fixedDay?: Date,
 ): TimelineListItem[] {
   const items: TimelineListItem[] = []
   let previousDayKey: string | null = null
 
   for (const entry of timeline) {
-    const at = new Date(entry.at)
+    const at = fixedDay ?? new Date(entry.at)
     const dayKey = at.toLocaleDateString('en-CA')
     if (dayKey !== previousDayKey) {
       items.push({ kind: 'separator', key: `day-${dayKey}`, label: formatDayLabel(at) })

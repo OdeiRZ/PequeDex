@@ -55,6 +55,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Línea temporal de un día pasado: una toma/sueño que empezó la
+  víspera y sigue pasada la medianoche también aparece en ese día**
+  (`filterTimelineToDay()` en `lib/timelineEntry.ts`) - antes solo
+  contaba la hora de inicio, así que solo salía en el día anterior. Un
+  sueño sin `ended_at` cuenta como en curso hasta ahora; una toma sin
+  `ended_at` (biberón sin duración) y un pañal siguen siendo puntuales.
+  Solo en días pasados: la vista de "hoy" no filtra por día, así que
+  ahí no se duplica ninguna tarjeta. En un día pasado toda la lista va
+  bajo la cabecera de ese día (`groupTimelineByDay(..., fixedDay)`),
+  sin abrir una segunda cabecera con la víspera.
+
 - **Sonido al tocar una entrada de la línea temporal para abrir su
   editor** (`EntryCard.vue`, `openEntry()`) - el mismo `tap` que ya
   suena al abrir esas hojas desde "+ Toma"/etc. en la barra de accesos,

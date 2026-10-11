@@ -1151,7 +1151,14 @@ verse bien en una captura:
   `DashboardView.vue` sigue siendo quien las llama - unas pocas
   funciones finas (`entryTitleFor`, `formatTimeFor`...) cierran sobre
   sus propios refs (`t`, `sideLabels`, `dateLocale`...) para que la
-  plantilla no tenga que cambiar.
+  plantilla no tenga que cambiar. `filterTimelineToDay()` (solo para
+  días pasados - "hoy" no se filtra) se queda con lo que ocupa parte
+  del día, no solo lo que empieza en él: una toma/sueño de la víspera
+  que sigue pasada la medianoche también sale (sueño sin `ended_at` =
+  en curso hasta ahora; toma sin `ended_at` y pañal = puntuales). Para
+  que esa entrada arrastrada no abra una segunda cabecera con la
+  víspera, `groupTimelineByDay()` acepta un `fixedDay` opcional que
+  agrupa toda la lista bajo el día elegido.
 - **Marca de tiempo trasera de "Línea temporal" a dos líneas** en un
   sueño finalizado o una toma de pecho con duración cargada: antes
   mostraba solo la hora de inicio (`item.entry.at`, que siempre es

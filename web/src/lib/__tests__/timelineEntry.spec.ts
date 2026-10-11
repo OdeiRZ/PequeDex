@@ -300,6 +300,41 @@ describe('filterTimelineToDay', () => {
     const timeline = [feedEntry({ started_at: local(2026, 8, 6, 12, 0) })]
     expect(filterTimelineToDay(timeline, '2026-08-07')).toEqual([])
   })
+
+  it('also keeps a sleep/feed that started the day before and ran past midnight', () => {
+    const overnightSleep = sleepEntry({
+      started_at: local(2026, 8, 6, 22, 0),
+      ended_at: local(2026, 8, 7, 6, 0),
+    })
+    const overnightFeed = feedEntry({
+      started_at: local(2026, 8, 6, 23, 50),
+      ended_at: local(2026, 8, 7, 0, 15),
+    })
+    const endedBeforeMidnight = sleepEntry({
+      started_at: local(2026, 8, 6, 20, 0),
+      ended_at: local(2026, 8, 6, 23, 0),
+    })
+
+    const result = filterTimelineToDay(
+      [overnightSleep, overnightFeed, endedBeforeMidnight],
+      '2026-08-07',
+    )
+
+    expect(result).toEqual([overnightSleep, overnightFeed])
+  })
+
+  it('treats a sleep with no end as ongoing until now, but a feed with no end as a point in time', () => {
+    const ongoingSleep = sleepEntry({ started_at: local(2026, 8, 6, 22, 0), ended_at: null })
+    const bottleNoDuration = feedEntry({ started_at: local(2026, 8, 6, 23, 30), ended_at: null })
+
+    const result = filterTimelineToDay(
+      [ongoingSleep, bottleNoDuration],
+      '2026-08-07',
+      new Date(local(2026, 8, 7, 3, 0)),
+    )
+
+    expect(result).toEqual([ongoingSleep])
+  })
 })
 
 describe('groupTimelineByDay', () => {
@@ -316,6 +351,23 @@ describe('groupTimelineByDay', () => {
     expect(items.map((i) => i.kind)).toEqual(['separator', 'entry', 'entry', 'separator', 'entry'])
     expect(items[0]).toMatchObject({ kind: 'separator', label: 'label-6' })
     expect(items[3]).toMatchObject({ kind: 'separator', label: 'label-7' })
+  })
+
+  it('groups everything under fixedDay when given, even an entry carried over from the day before', () => {
+    const today = diaperEntry({ changed_at: local(2026, 8, 7, 8, 0) })
+    const carriedOver = sleepEntry({
+      started_at: local(2026, 8, 6, 22, 0),
+      ended_at: local(2026, 8, 7, 6, 0),
+    })
+
+    const items = groupTimelineByDay(
+      [today, carriedOver],
+      (at) => `label-${at.getDate()}`,
+      new Date(2026, 7, 7),
+    )
+
+    expect(items.map((i) => i.kind)).toEqual(['separator', 'entry', 'entry'])
+    expect(items[0]).toMatchObject({ kind: 'separator', label: 'label-7' })
   })
 
   it('returns an empty list for an empty timeline, no stray separator', () => {

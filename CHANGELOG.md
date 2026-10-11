@@ -55,6 +55,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Sonido al tocar una entrada de la línea temporal para abrir su
+  editor** (`EntryCard.vue`, `openEntry()`) - el mismo `tap` que ya
+  suena al abrir esas hojas desde "+ Toma"/etc. en la barra de accesos,
+  respetando el ajuste "Sonido y vibración al interactuar". No suena
+  cuando el toque solo cierra el panel de borrar revelado en modo swipe.
+
 - **Singular/plural en las tarjetas resumen del día** - "1 toma"/
   "1 pañal" en singular, "0 tomas"/"4 pañales" (cualquier número
   distinto de 1, incluido 0) en plural. Usa la pluralización nativa de

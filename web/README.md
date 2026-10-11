@@ -633,6 +633,11 @@ los puntos de interacción que ya existían en el código:
   Contracciones.
 - **`ActionBar.vue`**: `tap()` en `onTap()`, junto al ripple que ya
   dibuja al cambiar de categoría.
+- **`EntryCard.vue`**: `tap()` al tocar una entrada interactiva para
+  abrir su editor (`openEntry()`, usado tanto en modo normal como en
+  modo swipe) - el mismo sonido que abrir esa hoja desde "+ Toma"/etc.
+  en la barra de accesos. No suena cuando el toque solo cierra el
+  panel de borrar ya revelado en modo swipe (eso no es "abrir").
 - **`DeleteButton.vue`**: `tap()` en `onClick()`, junto al shake de
   confirmación.
 - **`SoundsView.vue`**: `tap()` al pulsar play/stop y en la rama de

@@ -127,6 +127,13 @@ function onRowClick() {
     return
   }
 
+  openEntry()
+}
+
+// Mismo 'tap' que ActionBar.vue al abrir estas mismas hojas desde
+// "+ Toma"/etc. - abrir un evento existente suena igual que crearlo.
+function openEntry() {
+  feedback.tap()
   emit('open')
 }
 </script>
@@ -160,7 +167,7 @@ function onRowClick() {
           :type="interactive ? 'button' : undefined"
           class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl text-left"
           :class="interactive && 'group'"
-          @click="interactive && (swipeMode ? onRowClick() : emit('open'))"
+          @click="interactive && (swipeMode ? onRowClick() : openEntry())"
         >
           <img
             v-if="photoSrc"

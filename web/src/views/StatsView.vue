@@ -23,7 +23,9 @@ import {
   summarizeVitaminDStats,
   buildStatsExportPayload,
   filterByPeriod,
+  filterPreviousPeriod,
   findLastPoopAt,
+  summarizePeriodDeltas,
   type StatsPeriod,
 } from '@/lib/stats'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
@@ -100,6 +102,45 @@ const sleepStats = computed(() => summarizeSleepStats(periodSleeps.value))
 const feedStats = computed(() => summarizeFeedStats(periodFeeds.value))
 const diaperStats = computed(() => summarizeDiaperStats(periodDiaperChanges.value))
 const lastPoopAt = computed(() => findLastPoopAt(babies.statsDiaperChanges))
+
+// Mismas cifras sobre el periodo inmediatamente anterior (los 7/30 días
+// justo antes), solo para mostrar la diferencia bajo unas pocas fichas
+// donde la evolución dice algo. `null` con "Todo".
+const periodDeltas = computed(() => {
+  if (period.value === 'all') return null
+  const previous = {
+    sleep: summarizeSleepStats(
+      filterPreviousPeriod(babies.statsSleeps, (s) => s.started_at, period.value),
+    ),
+    feed: summarizeFeedStats(
+      filterPreviousPeriod(babies.statsFeeds, (f) => f.started_at, period.value),
+    ),
+    diaper: summarizeDiaperStats(
+      filterPreviousPeriod(babies.statsDiaperChanges, (c) => c.changed_at, period.value),
+    ),
+  }
+  return summarizePeriodDeltas(
+    { sleep: sleepStats.value, feed: feedStats.value, diaper: diaperStats.value },
+    previous,
+  )
+})
+
+// Sin color de "bien/mal" a propósito: más pañales o menos tomas no es
+// bueno ni malo por sí solo, solo se indica hacia dónde va.
+function formatMinutesDelta(minutes: number): string {
+  const rounded = Math.round(minutes)
+  if (rounded === 0) return t('stats.period.noChange')
+  return `${rounded > 0 ? '+' : '−'}${formatMinutes(Math.abs(rounded))}`
+}
+
+function formatPerDayDelta(value: number): string {
+  if (Math.abs(value) < 0.05) return t('stats.period.noChange')
+  return `${value > 0 ? '+' : '−'}${Math.abs(value).toFixed(1)}`
+}
+
+const deltaSuffix = computed(() =>
+  period.value === '30d' ? t('stats.period.vsPrevious30') : t('stats.period.vsPrevious7'),
+)
 const growthStats = computed(() => summarizeGrowthStats(babies.growthMeasurements))
 const vitaminDStats = computed(() =>
   summarizeVitaminDStats(babies.vitaminDSchedule, babies.vitaminDAllDoses),
@@ -349,6 +390,7 @@ async function onExportPdf() {
       {
         period: period.value,
         lastPoopAt: lastPoopAt.value,
+        periodDeltas: periodDeltas.value,
         weekComparison: weekComparison.value,
         weeklyTrend: weeklyTrend.value,
         activityHeatmap: activityHeatmap.value,
@@ -503,6 +545,12 @@ async function onExportPdf() {
               <div class="text-lg font-bold tabular-nums">
                 {{ feedStats.averagePerDay.toFixed(1) }}
               </div>
+              <div
+                v-if="periodDeltas?.feedsPerDay != null"
+                class="text-[0.68rem] tabular-nums text-text-muted"
+              >
+                {{ formatPerDayDelta(periodDeltas.feedsPerDay) }} {{ deltaSuffix }}
+              </div>
             </div>
             <div
               v-if="feedStats.gapStdDevMinutes !== null"
@@ -555,6 +603,12 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.sleep.longestStretchLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ formatMinutes(sleepStats.averageLongestStretchMinutes) }}
+              </div>
+              <div
+                v-if="periodDeltas?.longestStretchMinutes != null"
+                class="text-[0.68rem] tabular-nums text-text-muted"
+              >
+                {{ formatMinutesDelta(periodDeltas.longestStretchMinutes) }} {{ deltaSuffix }}
               </div>
             </div>
             <div
@@ -618,6 +672,13 @@ async function onExportPdf() {
               >
             </div>
             <p class="mt-1 text-[0.68rem] text-text-muted">{{ t('stats.sleep.nightRangeHint') }}</p>
+            <p
+              v-if="periodDeltas?.totalSleepMinutes != null"
+              class="text-[0.68rem] tabular-nums text-text-muted"
+            >
+              {{ t('stats.sleep.dailyTotalDelta') }}
+              {{ formatMinutesDelta(periodDeltas.totalSleepMinutes) }} {{ deltaSuffix }}
+            </p>
           </div>
         </template>
         <p v-else class="py-2 text-center text-sm text-text-muted">
@@ -674,6 +735,12 @@ async function onExportPdf() {
               <div class="text-lg font-bold tabular-nums">
                 {{ diaperStats.averagePeePerDay.toFixed(1) }}
               </div>
+              <div
+                v-if="periodDeltas?.peePerDay != null"
+                class="text-[0.68rem] tabular-nums text-text-muted"
+              >
+                {{ formatPerDayDelta(periodDeltas.peePerDay) }} {{ deltaSuffix }}
+              </div>
             </div>
             <div
               v-if="diaperStats.averagePoopPerDay !== null"
@@ -682,6 +749,12 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.diaper.poopPerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ diaperStats.averagePoopPerDay.toFixed(1) }}
+              </div>
+              <div
+                v-if="periodDeltas?.poopPerDay != null"
+                class="text-[0.68rem] tabular-nums text-text-muted"
+              >
+                {{ formatPerDayDelta(periodDeltas.poopPerDay) }} {{ deltaSuffix }}
               </div>
             </div>
             <div v-if="diaperStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">

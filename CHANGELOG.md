@@ -7,6 +7,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- **Estadísticas: comparación con el periodo anterior** - con "7 días"
+  o "30 días" elegido, cinco cifras muestran debajo cuánto han cambiado
+  frente a los 7/30 días justo anteriores ("+25min vs. los 7 días
+  anteriores"): tramo más largo, sueño total al día, tomas al día y
+  pañales con pis/con caca al día. Solo esas, donde la evolución dice
+  algo; sin colores de "bien/mal" (más pañales o menos tomas no es
+  bueno ni malo por sí solo). No aparece con "Todo" ni cuando el
+  periodo anterior no tiene datos suficientes. También en el PDF.
+
 ### Cambiado
 
 - **El PDF de Estadísticas se parece ahora a la pantalla** - mostraba

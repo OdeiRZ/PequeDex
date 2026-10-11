@@ -67,6 +67,7 @@ class StatsExportController extends Controller
             'babyAge' => BabyAgeHeadline::forBaby($baby),
             'generatedAt' => CarbonImmutable::now(),
             'periodLabel' => self::PERIOD_LABELS[$data['period']],
+            'deltaNotes' => $this->deltaNotes($data['period'], $data['period_deltas'] ?? null),
             'sleep' => $data['sleep'],
             'feed' => $data['feed'],
             'diaper' => $data['diaper'],
@@ -137,6 +138,46 @@ class StatsExportController extends Controller
                 'value' => $day['hours'],
             ])
             ->all();
+    }
+
+    /**
+     * La línea pequeña bajo cada ficha con su diferencia frente al
+     * periodo anterior ("+25min vs. los 7 días anteriores"), mismo texto
+     * que en pantalla. `null` por clave cuando no hay diferencia que
+     * mostrar.
+     *
+     * @param  array<string, float|int|null>|null  $deltas
+     * @return array<string, string|null>
+     */
+    private function deltaNotes(string $period, ?array $deltas): array
+    {
+        $keys = ['longest_stretch_minutes', 'total_sleep_minutes', 'feeds_per_day', 'pee_per_day', 'poop_per_day'];
+        if ($deltas === null || $period === 'all') {
+            return array_fill_keys($keys, null);
+        }
+
+        $suffix = $period === '30d' ? 'vs. los 30 días anteriores' : 'vs. los 7 días anteriores';
+        $minutes = function (float $value) use ($suffix): string {
+            $rounded = (int) round($value);
+            if ($rounded === 0) {
+                return "Sin cambios $suffix";
+            }
+            $abs = abs($rounded);
+            $text = intdiv($abs, 60) > 0 ? intdiv($abs, 60).'h '.($abs % 60).'min' : $abs.'min';
+
+            return ($rounded > 0 ? '+' : '−').$text.' '.$suffix;
+        };
+        $perDay = fn (float $value): string => abs($value) < 0.05
+            ? "Sin cambios $suffix"
+            : ($value > 0 ? '+' : '−').number_format(abs($value), 1).' '.$suffix;
+
+        $notes = [];
+        foreach ($keys as $key) {
+            $value = $deltas[$key] ?? null;
+            $notes[$key] = $value === null ? null : (str_ends_with($key, '_minutes') ? $minutes((float) $value) : $perDay((float) $value));
+        }
+
+        return $notes;
     }
 
     /**

@@ -173,6 +173,9 @@ export default {
       last30: '30 días',
       all: 'Todo',
       hint: 'Se aplica a tomas, sueño y pañales.',
+      vsPrevious7: 'vs. los 7 días anteriores',
+      vsPrevious30: 'vs. los 30 días anteriores',
+      noChange: 'Sin cambios',
     },
     sleep: {
       title: 'Sueño',
@@ -187,6 +190,7 @@ export default {
       nightLabel: 'Noche',
       dayLabel: 'De día',
       nightRangeHint: 'Noche: de 20:00 a 08:00',
+      dailyTotalDelta: 'Total al día:',
       longestLabel: 'Sueño más largo del periodo',
     },
     feed: {

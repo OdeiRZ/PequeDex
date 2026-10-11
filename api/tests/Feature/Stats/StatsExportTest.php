@@ -34,6 +34,13 @@ function validStatsPayload(): array
 
     return [
         'period' => '7d',
+        'period_deltas' => [
+            'longest_stretch_minutes' => 25.4,
+            'total_sleep_minutes' => -70.0,
+            'feeds_per_day' => 0.02,
+            'pee_per_day' => -0.4,
+            'poop_per_day' => null,
+        ],
         'sleep' => [
             'has_enough_data' => true,
             'average_duration_minutes' => 45.5,
@@ -159,6 +166,34 @@ it('accepts null per-day and day/night fields - below the sample threshold, lib/
     $payload['weekly_trend'][0]['sleep_hours'] = null;
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('formats the previous-period deltas the same way as the screen', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $notes = app(StatsExportController::class)->buildViewData($baby, validStatsPayload())['deltaNotes'];
+
+    expect($notes)->toBe([
+        'longest_stretch_minutes' => '+25min vs. los 7 días anteriores',
+        'total_sleep_minutes' => '−1h 10min vs. los 7 días anteriores',
+        'feeds_per_day' => 'Sin cambios vs. los 7 días anteriores',
+        'pee_per_day' => '−0.4 vs. los 7 días anteriores',
+        'poop_per_day' => null,
+    ]);
+});
+
+it('shows no deltas for the whole history', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['period'] = 'all';
+    $payload['period_deltas'] = null;
+
+    $notes = app(StatsExportController::class)->buildViewData($baby, $payload)['deltaNotes'];
+
+    expect(array_filter($notes))->toBe([]);
 });
 
 it('rejects an unknown period', function () {

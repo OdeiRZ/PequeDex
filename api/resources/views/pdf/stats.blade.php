@@ -140,7 +140,7 @@
                 ['label' => 'Duración media (pecho)', 'value' => $feed['average_pecho_duration_minutes'] !== null ? $fmtMin($feed['average_pecho_duration_minutes']) : null],
                 ['label' => 'Cantidad media (biberón)', 'value' => $feed['average_bottle_amount_ml'] !== null ? round($feed['average_bottle_amount_ml']).' ml' : null],
                 ['label' => 'Cada cuánto come', 'value' => $feed['average_gap_minutes'] !== null ? $fmtMin($feed['average_gap_minutes']) : null],
-                ['label' => 'Tomas al día', 'value' => $feed['average_per_day'] !== null ? number_format($feed['average_per_day'], 1) : null],
+                ['label' => 'Tomas al día', 'value' => $feed['average_per_day'] !== null ? number_format($feed['average_per_day'], 1) : null, 'note' => $deltaNotes['feeds_per_day']],
                 ['label' => 'Regularidad del horario', 'value' => $feed['gap_std_dev_minutes'] !== null ? ($feed['gap_std_dev_minutes'] < 30 ? 'Muy regular' : ($feed['gap_std_dev_minutes'] < 60 ? 'Regular' : 'Variable')) : null],
             ]])
 
@@ -174,7 +174,7 @@
             <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
         @else
             @include('pdf.partials.tiles', ['tiles' => [
-                ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null],
+                ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null, 'note' => $deltaNotes['longest_stretch_minutes']],
                 ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? number_format($sleep['average_sleeps_per_day'], 1) : null],
                 ['label' => 'Duración media', 'value' => $fmtMin($sleep['average_duration_minutes'] ?? 0)],
                 ['label' => 'Tiempo despierto entre sueños', 'value' => $sleep['average_wake_window_minutes'] !== null ? $fmtMin($sleep['average_wake_window_minutes']) : null],
@@ -213,6 +213,9 @@
                                 </tr>
                             </table>
                             <span style="display: block; font-size: 8px; color: #7a6f66; margin-top: 3px;">Noche: de 20:00 a 08:00</span>
+                            @if ($deltaNotes['total_sleep_minutes'] !== null)
+                                <span style="display: block; font-size: 9px; color: #7a6f66; margin-top: 1px;">Total al día: {{ $deltaNotes['total_sleep_minutes'] }}</span>
+                            @endif
                         </td>
                     </tr>
                 </table>
@@ -265,8 +268,8 @@
             <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
         @else
             @include('pdf.partials.tiles', ['tiles' => [
-                ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? number_format($diaper['average_pee_per_day'], 1) : null],
-                ['label' => 'Con caca al día', 'value' => $diaper['average_poop_per_day'] !== null ? number_format($diaper['average_poop_per_day'], 1) : null],
+                ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? number_format($diaper['average_pee_per_day'], 1) : null, 'note' => $deltaNotes['pee_per_day']],
+                ['label' => 'Con caca al día', 'value' => $diaper['average_poop_per_day'] !== null ? number_format($diaper['average_poop_per_day'], 1) : null, 'note' => $deltaNotes['poop_per_day']],
                 ['label' => 'Cambios al día', 'value' => $diaper['average_per_day'] !== null ? number_format($diaper['average_per_day'], 1) : null],
                 ['label' => 'Cada cuánto se cambia', 'value' => ($diaper['average_gap_minutes'] ?? null) !== null ? $fmtMin($diaper['average_gap_minutes']) : null],
             ]])

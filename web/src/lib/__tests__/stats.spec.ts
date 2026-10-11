@@ -10,7 +10,9 @@ import {
   summarizeVitaminDStats,
   buildStatsExportPayload,
   filterByPeriod,
+  filterPreviousPeriod,
   findLastPoopAt,
+  summarizePeriodDeltas,
   type WeeklyTrendPoint,
 } from '@/lib/stats'
 import type {
@@ -218,6 +220,78 @@ describe('filterByPeriod', () => {
 
   it('keeps everything for all', () => {
     expect(filterByPeriod(items, (i) => i.at, 'all', now)).toHaveLength(4)
+  })
+})
+
+describe('filterPreviousPeriod', () => {
+  const now = new Date(2026, 7, 10, 15)
+
+  it('takes the 7 calendar days right before the current 7-day period', () => {
+    const items = [
+      { at: local(2026, 8, 4, 0) }, // dentro del periodo actual
+      { at: local(2026, 8, 3, 23, 59) }, // último instante del anterior
+      { at: local(2026, 7, 28, 0) }, // primer día del anterior
+      { at: local(2026, 7, 27, 23) }, // fuera
+    ]
+    expect(filterPreviousPeriod(items, (i) => i.at, '7d', now)).toEqual([items[1], items[2]])
+  })
+
+  it('is empty for the whole history', () => {
+    expect(filterPreviousPeriod([{ at: local(2026, 1, 1) }], (i) => i.at, 'all', now)).toEqual(
+      [],
+    )
+  })
+})
+
+describe('summarizePeriodDeltas', () => {
+  const sleeps = (hours: number) => [
+    sleep(local(2026, 8, 7, 22), local(2026, 8, 7, 22 + hours)),
+    sleep(local(2026, 8, 8, 21), local(2026, 8, 8, 21 + hours)),
+    sleep(local(2026, 8, 9, 20), local(2026, 8, 9, 20 + hours)),
+  ]
+  const changes = (count: number) =>
+    Array.from({ length: count }, (_, i) =>
+      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 1 + i) }),
+    )
+
+  it('subtracts the previous period from the current one', () => {
+    const deltas = summarizePeriodDeltas(
+      {
+        sleep: summarizeSleepStats(sleeps(2)),
+        feed: summarizeFeedStats([]),
+        diaper: summarizeDiaperStats(changes(5)),
+      },
+      {
+        sleep: summarizeSleepStats(sleeps(1)),
+        feed: summarizeFeedStats([]),
+        diaper: summarizeDiaperStats(changes(3)),
+      },
+    )
+    expect(deltas.longestStretchMinutes).toBe(60)
+    expect(deltas.peePerDay).toBe(2)
+    expect(deltas.poopPerDay).toBe(2)
+  })
+
+  it('is null where either period lacks the figure', () => {
+    const deltas = summarizePeriodDeltas(
+      {
+        sleep: summarizeSleepStats(sleeps(2)),
+        feed: summarizeFeedStats([]),
+        diaper: summarizeDiaperStats([]),
+      },
+      {
+        sleep: summarizeSleepStats([]),
+        feed: summarizeFeedStats([]),
+        diaper: summarizeDiaperStats([]),
+      },
+    )
+    expect(deltas).toEqual({
+      longestStretchMinutes: null,
+      totalSleepMinutes: null,
+      feedsPerDay: null,
+      peePerDay: null,
+      poopPerDay: null,
+    })
   })
 })
 
@@ -789,6 +863,7 @@ describe('buildStatsExportPayload - options', () => {
     const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
 
     expect(payload.period).toBe('all')
+    expect(payload.period_deltas).toBeNull()
     expect(payload.diaper.last_poop_at).toBeNull()
   })
 

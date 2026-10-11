@@ -37,6 +37,14 @@ class ExportStatsRequest extends FormRequest
             // Periodo que cubren tomas/sueño/pañales (ver `StatsPeriod`
             // en `lib/stats.ts`); el resto de bloques no dependen de él.
             'period' => ['required', Rule::in(['7d', '30d', 'all'])],
+            // Diferencias frente al periodo anterior (`null` con "Todo");
+            // cada una `null` si alguno de los dos periodos no tiene el dato.
+            'period_deltas' => ['nullable', 'array'],
+            'period_deltas.longest_stretch_minutes' => ['nullable', 'numeric'],
+            'period_deltas.total_sleep_minutes' => ['nullable', 'numeric'],
+            'period_deltas.feeds_per_day' => ['nullable', 'numeric'],
+            'period_deltas.pee_per_day' => ['nullable', 'numeric'],
+            'period_deltas.poop_per_day' => ['nullable', 'numeric'],
 
             'sleep' => ['required', 'array'],
             'sleep.has_enough_data' => ['required', 'boolean'],

@@ -172,6 +172,9 @@ export default {
       last30: '30 days',
       all: 'All',
       hint: 'Applies to feeds, sleep and diapers.',
+      vsPrevious7: 'vs. the previous 7 days',
+      vsPrevious30: 'vs. the previous 30 days',
+      noChange: 'No change',
     },
     sleep: {
       title: 'Sleep',
@@ -186,6 +189,7 @@ export default {
       nightLabel: 'Night',
       dayLabel: 'Daytime',
       nightRangeHint: 'Night: 8 pm to 8 am',
+      dailyTotalDelta: 'Daily total:',
       longestLabel: 'Longest sleep in this period',
     },
     feed: {

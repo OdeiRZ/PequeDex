@@ -78,6 +78,59 @@ export function filterByPeriod<T>(
   return items.filter((item) => new Date(at(item)) >= start)
 }
 
+// El periodo inmediatamente anterior, del mismo número de días: con "7
+// días" (hoy y los 6 anteriores), los 7 días de calendario justo antes.
+// Vacío con "Todo" - no hay "antes de todo" con el que comparar.
+export function filterPreviousPeriod<T>(
+  items: T[],
+  at: (item: T) => string,
+  period: StatsPeriod,
+  now: Date = new Date(),
+): T[] {
+  if (period === 'all') return []
+  const end = periodStart(period, now) as Date
+  const start = new Date(end)
+  start.setDate(start.getDate() - PERIOD_DAYS[period])
+  return items.filter((item) => {
+    const date = new Date(at(item))
+    return date >= start && date < end
+  })
+}
+
+/** Diferencia (periodo actual menos el anterior) de las cifras donde la
+ * evolución dice algo; `null` si cualquiera de los dos periodos no
+ * tiene ese dato (p. ej. el anterior sin datos suficientes). */
+export interface PeriodDeltas {
+  longestStretchMinutes: number | null
+  totalSleepMinutes: number | null
+  feedsPerDay: number | null
+  peePerDay: number | null
+  poopPerDay: number | null
+}
+
+function delta(current: number | null, previous: number | null): number | null {
+  return current !== null && previous !== null ? current - previous : null
+}
+
+export function summarizePeriodDeltas(
+  current: { sleep: SleepStats; feed: FeedStats; diaper: DiaperStats },
+  previous: { sleep: SleepStats; feed: FeedStats; diaper: DiaperStats },
+): PeriodDeltas {
+  return {
+    longestStretchMinutes: delta(
+      current.sleep.averageLongestStretchMinutes,
+      previous.sleep.averageLongestStretchMinutes,
+    ),
+    totalSleepMinutes: delta(
+      current.sleep.averageTotalSleepMinutes,
+      previous.sleep.averageTotalSleepMinutes,
+    ),
+    feedsPerDay: delta(current.feed.averagePerDay, previous.feed.averagePerDay),
+    peePerDay: delta(current.diaper.averagePeePerDay, previous.diaper.averagePeePerDay),
+    poopPerDay: delta(current.diaper.averagePoopPerDay, previous.diaper.averagePoopPerDay),
+  }
+}
+
 // Clave de día de calendario LOCAL (no UTC, no un string de fecha que
 // dependa del idioma) - solo para agrupar entradas por "qué día es
 // esto", nunca mostrada.
@@ -824,6 +877,13 @@ export function summarizeVitaminDStats(
  */
 export interface StatsExportPayload {
   period: StatsPeriod
+  period_deltas: {
+    longest_stretch_minutes: number | null
+    total_sleep_minutes: number | null
+    feeds_per_day: number | null
+    pee_per_day: number | null
+    poop_per_day: number | null
+  } | null
   sleep: {
     has_enough_data: boolean
     average_duration_minutes: number | null
@@ -912,6 +972,7 @@ function exportGrowthMetric(stat: GrowthMetricStat): GrowthMetricExportStat {
  */
 export interface StatsExportOptions {
   period?: StatsPeriod
+  periodDeltas?: PeriodDeltas | null
   lastPoopAt?: string | null
   weekComparison?: WeekComparison | null
   weeklyTrend?: WeeklyTrendPoint[]
@@ -929,6 +990,7 @@ export function buildStatsExportPayload(
 ): StatsExportPayload {
   const {
     period = 'all',
+    periodDeltas = null,
     lastPoopAt = null,
     weekComparison = null,
     weeklyTrend = [],
@@ -939,6 +1001,15 @@ export function buildStatsExportPayload(
 
   return {
     period,
+    period_deltas: periodDeltas
+      ? {
+          longest_stretch_minutes: periodDeltas.longestStretchMinutes,
+          total_sleep_minutes: periodDeltas.totalSleepMinutes,
+          feeds_per_day: periodDeltas.feedsPerDay,
+          pee_per_day: periodDeltas.peePerDay,
+          poop_per_day: periodDeltas.poopPerDay,
+        }
+      : null,
     sleep: {
       has_enough_data: sleep.hasEnoughData,
       average_duration_minutes: sleep.averageDurationMinutes,

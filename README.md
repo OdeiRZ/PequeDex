@@ -2,8 +2,9 @@
 
 [![CI](https://github.com/OdeiRZ/PequeDex/actions/workflows/ci.yml/badge.svg)](https://github.com/OdeiRZ/PequeDex/actions/workflows/ci.yml)
 
-Diario y seguimiento de bebé: tomas, sueño, pañales, hitos y crecimiento,
-compartido en tiempo real entre cuidadores. Nace de una necesidad real (mi
+Diario y seguimiento de bebé: tomas, sueño, pañales, temperatura, hitos,
+crecimiento, vitamina D y vacunas, con estadísticas y PDF para el
+pediatra, compartido en tiempo real entre cuidadores. Nace de una necesidad real (mi
 hija nace en unas semanas) y, como [LudoDex](https://github.com/OdeiRZ/LudoDex),
 está pensada primero para uso personal y abierta a que cualquiera lleve el
 suyo.
@@ -115,6 +116,29 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     (antes redirigía directo a Login), instalable de verdad como PWA
     en Android/iOS, y un asistente paso a paso para crear el perfil
     del bebé en vez de un formulario plano — ver CHANGELOG.md.
+15. ✅ Recordatorio diario de vitamina D por bebé, con registro de qué
+    días se dio e historial — ver `web/README.md`.
+16. ✅ Estadísticas útiles de verdad: selector de periodo (7 días, 30
+    días, todo) con comparación frente al periodo anterior, sueño sin
+    suponer horarios "normales" (tramo más largo y su evolución
+    semanal, reparto día/noche por franja de reloj), pañales por
+    contenido (con pis / con caca), bandas de percentiles de la OMS en
+    las gráficas de crecimiento y un PDF que calca la pantalla — ver
+    `web/README.md`/`api/README.md`.
+17. ✅ Temperatura: registro con el lugar de la toma (y uno preferido
+    por defecto), nivel de color en la línea temporal, tarjeta de las
+    últimas 48 h con aviso para menores de 3 meses, y bloque en
+    estadísticas y PDF.
+18. ✅ Avisos suaves en el Dashboard ("lleva 3 días sin caca", "hoy
+    pocos pañales con pis"), que nunca diagnostican y remiten al
+    pediatra, desactivables.
+19. ✅ Vacunas y revisiones: cartilla digital por bebé con el calendario
+    común del Consejo Interterritorial 2026 o el de su comunidad
+    (de momento, Cantabria), editable, y revisiones con el pediatra.
+    Las plantillas son ficheros de datos: añadir otra comunidad es
+    añadir un fichero.
+20. ✅ Resumen para la consulta: un PDF de una página con los últimos
+    14 días y un recuadro de preguntas para el pediatra.
 
 ## Licencia
 

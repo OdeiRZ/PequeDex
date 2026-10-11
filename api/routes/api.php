@@ -17,6 +17,8 @@ use App\Http\Controllers\Sleeps\SleepController;
 use App\Http\Controllers\Sleeps\SleepPredictionController;
 use App\Http\Controllers\Stats\StatsExportController;
 use App\Http\Controllers\Temperatures\TemperatureController;
+use App\Http\Controllers\Vaccinations\CheckupController;
+use App\Http\Controllers\Vaccinations\VaccinationController;
 use App\Http\Controllers\VitaminD\VitaminDDoseController;
 use App\Http\Controllers\VitaminD\VitaminDScheduleController;
 use Illuminate\Http\Request;
@@ -86,6 +88,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);
     Route::put('/babies/{baby}/diaper-changes/{diaperChange}', [DiaperChangeController::class, 'update']);
     Route::delete('/babies/{baby}/diaper-changes/{diaperChange}', [DiaperChangeController::class, 'destroy']);
+
+    Route::get('/babies/{baby}/vaccinations', [VaccinationController::class, 'index']);
+    Route::put('/babies/{baby}/vaccinations/settings', [VaccinationController::class, 'updateSettings']);
+    Route::post('/babies/{baby}/vaccinations', [VaccinationController::class, 'store']);
+    Route::put('/babies/{baby}/vaccinations/{vaccination}', [VaccinationController::class, 'update']);
+    Route::delete('/babies/{baby}/vaccinations/{vaccination}', [VaccinationController::class, 'destroy']);
+
+    Route::get('/babies/{baby}/checkups', [CheckupController::class, 'index']);
+    Route::post('/babies/{baby}/checkups', [CheckupController::class, 'store']);
+    Route::put('/babies/{baby}/checkups/{checkup}', [CheckupController::class, 'update']);
+    Route::delete('/babies/{baby}/checkups/{checkup}', [CheckupController::class, 'destroy']);
 
     Route::get('/babies/{baby}/temperatures', [TemperatureController::class, 'index']);
     Route::post('/babies/{baby}/temperatures', [TemperatureController::class, 'store']);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BabySex;
+use App\Enums\Region;
 use Database\Factories\BabyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ class Baby extends Model
     /** @use HasFactory<BabyFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'due_date', 'birth_date', 'sex', 'invite_code', 'water_broke_at'];
+    protected $fillable = ['name', 'due_date', 'birth_date', 'sex', 'region', 'vaccinations_enabled', 'invite_code', 'water_broke_at'];
 
     /**
      * @return array<string, string>
@@ -26,6 +27,8 @@ class Baby extends Model
             'due_date' => 'date:Y-m-d',
             'birth_date' => 'date:Y-m-d',
             'sex' => BabySex::class,
+            'region' => Region::class,
+            'vaccinations_enabled' => 'boolean',
             // Unlike due_date/birth_date, the time matters here (see
             // ContractionsView.vue) - a plain datetime cast, not date:Y-m-d.
             'water_broke_at' => 'datetime',
@@ -85,6 +88,22 @@ class Baby extends Model
     public function diaperChanges(): HasMany
     {
         return $this->hasMany(DiaperChange::class);
+    }
+
+    /**
+     * @return HasMany<Vaccination, $this>
+     */
+    public function vaccinations(): HasMany
+    {
+        return $this->hasMany(Vaccination::class);
+    }
+
+    /**
+     * @return HasMany<Checkup, $this>
+     */
+    public function checkups(): HasMany
+    {
+        return $this->hasMany(Checkup::class);
     }
 
     /**

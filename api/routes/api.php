@@ -11,6 +11,7 @@ use App\Http\Controllers\DiaperChanges\DiaperChangeController;
 use App\Http\Controllers\Feeds\FeedController;
 use App\Http\Controllers\Feeds\FeedPredictionController;
 use App\Http\Controllers\GrowthMeasurements\GrowthMeasurementController;
+use App\Http\Controllers\GrowthMeasurements\GrowthReferenceController;
 use App\Http\Controllers\Milestones\MilestoneController;
 use App\Http\Controllers\Sleeps\SleepController;
 use App\Http\Controllers\Sleeps\SleepPredictionController;
@@ -84,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/babies/{baby}/diaper-changes/{diaperChange}', [DiaperChangeController::class, 'destroy']);
 
     Route::get('/babies/{baby}/growth-measurements', [GrowthMeasurementController::class, 'index']);
+    Route::get('/babies/{baby}/growth-reference', [GrowthReferenceController::class, 'show']);
     Route::post('/babies/{baby}/growth-measurements', [GrowthMeasurementController::class, 'store']);
     Route::put('/babies/{baby}/growth-measurements/{growthMeasurement}', [GrowthMeasurementController::class, 'update']);
     Route::delete('/babies/{baby}/growth-measurements/{growthMeasurement}', [GrowthMeasurementController::class, 'destroy']);

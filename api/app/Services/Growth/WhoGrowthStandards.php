@@ -216,6 +216,70 @@ class WhoGrowthStandards
     }
 
     /**
+     * Percentiles de las curvas de referencia que se dibujan detrás de la
+     * línea del bebé en "Crecimiento" (las mismas que usan las tablas de
+     * la OMS que ve el pediatra) y su z-score: p3/p97 y p15/p85 dan las
+     * dos bandas, p50 la mediana.
+     */
+    public const REFERENCE_PERCENTILES = [
+        'p3' => -1.880794,
+        'p15' => -1.036433,
+        'p50' => 0.0,
+        'p85' => 1.036433,
+        'p97' => 1.880794,
+    ];
+
+    /**
+     * Inverso de percentile(): el valor de la medida para un z-score
+     * dado, con la misma fórmula LMS. Null fuera de 0-24 meses o con una
+     * medida/sexo desconocidos, igual que percentile().
+     */
+    public static function valueAt(string $measure, string $sex, float $ageInMonths, float $z): ?float
+    {
+        $lms = self::interpolatedLms($measure, $sex, $ageInMonths);
+
+        if ($lms === null) {
+            return null;
+        }
+
+        [$l, $m, $s] = $lms;
+
+        return abs($l) < 1e-9
+            ? $m * exp($s * $z)
+            : $m * ((1 + $l * $s * $z) ** (1 / $l));
+    }
+
+    /**
+     * Una fila por mes (0-24) con el valor de cada percentil de
+     * REFERENCE_PERCENTILES - lo que dibujan GrowthLineChart.vue y el
+     * PDF como bandas. Null para una medida/sexo desconocidos.
+     *
+     * @return array<int, array{month: int, p3: float, p15: float, p50: float, p85: float, p97: float}>|null
+     */
+    public static function referenceCurves(string $measure, string $sex): ?array
+    {
+        if (! isset(self::LMS[$measure][$sex])) {
+            return null;
+        }
+
+        $at = fn (int $month, string $key): float => round((float) self::valueAt($measure, $sex, $month, self::REFERENCE_PERCENTILES[$key]), 3);
+
+        $rows = [];
+        for ($month = 0; $month <= 24; $month++) {
+            $rows[] = [
+                'month' => $month,
+                'p3' => $at($month, 'p3'),
+                'p15' => $at($month, 'p15'),
+                'p50' => $at($month, 'p50'),
+                'p85' => $at($month, 'p85'),
+                'p97' => $at($month, 'p97'),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * @return array{0: float, 1: float, 2: float}|null [L, M, S]
      */
     private static function interpolatedLms(string $measure, string $sex, float $ageInMonths): ?array

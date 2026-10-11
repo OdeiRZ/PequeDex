@@ -198,6 +198,14 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `GrowthMeasurementController` no calcula el percentil si al `Baby` le
   falta `sex` o `birth_date` — queda `null` en la respuesta en vez de
   fallar, porque no siempre se conocen o se quieren dar esos datos.
+  `valueAt()` es el inverso (el valor de la medida para un z-score) y
+  `referenceCurves()` da, mes a mes de 0 a 24, los percentiles 3/15/50/
+  85/97 que sirve `GET /babies/{baby}/growth-reference`
+  (`GrowthReferenceController`, `curves: null` sin sexo o fecha de
+  nacimiento) para que Estadísticas dibuje las bandas de la OMS sin
+  duplicar las tablas en el frontend. El PDF de estadísticas dibuja las
+  mismas bandas en su SVG de crecimiento
+  (`StatsExportController::referenceSamples()`).
 - `app/Models/Milestone.php` — la foto de un hito se sube como archivo
   real, no como una URL pegada: a diferencia del `image_url` de LudoDex
   (la carátula de un juego tiene una fuente externa real, BGG), no

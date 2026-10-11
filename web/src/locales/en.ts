@@ -227,6 +227,8 @@ export default {
       percentile: 'Percentile {value}',
       sinceFirst: 'since the first measurement',
       perWeek: 'per week',
+      referenceLegend:
+        'WHO bands: the light area spans the 3rd to 97th percentile, the darker one the 15th to 85th, and the dashed line is the median (50th percentile).',
       empty: 'No growth measurements logged yet.',
       chartLabelSingle: '{value} on {date}',
       chartLabelRange: '{firstValue} on {firstDate}, {latestValue} on {latestDate}',

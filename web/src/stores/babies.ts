@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { apiClient } from '@/lib/api'
 import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
 import type { StatsExportPayload } from '@/lib/stats'
+import type { GrowthReferenceCurves } from '@/lib/growthReference'
 
 export type BabySex = 'nino' | 'nina'
 
@@ -212,6 +213,10 @@ interface BabiesState {
    * a previous day doesn't fight with that poll overwriting it. */
   dayTimeline: TimelineEntry[]
   growthMeasurements: GrowthMeasurement[]
+  /** Curvas de percentiles de la OMS para el sexo del bebé actual (las
+   * bandas de las gráficas de Crecimiento). `null` sin sexo/fecha de
+   * nacimiento, o mientras no se han pedido. */
+  growthReference: GrowthReferenceCurves | null
   milestones: Milestone[]
   sleepPrediction: SleepPrediction | null
   feedPrediction: FeedPrediction | null
@@ -296,6 +301,7 @@ export const useBabiesStore = defineStore('babies', {
     timeline: [],
     dayTimeline: [],
     growthMeasurements: [],
+    growthReference: null,
     milestones: [],
     sleepPrediction: null,
     feedPrediction: null,
@@ -558,6 +564,15 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/growth-measurements`)
       this.growthMeasurements = data.data
+    },
+
+    async fetchGrowthReference() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/growth-reference`)
+      this.growthReference = data.data.curves
     },
 
     async createGrowthMeasurement(payload: CreateGrowthMeasurementPayload) {

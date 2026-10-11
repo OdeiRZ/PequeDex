@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Stats\ExportStatsRequest;
 use App\Models\Baby;
 use App\Services\Babies\BabyAgeHeadline;
+use App\Services\Growth\WhoGrowthStandards;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
@@ -86,9 +87,9 @@ class StatsExportController extends Controller
             'vitaminD' => $data['vitamin_d'],
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
-                $this->growthMetric('Peso', 'kg', 1, $data['growth']['weight_kg']),
-                $this->growthMetric('Talla', 'cm', 0, $data['growth']['height_cm']),
-                $this->growthMetric('Perímetro craneal', 'cm', 0, $data['growth']['head_circumference_cm']),
+                $this->growthMetric($baby, 'weight', 'Peso', 'kg', 1, $data['growth']['weight_kg']),
+                $this->growthMetric($baby, 'height', 'Talla', 'cm', 0, $data['growth']['height_cm']),
+                $this->growthMetric($baby, 'head_circumference', 'Perímetro craneal', 'cm', 0, $data['growth']['head_circumference_cm']),
             ],
             'trendWeeksLimited' => count($data['weekly_trend']) > self::MAX_TREND_WEEKS,
             'hourBucketLabels' => self::HOUR_BUCKET_LABELS,
@@ -259,71 +260,157 @@ class StatsExportController extends Controller
 
     /**
      * @param  array{points: array<int, array{date: string, value: float|int, percentile: float|int|null}>, latest_value: float|int|null, latest_percentile: float|int|null, gained: float|int|null, weekly_rate: float|int|null, count: int}  $stat
-     * @return array{label: string, unit: string, decimals: int, stat: array<string, mixed>, chart: string|null, firstDate: string|null, lastDate: string|null}
+     * @return array{label: string, unit: string, decimals: int, stat: array<string, mixed>, chart: string|null, hasReference: bool, firstDate: string|null, lastDate: string|null}
      */
-    private function growthMetric(string $label, string $unit, int $decimals, array $stat): array
+    private function growthMetric(Baby $baby, string $measure, string $label, string $unit, int $decimals, array $stat): array
     {
         $points = $stat['points'];
         $first = $points[0] ?? null;
         $last = $points[count($points) - 1] ?? null;
+
+        $times = array_map(fn ($p) => CarbonImmutable::parse($p['date'])->getTimestamp(), $points);
+        $domain = $times === [] ? null : $this->timeDomain(min($times), max($times));
+        $bands = $domain === null ? [] : $this->referenceSamples($baby, $measure, $domain[0], $domain[1]);
+
+        // Como en pantalla: con las bandas de la OMS, hasta una sola
+        // medición se dibuja (dónde cae frente a la referencia).
+        $chart = $domain !== null && (count($points) > 1 || $bands !== [])
+            ? $this->growthChartDataUri($points, $times, $domain, $bands)
+            : null;
 
         return [
             'label' => $label,
             'unit' => $unit,
             'decimals' => $decimals,
             'stat' => $stat,
-            'chart' => count($points) > 1 ? $this->growthChartDataUri($points) : null,
+            'chart' => $chart,
+            'hasReference' => $chart !== null && $bands !== [],
             'firstDate' => $first ? CarbonImmutable::parse($first['date'])->translatedFormat('j M') : null,
             'lastDate' => $last ? CarbonImmutable::parse($last['date'])->translatedFormat('j M') : null,
         ];
     }
 
     /**
-     * Misma gráfica de línea que GrowthLineChart.vue (área suave, línea y
+     * Mismo criterio que GrowthLineChart.vue: con todas las mediciones el
+     * mismo día se abre una ventana de ±15 días.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function timeDomain(int $start, int $end): array
+    {
+        return $start === $end ? [$start - 15 * 86400, $end + 15 * 86400] : [$start, $end];
+    }
+
+    /**
+     * Las curvas de la OMS (p3/p15/p50/p85/p97) muestreadas en los dos
+     * extremos del tramo de fechas y en cada mes entero de por medio -
+     * igual que `referenceSamples()` en `web/src/lib/growthReference.ts`.
+     * Vacío sin sexo/fecha de nacimiento o fuera de 0-24 meses.
+     *
+     * @return array<int, array{at: int, p3: float, p15: float, p50: float, p85: float, p97: float}>
+     */
+    private function referenceSamples(Baby $baby, string $measure, int $start, int $end): array
+    {
+        if ($baby->sex === null || $baby->birth_date === null) {
+            return [];
+        }
+
+        $monthSeconds = 30.4375 * 86400;
+        $birth = CarbonImmutable::parse($baby->birth_date)->startOfDay()->getTimestamp();
+        $fromMonth = max(0, ($start - $birth) / $monthSeconds);
+        $toMonth = min(24, ($end - $birth) / $monthSeconds);
+        if ($toMonth < $fromMonth) {
+            return [];
+        }
+
+        $months = [$fromMonth];
+        for ($m = (int) floor($fromMonth) + 1; $m < $toMonth; $m++) {
+            $months[] = $m;
+        }
+        if ($toMonth > $fromMonth) {
+            $months[] = $toMonth;
+        }
+
+        $sex = $baby->sex->whoTableKey();
+        $samples = [];
+        foreach ($months as $month) {
+            $sample = ['at' => (int) round($birth + $month * $monthSeconds)];
+            foreach (WhoGrowthStandards::REFERENCE_PERCENTILES as $key => $z) {
+                $sample[$key] = (float) WhoGrowthStandards::valueAt($measure, $sex, (float) $month, $z);
+            }
+            $samples[] = $sample;
+        }
+
+        /** @var array<int, array{at: int, p3: float, p15: float, p50: float, p85: float, p97: float}> $samples */
+        return $samples;
+    }
+
+    /**
+     * Misma gráfica de línea que GrowthLineChart.vue (bandas de la OMS
+     * detrás si las hay - o el área suave bajo la línea si no -, línea y
      * un punto por medición, el último algo mayor, eje X por fecha real),
      * como SVG en data URI - dompdf pinta SVG en `<img>` igual que el
      * logo. Las fechas van fuera, en HTML, porque el texto dentro del
      * SVG no es fiable en dompdf.
      *
      * @param  array<int, array{date: string, value: float|int, percentile: float|int|null}>  $points
+     * @param  array<int, int>  $times
+     * @param  array{0: int, 1: int}  $domain
+     * @param  array<int, array{at: int, p3: float, p15: float, p50: float, p85: float, p97: float}>  $bands
      */
-    private function growthChartDataUri(array $points): string
+    private function growthChartDataUri(array $points, array $times, array $domain, array $bands): string
     {
         $width = 600;
         $height = 150;
         $padX = 10;
         $padY = 14;
+        $color = '#a65a6b';
 
-        $times = array_map(fn ($p) => CarbonImmutable::parse($p['date'])->getTimestamp(), $points);
         $values = array_map(fn ($p) => (float) $p['value'], $points);
-        $minT = min($times);
-        $spanT = max($times) - $minT;
-        $minV = min($values);
-        $maxV = max($values) > $minV ? max($values) : $minV + 1;
+        $scaleValues = [...$values, ...array_column($bands, 'p3'), ...array_column($bands, 'p97')];
+        $minV = min($scaleValues);
+        $maxV = max($scaleValues) > $minV ? max($scaleValues) : $minV + 1;
+        [$startT, $endT] = $domain;
+
+        $x = fn (int $t) => round($padX + ($t - $startT) / ($endT - $startT) * ($width - 2 * $padX), 1);
+        $y = fn (float $v) => round($padY + (1 - ($v - $minV) / ($maxV - $minV)) * ($height - 2 * $padY), 1);
 
         $coords = [];
         foreach ($points as $i => $point) {
-            $x = $spanT === 0 ? $width / 2 : $padX + ($times[$i] - $minT) / $spanT * ($width - 2 * $padX);
-            $y = $padY + (1 - ($values[$i] - $minV) / ($maxV - $minV)) * ($height - 2 * $padY);
-            $coords[] = [round($x, 1), round($y, 1)];
+            $coords[] = [$x($times[$i]), $y($values[$i])];
         }
 
-        $line = implode(' ', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords));
-        $floor = $height - $padY;
-        $first = $coords[0];
-        $last = $coords[count($coords) - 1];
-        $area = "M{$first[0]},{$floor} L".implode(' L', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords))." L{$last[0]},{$floor} Z";
+        $svgBody = '';
+        if (count($bands) >= 2) {
+            $band = function (string $upper, string $lower) use ($bands, $x, $y): string {
+                $top = array_map(fn ($s) => $x($s['at']).','.$y($s[$upper]), $bands);
+                $bottom = array_map(fn ($s) => $x($s['at']).','.$y($s[$lower]), array_reverse($bands));
 
-        $dots = '';
+                return 'M'.implode(' L', [...$top, ...$bottom]).' Z';
+            };
+            $median = implode(' ', array_map(fn ($s) => $x($s['at']).','.$y($s['p50']), $bands));
+            $svgBody .= "<path d=\"{$band('p97', 'p3')}\" fill=\"{$color}\" fill-opacity=\"0.08\"/>"
+                ."<path d=\"{$band('p85', 'p15')}\" fill=\"{$color}\" fill-opacity=\"0.12\"/>"
+                ."<polyline points=\"{$median}\" fill=\"none\" stroke=\"{$color}\" stroke-opacity=\"0.55\" stroke-width=\"1.5\" stroke-dasharray=\"6 6\"/>";
+        } elseif (count($coords) > 1) {
+            $floor = $height - $padY;
+            $first = $coords[0];
+            $last = $coords[count($coords) - 1];
+            $svgBody .= "<path d=\"M{$first[0]},{$floor} L".implode(' L', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords))." L{$last[0]},{$floor} Z\" fill=\"{$color}\" fill-opacity=\"0.12\"/>";
+        }
+
+        if (count($coords) > 1) {
+            $line = implode(' ', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords));
+            $svgBody .= "<polyline points=\"{$line}\" fill=\"none\" stroke=\"{$color}\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>";
+        }
+
         foreach ($coords as $i => $c) {
             $r = $i === count($coords) - 1 ? 6 : 4.5;
-            $dots .= "<circle cx=\"{$c[0]}\" cy=\"{$c[1]}\" r=\"{$r}\" fill=\"#a65a6b\"/>";
+            $svgBody .= "<circle cx=\"{$c[0]}\" cy=\"{$c[1]}\" r=\"{$r}\" fill=\"{$color}\"/>";
         }
 
         $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$width}\" height=\"{$height}\" viewBox=\"0 0 {$width} {$height}\">"
-            ."<path d=\"{$area}\" fill=\"#a65a6b\" fill-opacity=\"0.12\"/>"
-            ."<polyline points=\"{$line}\" fill=\"none\" stroke=\"#a65a6b\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
-            .$dots
+            .$svgBody
             .'</svg>';
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);

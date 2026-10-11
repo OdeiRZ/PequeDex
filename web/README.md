@@ -1521,6 +1521,33 @@ rótulos cortos (Sueño/Tomas/Pañales) - con el flex anterior y rótulos
 largos sin espacios ("Pañales/semana") se salían del bloque en
 pantallas estrechas.
 
+**Comparación con el periodo anterior** - con "7 días" o "30 días",
+`filterPreviousPeriod()` toma los 7/30 días de calendario justo antes
+del periodo y `summarizePeriodDeltas()` resta sus cifras de las del
+periodo actual. Solo cinco, donde la evolución dice algo: tramo más
+largo, sueño total al día, tomas al día y pañales con pis/con caca al
+día; se muestran como una línea pequeña bajo la ficha ("+25min vs. los
+7 días anteriores"), sin colores de "bien/mal" a propósito. `null` (no
+se muestra) con "Todo" o si cualquiera de los dos periodos no tiene ese
+dato. Viajan al PDF como `period_deltas`.
+
+**Evolución del tramo más largo** - `summarizeWeeklyTrend()` calcula
+también `longestStretchMinutes` por semana (el sueño más largo de cada
+día con sueño de esa semana, de media) y Tendencia semanal lo dibuja
+como una gráfica más, debajo de las horas de sueño por semana.
+
+**Bandas de percentiles de la OMS** - `GrowthLineChart.vue` dibuja,
+detrás de la línea del bebé, la zona del percentil 3 al 97, la del 15
+al 85 y la mediana discontinua, para el sexo del bebé
+(`babies.fetchGrowthReference()` → `GET /babies/{id}/growth-reference`,
+las tablas LMS siguen viviendo solo en el backend). `referenceSamples()`
+(`lib/growthReference.ts`) las recorta al tramo de fechas de la gráfica
+(extremos interpolados + cada mes entero, mismo "mes medio" de 30,4375
+días que el backend) y la escala vertical las incluye. Con bandas,
+hasta una sola medición se dibuja (con una ventana de ±15 días), y el
+área bajo la línea desaparece para no confundirse con ellas. Sin sexo o
+fecha de nacimiento, o fuera de 0-24 meses, la gráfica sale como antes.
+
 **Sueño, sin horarios "normales"** - se quitaron "Sueños registrados"
 (un contador que solo crece) y "Hora habitual de acostarse/despertar"
 (daban por hecho que un bebé tiene un horario fijo; también desapareció

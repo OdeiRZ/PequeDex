@@ -70,6 +70,9 @@ onMounted(async () => {
     await Promise.all([
       babies.fetchStatsData(),
       babies.fetchGrowthMeasurements(),
+      // Las bandas de la OMS son un extra: si fallan, la gráfica sale
+      // igual, solo sin ellas.
+      babies.fetchGrowthReference().catch(() => {}),
       babies.fetchVitaminDSchedule(),
       babies.fetchAllVitaminDDoses(),
     ])
@@ -342,6 +345,7 @@ const growthMetrics = computed(() => [
     unit: 'kg',
     decimals: 1,
     titleKey: 'stats.growth.weightTitle',
+    reference: babies.growthReference?.weight ?? null,
   },
   {
     key: 'height' as const,
@@ -349,6 +353,7 @@ const growthMetrics = computed(() => [
     unit: 'cm',
     decimals: 0,
     titleKey: 'stats.growth.heightTitle',
+    reference: babies.growthReference?.height ?? null,
   },
   {
     key: 'head' as const,
@@ -356,6 +361,7 @@ const growthMetrics = computed(() => [
     unit: 'cm',
     decimals: 0,
     titleKey: 'stats.growth.headTitle',
+    reference: babies.growthReference?.head_circumference ?? null,
   },
 ])
 
@@ -880,12 +886,16 @@ async function onExportPdf() {
                 </span>
               </div>
 
-              <template v-if="metric.stat.count > 1">
+              <!-- Con las bandas de la OMS, hasta una sola medición
+                   dice algo: dónde cae frente a la referencia. -->
+              <template v-if="metric.stat.count > 1 || metric.reference">
                 <GrowthLineChart
                   :points="metric.stat.points"
                   :unit="metric.unit"
                   :decimals="metric.decimals"
                   :date-locale="dateLocale"
+                  :reference="metric.reference"
+                  :birth-date="babies.current?.birth_date ?? null"
                 />
                 <div class="mt-1 flex items-baseline justify-between">
                   <span class="text-lg font-bold tabular-nums">
@@ -912,6 +922,9 @@ async function onExportPdf() {
               </div>
             </template>
           </div>
+          <p v-if="babies.growthReference" class="-mt-2 text-[0.68rem] text-text-muted">
+            {{ t('stats.growth.referenceLegend') }}
+          </p>
         </template>
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.growth.empty') }}

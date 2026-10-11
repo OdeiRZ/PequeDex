@@ -377,6 +377,9 @@
                     </div>
                 @endif
             @endforeach
+            @if (collect($growthMetrics)->contains(fn ($m) => $m['hasReference']))
+                <p class="hint" style="margin-top: -4px;">Bandas de la OMS: la zona clara va del percentil 3 al 97, la más oscura del 15 al 85, y la línea discontinua es la mediana (percentil 50).</p>
+            @endif
         @endif
     </div>
 

@@ -237,9 +237,7 @@ describe('filterPreviousPeriod', () => {
   })
 
   it('is empty for the whole history', () => {
-    expect(filterPreviousPeriod([{ at: local(2026, 1, 1) }], (i) => i.at, 'all', now)).toEqual(
-      [],
-    )
+    expect(filterPreviousPeriod([{ at: local(2026, 1, 1) }], (i) => i.at, 'all', now)).toEqual([])
   })
 })
 

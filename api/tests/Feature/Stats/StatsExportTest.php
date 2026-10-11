@@ -321,6 +321,38 @@ it('reshapes the three growth metrics into a labeled list for the template', fun
     expect($data['growthMetrics'][2]['label'])->toBe('Perímetro craneal');
 });
 
+it('draws WHO bands behind the growth chart when the baby has a sex and birth date', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+    $baby->update(['sex' => 'nino', 'birth_date' => '2026-08-01']);
+
+    $payload = validStatsPayload();
+    $payload['growth']['weight_kg']['points'] = [['date' => '2026-09-01', 'value' => 4.4, 'percentile' => 50.0]];
+    $payload['growth']['weight_kg']['count'] = 1;
+
+    $metric = app(StatsExportController::class)->buildViewData($baby->fresh(), $payload)['growthMetrics'][0];
+
+    // Una sola medición: sin bandas no habría gráfica; con ellas, sí.
+    expect($metric['hasReference'])->toBeTrue()
+        ->and($metric['chart'])->toStartWith('data:image/svg+xml;base64,')
+        ->and(base64_decode(substr($metric['chart'], strlen('data:image/svg+xml;base64,'))))->toContain('stroke-dasharray');
+});
+
+it('skips WHO bands without a baby sex', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+    $baby->update(['sex' => null]);
+
+    $payload = validStatsPayload();
+    $payload['growth']['weight_kg']['points'] = [['date' => '2026-09-01', 'value' => 4.4, 'percentile' => null]];
+    $payload['growth']['weight_kg']['count'] = 1;
+
+    $metric = app(StatsExportController::class)->buildViewData($baby->fresh(), $payload)['growthMetrics'][0];
+
+    expect($metric['hasReference'])->toBeFalse()
+        ->and($metric['chart'])->toBeNull();
+});
+
 it('turns weekly_trend into a labeled point list per metric, keeping null sleep weeks as null', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { GrowthMetricPoint } from '@/lib/stats'
+import { referenceSamples, type GrowthReferenceRow } from '@/lib/growthReference'
 
 const { t } = useI18n()
 
@@ -11,6 +12,10 @@ const props = defineProps<{
   dateLocale?: string
   /** 1 decimal for kg, 0 for cm - avoids a chart full of "52.0"/"53.0". */
   decimals: number
+  /** Curvas de la OMS para esta medida (bandas detrás de la línea); sin
+   * ellas, o sin fecha de nacimiento, la gráfica sale como siempre. */
+  reference?: GrowthReferenceRow[] | null
+  birthDate?: string | null
 }>()
 
 const WIDTH = 300
@@ -18,28 +23,38 @@ const HEIGHT = 110
 const PAD_X = 8
 const PAD_TOP = 14
 const PAD_BOTTOM = 22
+// Con una sola medición (o todas el mismo día) no hay tramo de fechas:
+// se abre una ventana de ±15 días para que las bandas tengan anchura y
+// el punto quede centrado.
+const SINGLE_DAY_PAD_MS = 15 * 86_400_000
 
-// A single point still draws as a dot (no line to speak of) - evenly
-// spaced isn't meaningful for just one, so it sits centered.
-const xPositions = computed<number[]>(() => {
-  const { points } = props
-  if (points.length <= 1) return points.map(() => WIDTH / 2)
-
-  const firstPoint = points[0] as GrowthMetricPoint
-  const lastPoint = points[points.length - 1] as GrowthMetricPoint
-  const firstMs = new Date(firstPoint.date).getTime()
-  const lastMs = new Date(lastPoint.date).getTime()
-  const spanMs = lastMs - firstMs
-
-  return points.map((p) => {
-    if (spanMs === 0) return WIDTH / 2
-    const fraction = (new Date(p.date).getTime() - firstMs) / spanMs
-    return PAD_X + fraction * (WIDTH - PAD_X * 2)
-  })
+const timeDomain = computed(() => {
+  const times = props.points.map((p) => new Date(p.date).getTime())
+  if (times.length === 0) return { start: 0, end: 1 }
+  const start = Math.min(...times)
+  const end = Math.max(...times)
+  return start === end
+    ? { start: start - SINGLE_DAY_PAD_MS, end: end + SINGLE_DAY_PAD_MS }
+    : { start, end }
 })
 
+const bands = computed(() =>
+  referenceSamples(props.reference, props.birthDate, timeDomain.value.start, timeDomain.value.end),
+)
+
+function xFor(ms: number): number {
+  const { start, end } = timeDomain.value
+  return PAD_X + ((ms - start) / (end - start)) * (WIDTH - PAD_X * 2)
+}
+
+const xPositions = computed<number[]>(() =>
+  props.points.map((p) => xFor(new Date(p.date).getTime())),
+)
+
+// La escala vertical abarca también las bandas, para que se vea dónde
+// cae el bebé dentro de la referencia y no solo su propia línea.
 const valueRange = computed(() => {
-  const values = props.points.map((p) => p.value)
+  const values = [...props.points.map((p) => p.value), ...bands.value.flatMap((b) => [b.p3, b.p97])]
   const min = Math.min(...values)
   const max = Math.max(...values)
   // A flat line (every reading identical) would divide by zero below -
@@ -47,14 +62,13 @@ const valueRange = computed(() => {
   return { min, max: max > min ? max : min + 1 }
 })
 
-const yPositions = computed<number[]>(() => {
+function yFor(value: number): number {
   const { min, max } = valueRange.value
   const drawable = HEIGHT - PAD_TOP - PAD_BOTTOM
-  return props.points.map((p) => {
-    const fraction = (p.value - min) / (max - min)
-    return PAD_TOP + (1 - fraction) * drawable
-  })
-})
+  return PAD_TOP + (1 - (value - min) / (max - min)) * drawable
+}
+
+const yPositions = computed<number[]>(() => props.points.map((p) => yFor(p.value)))
 
 const linePath = computed(() => {
   const xs = xPositions.value
@@ -64,12 +78,29 @@ const linePath = computed(() => {
 })
 
 const areaPath = computed(() => {
-  if (linePath.value === '') return ''
+  // Con bandas detrás, el área bajo la línea se confundiría con ellas.
+  if (linePath.value === '' || bands.value.length > 0) return ''
   const xs = xPositions.value
   const floorY = HEIGHT - PAD_BOTTOM
   const firstX = xs[0]
   const lastX = xs[xs.length - 1]
   return `${linePath.value} L${lastX},${floorY} L${firstX},${floorY} Z`
+})
+
+function bandPath(upper: 'p97' | 'p85', lower: 'p3' | 'p15'): string {
+  const samples = bands.value
+  if (samples.length < 2) return ''
+  const top = samples.map((s) => `${xFor(s.at)},${yFor(s[upper])}`)
+  const bottom = [...samples].reverse().map((s) => `${xFor(s.at)},${yFor(s[lower])}`)
+  return `M${top.join(' L')} L${bottom.join(' L')} Z`
+}
+
+const outerBand = computed(() => bandPath('p97', 'p3'))
+const innerBand = computed(() => bandPath('p85', 'p15'))
+const medianPath = computed(() => {
+  const samples = bands.value
+  if (samples.length < 2) return ''
+  return samples.map((s, i) => `${i === 0 ? 'M' : 'L'}${xFor(s.at)},${yFor(s.p50)}`).join(' ')
 })
 
 function formatValue(value: number): string {
@@ -106,6 +137,17 @@ const chartLabel = computed(() => {
       role="img"
       :aria-label="chartLabel"
     >
+      <path v-if="outerBand" :d="outerBand" fill="currentColor" opacity="0.08" stroke="none" />
+      <path v-if="innerBand" :d="innerBand" fill="currentColor" opacity="0.12" stroke="none" />
+      <path
+        v-if="medianPath"
+        :d="medianPath"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+        opacity="0.55"
+      />
       <path v-if="areaPath" :d="areaPath" fill="currentColor" opacity="0.12" stroke="none" />
       <path
         v-if="linePath"
@@ -131,7 +173,7 @@ const chartLabel = computed(() => {
         font-size="9"
         fill="currentColor"
         opacity="0.6"
-        text-anchor="start"
+        :text-anchor="points.length > 1 ? 'start' : 'middle'"
       >
         {{ formatDate((points[0] as GrowthMetricPoint).date) }}
       </text>

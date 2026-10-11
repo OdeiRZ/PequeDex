@@ -9,6 +9,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Crecimiento: bandas de percentiles de la OMS** - las gráficas de
+  peso, talla y perímetro craneal muestran detrás de la línea del bebé
+  las curvas de referencia de la OMS para su sexo (zona del percentil 3
+  al 97, zona del 15 al 85 y la mediana discontinua), como las que usa
+  el pediatra, con una leyenda que lo explica. Con las bandas, hasta
+  una sola medición se ve en contexto. Necesita sexo y fecha de
+  nacimiento del bebé (0-24 meses); sin ellos la gráfica sale como
+  antes. También en el PDF.
+
 - **Tendencia semanal: evolución del tramo más largo** - nueva gráfica
   con el sueño seguido más largo de cada día, de media por semana, para
   ver de un vistazo si el bebé "empieza a dormir del tirón". Misma

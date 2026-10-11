@@ -228,6 +228,8 @@ export default {
       percentile: 'Percentil {value}',
       sinceFirst: 'desde el primer registro',
       perWeek: 'por semana',
+      referenceLegend:
+        'Bandas de la OMS: la zona clara va del percentil 3 al 97, la más oscura del 15 al 85, y la línea discontinua es la mediana (percentil 50).',
       empty: 'Todavía no hay medidas de crecimiento registradas.',
       chartLabelSingle: '{value} el {date}',
       chartLabelRange: '{firstValue} el {firstDate}, {latestValue} el {latestDate}',

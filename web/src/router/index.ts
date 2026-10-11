@@ -91,4 +91,48 @@ router.beforeEach((to) => {
   }
 })
 
+// Cada pantalla salvo el Dashboard se descarga aparte la primera vez que
+// se abre (`() => import(...)` arriba). Si esa descarga falla - justo
+// tras un despliegue, o con mala conexión -, vue-router cancela la
+// navegación sin avisar y el enlace "no hace nada" hasta recargar
+// (visto en vivo al abrir Vacunas recién activadas). En vez de eso, se
+// carga la pantalla de destino con una navegación normal del navegador.
+// Una sola vez por destino y minuto, para no entrar en bucle si el
+// fichero sigue sin estar disponible.
+const CHUNK_ERROR = /dynamically imported module|Importing a module script failed|Loading chunk/i
+const RELOAD_GUARD_KEY = 'pequedex.chunkReload'
+
+export function shouldReloadAfterChunkError(
+  message: string,
+  target: string,
+  storage: Pick<Storage, 'getItem' | 'setItem'> | null,
+  now: number = Date.now(),
+): boolean {
+  if (!CHUNK_ERROR.test(message)) return false
+  try {
+    const previous = JSON.parse(storage?.getItem(RELOAD_GUARD_KEY) ?? 'null') as {
+      target: string
+      at: number
+    } | null
+    if (previous && previous.target === target && now - previous.at < 60_000) return false
+    storage?.setItem(RELOAD_GUARD_KEY, JSON.stringify({ target, at: now }))
+  } catch {
+    // sin almacenamiento: se recarga igualmente (sin freno)
+  }
+  return true
+}
+
+router.onError((error: Error, to) => {
+  const target = router.resolve(to).href
+  let storage: Storage | null = null
+  try {
+    storage = window.sessionStorage
+  } catch {
+    storage = null
+  }
+  if (shouldReloadAfterChunkError(error.message, target, storage)) {
+    window.location.assign(target)
+  }
+})
+
 export default router

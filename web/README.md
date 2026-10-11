@@ -1327,6 +1327,17 @@ con foto se quedaba así de "colgado" en el móvil - ver `api/README.md`
 sobre `docker/uploads.ini`). Ahora cada uno muestra
 `t('dashboard.saveError')` por toast si falla.
 
+## Pantallas que no cargan
+
+Todas las rutas salvo el Dashboard se cargan bajo demanda
+(`() => import(...)` en `router/index.ts`). Si ese fichero no se puede
+descargar (justo tras un despliegue, mala conexión), vue-router cancela
+la navegación sin avisar y el enlace parece no hacer nada hasta
+recargar - visto en vivo con "Vacunas y revisiones". `router.onError`
+lo detecta (`shouldReloadAfterChunkError()`) y hace una navegación
+normal del navegador a la pantalla de destino, como mucho una vez por
+destino y minuto (marca en `sessionStorage`) para no entrar en bucle.
+
 ## Transiciones entre rutas
 
 `App.vue` envuelve `<RouterView>` en un único `<Transition name="route">`

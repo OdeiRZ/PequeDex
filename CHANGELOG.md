@@ -7,6 +7,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido
+
+- **Enlaces que "no hacían nada" hasta recargar** - al abrir una
+  pantalla secundaria (Vacunas, Estadísticas, Sonidos...) por primera
+  vez, si su descarga fallaba (justo tras un despliegue o con mala
+  conexión) la navegación se cancelaba sin avisar. Visto en vivo al
+  pulsar "Vacunas y revisiones" recién activadas. Ahora, si pasa, la
+  app carga esa pantalla directamente (una vez por destino y minuto,
+  para no entrar en bucle).
+
 ### Añadido
 
 - **Resumen para la consulta** - al descargar el PDF desde

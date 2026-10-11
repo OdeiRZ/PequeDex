@@ -2939,8 +2939,13 @@ const sleepPredictionDue = computed(() => {
               </p>
             </div>
 
-            <div v-if="vitaminDEnabled" class="flex gap-3">
-              <div class="flex-1">
+            <!-- Una debajo de otra, no lado a lado: el <input type="date">
+                 nativo del móvil tiene un ancho mínimo propio que no se
+                 deja encoger, y en dos columnas la fecha de fin se salía
+                 del marco. A todo el ancho, igual que la fecha de
+                 nacimiento de arriba. -->
+            <div v-if="vitaminDEnabled" class="flex flex-col gap-3">
+              <div class="min-w-0">
                 <label for="vitamin-d-start" class="field-label">{{
                   t('dashboard.babySettings.vitaminD.startDateLabel')
                 }}</label>
@@ -2948,10 +2953,10 @@ const sleepPredictionDue = computed(() => {
                   id="vitamin-d-start"
                   v-model="vitaminDStartDate"
                   type="date"
-                  class="field-input"
+                  class="field-input w-full min-w-0"
                 />
               </div>
-              <div class="flex-1">
+              <div class="min-w-0">
                 <label for="vitamin-d-end" class="field-label">{{
                   t('dashboard.babySettings.vitaminD.endDateLabel')
                 }}</label>
@@ -2959,7 +2964,7 @@ const sleepPredictionDue = computed(() => {
                   id="vitamin-d-end"
                   v-model="vitaminDEndDate"
                   type="date"
-                  class="field-input"
+                  class="field-input w-full min-w-0"
                 />
               </div>
             </div>

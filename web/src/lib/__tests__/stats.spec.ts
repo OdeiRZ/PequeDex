@@ -389,6 +389,16 @@ describe('summarizeDiaperStats', () => {
     expect(result.averagePeePerDay).toBeCloseTo(2 / 3)
   })
 
+  it('averages the time between changes, skipping overnight-length gaps', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ changed_at: local(2026, 8, 7, 11) }), // 180min
+      diaperChange({ changed_at: local(2026, 8, 7, 13) }), // 120min
+      diaperChange({ changed_at: local(2026, 8, 8, 8) }), // > 8h, excluded
+    ])
+    expect(result.averageGapMinutes).toBe(150)
+  })
+
   it('tallies the stool colour of dirty diapers only', () => {
     const result = summarizeDiaperStats([
       diaperChange({ type: 'mojado' }),
@@ -743,6 +753,7 @@ describe('buildStatsExportPayload - options', () => {
     averagePerDay: null,
     averagePeePerDay: null,
     averagePoopPerDay: null,
+    averageGapMinutes: null,
     byHourBucket: emptyBuckets,
     poopColors: { verde: 0, amarillo: 0, marron: 0, meconio: 0, unspecified: 0 },
   }

@@ -1513,6 +1513,13 @@ que una media sobre todo el historial describe a un bebé que ya no
 existe. Tendencia semanal, comparativa, mapa de actividad, crecimiento
 y "Sueño esta semana" siguen sobre todo el historial - es justo lo que
 miden. El PDF indica el periodo elegido (`period` en el payload).
+"Sueño esta semana" (`WeeklySleep.vue`) ya no es una tarjeta suelta:
+va dentro del bloque de Sueño, con el mismo rótulo pequeño que sus
+otras gráficas. Las tarjetas de "Esta semana frente a la anterior" en
+Tendencia semanal usan una rejilla de columnas iguales (`min-w-0`) con
+rótulos cortos (Sueño/Tomas/Pañales) - con el flex anterior y rótulos
+largos sin espacios ("Pañales/semana") se salían del bloque en
+pantallas estrechas.
 
 **Sueño, sin horarios "normales"** - se quitaron "Sueños registrados"
 (un contador que solo crece) y "Hora habitual de acostarse/despertar"
@@ -1598,6 +1605,9 @@ cada una):
   número de minutos que no dice nada por sí solo.
 - **Pañales con pis al día** (antes "mojados al día") - un indicador
   real que usan los pediatras para valorar si el bebé come suficiente.
+  Junto a él, **cada cuánto se cambia** (`averageGapMinutes` en
+  `DiaperStats`): tiempo medio entre cambios, con el mismo corte de 8 h
+  que las tomas para no contar el tirón de la noche.
 - **Velocidad de crecimiento** - lo ganado normalizado a "por semana"
   sobre el tiempo real entre el primer y el último registro
   (`weeklyRate`), junto al total acumulado que ya había.

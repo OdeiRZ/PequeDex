@@ -271,21 +271,27 @@
         <table class="stats-bar">
             <tr>
                 @if ($diaper['average_pee_per_day'] !== null)
-                    <td style="width: 33%;">
+                    <td style="width: 25%;">
                         <span class="stats-label">Con pis al día</span>
                         <span class="stats-value">{{ number_format($diaper['average_pee_per_day'], 1) }}</span>
                     </td>
                 @endif
                 @if ($diaper['average_poop_per_day'] !== null)
-                    <td style="width: 33%;">
+                    <td style="width: 25%;">
                         <span class="stats-label">Con caca al día</span>
                         <span class="stats-value">{{ number_format($diaper['average_poop_per_day'], 1) }}</span>
                     </td>
                 @endif
                 @if ($diaper['average_per_day'] !== null)
-                    <td style="width: 33%;">
+                    <td style="width: 25%;">
                         <span class="stats-label">Cambios al día</span>
                         <span class="stats-value">{{ number_format($diaper['average_per_day'], 1) }}</span>
+                    </td>
+                @endif
+                @if (($diaper['average_gap_minutes'] ?? null) !== null)
+                    <td style="width: 25%;">
+                        <span class="stats-label">Cada cuánto se cambia</span>
+                        <span class="stats-value">{{ intdiv((int) round($diaper['average_gap_minutes']), 60) }}h {{ (int) round($diaper['average_gap_minutes']) % 60 }}min</span>
                     </td>
                 @endif
             </tr>
@@ -336,6 +342,7 @@
          (ver summarizeWeekComparison() en lib/stats.ts); null con menos de
          dos semanas completas con dato. --}}
     @if ($weekComparison !== null)
+        <div style="page-break-inside: avoid;">
         <h2 class="trend">Esta semana frente a la anterior</h2>
         <table class="stats-bar">
             <tr>
@@ -361,6 +368,7 @@
                 </td>
             </tr>
         </table>
+        </div>
     @endif
 
     {{-- Tendencia semanal - mismos puntos que WeeklyTrendChart.vue,
@@ -394,7 +402,32 @@
          semana con algo de dato ya es información real. --}}
     @if ($heatmapMax > 0)
         <h2 class="trend">Mapa de actividad</h2>
-        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuándo suele haber más tomas, cambios de pañal y sueño a lo largo de la semana.</p>
+        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuántas tomas, cambios de pañal y sueños empiezan a cada hora de cada día de la semana, sumando todo el historial. Cada casilla indica el número de eventos; cuanto más oscura, más actividad.</p>
+        @if ($heatmapSummary !== null)
+            <table class="stats-bar">
+                <tr>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Momento más activo</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['peak']['day'] }}, {{ sprintf('%02d:00', $heatmapSummary['peak']['hour']) }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['peak']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Día más activo</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['busiestDay']['day'] }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestDay']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Hora más activa</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ sprintf('%02d:00-%02d:00', $heatmapSummary['busiestHour']['hour'], ($heatmapSummary['busiestHour']['hour'] + 1) % 24) }}</span>
+                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestHour']['count'] }} eventos</span>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="stats-label">Eventos en total</span>
+                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['total'] }}</span>
+                    </td>
+                </tr>
+            </table>
+        @endif
         @include('pdf.partials.activity-heatmap-grid', [
             'heatmapGrid' => $heatmapGrid,
             'heatmapMax' => $heatmapMax,

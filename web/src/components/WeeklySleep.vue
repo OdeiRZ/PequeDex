@@ -65,8 +65,10 @@ function hoursLabel(hours: number): string {
 </script>
 
 <template>
-  <section class="card p-4">
-    <h2 class="mb-3 font-display text-sm font-bold">{{ t('dashboard.sleepHistory.title') }}</h2>
+  <!-- Sin tarjeta propia: vive dentro del bloque de Sueño de
+       StatsView.vue, con el mismo rótulo que el resto de sus gráficas. -->
+  <div>
+    <div class="mb-1 text-xs text-text-muted">{{ t('dashboard.sleepHistory.title') }}</div>
 
     <template v-if="hasData">
       <div class="flex h-24 items-end justify-between gap-2">
@@ -106,7 +108,7 @@ function hoursLabel(hours: number): string {
     <p v-else class="py-2 text-center text-sm text-text-muted">
       {{ t('dashboard.sleepHistory.empty') }}
     </p>
-  </section>
+  </div>
 </template>
 
 <style scoped>

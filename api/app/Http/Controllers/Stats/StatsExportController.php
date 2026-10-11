@@ -19,6 +19,8 @@ class StatsExportController extends Controller
         'night' => 'Noche (18-24h)',
     ];
 
+    private const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
     private const PERIOD_LABELS = [
         '7d' => 'Últimos 7 días',
         '30d' => 'Últimos 30 días',
@@ -72,6 +74,7 @@ class StatsExportController extends Controller
             'diaperTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['diaper_count']),
             'heatmapGrid' => $this->heatmapGrid($data['activity_heatmap']),
             'heatmapMax' => collect($data['activity_heatmap'])->max('count') ?? 0,
+            'heatmapSummary' => $this->heatmapSummary($this->heatmapGrid($data['activity_heatmap'])),
             'vitaminD' => $data['vitamin_d'],
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
@@ -163,6 +166,46 @@ class StatsExportController extends Controller
         }
 
         return $grid;
+    }
+
+    /**
+     * En pantalla el mapa se lee tocando celdas; en papel no hay
+     * interacción, así que el PDF lo acompaña de lo que un cuidador
+     * buscaría tocando: el momento de la semana con más actividad, el
+     * día más movido, la hora del día más movida y el total. `null` sin
+     * ningún evento. Día 0 = lunes, igual que `summarizeActivityHeatmap()`.
+     *
+     * @param  array<int, array<int, int>>  $grid
+     * @return array{total: int, peak: array{day: string, hour: int, count: int}, busiestDay: array{day: string, count: int}, busiestHour: array{hour: int, count: int}}|null
+     */
+    private function heatmapSummary(array $grid): ?array
+    {
+        $total = array_sum(array_map('array_sum', $grid));
+        if ($total === 0) {
+            return null;
+        }
+
+        $peak = ['day' => 0, 'hour' => 0, 'count' => -1];
+        $hourTotals = array_fill(0, 24, 0);
+        foreach ($grid as $day => $hours) {
+            foreach ($hours as $hour => $count) {
+                $hourTotals[$hour] += $count;
+                if ($count > $peak['count']) {
+                    $peak = ['day' => $day, 'hour' => $hour, 'count' => $count];
+                }
+            }
+        }
+
+        $dayTotals = array_map('array_sum', $grid);
+        $busiestDay = (int) array_search(max($dayTotals), $dayTotals, true);
+        $busiestHour = (int) array_search(max($hourTotals), $hourTotals, true);
+
+        return [
+            'total' => $total,
+            'peak' => ['day' => self::DAY_NAMES[$peak['day']], 'hour' => $peak['hour'], 'count' => $peak['count']],
+            'busiestDay' => ['day' => self::DAY_NAMES[$busiestDay], 'count' => $dayTotals[$busiestDay]],
+            'busiestHour' => ['hour' => $busiestHour, 'count' => $hourTotals[$busiestHour]],
+        ];
     }
 
     /** Same logo as ContractionsExportController - kept in sync by hand

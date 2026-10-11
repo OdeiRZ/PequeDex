@@ -431,6 +431,10 @@ export interface DiaperStats {
   averagePeePerDay: number | null
   /** Pañales con caca al día. */
   averagePoopPerDay: number | null
+  /** Tiempo medio entre un cambio y el siguiente - "cada cuánto se
+   * cambia", el mismo corte de `MAX_FEED_GAP_HOURS` que las tomas para
+   * no contar el tirón de la noche ni un registro olvidado. */
+  averageGapMinutes: number | null
   /** Cambios por franja horaria - es la hora del cambio, no la de la
    * deposición, así que no se separa en pis/caca. */
   byHourBucket: HourBucketStat[]
@@ -476,12 +480,19 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
       averagePerDay: null,
       averagePeePerDay: null,
       averagePoopPerDay: null,
+      averageGapMinutes: null,
       byHourBucket: emptyBuckets(),
       poopColors,
     }
   }
 
   const days = daysSpanned(changes.map((c) => c.changed_at))
+  const times = changes.map((c) => new Date(c.changed_at).getTime()).sort((a, b) => a - b)
+  const gaps: number[] = []
+  for (let i = 1; i < times.length; i++) {
+    const gapMinutes = ((times[i] as number) - (times[i - 1] as number)) / 60_000
+    if (gapMinutes > 0 && gapMinutes <= MAX_FEED_GAP_HOURS * 60) gaps.push(gapMinutes)
+  }
 
   return {
     hasEnoughData: true,
@@ -490,6 +501,7 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     averagePerDay: changes.length / days,
     averagePeePerDay: changes.filter(hasPee).length / days,
     averagePoopPerDay: changes.filter(hasPoop).length / days,
+    averageGapMinutes: average(gaps),
     byHourBucket,
     poopColors,
   }
@@ -843,6 +855,7 @@ export interface StatsExportPayload {
     average_per_day: number | null
     average_pee_per_day: number | null
     average_poop_per_day: number | null
+    average_gap_minutes: number | null
     by_hour_bucket: HourBucketStat[]
     poop_colors: Record<DiaperResidueColor | 'unspecified', number>
     last_poop_at: string | null
@@ -957,6 +970,7 @@ export function buildStatsExportPayload(
       average_per_day: diaper.averagePerDay,
       average_pee_per_day: diaper.averagePeePerDay,
       average_poop_per_day: diaper.averagePoopPerDay,
+      average_gap_minutes: diaper.averageGapMinutes,
       by_hour_bucket: diaper.byHourBucket,
       poop_colors: diaper.poopColors,
       last_poop_at: lastPoopAt,

@@ -79,6 +79,7 @@ class ExportStatsRequest extends FormRequest
             'diaper.average_per_day' => ['nullable', 'numeric'],
             'diaper.average_pee_per_day' => ['nullable', 'numeric', 'min:0'],
             'diaper.average_poop_per_day' => ['nullable', 'numeric', 'min:0'],
+            'diaper.average_gap_minutes' => ['nullable', 'numeric', 'min:0'],
             'diaper.by_hour_bucket' => ['required', 'array', 'size:4'],
             'diaper.by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'diaper.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],

@@ -152,6 +152,41 @@ function formatDelta(delta: number, decimals = 0): string {
   return `${sign}${rounded.toFixed(decimals)}`
 }
 
+const comparisonTiles = computed(() => {
+  const comparison = weekComparison.value
+  if (!comparison) return []
+  const tiles: { key: string; label: string; value: string; delta: number; colorClass: string }[] =
+    []
+  if (comparison.sleepHours && enabledCategories.value.includes('sleep')) {
+    tiles.push({
+      key: 'sleep',
+      label: t('stats.sleep.title'),
+      value: `${formatDelta(comparison.sleepHours.delta, 1)} h`,
+      delta: comparison.sleepHours.delta,
+      colorClass: 'text-sleep',
+    })
+  }
+  if (enabledCategories.value.includes('feed')) {
+    tiles.push({
+      key: 'feed',
+      label: t('stats.feed.title'),
+      value: formatDelta(comparison.feedCount.delta),
+      delta: comparison.feedCount.delta,
+      colorClass: 'text-feed',
+    })
+  }
+  if (enabledCategories.value.includes('diaper')) {
+    tiles.push({
+      key: 'diaper',
+      label: t('stats.diaper.title'),
+      value: formatDelta(comparison.diaperCount.delta),
+      delta: comparison.diaperCount.delta,
+      colorClass: 'text-diaper',
+    })
+  }
+  return tiles
+})
+
 function formatMinutes(minutes: number): string {
   const rounded = Math.round(minutes)
   const hours = Math.floor(rounded / 60)
@@ -615,17 +650,11 @@ async function onExportPdf() {
             {{ formatMinutes(sleepStats.longestSleep.minutes) }}
           </div>
         </div>
-      </section>
 
-      <!-- Antes vivía en el Dashboard - movido aquí, junto al resto de
-           sueño, porque "Tendencia semanal" más abajo ya cubre
-           prácticamente lo mismo (sueño por semana) y competía por
-           espacio con los recordatorios/registro rápido del día a día. -->
-      <WeeklySleep
-        v-if="enabledCategories.includes('sleep')"
-        :sleeps="babies.statsSleeps"
-        :date-locale="dateLocale"
-      />
+        <!-- Antes vivía en el Dashboard. Siempre los últimos 7 días de
+             calendario, independiente del selector de periodo. -->
+        <WeeklySleep :sleeps="babies.statsSleeps" :date-locale="dateLocale" />
+      </section>
 
       <!-- Pañales -->
       <section v-if="enabledCategories.includes('diaper')" class="card flex flex-col gap-3 p-4">
@@ -658,6 +687,15 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.diaper.perDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ diaperStats.averagePerDay.toFixed(1) }}
+              </div>
+            </div>
+            <div
+              v-if="diaperStats.averageGapMinutes !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.diaper.gapLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatMinutes(diaperStats.averageGapMinutes) }}
               </div>
             </div>
           </div>
@@ -823,47 +861,34 @@ async function onExportPdf() {
           {{ t('stats.trend.title') }}
         </h2>
 
-        <div v-if="weekComparison" class="flex gap-3 text-center">
+        <!-- Rejilla de columnas iguales con `min-w-0` (no un flex con
+             `flex-1`): con rótulos largos sin espacios ("Pañales/semana")
+             el ancho mínimo de cada tarjeta empujaba la fila fuera del
+             bloque en pantallas estrechas. Rótulos cortos, misma forma
+             que el resto de tarjetas de Estadísticas. -->
+        <template v-if="weekComparison && comparisonTiles.length > 0">
           <div
-            v-if="weekComparison.sleepHours && enabledCategories.includes('sleep')"
-            class="flex-1 rounded-xl bg-surface-sunken p-3"
+            class="grid gap-3"
+            :style="{ gridTemplateColumns: `repeat(${comparisonTiles.length}, minmax(0, 1fr))` }"
           >
-            <div class="text-xs text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>
             <div
-              class="text-lg font-bold tabular-nums"
-              :class="weekComparison.sleepHours.delta >= 0 ? 'text-sleep' : 'text-text-muted'"
+              v-for="tile in comparisonTiles"
+              :key="tile.key"
+              class="min-w-0 rounded-xl bg-surface-sunken p-3"
             >
-              {{ formatDelta(weekComparison.sleepHours.delta, 1) }}h
+              <div class="truncate text-xs text-text-muted">{{ tile.label }}</div>
+              <div
+                class="text-lg font-bold tabular-nums"
+                :class="tile.delta >= 0 ? tile.colorClass : 'text-text-muted'"
+              >
+                {{ tile.value }}
+              </div>
             </div>
           </div>
-          <div
-            v-if="enabledCategories.includes('feed')"
-            class="flex-1 rounded-xl bg-surface-sunken p-3"
-          >
-            <div class="text-xs text-text-muted">{{ t('stats.trend.feedLabel') }}</div>
-            <div
-              class="text-lg font-bold tabular-nums"
-              :class="weekComparison.feedCount.delta >= 0 ? 'text-feed' : 'text-text-muted'"
-            >
-              {{ formatDelta(weekComparison.feedCount.delta) }}
-            </div>
-          </div>
-          <div
-            v-if="enabledCategories.includes('diaper')"
-            class="flex-1 rounded-xl bg-surface-sunken p-3"
-          >
-            <div class="text-xs text-text-muted">{{ t('stats.trend.diaperLabel') }}</div>
-            <div
-              class="text-lg font-bold tabular-nums"
-              :class="weekComparison.diaperCount.delta >= 0 ? 'text-diaper' : 'text-text-muted'"
-            >
-              {{ formatDelta(weekComparison.diaperCount.delta) }}
-            </div>
-          </div>
-        </div>
-        <p v-if="weekComparison" class="-mt-1 text-center text-xs text-text-muted">
-          {{ t('stats.trend.comparisonHint') }}
-        </p>
+          <p class="-mt-1 text-xs text-text-muted">
+            {{ t('stats.trend.comparisonHint') }}
+          </p>
+        </template>
 
         <div v-if="enabledCategories.includes('sleep')">
           <div class="mb-1 text-xs text-text-muted">{{ t('stats.trend.sleepLabel') }}</div>

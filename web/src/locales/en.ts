@@ -210,6 +210,7 @@ export default {
       perDayLabel: 'Changes per day',
       peePerDayLabel: 'Wet per day',
       poopPerDayLabel: 'Dirty per day',
+      gapLabel: 'Time between changes',
       byHourLabel: 'Changes per time slot',
       poopColorsLabel: 'Stool colour',
       lastPoopLabel: 'Last dirty diaper',

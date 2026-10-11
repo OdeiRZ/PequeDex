@@ -65,6 +65,7 @@ function validStatsPayload(): array
             'average_per_day' => 2.0,
             'average_pee_per_day' => 1.5,
             'average_poop_per_day' => 1.0,
+            'average_gap_minutes' => 165.0,
             'by_hour_bucket' => $emptyBuckets,
             'poop_colors' => ['verde' => 0, 'amarillo' => 3, 'marron' => 0, 'meconio' => 0, 'unspecified' => 1],
             'last_poop_at' => '2026-08-30T10:15:00.000Z',
@@ -182,6 +183,36 @@ it('labels the period and keeps only the stool colours that were logged', functi
         ->and(collect($data['poopColorRows'])->pluck('count', 'label')->all())
         ->toBe(['Amarillo' => 3, 'Sin indicar' => 1])
         ->and($data['lastPoopSince'])->toBeString();
+});
+
+it('summarizes the activity heatmap for the printed PDF, where cells cannot be tapped', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['activity_heatmap'] = [
+        ['day_of_week' => 6, 'hour' => 22, 'count' => 4],
+        ['day_of_week' => 0, 'hour' => 22, 'count' => 1],
+        ['day_of_week' => 0, 'hour' => 8, 'count' => 3],
+        ['day_of_week' => 0, 'hour' => 9, 'count' => 2],
+    ];
+
+    $summary = app(StatsExportController::class)->buildViewData($baby, $payload)['heatmapSummary'];
+
+    expect($summary['total'])->toBe(10)
+        ->and($summary['peak'])->toBe(['day' => 'Domingo', 'hour' => 22, 'count' => 4])
+        ->and($summary['busiestDay'])->toBe(['day' => 'Lunes', 'count' => 6])
+        ->and($summary['busiestHour'])->toBe(['hour' => 22, 'count' => 5]);
+});
+
+it('leaves heatmapSummary null with an empty activity_heatmap', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['activity_heatmap'] = [];
+
+    expect(app(StatsExportController::class)->buildViewData($baby, $payload)['heatmapSummary'])->toBeNull();
 });
 
 it('leaves lastPoopSince null when no dirty diaper was ever logged', function () {

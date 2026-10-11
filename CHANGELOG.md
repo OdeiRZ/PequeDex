@@ -9,6 +9,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Estadísticas: retoques de maquetación y PDF más útil** - "Sueño
+  esta semana" pasa a estar dentro del bloque de Sueño en vez de ser
+  una tarjeta suelta. Las tarjetas de "esta semana frente a la
+  anterior" en Tendencia semanal ya no se salen del bloque en móvil
+  (rejilla de columnas iguales y rótulos cortos, mismo estilo que el
+  resto de tarjetas). Pañales gana un cuarto dato, **cada cuánto se
+  cambia** (tiempo medio entre cambios, sin contar huecos de más de
+  8 h). En el PDF, el mapa de actividad (que en pantalla se consulta
+  tocando celdas) lleva ahora el número de eventos en cada casilla,
+  una leyenda de la escala de color y cuatro fichas de resumen:
+  momento más activo, día más activo, hora más activa y total de
+  eventos. La sección "Esta semana frente a la anterior" del PDF ya no
+  deja su título solo al final de una página.
+
 - **Estadísticas: sueño y pañales rediseñados, con selector de
   periodo** - "7 días / 30 días / Todo" (por defecto 7 días) al
   principio de la pantalla; tomas, sueño y pañales se calculan solo

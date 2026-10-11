@@ -211,6 +211,7 @@ export default {
       perDayLabel: 'Cambios al día',
       peePerDayLabel: 'Con pis al día',
       poopPerDayLabel: 'Con caca al día',
+      gapLabel: 'Cada cuánto se cambia',
       byHourLabel: 'Cambios por franja',
       poopColorsLabel: 'Color de las cacas',
       lastPoopLabel: 'Última caca',

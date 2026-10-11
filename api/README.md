@@ -468,7 +468,14 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `heatmapGrid()` convierte la lista plana en una rejilla 7×24 densa
   (consumida por `pdf/partials/activity-heatmap-grid.blade.php`, una
   tabla con el color de fondo de cada celda según la densidad) - mismo
-  criterio de reshape que ya usaba `growthMetrics` más arriba.
+  criterio de reshape que ya usaba `growthMetrics` más arriba. Como en
+  papel no se puede tocar una celda para ver su detalle (en pantalla
+  sí), cada casilla con actividad lleva su número escrito, hay una
+  leyenda de la escala de color, y `heatmapSummary()` añade encima
+  cuatro fichas: momento más activo (día + hora), día más activo, hora
+  del día más activa y total de eventos (`null` sin ningún evento).
+  `diaper.average_gap_minutes` (`nullable|numeric|min:0`) es el cuarto
+  dato de Pañales, "cada cuánto se cambia".
   `authorize()` comprueba `can('view', $baby)`, no `update` - es un
   endpoint de solo lectura, mismo patrón que
   `ContractionsExportController::show()`.

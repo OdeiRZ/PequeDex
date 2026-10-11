@@ -1371,7 +1371,7 @@ rejilla de 6 columnas con el texto algo más pequeño.
   color (`--temperature`, tema claro y oscuro) e icono de termómetro.
   Se abre para editar y se borra con swipe como el resto. Mismo formato
   de dos alturas que los demás eventos: arriba la temperatura y, si se
-  indicó, dónde se tomó entre paréntesis ("38,2 °C (axila)"); debajo el
+  indicó, dónde se tomó entre paréntesis ("38,2 °C (Axila)"); debajo el
   nivel ("Baja" < 36, "Normal" 36-37,4, "Algo alta" 37,5-37,9, "Alta"
   ≥ 38 - `temperatureLevel()` en `lib/timelineEntry.ts`, la misma
   escala sea cual sea el método) con un indicador de 4 segmentos

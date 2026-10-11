@@ -959,7 +959,7 @@ function entryTitleFor(entry: TimelineEntry): string {
     (type) => diaperTypeLabels.value[type] ?? type,
     (celsius, method) =>
       method
-        ? `${formatCelsius(celsius, dateLocale.value)} (${(temperatureMethodLabels.value[method] ?? method).toLocaleLowerCase(dateLocale.value)})`
+        ? `${formatCelsius(celsius, dateLocale.value)} (${temperatureMethodLabels.value[method] ?? method})`
         : formatCelsius(celsius, dateLocale.value),
   )
 }

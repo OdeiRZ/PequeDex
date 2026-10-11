@@ -12,6 +12,7 @@ import WeeklyTrendChart from '@/components/WeeklyTrendChart.vue'
 import ActivityHeatmap from '@/components/ActivityHeatmap.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import {
   summarizeSleepStats,
   summarizeFeedStats,
@@ -29,11 +30,13 @@ import {
   summarizeTemperatureStats,
   summarizeVaccinationStats,
   type StatsPeriod,
+  type StatsExportMode,
+  SUMMARY_PERIOD,
 } from '@/lib/stats'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
-import { formatCelsius } from '@/lib/timelineEntry'
+import { FEVER_THRESHOLD_CELSIUS, formatCelsius } from '@/lib/timelineEntry'
 import { parseDateOnly } from '@/lib/localDate'
 import type { DiaperResidueColor, DiaperSize } from '@/stores/babies'
 
@@ -421,36 +424,84 @@ const hasAnyStatsData = computed(
     vitaminDStats.value.hasSchedule,
 )
 
-async function onExportPdf() {
+// Al pulsar descargar se elige entre el PDF completo (el de siempre,
+// con el periodo elegido) y el "Resumen para la consulta": una página
+// con los últimos 14 días fijos y un recuadro de preguntas para el
+// pediatra, que se rellena aquí mismo.
+const exportSheetOpen = ref(false)
+const exportQuestions = ref('')
+
+function openExportSheet() {
+  feedback.tap()
+  exportSheetOpen.value = true
+}
+
+function buildSummaryPayload() {
+  const sleeps = filterByPeriod(babies.statsSleeps, (s) => s.started_at, SUMMARY_PERIOD)
+  const feeds = filterByPeriod(babies.statsFeeds, (f) => f.started_at, SUMMARY_PERIOD)
+  const changes = filterByPeriod(babies.statsDiaperChanges, (c) => c.changed_at, SUMMARY_PERIOD)
+  const temperatures = filterByPeriod(
+    babies.statsTemperatures,
+    (t) => t.measured_at,
+    SUMMARY_PERIOD,
+  )
+  return buildStatsExportPayload(
+    summarizeSleepStats(sleeps),
+    summarizeFeedStats(feeds),
+    summarizeDiaperStats(changes),
+    growthStats.value,
+    {
+      mode: 'summary',
+      questions: exportQuestions.value.trim() || null,
+      highTemperatures: temperatures
+        .filter((t) => t.celsius >= FEVER_THRESHOLD_CELSIUS)
+        .sort((a, b) => b.measured_at.localeCompare(a.measured_at))
+        .slice(0, 10)
+        .map((t) => ({ celsius: t.celsius, at: t.measured_at })),
+      period: SUMMARY_PERIOD,
+      lastPoopAt: lastPoopAt.value,
+      temperature: hasAnyTemperature.value ? summarizeTemperatureStats(temperatures) : null,
+      vaccinations: babies.current?.vaccinations_enabled ? vaccinationStats.value : null,
+      vitaminD: vitaminDStats.value,
+      dailySleep: dailySleep.value,
+    },
+  )
+}
+
+async function onExportPdf(mode: StatsExportMode) {
+  exportSheetOpen.value = false
   // Dos eventos de sonido/vibración independientes, no v-press genérico:
   // "download" al pulsar (empieza a generarse), "downloadDone" cuando el
   // icono pasa a su tick de confirmación (ya está listo y descargado).
   feedback.download()
   exporting.value = true
   try {
-    const payload = buildStatsExportPayload(
-      sleepStats.value,
-      feedStats.value,
-      diaperStats.value,
-      growthStats.value,
-      {
-        period: period.value,
-        lastPoopAt: lastPoopAt.value,
-        periodDeltas: periodDeltas.value,
-        temperature: hasAnyTemperature.value ? temperatureStats.value : null,
-        vaccinations: babies.current?.vaccinations_enabled ? vaccinationStats.value : null,
-        weekComparison: weekComparison.value,
-        weeklyTrend: weeklyTrend.value,
-        activityHeatmap: activityHeatmap.value,
-        vitaminD: vitaminDStats.value,
-        dailySleep: dailySleep.value,
-      },
-    )
+    const payload =
+      mode === 'summary'
+        ? buildSummaryPayload()
+        : buildStatsExportPayload(
+            sleepStats.value,
+            feedStats.value,
+            diaperStats.value,
+            growthStats.value,
+            {
+              period: period.value,
+              lastPoopAt: lastPoopAt.value,
+              periodDeltas: periodDeltas.value,
+              temperature: hasAnyTemperature.value ? temperatureStats.value : null,
+              vaccinations: babies.current?.vaccinations_enabled ? vaccinationStats.value : null,
+              weekComparison: weekComparison.value,
+              weeklyTrend: weeklyTrend.value,
+              activityHeatmap: activityHeatmap.value,
+              vitaminD: vitaminDStats.value,
+              dailySleep: dailySleep.value,
+            },
+          )
     const blob = await babies.exportStatsPdf(payload)
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'estadisticas.pdf'
+    link.download = mode === 'summary' ? 'resumen-consulta.pdf' : 'estadisticas.pdf'
     link.click()
     URL.revokeObjectURL(url)
     justExported.value = true
@@ -495,7 +546,7 @@ async function onExportPdf() {
         :class="[exporting && 'is-exporting', justExported && 'is-done']"
         :disabled="exporting || loading || !hasAnyStatsData"
         :aria-label="t('stats.export')"
-        @click="onExportPdf"
+        @click="openExportSheet"
       >
         <span class="export-ring" aria-hidden="true"></span>
         <svg
@@ -1170,6 +1221,44 @@ async function onExportPdf() {
         <ActivityHeatmap :cells="activityHeatmap" :date-locale="dateLocale" />
       </section>
     </template>
+
+    <!-- Elegir qué PDF descargar -->
+    <BottomSheet v-model:open="exportSheetOpen">
+      <h3 class="mb-4 font-display text-base font-bold">{{ t('stats.exportSheet.title') }}</h3>
+      <div class="flex flex-col gap-4">
+        <button
+          type="button"
+          class="card-interactive flex flex-col gap-0.5 rounded-xl bg-surface-sunken p-3 text-left"
+          @click="onExportPdf('full')"
+        >
+          <span class="text-sm font-semibold">{{ t('stats.exportSheet.fullTitle') }}</span>
+          <span class="text-xs text-text-muted">{{ t('stats.exportSheet.fullBody') }}</span>
+        </button>
+
+        <div class="flex flex-col gap-3 rounded-xl border border-border p-3">
+          <div>
+            <div class="text-sm font-semibold">{{ t('stats.exportSheet.summaryTitle') }}</div>
+            <div class="text-xs text-text-muted">{{ t('stats.exportSheet.summaryBody') }}</div>
+          </div>
+          <div>
+            <label for="export-questions" class="field-label">{{
+              t('stats.exportSheet.questions')
+            }}</label>
+            <textarea
+              id="export-questions"
+              v-model="exportQuestions"
+              rows="3"
+              maxlength="1000"
+              :placeholder="t('stats.exportSheet.questionsPlaceholder')"
+              class="field-input w-full min-w-0"
+            ></textarea>
+          </div>
+          <button v-press type="button" class="btn-primary" @click="onExportPdf('summary')">
+            {{ t('stats.exportSheet.summaryAction') }}
+          </button>
+        </div>
+      </div>
+    </BottomSheet>
   </main>
 </template>
 

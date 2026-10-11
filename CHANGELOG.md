@@ -9,6 +9,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Resumen para la consulta** - al descargar el PDF desde
+  Estadísticas se elige entre el completo de siempre y un resumen de
+  una página con los últimos 14 días, pensado para el pediatra: última
+  medida de crecimiento con percentil, tomas, sueño, pañales,
+  temperaturas de 38 °C o más, vacunas puestas en ese tiempo y la
+  próxima vacuna y revisión, y vitamina D. Arriba lleva un recuadro de
+  "Preguntas para la consulta" que se rellena al exportar (o líneas en
+  blanco para apuntarlas a mano).
+
 - **Vacunas y revisiones** - una cartilla digital por bebé, en
   `/vacunas`. Se activa en los ajustes del bebé eligiendo la comunidad
   autónoma: la lista de vacunas sale del calendario común del Consejo

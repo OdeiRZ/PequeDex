@@ -1672,6 +1672,19 @@ la deposición). Nuevos: **color de las cacas** del periodo (sin
 interpretación clínica) y **última caca** ("hace 5 horas"), esta sobre
 todo el historial (`findLastPoopAt()`) - es una pregunta sobre ahora.
 
+**Resumen para la consulta** - el botón de descarga abre una hoja con
+dos opciones: "Completo" (el PDF de siempre, con el periodo elegido) y
+"Resumen para la consulta", una sola página para el pediatra
+(`api/resources/views/pdf/consult-summary.blade.php`). El resumen usa
+siempre los últimos 14 días (`SUMMARY_PERIOD = '14d'` en
+`lib/stats.ts`, un periodo que no aparece en el selector) y el mismo
+payload y endpoint que el completo, con `mode: 'summary'`, las
+`questions` que se escriben en la hoja (hasta 1000 caracteres; sin
+ellas, el PDF deja líneas en blanco para apuntarlas a mano) y
+`high_temperatures` (las de 38 °C o más del periodo, como mucho 10). El
+backend elige la plantilla según `mode` y filtra las vacunas puestas
+dentro del periodo. Sin gráficas: fichas de 3 en 3 y filas.
+
 **Export a PDF** - botón en la cabecera (icono descargar, mismo patrón
 visual y de estados `exporting`/`justExported` que `ContractionsView.vue`),
 deshabilitado mientras carga o si no hay ningún dato en los cuatro

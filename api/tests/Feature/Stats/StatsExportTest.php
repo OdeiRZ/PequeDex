@@ -257,6 +257,58 @@ it('rejects a temperature max missing its date', function () {
         ->assertJsonValidationErrors(['temperature.max.at']);
 });
 
+it('exports the one-page summary for the check-up', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['mode'] = 'summary';
+    $payload['period'] = '14d';
+    $payload['period_deltas'] = null;
+    $payload['questions'] = "¿Es normal que lleve 3 días sin caca?\n¿Cuándo empezamos con la fruta?";
+    $payload['high_temperatures'] = [['celsius' => 38.4, 'at' => '2026-08-29T03:00:00Z']];
+    $payload['temperature'] = ['count' => 3, 'high_count' => 1, 'max' => ['celsius' => 38.4, 'at' => '2026-08-29T03:00:00Z'], 'latest' => ['celsius' => 37.0, 'at' => '2026-08-30T09:00:00Z']];
+
+    $response = $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+
+    expect($response->headers->get('Content-Type'))->toContain('application/pdf')
+        ->and($response->headers->get('Content-Disposition'))->toContain('resumen-consulta.pdf');
+});
+
+it('lists only the vaccines given within the summary window', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['period'] = '14d';
+    $payload['vaccinations'] = [
+        'given' => 2, 'total' => 20, 'overdue' => 0,
+        'given_list' => [
+            ['name' => 'Antigua', 'date' => now()->subDays(40)->toDateString()],
+            ['name' => 'Reciente', 'date' => now()->subDays(3)->toDateString()],
+        ],
+        'upcoming_list' => [], 'next_checkup' => null,
+    ];
+
+    $data = app(StatsExportController::class)->buildViewData($baby, $payload);
+
+    expect(array_column($data['recentVaccines'], 'name'))->toBe(['Reciente']);
+});
+
+it('rejects too long questions or more than 10 high temperatures', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['mode'] = 'summary';
+    $payload['questions'] = str_repeat('a', 1001);
+    $payload['high_temperatures'] = array_fill(0, 11, ['celsius' => 38.5, 'at' => '2026-08-29T03:00:00Z']);
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['questions', 'high_temperatures']);
+});
+
 it('rejects an unknown period', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

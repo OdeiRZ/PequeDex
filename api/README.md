@@ -152,6 +152,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   del nacimiento) y `/checkups` (revisiones a mano, pueden estar en el
   futuro). El export de estadísticas acepta un bloque `vaccinations`
   opcional (resumen, próximas y puestas).
+- Resumen para la consulta: `POST /babies/{baby}/stats/export` acepta
+  `mode` (`full` por defecto, o `summary`), `questions` (nullable, hasta
+  1000 caracteres), `high_temperatures` (hasta 10 `{celsius, at}`) y el
+  periodo `14d`. Con `summary` renderiza `pdf/consult-summary.blade.php`
+  (una página, fichas de 3 en 3, sin gráficas) y devuelve
+  `resumen-consulta.pdf`; `StatsExportController::recentVaccines()`
+  filtra las vacunas puestas dentro del periodo.
 - Avisos suaves del Dashboard: `GET /babies/{baby}/diaper-changes`
   acepta un `since` opcional (fecha) para pedir solo los últimos días
   en vez del historial entero, y `users.alerts_enabled` (`PUT

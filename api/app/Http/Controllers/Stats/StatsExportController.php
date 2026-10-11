@@ -30,6 +30,7 @@ class StatsExportController extends Controller
 
     private const PERIOD_LABELS = [
         '7d' => 'Últimos 7 días',
+        '14d' => 'Últimos 14 días',
         '30d' => 'Últimos 30 días',
         'all' => 'Todo el historial',
     ];
@@ -46,9 +47,15 @@ class StatsExportController extends Controller
 
     public function store(ExportStatsRequest $request, Baby $baby): Response
     {
-        $pdf = Pdf::loadView('pdf.stats', $this->buildViewData($baby, $request->validated()));
+        $data = $request->validated();
+        $summary = ($data['mode'] ?? 'full') === 'summary';
 
-        return $pdf->stream('estadisticas.pdf');
+        $pdf = Pdf::loadView(
+            $summary ? 'pdf.consult-summary' : 'pdf.stats',
+            $this->buildViewData($baby, $data),
+        );
+
+        return $pdf->stream($summary ? 'resumen-consulta.pdf' : 'estadisticas.pdf');
     }
 
     /**
@@ -96,7 +103,34 @@ class StatsExportController extends Controller
             'trendWeeksLimited' => count($data['weekly_trend']) > self::MAX_TREND_WEEKS,
             'hourBucketLabels' => self::HOUR_BUCKET_LABELS,
             'logo' => $this->logoDataUri(),
+            // Solo los usa el resumen para la consulta (pdf/consult-summary).
+            'questions' => $data['questions'] ?? null,
+            'highTemperatures' => $data['high_temperatures'] ?? [],
+            'recentVaccines' => $this->recentVaccines($data['vaccinations'] ?? null, $data['period']),
         ];
+    }
+
+    /**
+     * Las vacunas puestas dentro del periodo (para el resumen de la
+     * consulta: "qué se le ha puesto desde la última vez"). Vacío con
+     * "Todo" o sin vacunas activadas.
+     *
+     * @param  array<string, mixed>|null  $vaccinations
+     * @return array<int, array{name: string, date: string}>
+     */
+    private function recentVaccines(?array $vaccinations, string $period): array
+    {
+        $days = ['7d' => 7, '14d' => 14, '30d' => 30][$period] ?? null;
+        if ($vaccinations === null || $days === null) {
+            return [];
+        }
+
+        $since = CarbonImmutable::today()->subDays($days - 1)->toDateString();
+
+        /** @var array<int, array{name: string, date: string}> $given */
+        $given = $vaccinations['given_list'] ?? [];
+
+        return array_values(array_filter($given, fn ($v) => $v['date'] >= $since));
     }
 
     /**

@@ -36,7 +36,15 @@ class ExportStatsRequest extends FormRequest
         return [
             // Periodo que cubren tomas/sueño/pañales (ver `StatsPeriod`
             // en `lib/stats.ts`); el resto de bloques no dependen de él.
-            'period' => ['required', Rule::in(['7d', '30d', 'all'])],
+            'period' => ['required', Rule::in(['7d', '14d', '30d', 'all'])],
+            // "full" = el PDF de siempre; "summary" = el resumen de una
+            // página para la consulta (últimos 14 días), con su recuadro
+            // de preguntas y las temperaturas altas del periodo.
+            'mode' => ['sometimes', Rule::in(['full', 'summary'])],
+            'questions' => ['nullable', 'string', 'max:1000'],
+            'high_temperatures' => ['sometimes', 'array', 'max:10'],
+            'high_temperatures.*.celsius' => ['required', 'numeric'],
+            'high_temperatures.*.at' => ['required', 'date'],
             // Diferencias frente al periodo anterior (`null` con "Todo");
             // cada una `null` si alguno de los dos periodos no tiene el dato.
             'period_deltas' => ['nullable', 'array'],

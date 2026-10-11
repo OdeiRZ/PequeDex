@@ -214,6 +214,10 @@ describe('filterByPeriod', () => {
     expect(filterByPeriod(items, (i) => i.at, '7d', now)).toHaveLength(2)
   })
 
+  it('keeps 14 calendar days for the check-up summary window', () => {
+    expect(filterByPeriod(items, (i) => i.at, '14d', now)).toHaveLength(3)
+  })
+
   it('keeps 30 calendar days for 30d', () => {
     expect(filterByPeriod(items, (i) => i.at, '30d', now)).toHaveLength(3)
   })
@@ -886,8 +890,25 @@ describe('buildStatsExportPayload - options', () => {
     const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
 
     expect(payload.period).toBe('all')
+    expect(payload.mode).toBe('full')
+    expect(payload.questions).toBeNull()
+    expect(payload.high_temperatures).toEqual([])
     expect(payload.period_deltas).toBeNull()
     expect(payload.diaper.last_poop_at).toBeNull()
+  })
+
+  it('carries the summary mode, questions and high temperatures', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth, {
+      mode: 'summary',
+      questions: '¿Es normal?',
+      highTemperatures: [{ celsius: 38.4, at: '2026-10-10T03:00:00Z' }],
+      period: '14d',
+    })
+
+    expect(payload.mode).toBe('summary')
+    expect(payload.questions).toBe('¿Es normal?')
+    expect(payload.high_temperatures).toEqual([{ celsius: 38.4, at: '2026-10-10T03:00:00Z' }])
+    expect(payload.period).toBe('14d')
   })
 
   it('passes the chosen period and last poop through', () => {

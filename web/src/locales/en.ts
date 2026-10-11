@@ -232,6 +232,16 @@ export default {
     noDataYet: 'No data in any time slot yet.',
     export: 'Download PDF',
     exportError: 'Could not generate the PDF. Please try again.',
+    exportSheet: {
+      title: 'Download PDF',
+      fullTitle: 'Full report',
+      fullBody: 'All statistics for the selected period, with charts and trends.',
+      summaryTitle: 'Summary for the check-up',
+      summaryBody: 'One page with the last 14 days, made to show the paediatrician.',
+      questions: 'Questions for the check-up (optional)',
+      questionsPlaceholder: 'For example: is it normal to go 3 days without a dirty diaper?',
+      summaryAction: 'Download summary',
+    },
     hourBucket: {
       dawn: 'Early morning',
       morning: 'Morning',

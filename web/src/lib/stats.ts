@@ -56,9 +56,16 @@ function standardDeviation(values: number[]): number | null {
 // pañales se calculan sobre el periodo elegido (por defecto, los
 // últimos 7 días); tendencia semanal, mapa de actividad y crecimiento
 // siguen usando todo el historial, que es justo lo que miden.
-export type StatsPeriod = '7d' | '30d' | 'all'
+// '14d' no está en el selector de la pantalla: es la ventana fija del
+// "Resumen para la consulta" (el PDF corto para el pediatra).
+export type StatsPeriod = '7d' | '14d' | '30d' | 'all'
 
-const PERIOD_DAYS: Record<Exclude<StatsPeriod, 'all'>, number> = { '7d': 7, '30d': 30 }
+const PERIOD_DAYS: Record<Exclude<StatsPeriod, 'all'>, number> = { '7d': 7, '14d': 14, '30d': 30 }
+
+/** "Completo": el PDF de siempre. "Resumen": una página para la consulta. */
+export type StatsExportMode = 'full' | 'summary'
+
+export const SUMMARY_PERIOD: StatsPeriod = '14d'
 
 // Inicio (medianoche local) del primer día del periodo: "últimos 7
 // días" = hoy y los 6 anteriores, días de calendario completos.
@@ -963,6 +970,11 @@ export function summarizeVitaminDStats(
  * nothing here is computed, only relabeled.
  */
 export interface StatsExportPayload {
+  mode: StatsExportMode
+  /** Solo en el resumen: las preguntas que el cuidador quiere hacer. */
+  questions: string | null
+  /** Solo en el resumen: las temperaturas de 38 °C o más del periodo. */
+  high_temperatures: { celsius: number; at: string }[]
   period: StatsPeriod
   period_deltas: {
     longest_stretch_minutes: number | null
@@ -1076,6 +1088,9 @@ function exportGrowthMetric(stat: GrowthMetricStat): GrowthMetricExportStat {
  * to new metrics without touching existing call-sites' argument order.
  */
 export interface StatsExportOptions {
+  mode?: StatsExportMode
+  questions?: string | null
+  highTemperatures?: { celsius: number; at: string }[]
   period?: StatsPeriod
   periodDeltas?: PeriodDeltas | null
   lastPoopAt?: string | null
@@ -1096,6 +1111,9 @@ export function buildStatsExportPayload(
   options: StatsExportOptions = {},
 ): StatsExportPayload {
   const {
+    mode = 'full',
+    questions = null,
+    highTemperatures = [],
     period = 'all',
     periodDeltas = null,
     lastPoopAt = null,
@@ -1109,6 +1127,9 @@ export function buildStatsExportPayload(
   } = options
 
   return {
+    mode,
+    questions,
+    high_temperatures: highTemperatures,
     period,
     period_deltas: periodDeltas
       ? {

@@ -235,6 +235,7 @@ export default {
     trend: {
       title: 'Tendencia semanal',
       sleepLabel: 'Sueño (horas/semana)',
+      longestStretchLabel: 'Tramo más largo (media de cada semana)',
       feedLabel: 'Tomas/semana',
       diaperLabel: 'Pañales/semana',
       comparisonHint: 'Esta semana frente a la anterior',

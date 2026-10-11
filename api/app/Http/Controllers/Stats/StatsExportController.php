@@ -77,6 +77,7 @@ class StatsExportController extends Controller
                 : null,
             'weekComparison' => $data['week_comparison'] ?? null,
             'sleepTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['sleep_hours']),
+            'longestStretchTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['longest_stretch_minutes'] ?? null),
             'feedTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['feed_count']),
             'diaperTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['diaper_count']),
             'heatmapGrid' => $this->heatmapGrid($data['activity_heatmap']),
@@ -103,8 +104,8 @@ class StatsExportController extends Controller
      * partial, igual que en pantalla), nunca un 0. Solo las
      * `MAX_TREND_WEEKS` más recientes.
      *
-     * @param  array<int, array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}>  $weeklyTrend
-     * @param  callable(array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}): (float|int|null)  $value
+     * @param  array<int, array{week_start: string, sleep_hours: float|null, longest_stretch_minutes?: float|null, feed_count: int, diaper_count: int}>  $weeklyTrend
+     * @param  callable(array{week_start: string, sleep_hours: float|null, longest_stretch_minutes?: float|null, feed_count: int, diaper_count: int}): (float|int|null)  $value
      * @return array<int, array{label: string, value: float|int|null}>
      */
     private function weeklyTrendPoints(array $weeklyTrend, callable $value): array

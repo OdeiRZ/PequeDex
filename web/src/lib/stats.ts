@@ -683,6 +683,11 @@ export interface WeeklyTrendPoint {
    * cuando no hubo ningún sueño completado, para no leer "no hay
    * registro" como "no durmió nada". */
   sleepHours: number | null
+  /** Media, sobre los días de esa semana con algún sueño completado, del
+   * sueño seguido más largo de cada día - la misma cifra que "Tramo más
+   * largo" del bloque de Sueño, semana a semana: "¿empieza a dormir del
+   * tirón?". `null` sin ningún sueño completado esa semana. */
+  longestStretchMinutes: number | null
   feedCount: number
   diaperCount: number
 }
@@ -705,21 +710,27 @@ export function summarizeWeeklyTrend(
   feeds: Feed[],
   diaperChanges: DiaperChange[],
 ): WeeklyTrendPoint[] {
-  const weeks = new Map<
-    string,
-    { sleepMinutes: number; hasSleep: boolean; feedCount: number; diaperCount: number }
-  >()
-
-  function weekOf(date: Date): {
+  interface WeekAccumulator {
     sleepMinutes: number
     hasSleep: boolean
+    /** Sueño más largo de cada día (clave local del día de inicio). */
+    longestByDay: Map<string, number>
     feedCount: number
     diaperCount: number
-  } {
+  }
+  const weeks = new Map<string, WeekAccumulator>()
+
+  function weekOf(date: Date): WeekAccumulator {
     const key = toDateOnlyString(mondayOf(date))
     let week = weeks.get(key)
     if (!week) {
-      week = { sleepMinutes: 0, hasSleep: false, feedCount: 0, diaperCount: 0 }
+      week = {
+        sleepMinutes: 0,
+        hasSleep: false,
+        longestByDay: new Map(),
+        feedCount: 0,
+        diaperCount: 0,
+      }
       weeks.set(key, week)
     }
     return week
@@ -727,10 +738,13 @@ export function summarizeWeeklyTrend(
 
   for (const sleep of sleeps) {
     if (!sleep.ended_at) continue
-    const week = weekOf(new Date(sleep.started_at))
-    week.sleepMinutes +=
-      (new Date(sleep.ended_at).getTime() - new Date(sleep.started_at).getTime()) / 60_000
+    const start = new Date(sleep.started_at)
+    const week = weekOf(start)
+    const minutes = (new Date(sleep.ended_at).getTime() - start.getTime()) / 60_000
+    week.sleepMinutes += minutes
     week.hasSleep = true
+    const dayKey = localDayKey(start)
+    week.longestByDay.set(dayKey, Math.max(week.longestByDay.get(dayKey) ?? 0, minutes))
   }
   for (const feed of feeds) weekOf(new Date(feed.started_at)).feedCount++
   for (const change of diaperChanges) weekOf(new Date(change.changed_at)).diaperCount++
@@ -740,6 +754,7 @@ export function summarizeWeeklyTrend(
     .map(([weekStart, w]) => ({
       weekStart,
       sleepHours: w.hasSleep ? w.sleepMinutes / 60 : null,
+      longestStretchMinutes: average([...w.longestByDay.values()]),
       feedCount: w.feedCount,
       diaperCount: w.diaperCount,
     }))
@@ -933,6 +948,7 @@ export interface StatsExportPayload {
   weekly_trend: {
     week_start: string
     sleep_hours: number | null
+    longest_stretch_minutes: number | null
     feed_count: number
     diaper_count: number
   }[]
@@ -1061,6 +1077,7 @@ export function buildStatsExportPayload(
     weekly_trend: weeklyTrend.map((w) => ({
       week_start: w.weekStart,
       sleep_hours: w.sleepHours,
+      longest_stretch_minutes: w.longestStretchMinutes,
       feed_count: w.feedCount,
       diaper_count: w.diaperCount,
     })),

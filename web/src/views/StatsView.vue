@@ -174,6 +174,9 @@ const sleepWeeklyPoints = computed(() =>
     value: w.sleepHours !== null ? Math.round(w.sleepHours * 10) / 10 : null,
   })),
 )
+const longestStretchWeeklyPoints = computed(() =>
+  weeklyTrend.value.map((w) => ({ label: weekLabel(w.weekStart), value: w.longestStretchMinutes })),
+)
 const feedWeeklyPoints = computed(() =>
   weeklyTrend.value.map((w) => ({ label: weekLabel(w.weekStart), value: w.feedCount })),
 )
@@ -970,6 +973,18 @@ async function onExportPdf() {
             :points="sleepWeeklyPoints"
             category="sleep"
             :format-value="formatHours"
+          />
+        </div>
+        <!-- "¿Empieza a dormir del tirón?" - el tramo más largo de cada
+             día, de media por semana. -->
+        <div v-if="enabledCategories.includes('sleep')">
+          <div class="mb-1 text-xs text-text-muted">
+            {{ t('stats.trend.longestStretchLabel') }}
+          </div>
+          <WeeklyTrendChart
+            :points="longestStretchWeeklyPoints"
+            category="sleep"
+            :format-value="formatMinutes"
           />
         </div>
         <div v-if="enabledCategories.includes('feed')">

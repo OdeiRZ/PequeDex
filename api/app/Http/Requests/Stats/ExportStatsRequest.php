@@ -127,6 +127,7 @@ class ExportStatsRequest extends FormRequest
             'weekly_trend' => ['present', 'array'],
             'weekly_trend.*.week_start' => ['required', 'date'],
             'weekly_trend.*.sleep_hours' => ['nullable', 'numeric', 'min:0'],
+            'weekly_trend.*.longest_stretch_minutes' => ['nullable', 'numeric', 'min:0'],
             'weekly_trend.*.feed_count' => ['required', 'integer', 'min:0'],
             'weekly_trend.*.diaper_count' => ['required', 'integer', 'min:0'],
 

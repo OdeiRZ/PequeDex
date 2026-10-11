@@ -88,8 +88,8 @@ function validStatsPayload(): array
             'diaper_count' => ['current' => 40, 'delta' => 1],
         ],
         'weekly_trend' => [
-            ['week_start' => '2026-07-27', 'sleep_hours' => 50.0, 'feed_count' => 20, 'diaper_count' => 15],
-            ['week_start' => '2026-08-03', 'sleep_hours' => null, 'feed_count' => 22, 'diaper_count' => 16],
+            ['week_start' => '2026-07-27', 'sleep_hours' => 50.0, 'longest_stretch_minutes' => 190.0, 'feed_count' => 20, 'diaper_count' => 15],
+            ['week_start' => '2026-08-03', 'sleep_hours' => null, 'longest_stretch_minutes' => null, 'feed_count' => 22, 'diaper_count' => 16],
         ],
         'activity_heatmap' => [
             ['day_of_week' => 0, 'hour' => 22, 'count' => 3],
@@ -332,6 +332,8 @@ it('turns weekly_trend into a labeled point list per metric, keeping null sleep 
     expect($data['sleepTrendPoints'][1]['value'])->toBeNull();
     expect($data['feedTrendPoints'][0])->toBe(['label' => '27 jul.', 'value' => 20]);
     expect($data['diaperTrendPoints'][1])->toBe(['label' => '3 ago.', 'value' => 16]);
+    expect($data['longestStretchTrendPoints'][0]['value'])->toBe(190.0);
+    expect($data['longestStretchTrendPoints'][1]['value'])->toBeNull();
 });
 
 it('reshapes the flat activity_heatmap list into a dense 7x24 grid', function () {

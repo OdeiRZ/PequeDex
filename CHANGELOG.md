@@ -9,6 +9,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Tendencia semanal: evolución del tramo más largo** - nueva gráfica
+  con el sueño seguido más largo de cada día, de media por semana, para
+  ver de un vistazo si el bebé "empieza a dormir del tirón". Misma
+  cifra que "Tramo más largo" del bloque de Sueño, semana a semana.
+  También en el PDF.
+
 - **Estadísticas: comparación con el periodo anterior** - con "7 días"
   o "30 días" elegido, cinco cifras muestran debajo cuánto han cambiado
   frente a los 7/30 días justo anteriores ("+25min vs. los 7 días

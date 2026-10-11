@@ -234,6 +234,7 @@ export default {
     trend: {
       title: 'Weekly trend',
       sleepLabel: 'Sleep (hours/week)',
+      longestStretchLabel: 'Longest stretch (weekly average)',
       feedLabel: 'Feeds/week',
       diaperLabel: 'Diapers/week',
       comparisonHint: 'This week vs. last week',

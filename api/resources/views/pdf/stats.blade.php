@@ -408,6 +408,15 @@
                 ])
                 </div>
                 <div style="page-break-inside: avoid;">
+                <p class="sub-label">Tramo más largo (media de cada semana)</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $longestStretchTrendPoints,
+                    'color' => $colors['sleep'],
+                    'format' => $fmtMin,
+                    'height' => 54,
+                ])
+                </div>
+                <div style="page-break-inside: avoid;">
                 <p class="sub-label">Tomas/semana</p>
                 @include('pdf.partials.vertical-bars', [
                     'points' => $feedTrendPoints,

@@ -612,15 +612,33 @@ describe('summarizeWeeklyTrend', () => {
     expect(result[0]).toEqual({
       weekStart: '2026-08-03',
       sleepHours: 8,
+      longestStretchMinutes: 480,
       feedCount: 1,
       diaperCount: 0,
     })
     expect(result[1]).toEqual({
       weekStart: '2026-08-10',
       sleepHours: null,
+      longestStretchMinutes: null,
       feedCount: 1,
       diaperCount: 1,
     })
+  })
+
+  it('averages the longest sleep of each day within the week', () => {
+    const result = summarizeWeeklyTrend(
+      [
+        // Lunes 10: tramos de 2h y 4h -> 4h
+        sleep(local(2026, 8, 10, 13), local(2026, 8, 10, 15)),
+        sleep(local(2026, 8, 10, 22), local(2026, 8, 11, 2)),
+        // Martes 11: un solo tramo de 2h
+        sleep(local(2026, 8, 11, 22), local(2026, 8, 12, 0)),
+      ],
+      [],
+      [],
+    )
+    // (240 + 120) / 2
+    expect(result[0]?.longestStretchMinutes).toBe(180)
   })
 
   it('returns an empty list with no data at all', () => {
@@ -644,7 +662,14 @@ describe('summarizeWeeklyTrend', () => {
 // usados también en `summarizeWeeklyTrend` arriba.
 describe('summarizeWeekComparison', () => {
   function point(weekStart: string, overrides: Partial<WeeklyTrendPoint> = {}): WeeklyTrendPoint {
-    return { weekStart, sleepHours: null, feedCount: 0, diaperCount: 0, ...overrides }
+    return {
+      weekStart,
+      sleepHours: null,
+      longestStretchMinutes: null,
+      feedCount: 0,
+      diaperCount: 0,
+      ...overrides,
+    }
   }
 
   it('returns null with fewer than two COMPLETE weeks, even with 2+ weeks of raw data', () => {

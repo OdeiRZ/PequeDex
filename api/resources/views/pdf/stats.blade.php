@@ -4,71 +4,89 @@
     <meta charset="utf-8">
     <title>Estadísticas</title>
     <style>
-        /* Mismo criterio que pdf/contractions.blade.php - CSS plano, sin
-           flex/grid, mismos colores/formas que la propia app en pantalla
-           (franja de color por categoría junto al título de cada
-           sección, pastillas de cifra tipo "stats-bar"). */
-        body { font-family: sans-serif; font-size: 14px; color: #2b2420; }
-        h1 { font-size: 26px; margin-bottom: 14px; color: #1a1a1a; }
+        /* Calcado de StatsView.vue en pantalla, con las limitaciones de
+           dompdf (CSS2, sin flex/grid - tablas en su lugar): fondo crema
+           de la app, cada sección es una tarjeta blanca redondeada con la
+           franja de color de su categoría junto al título, fichas de 2 en
+           2 con el rótulo arriba a la izquierda, gráficas de barras
+           verticales y pastillas. Mismo orden de secciones que la
+           pantalla. Colores = tokens de web/src/assets/base.css (tema
+           claro). */
+        @page { margin: 50px 40px 55px; }
+        html { background-color: #fbf7f2; }
+        body { font-family: sans-serif; font-size: 13px; color: #2b2420; }
+        h1 { font-size: 24px; margin: 0 0 12px; color: #2b2420; }
 
         /* Mismo formato que la tarjeta principal del bebé en el dashboard
            (DashboardView.vue): nombre + sexo arriba, edad en grande +
            fecha de nacimiento debajo, sobre un degradado de marca con un
-           par de círculos decorativos traslúcidos - mismo truco que la
-           propia tarjeta en pantalla (dos `span` con `rounded-full` y
-           opacidad baja). El bug real de antes (la tarjeta entera no
-           aparecía) era el selector `>` de un commit anterior, no el
-           degradado en sí - confirmado con una captura real del PDF
-           (Ghostscript, `gswin64c -sDEVICE=png16m`, única forma de verlo
-           sin desplegar). */
-        table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+           par de círculos decorativos traslúcidos. */
+        table.baby-card { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
         table.baby-card td { background-color: #a65a6b; background-image: linear-gradient(135deg, #a65a6b 0%, #2f6e68 140%); color: #ffffff; padding: 0; border-radius: 20px; }
-        .baby-card-wrap { position: relative; padding: 26px 30px; }
+        .baby-card-wrap { position: relative; padding: 24px 28px; }
         .baby-card-deco-1 { position: absolute; top: -56px; right: -40px; width: 120px; height: 120px; border-radius: 60px; background: rgba(255,255,255,0.14); }
         .baby-card-deco-2 { position: absolute; bottom: -30px; left: 100px; width: 56px; height: 56px; border-radius: 28px; background: rgba(255,255,255,0.1); }
         table.baby-card-inner { position: relative; width: 100%; border-collapse: collapse; }
         table.baby-card-inner td { background: none; padding: 0; color: #ffffff; }
         .baby-card-name { font-size: 16px; font-weight: bold; letter-spacing: 0.3px; }
         .baby-card-sex { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.22); border-radius: 12px; padding: 5px 14px; }
-        .baby-card-age { font-size: 46px; font-weight: bold; line-height: 1; }
+        .baby-card-age { font-size: 44px; font-weight: bold; line-height: 1; }
         .baby-card-age span { font-size: 19px; font-weight: bold; }
-        .baby-card-born { font-size: 14px; opacity: 0.95; }
+        .baby-card-born { font-size: 13px; opacity: 0.95; }
 
-        /* Fija en la parte superior de CADA página, igual que .footer ya
-           hace en la inferior - no solo debajo del título en la primera. */
-        .header { position: fixed; top: -30px; left: 0; right: 0; text-align: right; font-size: 10px; color: #a3968a; }
-
-        h2 { font-size: 17px; margin: 22px 0 10px; padding-left: 10px; border-left: 5px solid #a3968a; }
-        h2.feed { border-left-color: #c98a3e; }
-        h2.sleep { border-left-color: #5b5a8c; }
-        h2.diaper { border-left-color: #6e9080; }
-        h2.growth { border-left-color: #a65a6b; }
-        h2.trend { border-left-color: #2f6e68; }
-        h2.vitamind { border-left-color: #b8742e; }
-
-        .empty { color: #a3968a; font-style: italic; margin: 0 0 10px; }
-
-        table.stats-bar { width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 0 0 12px -8px; }
-        table.stats-bar td { background: #f3ece4; border-radius: 8px; padding: 10px 14px; text-align: center; }
-        .stats-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #7a6f66; margin-bottom: 4px; }
-        .stats-value { display: block; font-size: 17px; font-weight: bold; color: #2b2420; }
-
-        /* Las 4 franjas horarias (Madrugada/Mañana/Tarde/Noche) ocupaban
-           4 filas a todo lo ancho con la mayor parte del espacio vacío -
-           2 por fila en vez de 1, mismo estilo de ficha que .stats-bar. */
-        table.bucket-grid { width: 100%; border-collapse: separate; border-spacing: 8px 8px; margin: 0 0 14px -8px; }
-        table.bucket-grid td { width: 50%; background: #f3ece4; border-radius: 8px; padding: 8px 12px; text-align: center; }
-
-        .stats-note { display: block; font-size: 10px; color: #7a6f66; margin-top: 2px; }
-
-        .size-pill { display: inline-block; background: #f3ece4; border-radius: 10px; padding: 4px 10px; margin: 0 6px 6px 0; font-size: 12px; }
-        .size-pill b { color: #2b2420; }
-
-        .footer { position: fixed; bottom: -35px; left: 0; right: 0; text-align: center; font-size: 10px; color: #a3968a; border-top: 1px solid #e8ddd0; padding-top: 6px; }
+        .header { position: fixed; top: -32px; left: 0; right: 0; text-align: right; font-size: 9px; color: #a3968a; }
+        .footer { position: fixed; bottom: -38px; left: 0; right: 0; text-align: center; font-size: 9px; color: #a3968a; border-top: 1px solid #e8ddd0; padding-top: 6px; }
         .footer img { vertical-align: middle; margin-right: 5px; width: 13px; height: 16px; }
+
+        /* El selector de periodo de la pantalla ("7 días / 30 días /
+           Todo"), en papel solo el elegido. */
+        .period { text-align: center; margin: 0 0 12px; }
+        .period .chip { display: inline-block; background: #ffffff; color: #a65a6b; font-weight: bold; font-size: 11px; border-radius: 10px; padding: 5px 16px; border: 1px solid #efe6dc; }
+        .period-hint { display: block; font-size: 9px; color: #7a6f66; margin-top: 4px; }
+
+        /* .card de base.css: blanco, radio 1rem. Padding horizontal de 8px
+           + border-spacing de 8px en las tablas internas = 16px de margen
+           visual, el `p-4` de la pantalla. */
+        .card { background: #ffffff; border: 1px solid #efe6dc; border-radius: 16px; padding: 12px 8px 8px; margin: 0 0 14px; }
+        .card-title { font-size: 14px; font-weight: bold; margin: 2px 8px 8px; }
+        .card-title .bar { display: inline-block; width: 5px; height: 14px; border-radius: 3px; margin-right: 7px; vertical-align: -2px; }
+        .card-subtitle { font-size: 10px; color: #7a6f66; margin: -4px 8px 8px; }
+        .sub-label { font-size: 10px; color: #7a6f66; margin: 8px 8px 4px; }
+        .empty { color: #7a6f66; font-size: 12px; text-align: center; margin: 6px 8px 10px; }
+        .hint { font-size: 9px; color: #7a6f66; margin: 0 8px 6px; }
+        .pad { padding: 0 8px; }
+
+        table.tiles { width: 100%; border-collapse: separate; border-spacing: 8px 8px; margin: -8px 0 0; }
+        table.tiles td { background: #f3ece4; border-radius: 12px; padding: 9px 11px; text-align: left; vertical-align: top; }
+        table.tiles td.tile-empty { background: none; }
+        .tile-label { display: block; font-size: 10px; color: #7a6f66; margin-bottom: 3px; }
+        .tile-value { display: block; font-size: 16px; font-weight: bold; color: #2b2420; }
+        .tile-note { display: block; font-size: 9px; color: #7a6f66; margin-top: 1px; }
+
+        /* Fila hundida "rótulo a la izquierda, cifra a la derecha" - el
+           récord de sueño y la última caca en pantalla. */
+        table.row { width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 4px 0 8px; }
+        table.row td.row-cell { background: #f3ece4; border-radius: 12px; padding: 10px 11px; }
+
+        .pill { display: inline-block; background: #f3ece4; border-radius: 12px; padding: 4px 10px; margin: 0 5px 5px 0; font-size: 10px; font-weight: bold; }
+        .pill .muted { color: #7a6f66; font-weight: normal; }
+        .pill .dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; margin-right: 3px; }
     </style>
 </head>
 <body>
+    @php
+        $fmtMin = function ($minutes) {
+            $rounded = (int) round($minutes);
+            $hours = intdiv($rounded, 60);
+
+            return $hours > 0 ? $hours.'h '.($rounded % 60).'min' : ($rounded % 60).'min';
+        };
+        $fmtDelta = fn ($delta, $decimals = 0) => (abs($delta) < 0.05 ? '' : ($delta > 0 ? '+' : '')).number_format(abs($delta) < 0.05 ? 0 : $delta, $decimals);
+        $bucketPoints = fn ($buckets) => array_map(fn ($b) => ['label' => $hourBucketLabels[$b['key']], 'value' => $b['value']], $buckets);
+        $sizeLabels = ['0' => 'Talla 0', '1' => 'Talla 1', '2' => 'Talla 2', '3' => 'Talla 3', '4' => 'Talla 4', '5' => 'Talla 5', '6+' => 'Talla 6+', 'unspecified' => 'Sin indicar'];
+        $colors = ['feed' => '#c98a3e', 'sleep' => '#5b5a8c', 'diaper' => '#6e9080', 'growth' => '#a65a6b', 'warning' => '#b8742e', 'teal' => '#2f6e68'];
+    @endphp
+
     <div class="header">Generado el {{ $generatedAt->translatedFormat('j \d\e F \d\e Y, H:i') }}</div>
     <h1>Estadísticas</h1>
 
@@ -105,379 +123,330 @@
         </tr>
     </table>
 
-    <p class="stats-label" style="margin: 0 0 4px;">Tomas, sueño y pañales: {{ $periodLabel }}</p>
+    <div class="period">
+        <span class="chip">{{ $periodLabel }}</span>
+        <span class="period-hint">Se aplica a tomas, sueño y pañales.</span>
+    </div>
 
     {{-- Tomas --}}
-    <h2 class="feed">Tomas</h2>
-    @if (! $feed['has_enough_data'])
-        <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
-    @else
-        <table class="stats-bar">
-            <tr>
-                <td style="width: 25%;">
-                    <span class="stats-label">Al pecho</span>
-                    <span class="stats-value">{{ $feed['total'] > 0 ? round($feed['by_type']['pecho'] / $feed['total'] * 100) : 0 }}%</span>
-                </td>
-                <td style="width: 25%;">
-                    <span class="stats-label">Con biberón</span>
-                    <span class="stats-value">{{ $feed['total'] > 0 ? round($feed['by_type']['biberon'] / $feed['total'] * 100) : 0 }}%</span>
-                </td>
-                @if ($feed['average_gap_minutes'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Cada cuánto come</span>
-                        <span class="stats-value">{{ intdiv((int) round($feed['average_gap_minutes']), 60) }}h {{ (int) round($feed['average_gap_minutes']) % 60 }}min</span>
-                    </td>
-                @endif
-                @if ($feed['average_per_day'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Tomas al día</span>
-                        <span class="stats-value">{{ number_format($feed['average_per_day'], 1) }}</span>
-                    </td>
-                @endif
-            </tr>
-        </table>
+    <div class="card">
+        <div class="card-title"><span class="bar" style="background: {{ $colors['feed'] }};"></span>Tomas</div>
+        @if (! $feed['has_enough_data'])
+            <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
+        @else
+            @include('pdf.partials.tiles', ['tiles' => [
+                ['label' => 'Al pecho', 'value' => ($feed['total'] > 0 ? round($feed['by_type']['pecho'] / $feed['total'] * 100) : 0).'%'],
+                ['label' => 'Con biberón', 'value' => ($feed['total'] > 0 ? round($feed['by_type']['biberon'] / $feed['total'] * 100) : 0).'%'],
+                ['label' => 'Duración media (pecho)', 'value' => $feed['average_pecho_duration_minutes'] !== null ? $fmtMin($feed['average_pecho_duration_minutes']) : null],
+                ['label' => 'Cantidad media (biberón)', 'value' => $feed['average_bottle_amount_ml'] !== null ? round($feed['average_bottle_amount_ml']).' ml' : null],
+                ['label' => 'Cada cuánto come', 'value' => $feed['average_gap_minutes'] !== null ? $fmtMin($feed['average_gap_minutes']) : null],
+                ['label' => 'Tomas al día', 'value' => $feed['average_per_day'] !== null ? number_format($feed['average_per_day'], 1) : null],
+                ['label' => 'Regularidad del horario', 'value' => $feed['gap_std_dev_minutes'] !== null ? ($feed['gap_std_dev_minutes'] < 30 ? 'Muy regular' : ($feed['gap_std_dev_minutes'] < 60 ? 'Regular' : 'Variable')) : null],
+            ]])
 
-        @if ($feed['average_pecho_duration_minutes'] !== null || $feed['average_bottle_amount_ml'] !== null)
-            <table class="stats-bar">
-                <tr>
-                    @if ($feed['average_pecho_duration_minutes'] !== null)
-                        <td style="width: 50%;">
-                            <span class="stats-label">Duración media (pecho)</span>
-                            <span class="stats-value">{{ (int) round($feed['average_pecho_duration_minutes']) }} min</span>
+            @if ($feed['by_type']['pecho'] > 0)
+                <table class="tiles">
+                    <tr>
+                        <td style="padding: 8px 11px; font-size: 10px; color: #7a6f66;">
+                            Izquierdo <b style="color: #2b2420;">{{ $feed['pecho_side_counts']['izquierdo'] }}</b>
+                            &nbsp;&nbsp;·&nbsp;&nbsp; Derecho <b style="color: #2b2420;">{{ $feed['pecho_side_counts']['derecho'] }}</b>
+                            &nbsp;&nbsp;·&nbsp;&nbsp; Ambos <b style="color: #2b2420;">{{ $feed['pecho_side_counts']['ambos'] }}</b>
                         </td>
-                    @endif
-                    @if ($feed['average_bottle_amount_ml'] !== null)
-                        <td style="width: 50%;">
-                            <span class="stats-label">Cantidad media (biberón)</span>
-                            <span class="stats-value">{{ (int) round($feed['average_bottle_amount_ml']) }} ml</span>
-                        </td>
-                    @endif
-                </tr>
-            </table>
-        @endif
+                    </tr>
+                </table>
+            @endif
 
-        @if ($feed['gap_std_dev_minutes'] !== null)
-            @php
-                $feedRegularity = $feed['gap_std_dev_minutes'] < 30 ? 'Muy regular' : ($feed['gap_std_dev_minutes'] < 60 ? 'Regular' : 'Variable');
-            @endphp
-            <table class="stats-bar">
-                <tr>
-                    <td>
-                        <span class="stats-label">Regularidad del horario</span>
-                        <span class="stats-value">{{ $feedRegularity }}</span>
-                    </td>
-                </tr>
-            </table>
+            <div style="page-break-inside: avoid;">
+                <p class="sub-label">Tomas por franja</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $bucketPoints($feed['by_hour_bucket']),
+                    'color' => $colors['feed'],
+                    'format' => fn ($value) => (string) (int) round($value),
+                ])
+            </div>
         @endif
-
-        @include('pdf.partials.bucket-grid', [
-            'buckets' => $feed['by_hour_bucket'],
-            'labels' => $hourBucketLabels,
-            'format' => fn ($value) => (int) round($value).' tomas',
-        ])
-    @endif
+    </div>
 
     {{-- Sueño --}}
-    <h2 class="sleep">Sueño</h2>
-    @if (! $sleep['has_enough_data'])
-        <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
-    @else
-        <table class="stats-bar">
-            <tr>
-                @if ($sleep['average_longest_stretch_minutes'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Tramo más largo (media)</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_longest_stretch_minutes']), 60) }}h {{ (int) round($sleep['average_longest_stretch_minutes']) % 60 }}min</span>
-                    </td>
-                @endif
-                @if ($sleep['average_sleeps_per_day'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Sueños al día</span>
-                        <span class="stats-value">{{ number_format($sleep['average_sleeps_per_day'], 1) }}</span>
-                    </td>
-                @endif
-                <td style="width: 25%;">
-                    <span class="stats-label">Duración media</span>
-                    <span class="stats-value">{{ intdiv((int) round($sleep['average_duration_minutes']), 60) }}h {{ (int) round($sleep['average_duration_minutes']) % 60 }}min</span>
-                </td>
-                @if ($sleep['average_wake_window_minutes'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Despierto entre sueños</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_wake_window_minutes']), 60) }}h {{ (int) round($sleep['average_wake_window_minutes']) % 60 }}min</span>
-                    </td>
-                @endif
-            </tr>
-        </table>
+    <div class="card">
+        <div class="card-title"><span class="bar" style="background: {{ $colors['sleep'] }};"></span>Sueño</div>
+        @if (! $sleep['has_enough_data'])
+            <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
+        @else
+            @include('pdf.partials.tiles', ['tiles' => [
+                ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null],
+                ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? number_format($sleep['average_sleeps_per_day'], 1) : null],
+                ['label' => 'Duración media', 'value' => $fmtMin($sleep['average_duration_minutes'] ?? 0)],
+                ['label' => 'Tiempo despierto entre sueños', 'value' => $sleep['average_wake_window_minutes'] !== null ? $fmtMin($sleep['average_wake_window_minutes']) : null],
+            ]])
 
-        @if ($sleep['average_total_sleep_minutes'] !== null)
-            <table class="stats-bar">
+            {{-- Reparto día/noche: la misma barra partida que en pantalla. --}}
+            @if ($sleep['average_total_sleep_minutes'] !== null)
+                @php
+                    $nightShare = $sleep['average_total_sleep_minutes'] > 0
+                        ? max(0, min(100, round($sleep['average_night_sleep_minutes'] / $sleep['average_total_sleep_minutes'] * 100)))
+                        : 0;
+                @endphp
+                <table class="tiles">
+                    <tr>
+                        <td>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0; font-size: 10px; color: #7a6f66;">Reparto día/noche</td>
+                                    <td style="padding: 0; text-align: right; font-size: 13px; font-weight: bold;">{{ $fmtMin($sleep['average_total_sleep_minutes']) }} <span style="font-weight: normal; color: #7a6f66; font-size: 10px;">al día</span></td>
+                                </tr>
+                            </table>
+                            <table style="width: 100%; border-collapse: collapse; margin: 6px 0;">
+                                <tr>
+                                    @if ($nightShare > 0)
+                                        <td style="width: {{ $nightShare }}%; height: 9px; padding: 0; background: {{ $colors['sleep'] }}; border-radius: {{ $nightShare < 100 ? '5px 0 0 5px' : '5px' }};"></td>
+                                    @endif
+                                    @if ($nightShare < 100)
+                                        <td style="height: 9px; padding: 0; background: #c5c4db; border-radius: {{ $nightShare > 0 ? '0 5px 5px 0' : '5px' }};"></td>
+                                    @endif
+                                </tr>
+                            </table>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0; font-size: 10px; color: #7a6f66;">Noche · {{ $fmtMin($sleep['average_night_sleep_minutes'] ?? 0) }}</td>
+                                    <td style="padding: 0; text-align: right; font-size: 10px; color: #7a6f66;">De día · {{ $fmtMin($sleep['average_day_sleep_minutes'] ?? 0) }}</td>
+                                </tr>
+                            </table>
+                            <span style="display: block; font-size: 8px; color: #7a6f66; margin-top: 3px;">Noche: de 20:00 a 08:00</span>
+                        </td>
+                    </tr>
+                </table>
+            @endif
+        @endif
+
+        {{-- Siempre los últimos 7 días de calendario, haya o no datos
+             suficientes para el resto (un día sin sueño es un dato). --}}
+        <div style="page-break-inside: avoid;">
+            <p class="sub-label">Sueño esta semana</p>
+            @include('pdf.partials.vertical-bars', [
+                'points' => $dailySleepPoints,
+                'color' => $colors['sleep'],
+                'format' => fn ($value) => number_format($value, 1).' h',
+                'highlightLast' => true,
+            ])
+        </div>
+
+        @if ($sleep['has_enough_data'])
+            <div style="page-break-inside: avoid;">
+                <p class="sub-label">Minutos dormidos por franja</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $bucketPoints($sleep['by_hour_bucket']),
+                    'color' => $colors['sleep'],
+                    'format' => $fmtMin,
+                ])
+            </div>
+        @endif
+
+        @if ($sleep['longest_sleep'] !== null)
+            <table class="row">
                 <tr>
-                    <td style="width: 33%;">
-                        <span class="stats-label">Total al día</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_total_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_total_sleep_minutes']) % 60 }}min</span>
-                    </td>
-                    <td style="width: 33%;">
-                        <span class="stats-label">De noche (20-08h)</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_night_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_night_sleep_minutes']) % 60 }}min</span>
-                    </td>
-                    <td style="width: 33%;">
-                        <span class="stats-label">De día</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_day_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_day_sleep_minutes']) % 60 }}min</span>
+                    <td class="row-cell">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0; font-size: 10px; color: #7a6f66;">Sueño más largo del periodo<br>{{ \Carbon\CarbonImmutable::parse($sleep['longest_sleep']['date'])->translatedFormat('j \d\e F') }}</td>
+                                <td style="padding: 0; text-align: right; font-size: 16px; font-weight: bold; color: {{ $colors['sleep'] }};">{{ $fmtMin($sleep['longest_sleep']['minutes']) }}</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
         @endif
-    @endif
-
-    {{-- Sueño esta semana - antes vivía en el Dashboard, mismos 7 días
-         de calendario que WeeklySleep.vue, reutilizando el mismo
-         partial de barra horizontal que ya usa "Tendencia semanal" más
-         abajo (misma limitación de dompdf: sin flexbox para crecer una
-         barra vertical). Sin condición de "hay datos" - un día sin
-         sueño registrado es él mismo un dato (barra en 0h), igual que
-         en pantalla. Mismo orden que en pantalla: entre el reparto
-         día/noche y los minutos por franja. --}}
-    <p class="stats-label" style="margin-bottom: 4px;">Sueño esta semana</p>
-    @include('pdf.partials.weekly-trend-bars', [
-        'points' => $dailySleepPoints,
-        'color' => '#5b5a8c',
-        'format' => fn ($value) => number_format($value, 1).'h',
-    ])
-
-    @if ($sleep['has_enough_data'])
-        <p class="stats-label" style="margin-bottom: 4px;">Minutos dormidos por franja</p>
-        @include('pdf.partials.bucket-grid', [
-            'buckets' => $sleep['by_hour_bucket'],
-            'labels' => $hourBucketLabels,
-            'format' => fn ($value) => intdiv((int) round($value), 60).'h '.((int) round($value) % 60).'min',
-        ])
-    @endif
-
-    @if ($sleep['longest_sleep'] !== null)
-        <table class="stats-bar">
-            <tr>
-                <td>
-                    <span class="stats-label">Sueño más largo del periodo</span>
-                    <span class="stats-value">
-                        {{ intdiv($sleep['longest_sleep']['minutes'], 60) }}h {{ $sleep['longest_sleep']['minutes'] % 60 }}min
-                        <span style="font-weight: normal; font-size: 12px; color: #7a6f66;">— {{ \Carbon\CarbonImmutable::parse($sleep['longest_sleep']['date'])->translatedFormat('j \d\e F') }}</span>
-                    </span>
-                </td>
-            </tr>
-        </table>
-    @endif
+    </div>
 
     {{-- Pañales --}}
-    <h2 class="diaper">Pañales</h2>
-    @if (! $diaper['has_enough_data'])
-        <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
-    @else
-        <table class="stats-bar">
-            <tr>
-                @if ($diaper['average_pee_per_day'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Con pis al día</span>
-                        <span class="stats-value">{{ number_format($diaper['average_pee_per_day'], 1) }}</span>
-                    </td>
-                @endif
-                @if ($diaper['average_poop_per_day'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Con caca al día</span>
-                        <span class="stats-value">{{ number_format($diaper['average_poop_per_day'], 1) }}</span>
-                    </td>
-                @endif
-                @if ($diaper['average_per_day'] !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Cambios al día</span>
-                        <span class="stats-value">{{ number_format($diaper['average_per_day'], 1) }}</span>
-                    </td>
-                @endif
-                @if (($diaper['average_gap_minutes'] ?? null) !== null)
-                    <td style="width: 25%;">
-                        <span class="stats-label">Cada cuánto se cambia</span>
-                        <span class="stats-value">{{ intdiv((int) round($diaper['average_gap_minutes']), 60) }}h {{ (int) round($diaper['average_gap_minutes']) % 60 }}min</span>
-                    </td>
-                @endif
-            </tr>
-        </table>
+    <div class="card">
+        <div class="card-title"><span class="bar" style="background: {{ $colors['diaper'] }};"></span>Pañales</div>
+        @if (! $diaper['has_enough_data'])
+            <p class="empty">Todavía no hay datos suficientes para esta estadística.</p>
+        @else
+            @include('pdf.partials.tiles', ['tiles' => [
+                ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? number_format($diaper['average_pee_per_day'], 1) : null],
+                ['label' => 'Con caca al día', 'value' => $diaper['average_poop_per_day'] !== null ? number_format($diaper['average_poop_per_day'], 1) : null],
+                ['label' => 'Cambios al día', 'value' => $diaper['average_per_day'] !== null ? number_format($diaper['average_per_day'], 1) : null],
+                ['label' => 'Cada cuánto se cambia', 'value' => ($diaper['average_gap_minutes'] ?? null) !== null ? $fmtMin($diaper['average_gap_minutes']) : null],
+            ]])
 
-        @if (count($poopColorRows) > 0)
-            <p class="stats-label" style="margin-bottom: 4px;">Color de las cacas</p>
-            <p style="margin: 0 0 12px;">
-                @foreach ($poopColorRows as $row)
-                    <span class="size-pill">@if ($row['hex'])<span style="display: inline-block; width: 9px; height: 9px; border-radius: 5px; background: {{ $row['hex'] }};"></span> @endif{{ $row['label'] }} · <b>{{ $row['count'] }}</b></span>
-                @endforeach
-            </p>
+            @if (count($poopColorRows) > 0)
+                <p class="sub-label">Color de las cacas</p>
+                <div class="pad">
+                    @foreach ($poopColorRows as $row)
+                        <span class="pill">@if ($row['hex'])<span class="dot" style="background: {{ $row['hex'] }};"></span>@endif{{ $row['label'] }} <span class="muted">· {{ $row['count'] }}</span></span>
+                    @endforeach
+                </div>
+            @endif
+
+            @if (collect($diaper['by_size'])->sum() > 0)
+                <p class="sub-label">Por talla</p>
+                <div class="pad">
+                    @foreach ($diaper['by_size'] as $size => $count)
+                        @if ($count > 0)
+                            <span class="pill">{{ $sizeLabels[$size] ?? $size }} <span class="muted">· {{ $count }}</span></span>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+
+            <div style="page-break-inside: avoid;">
+                <p class="sub-label">Cambios por franja</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $bucketPoints($diaper['by_hour_bucket']),
+                    'color' => $colors['diaper'],
+                    'format' => fn ($value) => (string) (int) round($value),
+                ])
+            </div>
         @endif
 
-        @php
-            $sizeLabels = ['0' => 'Talla 0', '1' => 'Talla 1', '2' => 'Talla 2', '3' => 'Talla 3', '4' => 'Talla 4', '5' => 'Talla 5', '6+' => 'Talla 6+', 'unspecified' => 'Sin indicar'];
-        @endphp
-        @if (collect($diaper['by_size'])->sum() > 0)
-            <p style="margin: 0 0 12px;">
-                @foreach ($diaper['by_size'] as $size => $count)
-                    @if ($count > 0)
-                        <span class="size-pill">{{ $sizeLabels[$size] ?? $size }} · <b>{{ $count }}</b></span>
-                    @endif
-                @endforeach
-            </p>
-        @endif
-
-        <p class="stats-label" style="margin-bottom: 4px;">Cambios por franja</p>
-        @include('pdf.partials.bucket-grid', [
-            'buckets' => $diaper['by_hour_bucket'],
-            'labels' => $hourBucketLabels,
-            'format' => fn ($value) => (string) (int) round($value),
-        ])
-    @endif
-
-    @if ($lastPoopSince !== null)
-        <table class="stats-bar">
-            <tr>
-                <td>
-                    <span class="stats-label">Última caca</span>
-                    <span class="stats-value">{{ $lastPoopSince }}</span>
-                </td>
-            </tr>
-        </table>
-    @endif
-
-    {{-- Comparativa semanal - última semana completa frente a la anterior
-         (ver summarizeWeekComparison() en lib/stats.ts); null con menos de
-         dos semanas completas con dato. --}}
-    @if ($weekComparison !== null)
-        <div style="page-break-inside: avoid;">
-        <h2 class="trend">Esta semana frente a la anterior</h2>
-        <table class="stats-bar">
-            <tr>
-                @if ($weekComparison['sleep_hours'] !== null)
-                    <td style="width: 33%;">
-                        <span class="stats-label">Sueño</span>
-                        <span class="stats-value">
-                            {{ $weekComparison['sleep_hours']['delta'] > 0 ? '+' : '' }}{{ number_format($weekComparison['sleep_hours']['delta'], 1) }}h
-                        </span>
+        @if ($lastPoopSince !== null)
+            <table class="row">
+                <tr>
+                    <td class="row-cell">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0; font-size: 10px; color: #7a6f66;">Última caca</td>
+                                <td style="padding: 0; text-align: right; font-size: 16px; font-weight: bold; color: {{ $colors['diaper'] }};">{{ $lastPoopSince }}</td>
+                            </tr>
+                        </table>
                     </td>
-                @endif
-                <td style="width: 33%;">
-                    <span class="stats-label">Tomas</span>
-                    <span class="stats-value">
-                        {{ $weekComparison['feed_count']['delta'] > 0 ? '+' : '' }}{{ (int) round($weekComparison['feed_count']['delta']) }}
-                    </span>
-                </td>
-                <td style="width: 33%;">
-                    <span class="stats-label">Pañales</span>
-                    <span class="stats-value">
-                        {{ $weekComparison['diaper_count']['delta'] > 0 ? '+' : '' }}{{ (int) round($weekComparison['diaper_count']['delta']) }}
-                    </span>
-                </td>
-            </tr>
-        </table>
+                </tr>
+            </table>
+        @endif
+    </div>
+
+    {{-- Vitamina D - solo si hay (o hubo) una pauta activada. --}}
+    @if ($vitaminD['has_schedule'])
+        <div class="card" style="page-break-inside: avoid;">
+            <div class="card-title"><span class="bar" style="background: {{ $colors['warning'] }};"></span>Vitamina D</div>
+            @include('pdf.partials.tiles', ['columns' => 1, 'tiles' => [
+                ['label' => 'Tomas dadas', 'value' => $vitaminD['given'].'/'.$vitaminD['total_days']],
+            ]])
         </div>
     @endif
 
-    {{-- Tendencia semanal - mismos puntos que WeeklyTrendChart.vue,
-         dibujados como barra horizontal (ver el partial) en vez de
-         vertical, ya que dompdf no tiene flexbox para crecer una
-         altura dinámica. --}}
-    @if (count($sleepTrendPoints) > 0)
-        <h2 class="trend">Tendencia semanal</h2>
-        <p class="stats-label" style="margin-bottom: 4px;">Sueño</p>
-        @include('pdf.partials.weekly-trend-bars', [
-            'points' => $sleepTrendPoints,
-            'color' => '#5b5a8c',
-            'format' => fn ($value) => number_format($value, 1).'h',
-        ])
-        <p class="stats-label" style="margin-bottom: 4px;">Tomas</p>
-        @include('pdf.partials.weekly-trend-bars', [
-            'points' => $feedTrendPoints,
-            'color' => '#c98a3e',
-            'format' => fn ($value) => (int) round($value),
-        ])
-        <p class="stats-label" style="margin-bottom: 4px;">Pañales</p>
-        @include('pdf.partials.weekly-trend-bars', [
-            'points' => $diaperTrendPoints,
-            'color' => '#6e9080',
-            'format' => fn ($value) => (int) round($value),
-        ])
-    @endif
-
-    {{-- Vitamina D - no depende de un umbral de muestra, solo de si hay
-         (o hubo) una pauta activada para este bebé. --}}
-    @if ($vitaminD['has_schedule'])
-        <h2 class="vitamind">Vitamina D</h2>
-        <table class="stats-bar">
-            <tr>
-                <td>
-                    <span class="stats-label">Tomas dadas</span>
-                    <span class="stats-value">{{ $vitaminD['given'] }}/{{ $vitaminD['total_days'] }}</span>
-                </td>
-            </tr>
-        </table>
-    @endif
-
-    {{-- Crecimiento --}}
-    <h2 class="growth">Crecimiento</h2>
-    @php
-        $hasAnyGrowth = collect($growthMetrics)->contains(fn ($m) => $m['stat']['count'] > 0);
-    @endphp
-    @if (! $hasAnyGrowth)
-        <p class="empty">Todavía no hay medidas de crecimiento registradas.</p>
-    @else
-        @foreach ($growthMetrics as $metric)
-            @if ($metric['stat']['count'] > 0)
-                <p class="stats-label" style="margin-bottom: 4px;">{{ $metric['label'] }}</p>
-                @include('pdf.partials.growth-points-grid', [
-                    'points' => $metric['stat']['points'],
-                    'unit' => $metric['unit'],
-                    'decimals' => $metric['decimals'],
-                ])
-                @if ($metric['stat']['gained'] !== null)
-                    <p class="empty" style="font-style: normal; margin-top: -6px;">
-                        {{ $metric['stat']['gained'] > 0 ? '+' : '' }}{{ number_format($metric['stat']['gained'], $metric['decimals']) }} {{ $metric['unit'] }} desde el primer registro
-                        @if ($metric['stat']['weekly_rate'] !== null)
-                            ({{ $metric['stat']['weekly_rate'] > 0 ? '+' : '' }}{{ number_format($metric['stat']['weekly_rate'], $metric['decimals']) }} {{ $metric['unit'] }}/semana)
+    {{-- Crecimiento - misma gráfica de línea que GrowthLineChart.vue. --}}
+    <div class="card" style="page-break-inside: avoid;">
+        <div class="card-title"><span class="bar" style="background: {{ $colors['growth'] }};"></span>Crecimiento</div>
+        @php
+            $hasAnyGrowth = collect($growthMetrics)->contains(fn ($m) => $m['stat']['count'] > 0);
+        @endphp
+        @if (! $hasAnyGrowth)
+            <p class="empty">Todavía no hay medidas de crecimiento registradas.</p>
+        @else
+            @foreach ($growthMetrics as $metric)
+                @if ($metric['stat']['count'] > 0)
+                    <div class="pad" style="margin-bottom: 12px; page-break-inside: avoid;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0; font-size: 10px; color: #7a6f66;">{{ $metric['label'] }}</td>
+                                <td style="padding: 0; text-align: right; font-size: 10px; font-weight: bold; color: {{ $colors['growth'] }};">
+                                    @if ($metric['stat']['latest_percentile'] !== null)
+                                        Percentil {{ round($metric['stat']['latest_percentile']) }}
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                        @if ($metric['chart'] !== null)
+                            <img src="{{ $metric['chart'] }}" alt="" style="width: 100%; height: auto; margin-top: 4px;" />
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0; font-size: 8px; color: #a3968a;">{{ $metric['firstDate'] }}</td>
+                                    <td style="padding: 0; font-size: 8px; color: #a3968a; text-align: right;">{{ $metric['lastDate'] }}</td>
+                                </tr>
+                            </table>
                         @endif
-                    </p>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 2px;">
+                            <tr>
+                                <td style="padding: 0; font-size: 16px; font-weight: bold;">{{ number_format($metric['stat']['latest_value'], $metric['decimals']) }} {{ $metric['unit'] }}</td>
+                                <td style="padding: 0; text-align: right; font-size: 10px; font-weight: bold; color: #7a6f66;">
+                                    @if ($metric['stat']['gained'] !== null)
+                                        {{ $metric['stat']['gained'] > 0 ? '+' : '' }}{{ number_format($metric['stat']['gained'], $metric['decimals']) }} {{ $metric['unit'] }} desde el primer registro
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                        @if ($metric['stat']['weekly_rate'] !== null)
+                            <div style="text-align: right; font-size: 10px; color: #7a6f66;">{{ $metric['stat']['weekly_rate'] > 0 ? '+' : '' }}{{ number_format($metric['stat']['weekly_rate'], $metric['decimals']) }} {{ $metric['unit'] }} por semana</div>
+                        @endif
+                    </div>
                 @endif
+            @endforeach
+        @endif
+    </div>
+
+    {{-- Tendencia semanal - comparativa arriba (si hay dos semanas
+         completas) y una gráfica de barras por métrica, como en pantalla. --}}
+    @if (count($sleepTrendPoints) > 0 || $weekComparison !== null)
+        <div class="card">
+            <div class="card-title"><span class="bar" style="background: {{ $colors['teal'] }};"></span>Tendencia semanal</div>
+            @if ($weekComparison !== null)
+                @include('pdf.partials.tiles', ['columns' => 3, 'tiles' => [
+                    ['label' => 'Sueño', 'value' => $weekComparison['sleep_hours'] !== null ? $fmtDelta($weekComparison['sleep_hours']['delta'], 1).' h' : null, 'color' => ($weekComparison['sleep_hours']['delta'] ?? -1) >= 0 ? $colors['sleep'] : '#7a6f66'],
+                    ['label' => 'Tomas', 'value' => $fmtDelta($weekComparison['feed_count']['delta']), 'color' => $weekComparison['feed_count']['delta'] >= 0 ? $colors['feed'] : '#7a6f66'],
+                    ['label' => 'Pañales', 'value' => $fmtDelta($weekComparison['diaper_count']['delta']), 'color' => $weekComparison['diaper_count']['delta'] >= 0 ? $colors['diaper'] : '#7a6f66'],
+                ]])
+                <p class="hint">Esta semana frente a la anterior</p>
             @endif
-        @endforeach
+
+            @if (count($sleepTrendPoints) > 0)
+                @if ($trendWeeksLimited)
+                    <p class="hint">Últimas 12 semanas</p>
+                @endif
+                <div style="page-break-inside: avoid;">
+                <p class="sub-label">Sueño (horas/semana)</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $sleepTrendPoints,
+                    'color' => $colors['sleep'],
+                    'format' => fn ($value) => round($value).'h',
+                    'height' => 54,
+                ])
+                </div>
+                <div style="page-break-inside: avoid;">
+                <p class="sub-label">Tomas/semana</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $feedTrendPoints,
+                    'color' => $colors['feed'],
+                    'format' => fn ($value) => (string) (int) round($value),
+                    'height' => 54,
+                ])
+                </div>
+                <div style="page-break-inside: avoid;">
+                <p class="sub-label">Pañales/semana</p>
+                @include('pdf.partials.vertical-bars', [
+                    'points' => $diaperTrendPoints,
+                    'color' => $colors['diaper'],
+                    'format' => fn ($value) => (string) (int) round($value),
+                    'height' => 54,
+                ])
+                </div>
+            @endif
+        </div>
     @endif
 
-    {{-- Mapa de actividad - misma rejilla 7x24 que ActivityHeatmap.vue,
-         sin umbral de muestra mínima (igual que en pantalla): toda
-         semana con algo de dato ya es información real. --}}
+    {{-- Mapa de actividad - lo último, como en pantalla. En papel no se
+         pueden tocar las celdas, así que lleva resumen, números y leyenda. --}}
     @if ($heatmapMax > 0)
-        <h2 class="trend">Mapa de actividad</h2>
-        <p style="margin: 0 0 8px; font-size: 11px; color: #7a6f66;">Cuántas tomas, cambios de pañal y sueños empiezan a cada hora de cada día de la semana, sumando todo el historial. Cada casilla indica el número de eventos; cuanto más oscura, más actividad.</p>
-        @if ($heatmapSummary !== null)
-            <table class="stats-bar">
-                <tr>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Momento más activo</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['peak']['day'] }}, {{ sprintf('%02d:00', $heatmapSummary['peak']['hour']) }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['peak']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Día más activo</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['busiestDay']['day'] }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestDay']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Hora más activa</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ sprintf('%02d:00-%02d:00', $heatmapSummary['busiestHour']['hour'], ($heatmapSummary['busiestHour']['hour'] + 1) % 24) }}</span>
-                        <span style="font-size: 10px; color: #7a6f66;">{{ $heatmapSummary['busiestHour']['count'] }} eventos</span>
-                    </td>
-                    <td style="width: 25%;">
-                        <span class="stats-label">Eventos en total</span>
-                        <span class="stats-value" style="font-size: 13px;">{{ $heatmapSummary['total'] }}</span>
-                    </td>
-                </tr>
-            </table>
-        @endif
-        @include('pdf.partials.activity-heatmap-grid', [
-            'heatmapGrid' => $heatmapGrid,
-            'heatmapMax' => $heatmapMax,
-        ])
+        <div class="card" style="page-break-inside: avoid;">
+            <div class="card-title"><span class="bar" style="background: {{ $colors['teal'] }};"></span>Mapa de actividad</div>
+            <p class="card-subtitle">Cuándo suele haber más tomas, cambios de pañal y sueño a lo largo de la semana, sumando todo el historial. Cada casilla indica el número de eventos; cuanto más oscura, más actividad.</p>
+            @if ($heatmapSummary !== null)
+                @include('pdf.partials.tiles', ['tiles' => [
+                    ['label' => 'Momento más activo', 'value' => $heatmapSummary['peak']['day'].', '.sprintf('%02d:00', $heatmapSummary['peak']['hour']), 'note' => $heatmapSummary['peak']['count'].' eventos'],
+                    ['label' => 'Día más activo', 'value' => $heatmapSummary['busiestDay']['day'], 'note' => $heatmapSummary['busiestDay']['count'].' eventos'],
+                    ['label' => 'Hora más activa', 'value' => sprintf('%02d:00-%02d:00', $heatmapSummary['busiestHour']['hour'], ($heatmapSummary['busiestHour']['hour'] + 1) % 24), 'note' => $heatmapSummary['busiestHour']['count'].' eventos'],
+                    ['label' => 'Eventos en total', 'value' => (string) $heatmapSummary['total']],
+                ]])
+            @endif
+            <div class="pad">
+                @include('pdf.partials.activity-heatmap-grid', [
+                    'heatmapGrid' => $heatmapGrid,
+                    'heatmapMax' => $heatmapMax,
+                ])
+            </div>
+        </div>
     @endif
 
     <div class="footer"><img src="{{ $logo }}" alt="" />PequeDex · Estadísticas</div>

@@ -12,12 +12,18 @@ use Illuminate\Http\Response;
 
 class StatsExportController extends Controller
 {
+    /** Mismos rótulos cortos que `stats.hourBucket.*` bajo las barras
+     * de HourBucketChart.vue en pantalla. */
     private const HOUR_BUCKET_LABELS = [
-        'dawn' => 'Madrugada (00-06h)',
-        'morning' => 'Mañana (06-12h)',
-        'afternoon' => 'Tarde (12-18h)',
-        'night' => 'Noche (18-24h)',
+        'dawn' => 'Madrugada',
+        'morning' => 'Mañana',
+        'afternoon' => 'Tarde',
+        'night' => 'Noche',
     ];
+
+    /** La pantalla hace scroll horizontal con todas las semanas; en
+     * papel no hay scroll, así que se pintan solo las más recientes. */
+    private const MAX_TREND_WEEKS = 12;
 
     private const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -78,24 +84,23 @@ class StatsExportController extends Controller
             'vitaminD' => $data['vitamin_d'],
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
-                ['label' => 'Peso', 'unit' => 'kg', 'decimals' => 1, 'stat' => $data['growth']['weight_kg']],
-                ['label' => 'Talla', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['height_cm']],
-                ['label' => 'Perímetro craneal', 'unit' => 'cm', 'decimals' => 0, 'stat' => $data['growth']['head_circumference_cm']],
+                $this->growthMetric('Peso', 'kg', 1, $data['growth']['weight_kg']),
+                $this->growthMetric('Talla', 'cm', 0, $data['growth']['height_cm']),
+                $this->growthMetric('Perímetro craneal', 'cm', 0, $data['growth']['head_circumference_cm']),
             ],
+            'trendWeeksLimited' => count($data['weekly_trend']) > self::MAX_TREND_WEEKS,
             'hourBucketLabels' => self::HOUR_BUCKET_LABELS,
             'logo' => $this->logoDataUri(),
         ];
     }
 
     /**
-     * dompdf has no flexbox/grid to grow a bar's height like
-     * WeeklyTrendChart.vue does on screen - `pdf/partials/
-     * weekly-trend-bars.blade.php` draws a HORIZONTAL bar per week
-     * instead (a `<div>` with a percentage `width`, which plain CSS2
-     * handles fine), one call per metric so each gets its own scale.
-     * `$value` stays `null` for a week with no completed sleep (dashed
-     * placeholder in the partial, same meaning as the empty-grid mark
-     * on screen), never silently turned into a 0.
+     * Un punto etiquetado por semana para `pdf/partials/vertical-bars`
+     * (mismas barras verticales que WeeklyTrendChart.vue), una llamada
+     * por métrica para que cada una tenga su propia escala. `$value`
+     * sigue `null` en una semana sin sueño completado (marca hueca en el
+     * partial, igual que en pantalla), nunca un 0. Solo las
+     * `MAX_TREND_WEEKS` más recientes.
      *
      * @param  array<int, array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}>  $weeklyTrend
      * @param  callable(array{week_start: string, sleep_hours: float|null, feed_count: int, diaper_count: int}): (float|int|null)  $value
@@ -104,6 +109,8 @@ class StatsExportController extends Controller
     private function weeklyTrendPoints(array $weeklyTrend, callable $value): array
     {
         return collect($weeklyTrend)
+            ->slice(-self::MAX_TREND_WEEKS)
+            ->values()
             ->map(fn (array $week) => [
                 'label' => CarbonImmutable::parse($week['week_start'])->translatedFormat('j M'),
                 'value' => $value($week),
@@ -206,6 +213,78 @@ class StatsExportController extends Controller
             'busiestDay' => ['day' => self::DAY_NAMES[$busiestDay], 'count' => $dayTotals[$busiestDay]],
             'busiestHour' => ['hour' => $busiestHour, 'count' => $hourTotals[$busiestHour]],
         ];
+    }
+
+    /**
+     * @param  array{points: array<int, array{date: string, value: float|int, percentile: float|int|null}>, latest_value: float|int|null, latest_percentile: float|int|null, gained: float|int|null, weekly_rate: float|int|null, count: int}  $stat
+     * @return array{label: string, unit: string, decimals: int, stat: array<string, mixed>, chart: string|null, firstDate: string|null, lastDate: string|null}
+     */
+    private function growthMetric(string $label, string $unit, int $decimals, array $stat): array
+    {
+        $points = $stat['points'];
+        $first = $points[0] ?? null;
+        $last = $points[count($points) - 1] ?? null;
+
+        return [
+            'label' => $label,
+            'unit' => $unit,
+            'decimals' => $decimals,
+            'stat' => $stat,
+            'chart' => count($points) > 1 ? $this->growthChartDataUri($points) : null,
+            'firstDate' => $first ? CarbonImmutable::parse($first['date'])->translatedFormat('j M') : null,
+            'lastDate' => $last ? CarbonImmutable::parse($last['date'])->translatedFormat('j M') : null,
+        ];
+    }
+
+    /**
+     * Misma gráfica de línea que GrowthLineChart.vue (área suave, línea y
+     * un punto por medición, el último algo mayor, eje X por fecha real),
+     * como SVG en data URI - dompdf pinta SVG en `<img>` igual que el
+     * logo. Las fechas van fuera, en HTML, porque el texto dentro del
+     * SVG no es fiable en dompdf.
+     *
+     * @param  array<int, array{date: string, value: float|int, percentile: float|int|null}>  $points
+     */
+    private function growthChartDataUri(array $points): string
+    {
+        $width = 600;
+        $height = 150;
+        $padX = 10;
+        $padY = 14;
+
+        $times = array_map(fn ($p) => CarbonImmutable::parse($p['date'])->getTimestamp(), $points);
+        $values = array_map(fn ($p) => (float) $p['value'], $points);
+        $minT = min($times);
+        $spanT = max($times) - $minT;
+        $minV = min($values);
+        $maxV = max($values) > $minV ? max($values) : $minV + 1;
+
+        $coords = [];
+        foreach ($points as $i => $point) {
+            $x = $spanT === 0 ? $width / 2 : $padX + ($times[$i] - $minT) / $spanT * ($width - 2 * $padX);
+            $y = $padY + (1 - ($values[$i] - $minV) / ($maxV - $minV)) * ($height - 2 * $padY);
+            $coords[] = [round($x, 1), round($y, 1)];
+        }
+
+        $line = implode(' ', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords));
+        $floor = $height - $padY;
+        $first = $coords[0];
+        $last = $coords[count($coords) - 1];
+        $area = "M{$first[0]},{$floor} L".implode(' L', array_map(fn ($c) => "{$c[0]},{$c[1]}", $coords))." L{$last[0]},{$floor} Z";
+
+        $dots = '';
+        foreach ($coords as $i => $c) {
+            $r = $i === count($coords) - 1 ? 6 : 4.5;
+            $dots .= "<circle cx=\"{$c[0]}\" cy=\"{$c[1]}\" r=\"{$r}\" fill=\"#a65a6b\"/>";
+        }
+
+        $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$width}\" height=\"{$height}\" viewBox=\"0 0 {$width} {$height}\">"
+            ."<path d=\"{$area}\" fill=\"#a65a6b\" fill-opacity=\"0.12\"/>"
+            ."<polyline points=\"{$line}\" fill=\"none\" stroke=\"#a65a6b\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+            .$dots
+            .'</svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
     /** Same logo as ContractionsExportController - kept in sync by hand

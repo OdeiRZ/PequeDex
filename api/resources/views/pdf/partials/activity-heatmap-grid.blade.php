@@ -24,7 +24,7 @@
                     $opacity = $count > 0 && $heatmapMax > 0 ? max(0.12, $count / $heatmapMax) : 0;
                     $textColor = $opacity >= 0.55 ? '#ffffff' : '#2b2420';
                 @endphp
-                <td style="height: 16px; background-color: {{ $count > 0 ? "rgba(47, 110, 104, $opacity)" : '#f6f1ec' }}; border: 1px solid #ffffff; text-align: center; font-size: 7px; color: {{ $textColor }};">{{ $count > 0 ? $count : '' }}</td>
+                <td style="height: 16px; background-color: {{ $count > 0 ? "rgba(201, 138, 62, $opacity)" : '#f6f1ec' }}; border: 1px solid #ffffff; text-align: center; font-size: 7px; color: {{ $textColor }};">{{ $count > 0 ? $count : '' }}</td>
             @endfor
         </tr>
     @endforeach
@@ -34,7 +34,7 @@
         <td style="font-size: 8px; color: #7a6f66; padding-right: 6px;">Menos</td>
         <td style="width: 14px; height: 10px; background-color: #f6f1ec; border: 1px solid #ffffff;"></td>
         @foreach ([0.25, 0.5, 0.75, 1] as $step)
-            <td style="width: 14px; height: 10px; background-color: rgba(47, 110, 104, {{ $step }}); border: 1px solid #ffffff;"></td>
+            <td style="width: 14px; height: 10px; background-color: rgba(201, 138, 62, {{ $step }}); border: 1px solid #ffffff;"></td>
         @endforeach
         <td style="font-size: 8px; color: #7a6f66; padding-left: 6px;">Más (máx. {{ $heatmapMax }} en una hora)</td>
     </tr>

@@ -9,6 +9,21 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **El PDF de Estadísticas se parece ahora a la pantalla** - mostraba
+  casi lo mismo pero con otra forma (fichas centradas en mayúsculas,
+  franjas horarias como fichas sueltas, barras tumbadas). Ahora sigue
+  el mismo orden de secciones que la app (Tomas, Sueño, Pañales,
+  Vitamina D, Crecimiento, Tendencia semanal y Mapa de actividad al
+  final), cada sección es una tarjeta blanca con la franja de color de
+  su categoría, las cifras van en fichas de 2 en 2 con el mismo rótulo
+  que en pantalla, franjas horarias / "Sueño esta semana" / tendencia
+  son gráficas de barras verticales, el reparto día/noche es la misma
+  barra, Crecimiento lleva la misma gráfica de línea, y el mapa de
+  actividad usa el mismo color que en la app. El periodo elegido se
+  muestra como la pastilla del selector. Las gráficas ya no se parten
+  entre páginas. La tendencia semanal muestra las 12 semanas más
+  recientes (en papel no hay scroll).
+
 - **Estadísticas: retoques de maquetación y PDF más útil** - "Sueño
   esta semana" pasa a estar dentro del bloque de Sueño en vez de ser
   una tarjeta suelta. Las tarjetas de "esta semana frente a la

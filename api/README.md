@@ -459,12 +459,9 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   (array `present`, puede venir vacío - un bebé recién creado sin
   historial) y `activity_heatmap` (168 entradas `day_of_week`/`hour`/
   `count`, también `present`) alimentan las dos secciones que antes
-  solo existían en pantalla - dompdf no tiene flexbox/grid para
-  replicar el gráfico de barras verticales ni el grid con opacidad
-  CSS tal cual, así que `StatsExportController::weeklyTrendPoints()`
-  reshapea cada semana a un punto etiquetado por métrica (consumido
-  por `pdf/partials/weekly-trend-bars.blade.php`, una barra
-  HORIZONTAL por semana vía `width` en %, reutilizado 3 veces) y
+  solo existían en pantalla. `StatsExportController::weeklyTrendPoints()`
+  reshapea cada semana (solo las 12 más recientes - en papel no hay
+  scroll horizontal) a un punto etiquetado por métrica y
   `heatmapGrid()` convierte la lista plana en una rejilla 7×24 densa
   (consumida por `pdf/partials/activity-heatmap-grid.blade.php`, una
   tabla con el color de fondo de cada celda según la densidad) - mismo
@@ -482,20 +479,26 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `BabyAgeHeadline::forBaby()` (ver su propia entrada más arriba) da la
   edad para la cabecera del PDF (tarjeta con el mismo formato que la
   tarjeta principal del bebé en el dashboard), el mismo número que ya
-  ve el cuidador en pantalla. Las franjas horarias de
-  cada sección se renderizan con un partial compartido
-  (`pdf/partials/bucket-grid.blade.php`, 2 por fila en vez de 4 filas a
-  todo lo ancho) que recibe un closure `format` por sección - cada una
-  formatea el valor crudo de la franja a su manera ("3 tomas", "1h
-  20min", o un número suelto para pis/caca). Cada medición de
-  "Crecimiento" (antes una fila de tabla por medición, con el
-  percentil apretado al final) sigue el mismo criterio con un segundo
-  partial, `pdf/partials/growth-points-grid.blade.php` (2 mediciones
-  por fila, fecha+valor como título de la ficha, percentil debajo en
-  texto pequeño). Las fichas de "horarios habituales" (hora de reloj,
-  `sprintf('%02d:%02d', ...)`, no un closure `format` compartido como
-  las franjas - solo dos fichas por sección, no merecía el partial)
-  solo se muestran cuando el valor no es `null`.
+  ve el cuidador en pantalla.
+  **El PDF calca la pantalla de Estadísticas** (mismo orden de
+  secciones, mismos rótulos, mismos colores de `base.css`), dentro de
+  lo que permite dompdf (CSS2, sin flex/grid - tablas en su lugar):
+  cada sección es una tarjeta blanca redondeada con la franja de color
+  de su categoría junto al título; las cifras van en fichas de 2 en 2
+  con el rótulo arriba a la izquierda (`pdf/partials/tiles.blade.php`,
+  omite las de valor `null` igual que los `v-if` de la pantalla);
+  franjas horarias, "Sueño esta semana" y tendencia semanal son
+  barras VERTICALES (`pdf/partials/vertical-bars.blade.php`: celda con
+  `vertical-align: bottom` y un `<div>` con altura en px calculada en
+  la plantilla - el mismo dibujo que HourBucketChart.vue/
+  WeeklyTrendChart.vue sin flexbox); el reparto día/noche es la misma
+  barra partida; récord de sueño y última caca, una fila "rótulo a la
+  izquierda, cifra a la derecha"; colores de caca y tallas, pastillas.
+  Crecimiento lleva la misma gráfica de línea que GrowthLineChart.vue,
+  generada como SVG en data URI por `growthChartDataUri()` (las fechas
+  van fuera, en HTML - el texto dentro del SVG no es fiable en dompdf).
+  Cada gráfica va en un bloque `page-break-inside: avoid` para no
+  partirse entre páginas.
   Bug real de dompdf encontrado al revisar un PDF generado renderizado
   a imagen con Ghostscript (`gswin64c -sDEVICE=png16m`, única forma de
   verlo durante el desarrollo - no hay navegador que lo muestre antes
@@ -530,8 +533,8 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `web/README.md`), por lo que el PDF pasó a necesitar estos datos que
   antes no exportaba en absoluto. `StatsExportController::dailySleepPoints()`
   etiqueta cada día por su nombre corto (`CarbonImmutable::translatedFormat('D')`,
-  "lun.") y reutiliza el mismo partial `weekly-trend-bars.blade.php` de
-  "Tendencia semanal" - ningún partial nuevo. `buildStatsExportPayload()`
+  "lun.") y reutiliza el mismo partial de barras verticales que
+  "Tendencia semanal", con el día de hoy resaltado. `buildStatsExportPayload()`
   pasó de 8 parámetros posicionales a un único objeto de opciones
   (`StatsExportOptions`) con esta feature - quedó anotado en el propio
   código del frontend que la siguiente estadística exportable era el

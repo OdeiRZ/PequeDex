@@ -33,16 +33,16 @@ function validStatsPayload(): array
     ];
 
     return [
+        'period' => '7d',
         'sleep' => [
             'has_enough_data' => true,
-            'total_completed' => 5,
             'average_duration_minutes' => 45.5,
             'average_wake_window_minutes' => 120.0,
+            'average_sleeps_per_day' => 5.3,
+            'average_longest_stretch_minutes' => 210.0,
             'by_hour_bucket' => $emptyBuckets,
-            'typical_bedtime' => ['hours' => 21, 'minutes' => 30],
-            'typical_wake_time' => ['hours' => 7, 'minutes' => 0],
             'average_night_sleep_minutes' => 480.0,
-            'average_nap_minutes' => 40.0,
+            'average_day_sleep_minutes' => 40.0,
             'average_total_sleep_minutes' => 520.0,
             'longest_sleep' => ['minutes' => 480, 'date' => '2026-08-07T22:00:00.000Z'],
         ],
@@ -61,12 +61,13 @@ function validStatsPayload(): array
         'diaper' => [
             'has_enough_data' => true,
             'total' => 8,
-            'by_type' => ['mojado' => 4, 'sucio' => 2, 'ambos' => 2],
             'by_size' => ['0' => 0, '1' => 3, '2' => 0, '3' => 0, '4' => 0, '5' => 0, '6+' => 0, 'unspecified' => 5],
             'average_per_day' => 2.0,
-            'average_wet_per_day' => 1.5,
-            'pee_by_hour_bucket' => $emptyBuckets,
-            'poop_by_hour_bucket' => $emptyBuckets,
+            'average_pee_per_day' => 1.5,
+            'average_poop_per_day' => 1.0,
+            'by_hour_bucket' => $emptyBuckets,
+            'poop_colors' => ['verde' => 0, 'amarillo' => 3, 'marron' => 0, 'meconio' => 0, 'unspecified' => 1],
+            'last_poop_at' => '2026-08-30T10:15:00.000Z',
         ],
         'growth' => [
             'weight_kg' => $emptyGrowthMetric,
@@ -138,23 +139,61 @@ it('rejects a malformed payload instead of rendering a broken PDF', function () 
         ->assertJsonValidationErrors(['sleep.by_hour_bucket.0.key', 'sleep.by_hour_bucket']);
 });
 
-it('accepts null typical-time and day/night fields - below the sample threshold, lib/stats.ts sends null', function () {
+it('accepts null per-day and day/night fields - below the sample threshold, lib/stats.ts sends null', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);
 
     $payload = validStatsPayload();
-    $payload['sleep']['typical_bedtime'] = null;
-    $payload['sleep']['typical_wake_time'] = null;
+    $payload['sleep']['average_sleeps_per_day'] = null;
+    $payload['sleep']['average_longest_stretch_minutes'] = null;
     $payload['sleep']['average_night_sleep_minutes'] = null;
-    $payload['sleep']['average_nap_minutes'] = null;
+    $payload['sleep']['average_day_sleep_minutes'] = null;
     $payload['sleep']['average_total_sleep_minutes'] = null;
     $payload['sleep']['longest_sleep'] = null;
     $payload['feed']['gap_std_dev_minutes'] = null;
-    $payload['diaper']['average_wet_per_day'] = null;
+    $payload['diaper']['average_pee_per_day'] = null;
+    $payload['diaper']['average_poop_per_day'] = null;
+    $payload['diaper']['last_poop_at'] = null;
     $payload['week_comparison'] = null;
     $payload['weekly_trend'][0]['sleep_hours'] = null;
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('rejects an unknown period', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['period'] = '90d';
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['period']);
+});
+
+it('labels the period and keeps only the stool colours that were logged', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $data = app(StatsExportController::class)->buildViewData($baby, validStatsPayload());
+
+    expect($data['periodLabel'])->toBe('Últimos 7 días')
+        ->and(collect($data['poopColorRows'])->pluck('count', 'label')->all())
+        ->toBe(['Amarillo' => 3, 'Sin indicar' => 1])
+        ->and($data['lastPoopSince'])->toBeString();
+});
+
+it('leaves lastPoopSince null when no dirty diaper was ever logged', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['diaper']['last_poop_at'] = null;
+
+    $data = app(StatsExportController::class)->buildViewData($baby, $payload);
+
+    expect($data['lastPoopSince'])->toBeNull();
 });
 
 it('accepts an empty weekly_trend/activity_heatmap - a brand new baby with no history yet', function () {
@@ -168,28 +207,16 @@ it('accepts an empty weekly_trend/activity_heatmap - a brand new baby with no hi
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
 });
 
-it('rejects an hour outside 0-23 in a typical-time field', function () {
+it('rejects a poop_colors missing one of the colours', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);
 
     $payload = validStatsPayload();
-    $payload['sleep']['typical_bedtime'] = ['hours' => 24, 'minutes' => 0];
+    unset($payload['diaper']['poop_colors']['meconio']);
 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['sleep.typical_bedtime.hours']);
-});
-
-it('rejects a typical-time field missing its minutes', function () {
-    $user = actingAsUser();
-    $baby = babyForStatsExportTest($user);
-
-    $payload = validStatsPayload();
-    unset($payload['sleep']['typical_wake_time']['minutes']);
-
-    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['sleep.typical_wake_time.minutes']);
+        ->assertJsonValidationErrors(['diaper.poop_colors.meconio']);
 });
 
 it('rejects a longest_sleep missing its date', function () {

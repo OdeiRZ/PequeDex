@@ -9,6 +9,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Estadísticas: sueño y pañales rediseñados, con selector de
+  periodo** - "7 días / 30 días / Todo" (por defecto 7 días) al
+  principio de la pantalla; tomas, sueño y pañales se calculan solo
+  sobre ese periodo, porque una media sobre todo el historial mezcla
+  al recién nacido con el bebé de hoy. Tendencia semanal, comparativa,
+  mapa de actividad y crecimiento siguen sobre todo el historial. En
+  **Sueño** desaparecen "Sueños registrados" y "Hora habitual de
+  acostarse/despertar" (suponían un horario "normal" que un bebé no
+  tiene); entran **tramo más largo** (media del sueño seguido más largo
+  de cada día) y **sueños al día**, y el reparto día/noche pasa a ser
+  por franja de reloj (20:00-08:00) en vez de "el sueño más largo es la
+  noche". En **Pañales** desaparecen los % de mojado/sucio/ambos y
+  "Mojados al día"; ahora cada cambio cuenta como "con pis" y/o "con
+  caca" (un "ambos" cuenta en los dos): **con pis al día**, **con caca
+  al día** y **cambios al día**, más **color de las cacas** del periodo
+  y **última caca** ("hace 5 horas"). Las dos gráficas de pis/caca por
+  franja se unen en una sola de cambios por franja, ya que la hora
+  registrada es la del cambio, no la de la deposición. El PDF refleja
+  todo esto e indica el periodo.
+
 - **"Tu cuenta" reorganizado para agrupar controles del mismo tipo** -
   los interruptores on/off del perfil (Predicciones, Tarjetas resumen
   del día, enlaces a Sonidos/Estadísticas, Borrar con swipe, Sonido y

@@ -1504,26 +1504,37 @@ no estaba pedido explícitamente - sale gratis de los mismos datos ya
 cargados, por día de calendario sobre el rango real que cubren (no
 una ventana de 24h fija).
 
-**Horarios habituales** ("horarios normativos", la fase pendiente
-desde el principio de esta sección) - `typicalBedtime`/`typicalWakeTime`
-(sueño) y `typicalFirstFeedTime`/`typicalLastFeedTime` (tomas), la hora
-de reloj a la que suele pasar algo, no cuántas veces ni cuánto dura.
-Para el sueño, "la hora de acostarse" es el inicio del sueño MÁS LARGO
-de cada día de calendario (no cualquiera) - una apuesta fiable para "el
-sueño de la noche" frente a una siesta sin que el cuidador tenga que
-marcar cuál es cuál, porque una siesta rara vez supera en duración al
-sueño nocturno real; "la hora de despertar" es el final de ese mismo
-sueño. Para las tomas, simplemente la primera y la última de cada día.
-La media de varias horas de reloj no puede ser una media aritmética
-normal - 23:00 y 01:00 promediarían al mediodía tratados como números
-sueltos, cuando la hora "típica" real está sobre la medianoche -, así
-que `circularMeanTimeOfDay()` trata cada hora como un ángulo sobre un
-reloj de 24h y promedia en seno/coseno (estadística circular estándar
-para "promediar horas del día", no una invención de esta app) antes de
-volver a leer el ángulo resultante como hora. Mismo umbral
-`MIN_SAMPLE_SIZE` que el resto de "Estadísticas", pero contando DÍAS
-distintos con dato, no entradas sueltas - con 1-2 días, "la hora
-típica" diría más de lo que los datos realmente sostienen.
+**Periodo** - un selector "7 días / 30 días / Todo" (`SegmentedControl`,
+por defecto 7 días) al principio de la pantalla. Tomas, sueño y
+pañales se calculan solo sobre ese periodo (`filterByPeriod()`/
+`periodStart()` en `lib/stats.ts`, días de calendario completos: "7
+días" = hoy y los 6 anteriores): un bebé cambia tanto en pocas semanas
+que una media sobre todo el historial describe a un bebé que ya no
+existe. Tendencia semanal, comparativa, mapa de actividad, crecimiento
+y "Sueño esta semana" siguen sobre todo el historial - es justo lo que
+miden. El PDF indica el periodo elegido (`period` en el payload).
+
+**Sueño, sin horarios "normales"** - se quitaron "Sueños registrados"
+(un contador que solo crece) y "Hora habitual de acostarse/despertar"
+(daban por hecho que un bebé tiene un horario fijo; también desapareció
+la media circular de horas que las calculaba). En su lugar: **tramo más
+largo** (el sueño seguido más largo de cada día, de media - el
+indicador de "empieza a dormir del tirón") y **sueños al día**
+(fragmentación). El **reparto día/noche** ya no toma "el sueño más
+largo del día = la noche": cada minuto dormido cuenta como noche si cae
+entre las 20:00 y las 08:00 (`nightMs()`, un sueño que cruza las 20:00
+se reparte), dividido por los días que cubre el periodo.
+
+**Pañales, por contenido y no por tipo** - se quitaron los % de
+mojado/sucio/ambos (reflejaban sobre todo cómo se catalogó cada cambio)
+y "Mojados al día". Cada cambio cuenta como "con pis" (mojado o ambos)
+y/o "con caca" (sucio o ambos): **con pis al día**, **con caca al
+día** y **cambios al día**, los tres con el mismo denominador de días.
+Las dos gráficas de pis/caca por franja se unieron en una sola
+**cambios por franja** (lo registrado es la hora del cambio, no la de
+la deposición). Nuevos: **color de las cacas** del periodo (sin
+interpretación clínica) y **última caca** ("hace 5 horas"), esta sobre
+todo el historial (`findLastPoopAt()`) - es una pregunta sobre ahora.
 
 **Export a PDF** - botón en la cabecera (icono descargar, mismo patrón
 visual y de estados `exporting`/`justExported` que `ContractionsView.vue`),
@@ -1573,12 +1584,11 @@ día" (decían "a qué hora" pero no "qué tan bien" ni "cómo
 evoluciona" - ver el propio `CHANGELOG.md` para el porqué completo de
 cada una):
 
-- **Reparto día/noche de sueño** - el sueño más largo de cada día
-  cuenta como el de noche (sin que el cuidador marque nada, una siesta
-  rara vez lo supera en duración), el resto como siestas. Una barra de
+- **Reparto día/noche de sueño** - hoy por franja de reloj 20:00-08:00
+  (ver "Sueño, sin horarios normales" más arriba). Una barra de
   progreso (`<span>` con `width` en %, no un gráfico aparte) con el
   total al día y el reparto debajo, en la propia tarjeta de Sueño.
-- **Sueño más largo registrado** - un dato de récord, visible aunque
+- **Sueño más largo del periodo** - un dato de récord, visible aunque
   no haya datos suficientes para el resto de la sección (no depende de
   `hasEnoughData`, es un hecho puntual, no una media).
 - **Regularidad del horario de tomas** - la desviación típica de los
@@ -1586,8 +1596,8 @@ cada una):
   regular"/"Regular"/"Variable" (`formatRegularity()`, umbrales
   orientativos de 30/60 min, no un estándar clínico) en vez de un
   número de minutos que no dice nada por sí solo.
-- **Pañales mojados al día** - un indicador real que usan los
-  pediatras para valorar si el bebé come suficiente.
+- **Pañales con pis al día** (antes "mojados al día") - un indicador
+  real que usan los pediatras para valorar si el bebé come suficiente.
 - **Velocidad de crecimiento** - lo ganado normalizado a "por semana"
   sobre el tiempo real entre el primer y el último registro
   (`weeklyRate`), junto al total acumulado que ya había.

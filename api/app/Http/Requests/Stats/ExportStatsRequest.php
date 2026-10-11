@@ -34,18 +34,21 @@ class ExportStatsRequest extends FormRequest
         $hourBucketKey = Rule::in(['dawn', 'morning', 'afternoon', 'night']);
 
         return [
+            // Periodo que cubren tomas/sueño/pañales (ver `StatsPeriod`
+            // en `lib/stats.ts`); el resto de bloques no dependen de él.
+            'period' => ['required', Rule::in(['7d', '30d', 'all'])],
+
             'sleep' => ['required', 'array'],
             'sleep.has_enough_data' => ['required', 'boolean'],
-            'sleep.total_completed' => ['required', 'integer', 'min:0'],
             'sleep.average_duration_minutes' => ['nullable', 'numeric'],
             'sleep.average_wake_window_minutes' => ['nullable', 'numeric'],
+            'sleep.average_sleeps_per_day' => ['nullable', 'numeric', 'min:0'],
+            'sleep.average_longest_stretch_minutes' => ['nullable', 'numeric', 'min:0'],
             'sleep.by_hour_bucket' => ['required', 'array', 'size:4'],
             'sleep.by_hour_bucket.*.key' => ['required', $hourBucketKey],
             'sleep.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
-            ...$this->clockTimeRules('sleep.typical_bedtime'),
-            ...$this->clockTimeRules('sleep.typical_wake_time'),
             'sleep.average_night_sleep_minutes' => ['nullable', 'numeric', 'min:0'],
-            'sleep.average_nap_minutes' => ['nullable', 'numeric', 'min:0'],
+            'sleep.average_day_sleep_minutes' => ['nullable', 'numeric', 'min:0'],
             'sleep.average_total_sleep_minutes' => ['nullable', 'numeric', 'min:0'],
             'sleep.longest_sleep' => ['nullable', 'array'],
             'sleep.longest_sleep.minutes' => ['required_with:sleep.longest_sleep', 'integer', 'min:0'],
@@ -72,18 +75,20 @@ class ExportStatsRequest extends FormRequest
             'diaper' => ['required', 'array'],
             'diaper.has_enough_data' => ['required', 'boolean'],
             'diaper.total' => ['required', 'integer', 'min:0'],
-            'diaper.by_type.mojado' => ['required', 'integer', 'min:0'],
-            'diaper.by_type.sucio' => ['required', 'integer', 'min:0'],
-            'diaper.by_type.ambos' => ['required', 'integer', 'min:0'],
             'diaper.by_size' => ['required', 'array'],
             'diaper.average_per_day' => ['nullable', 'numeric'],
-            'diaper.average_wet_per_day' => ['nullable', 'numeric'],
-            'diaper.pee_by_hour_bucket' => ['required', 'array', 'size:4'],
-            'diaper.pee_by_hour_bucket.*.key' => ['required', $hourBucketKey],
-            'diaper.pee_by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
-            'diaper.poop_by_hour_bucket' => ['required', 'array', 'size:4'],
-            'diaper.poop_by_hour_bucket.*.key' => ['required', $hourBucketKey],
-            'diaper.poop_by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
+            'diaper.average_pee_per_day' => ['nullable', 'numeric', 'min:0'],
+            'diaper.average_poop_per_day' => ['nullable', 'numeric', 'min:0'],
+            'diaper.by_hour_bucket' => ['required', 'array', 'size:4'],
+            'diaper.by_hour_bucket.*.key' => ['required', $hourBucketKey],
+            'diaper.by_hour_bucket.*.value' => ['required', 'numeric', 'min:0'],
+            'diaper.poop_colors' => ['required', 'array'],
+            'diaper.poop_colors.verde' => ['required', 'integer', 'min:0'],
+            'diaper.poop_colors.amarillo' => ['required', 'integer', 'min:0'],
+            'diaper.poop_colors.marron' => ['required', 'integer', 'min:0'],
+            'diaper.poop_colors.meconio' => ['required', 'integer', 'min:0'],
+            'diaper.poop_colors.unspecified' => ['required', 'integer', 'min:0'],
+            'diaper.last_poop_at' => ['nullable', 'date'],
 
             'growth' => ['required', 'array'],
             ...$this->growthMetricRules('growth.weight_kg'),
@@ -138,27 +143,6 @@ class ExportStatsRequest extends FormRequest
             'weekly_sleep_by_day' => ['present', 'array'],
             'weekly_sleep_by_day.*.date' => ['required', 'date'],
             'weekly_sleep_by_day.*.hours' => ['required', 'numeric', 'min:0'],
-        ];
-    }
-
-    /**
-     * "Horarios habituales" - una hora de reloj (`{hours, minutes}`),
-     * no una fecha, calculada con una media circular sobre varios días
-     * (ver `lib/stats.ts`). `nullable` en el propio array: por debajo
-     * de 3 días distintos con dato no hay "hora típica" que mostrar -
-     * mismo motivo por el que el resto de medias de esta plantilla
-     * también son `nullable`. `required_with` en los dos campos
-     * internos en vez de volverlos `nullable` también: si el array
-     * llega, tiene que traer una hora real, no una mitad.
-     *
-     * @return array<string, mixed>
-     */
-    private function clockTimeRules(string $prefix): array
-    {
-        return [
-            "$prefix" => ['nullable', 'array'],
-            "$prefix.hours" => ["required_with:$prefix", 'integer', 'min:0', 'max:23'],
-            "$prefix.minutes" => ["required_with:$prefix", 'integer', 'min:0', 'max:59'],
         ];
     }
 

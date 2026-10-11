@@ -433,22 +433,24 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   bebé sin ninguna medición de una métrica concreta es un estado válido
   (array vacío, no clave ausente), así que la regla se cambió a
   `present|array`, que solo exige que la clave exista.
-  `clockTimeRules()` valida los dos campos de "horarios habituales"
-  (`sleep.typical_bedtime`/`typical_wake_time`) - el propio array es
-  `nullable` (por debajo de `MIN_SAMPLE_SIZE` días en `lib/stats.ts`,
-  `null`), pero si llega, `hours`/`minutes` son `required_with` + rango
-  (`0-23`/`0-59`): una hora a medias no es un estado válido, a
-  diferencia de los `points` de crecimiento de arriba. Siete campos
-  más, añadidos cuando "primera/última toma del día" (decían "a qué
-  hora" pero no mucho más) se sustituyeron por estadísticas más
-  útiles: `sleep.average_night_sleep_minutes`/`average_nap_minutes`/
-  `average_total_sleep_minutes` (`nullable|numeric|min:0`, el reparto
-  día/noche), `sleep.longest_sleep` (array `nullable`, mismo criterio
-  `required_with` que `clockTimeRules()` para `minutes`/`date` - un
-  dato de récord, no gated por `MIN_SAMPLE_SIZE`),
-  `feed.gap_std_dev_minutes` (regularidad del horario),
-  `diaper.average_wet_per_day` (pañales mojados al día, un indicador
-  real que usan los pediatras) y `weekly_rate` dentro de
+  `period` (`7d`/`30d`/`all`) indica sobre qué periodo se calcularon
+  tomas, sueño y pañales, y sale en el PDF como "Últimos 7 días" etc.
+  Sueño: `sleep.average_sleeps_per_day`/`average_longest_stretch_minutes`
+  y el reparto día/noche por franja de reloj 20:00-08:00
+  (`average_night_sleep_minutes`/`average_day_sleep_minutes`/
+  `average_total_sleep_minutes`, `nullable|numeric|min:0`); ya no hay
+  "hora habitual de acostarse/despertar" ni total de sueños
+  registrados. `sleep.longest_sleep` (array `nullable`, `minutes`/
+  `date` `required_with` - un dato de récord, no gated por
+  `MIN_SAMPLE_SIZE`), `feed.gap_std_dev_minutes` (regularidad del
+  horario). Pañales: `diaper.average_pee_per_day`/
+  `average_poop_per_day` ("con pis"/"con caca" al día - un "ambos"
+  cuenta en los dos; sustituyen a los % mojado/sucio/ambos y a
+  `average_wet_per_day`), un único `by_hour_bucket` de cambios (antes
+  pis y caca por separado), `poop_colors` (las cinco claves de color,
+  `required|integer`; el controlador solo pinta las que tienen algún
+  pañal) y `last_poop_at` (`nullable|date`, sobre todo el historial; el
+  controlador lo convierte en "hace X" con Carbon). `weekly_rate` dentro de
   `growthMetricRules()` (velocidad de crecimiento, "por semana" en vez
   de solo el total acumulado). `week_comparison` (array `nullable` en
   bloque, `null` con menos de dos semanas ISO ya completas con dato -

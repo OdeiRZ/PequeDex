@@ -105,6 +105,8 @@
         </tr>
     </table>
 
+    <p class="stats-label" style="margin: 0 0 4px;">Tomas, sueño y pañales: {{ $periodLabel }}</p>
+
     {{-- Tomas --}}
     <h2 class="feed">Tomas</h2>
     @if (! $feed['has_enough_data'])
@@ -182,41 +184,30 @@
     @else
         <table class="stats-bar">
             <tr>
-                <td style="width: 33%;">
-                    <span class="stats-label">Sueños registrados</span>
-                    <span class="stats-value">{{ $sleep['total_completed'] }}</span>
-                </td>
-                <td style="width: 33%;">
+                @if ($sleep['average_longest_stretch_minutes'] !== null)
+                    <td style="width: 25%;">
+                        <span class="stats-label">Tramo más largo (media)</span>
+                        <span class="stats-value">{{ intdiv((int) round($sleep['average_longest_stretch_minutes']), 60) }}h {{ (int) round($sleep['average_longest_stretch_minutes']) % 60 }}min</span>
+                    </td>
+                @endif
+                @if ($sleep['average_sleeps_per_day'] !== null)
+                    <td style="width: 25%;">
+                        <span class="stats-label">Sueños al día</span>
+                        <span class="stats-value">{{ number_format($sleep['average_sleeps_per_day'], 1) }}</span>
+                    </td>
+                @endif
+                <td style="width: 25%;">
                     <span class="stats-label">Duración media</span>
                     <span class="stats-value">{{ intdiv((int) round($sleep['average_duration_minutes']), 60) }}h {{ (int) round($sleep['average_duration_minutes']) % 60 }}min</span>
                 </td>
                 @if ($sleep['average_wake_window_minutes'] !== null)
-                    <td style="width: 33%;">
+                    <td style="width: 25%;">
                         <span class="stats-label">Despierto entre sueños</span>
                         <span class="stats-value">{{ intdiv((int) round($sleep['average_wake_window_minutes']), 60) }}h {{ (int) round($sleep['average_wake_window_minutes']) % 60 }}min</span>
                     </td>
                 @endif
             </tr>
         </table>
-
-        @if ($sleep['typical_bedtime'] !== null || $sleep['typical_wake_time'] !== null)
-            <table class="stats-bar">
-                <tr>
-                    @if ($sleep['typical_bedtime'] !== null)
-                        <td style="width: 50%;">
-                            <span class="stats-label">Hora habitual de acostarse</span>
-                            <span class="stats-value">{{ sprintf('%02d:%02d', $sleep['typical_bedtime']['hours'], $sleep['typical_bedtime']['minutes']) }}</span>
-                        </td>
-                    @endif
-                    @if ($sleep['typical_wake_time'] !== null)
-                        <td style="width: 50%;">
-                            <span class="stats-label">Hora habitual de despertar</span>
-                            <span class="stats-value">{{ sprintf('%02d:%02d', $sleep['typical_wake_time']['hours'], $sleep['typical_wake_time']['minutes']) }}</span>
-                        </td>
-                    @endif
-                </tr>
-            </table>
-        @endif
 
         @if ($sleep['average_total_sleep_minutes'] !== null)
             <table class="stats-bar">
@@ -226,12 +217,12 @@
                         <span class="stats-value">{{ intdiv((int) round($sleep['average_total_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_total_sleep_minutes']) % 60 }}min</span>
                     </td>
                     <td style="width: 33%;">
-                        <span class="stats-label">De noche</span>
+                        <span class="stats-label">De noche (20-08h)</span>
                         <span class="stats-value">{{ intdiv((int) round($sleep['average_night_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_night_sleep_minutes']) % 60 }}min</span>
                     </td>
                     <td style="width: 33%;">
-                        <span class="stats-label">Siestas</span>
-                        <span class="stats-value">{{ intdiv((int) round($sleep['average_nap_minutes']), 60) }}h {{ (int) round($sleep['average_nap_minutes']) % 60 }}min</span>
+                        <span class="stats-label">De día</span>
+                        <span class="stats-value">{{ intdiv((int) round($sleep['average_day_sleep_minutes']), 60) }}h {{ (int) round($sleep['average_day_sleep_minutes']) % 60 }}min</span>
                     </td>
                 </tr>
             </table>
@@ -248,7 +239,7 @@
         <table class="stats-bar">
             <tr>
                 <td>
-                    <span class="stats-label">Sueño más largo registrado</span>
+                    <span class="stats-label">Sueño más largo del periodo</span>
                     <span class="stats-value">
                         {{ intdiv($sleep['longest_sleep']['minutes'], 60) }}h {{ $sleep['longest_sleep']['minutes'] % 60 }}min
                         <span style="font-weight: normal; font-size: 12px; color: #7a6f66;">— {{ \Carbon\CarbonImmutable::parse($sleep['longest_sleep']['date'])->translatedFormat('j \d\e F') }}</span>
@@ -279,20 +270,20 @@
     @else
         <table class="stats-bar">
             <tr>
-                <td style="width: 25%;">
-                    <span class="stats-label">Mojado</span>
-                    <span class="stats-value">{{ $diaper['total'] > 0 ? round($diaper['by_type']['mojado'] / $diaper['total'] * 100) : 0 }}%</span>
-                </td>
-                <td style="width: 25%;">
-                    <span class="stats-label">Sucio</span>
-                    <span class="stats-value">{{ $diaper['total'] > 0 ? round($diaper['by_type']['sucio'] / $diaper['total'] * 100) : 0 }}%</span>
-                </td>
-                <td style="width: 25%;">
-                    <span class="stats-label">Ambos</span>
-                    <span class="stats-value">{{ $diaper['total'] > 0 ? round($diaper['by_type']['ambos'] / $diaper['total'] * 100) : 0 }}%</span>
-                </td>
+                @if ($diaper['average_pee_per_day'] !== null)
+                    <td style="width: 33%;">
+                        <span class="stats-label">Con pis al día</span>
+                        <span class="stats-value">{{ number_format($diaper['average_pee_per_day'], 1) }}</span>
+                    </td>
+                @endif
+                @if ($diaper['average_poop_per_day'] !== null)
+                    <td style="width: 33%;">
+                        <span class="stats-label">Con caca al día</span>
+                        <span class="stats-value">{{ number_format($diaper['average_poop_per_day'], 1) }}</span>
+                    </td>
+                @endif
                 @if ($diaper['average_per_day'] !== null)
-                    <td style="width: 25%;">
+                    <td style="width: 33%;">
                         <span class="stats-label">Cambios al día</span>
                         <span class="stats-value">{{ number_format($diaper['average_per_day'], 1) }}</span>
                     </td>
@@ -300,15 +291,13 @@
             </tr>
         </table>
 
-        @if ($diaper['average_wet_per_day'] !== null)
-            <table class="stats-bar">
-                <tr>
-                    <td>
-                        <span class="stats-label">Mojados al día</span>
-                        <span class="stats-value">{{ number_format($diaper['average_wet_per_day'], 1) }}</span>
-                    </td>
-                </tr>
-            </table>
+        @if (count($poopColorRows) > 0)
+            <p class="stats-label" style="margin-bottom: 4px;">Color de las cacas</p>
+            <p style="margin: 0 0 12px;">
+                @foreach ($poopColorRows as $row)
+                    <span class="size-pill">@if ($row['hex'])<span style="display: inline-block; width: 9px; height: 9px; border-radius: 5px; background: {{ $row['hex'] }};"></span> @endif{{ $row['label'] }} · <b>{{ $row['count'] }}</b></span>
+                @endforeach
+            </p>
         @endif
 
         @php
@@ -324,19 +313,23 @@
             </p>
         @endif
 
-        <p class="stats-label" style="margin-bottom: 4px;">Pis por franja</p>
+        <p class="stats-label" style="margin-bottom: 4px;">Cambios por franja</p>
         @include('pdf.partials.bucket-grid', [
-            'buckets' => $diaper['pee_by_hour_bucket'],
+            'buckets' => $diaper['by_hour_bucket'],
             'labels' => $hourBucketLabels,
             'format' => fn ($value) => (string) (int) round($value),
         ])
+    @endif
 
-        <p class="stats-label" style="margin-bottom: 4px;">Caca por franja</p>
-        @include('pdf.partials.bucket-grid', [
-            'buckets' => $diaper['poop_by_hour_bucket'],
-            'labels' => $hourBucketLabels,
-            'format' => fn ($value) => (string) (int) round($value),
-        ])
+    @if ($lastPoopSince !== null)
+        <table class="stats-bar">
+            <tr>
+                <td>
+                    <span class="stats-label">Última caca</span>
+                    <span class="stats-value">{{ $lastPoopSince }}</span>
+                </td>
+            </tr>
+        </table>
     @endif
 
     {{-- Comparativa semanal - última semana completa frente a la anterior

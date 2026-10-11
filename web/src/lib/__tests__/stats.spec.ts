@@ -9,7 +9,8 @@ import {
   summarizeActivityHeatmap,
   summarizeVitaminDStats,
   buildStatsExportPayload,
-  formatClockTime,
+  filterByPeriod,
+  findLastPoopAt,
   type WeeklyTrendPoint,
 } from '@/lib/stats'
 import type {
@@ -69,7 +70,7 @@ describe('summarizeSleepStats', () => {
   it('reports not enough data below the minimum sample size', () => {
     const result = summarizeSleepStats([sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 11))])
     expect(result.hasEnoughData).toBe(false)
-    expect(result.totalCompleted).toBe(1)
+    expect(result.averageDurationMinutes).toBeNull()
   })
 
   it('averages duration across completed sleeps only, ignoring an ongoing one', () => {
@@ -80,7 +81,6 @@ describe('summarizeSleepStats', () => {
       sleep(local(2026, 8, 8, 2), null), // ongoing - excluded
     ])
     expect(result.hasEnoughData).toBe(true)
-    expect(result.totalCompleted).toBe(3)
     expect(result.averageDurationMinutes).toBe(45)
   })
 
@@ -119,45 +119,31 @@ describe('summarizeSleepStats', () => {
   })
 })
 
-describe('summarizeSleepStats - typicalBedtime / typicalWakeTime', () => {
-  it('reports null below 3 distinct days with a completed sleep', () => {
-    // Un solo día, aunque tenga de sobra sueños completados (sigue sin
-    // haber ningún otro día con el que promediar "la hora típica").
+describe('summarizeSleepStats - sleeps per day / longest stretch', () => {
+  it('reports the longest stretch as null below 3 distinct days', () => {
     const result = summarizeSleepStats([
       sleep(local(2026, 8, 7, 13), local(2026, 8, 7, 13, 30)),
       sleep(local(2026, 8, 7, 20), local(2026, 8, 7, 22)),
       sleep(local(2026, 8, 7, 23), local(2026, 8, 8, 1)),
     ])
-    expect(result.typicalBedtime).toBeNull()
-    expect(result.typicalWakeTime).toBeNull()
+    expect(result.averageLongestStretchMinutes).toBeNull()
+    expect(result.averageSleepsPerDay).toBe(3)
   })
 
-  it('picks the LONGEST sleep of each day (the night one), ignoring naps', () => {
+  it('averages the longest sleep of each day, whatever time it happened', () => {
     const result = summarizeSleepStats([
-      // Día 1: siesta corta + sueño nocturno largo
-      sleep(local(2026, 8, 7, 13), local(2026, 8, 7, 13, 30)),
-      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6)),
-      // Día 2: igual
-      sleep(local(2026, 8, 8, 14), local(2026, 8, 8, 14, 45)),
-      sleep(local(2026, 8, 8, 22), local(2026, 8, 9, 6)),
-      // Día 3: igual
-      sleep(local(2026, 8, 9, 12), local(2026, 8, 9, 13)),
-      sleep(local(2026, 8, 9, 22), local(2026, 8, 10, 6)),
+      // Día 1: el tramo más largo es de día (3h), no de noche
+      sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 13)),
+      sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 0)),
+      // Día 2: 4h
+      sleep(local(2026, 8, 8, 21), local(2026, 8, 9, 1)),
+      // Día 3: 2h
+      sleep(local(2026, 8, 9, 14), local(2026, 8, 9, 16)),
     ])
-    expect(result.typicalBedtime).toEqual({ hours: 22, minutes: 0 })
-    expect(result.typicalWakeTime).toEqual({ hours: 6, minutes: 0 })
-  })
-
-  it('averages clock times circularly, not arithmetically, across midnight', () => {
-    // 23:00, 00:00 y 01:00 - una media aritmética normal de las horas
-    // (23+0+1)/3 daría las 08:00, un sinsentido; la media circular real
-    // da medianoche, el centro real de esas tres horas.
-    const result = summarizeSleepStats([
-      sleep(local(2026, 8, 7, 23), local(2026, 8, 7, 23, 10)),
-      sleep(local(2026, 8, 8, 0), local(2026, 8, 8, 0, 10)),
-      sleep(local(2026, 8, 9, 1), local(2026, 8, 9, 1, 10)),
-    ])
-    expect(result.typicalBedtime).toEqual({ hours: 0, minutes: 0 })
+    // (180 + 240 + 120) / 3
+    expect(result.averageLongestStretchMinutes).toBe(180)
+    // 4 sueños en 3 días
+    expect(result.averageSleepsPerDay).toBeCloseTo(4 / 3)
   })
 })
 
@@ -168,11 +154,11 @@ describe('summarizeSleepStats - day/night split', () => {
       sleep(local(2026, 8, 7, 22), local(2026, 8, 8, 6)),
     ])
     expect(result.averageNightSleepMinutes).toBeNull()
-    expect(result.averageNapMinutes).toBeNull()
+    expect(result.averageDaySleepMinutes).toBeNull()
     expect(result.averageTotalSleepMinutes).toBeNull()
   })
 
-  it('splits each day into the longest sleep (night) and the rest (naps), averaged separately', () => {
+  it('splits sleep time by the 20:00-08:00 clock window, per day', () => {
     const result = summarizeSleepStats([
       // Día 1: 2 siestas de 30min (60 total) + 8h de noche (480min)
       sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 10, 30)),
@@ -186,8 +172,52 @@ describe('summarizeSleepStats - day/night split', () => {
     ])
     expect(result.averageNightSleepMinutes).toBe(480)
     // (60 + 60 + 0) / 3 = 40
-    expect(result.averageNapMinutes).toBe(40)
+    expect(result.averageDaySleepMinutes).toBe(40)
     expect(result.averageTotalSleepMinutes).toBe(520)
+  })
+
+  it('counts several night sleeps as night, not only the longest one', () => {
+    const result = summarizeSleepStats([
+      // Cada noche, dos tramos de 3h dentro de la franja nocturna
+      sleep(local(2026, 8, 7, 21), local(2026, 8, 8, 0)),
+      sleep(local(2026, 8, 8, 2), local(2026, 8, 8, 5)),
+      sleep(local(2026, 8, 8, 21), local(2026, 8, 9, 0)),
+      sleep(local(2026, 8, 9, 2), local(2026, 8, 9, 5)),
+      sleep(local(2026, 8, 9, 21), local(2026, 8, 10, 0)),
+    ])
+    expect(result.averageDaySleepMinutes).toBe(0)
+  })
+
+  it('splits a sleep straddling 20:00 between day and night', () => {
+    const result = summarizeSleepStats([
+      sleep(local(2026, 8, 7, 19), local(2026, 8, 7, 21)), // 1h día + 1h noche
+      sleep(local(2026, 8, 8, 19), local(2026, 8, 8, 21)),
+      sleep(local(2026, 8, 9, 19), local(2026, 8, 9, 21)),
+    ])
+    expect(result.averageNightSleepMinutes).toBe(60)
+    expect(result.averageDaySleepMinutes).toBe(60)
+  })
+})
+
+describe('filterByPeriod', () => {
+  const now = new Date(2026, 7, 10, 15)
+  const items = [
+    { at: local(2026, 8, 10, 1) }, // hoy
+    { at: local(2026, 8, 4, 0) }, // primer día de "últimos 7 días"
+    { at: local(2026, 8, 3, 23, 59) }, // fuera de 7 días
+    { at: local(2026, 7, 1, 10) }, // fuera de 30 días
+  ]
+
+  it('keeps today and the 6 previous calendar days for 7d', () => {
+    expect(filterByPeriod(items, (i) => i.at, '7d', now)).toHaveLength(2)
+  })
+
+  it('keeps 30 calendar days for 30d', () => {
+    expect(filterByPeriod(items, (i) => i.at, '30d', now)).toHaveLength(3)
+  })
+
+  it('keeps everything for all', () => {
+    expect(filterByPeriod(items, (i) => i.at, 'all', now)).toHaveLength(4)
   })
 })
 
@@ -311,52 +341,68 @@ describe('summarizeFeedStats - gapStdDevMinutes', () => {
   })
 })
 
-describe('formatClockTime', () => {
-  it('pads single-digit hours and minutes', () => {
-    expect(formatClockTime({ hours: 7, minutes: 5 })).toBe('07:05')
-  })
-
-  it('leaves double-digit hours and minutes as they are', () => {
-    expect(formatClockTime({ hours: 22, minutes: 30 })).toBe('22:30')
-  })
-
-  it('formats midnight as 00:00', () => {
-    expect(formatClockTime({ hours: 0, minutes: 0 })).toBe('00:00')
-  })
-})
-
 describe('summarizeDiaperStats', () => {
   it('reports not enough data below the minimum sample size', () => {
     const result = summarizeDiaperStats([diaperChange(), diaperChange()])
     expect(result.hasEnoughData).toBe(false)
   })
 
-  it('counts by type and by size, defaulting a missing size to unspecified', () => {
+  it('counts by size, defaulting a missing size to unspecified', () => {
     const result = summarizeDiaperStats([
       diaperChange({ type: 'mojado', size: '1' }),
       diaperChange({ type: 'sucio', size: '1' }),
       diaperChange({ type: 'ambos', size: null }),
     ])
     expect(result.hasEnoughData).toBe(true)
-    expect(result.byType).toEqual({ mojado: 1, sucio: 1, ambos: 1 })
     expect(result.bySize['1']).toBe(2)
     expect(result.bySize.unspecified).toBe(1)
   })
 
-  it('splits pee/poop patterns by hour bucket, counting "ambos" in both', () => {
+  it('buckets every change by the hour it was changed, without splitting pee/poop', () => {
     const result = summarizeDiaperStats([
-      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }), // morning, pee only
-      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 8) }), // morning, poop only
-      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 20) }), // night, both
+      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 20) }),
     ])
-    const peeMorning = result.peeByHourBucket.find((b) => b.key === 'morning')
-    const poopMorning = result.poopByHourBucket.find((b) => b.key === 'morning')
-    const peeNight = result.peeByHourBucket.find((b) => b.key === 'night')
-    const poopNight = result.poopByHourBucket.find((b) => b.key === 'night')
-    expect(peeMorning?.value).toBe(1)
-    expect(poopMorning?.value).toBe(1)
-    expect(peeNight?.value).toBe(1)
-    expect(poopNight?.value).toBe(1)
+    expect(result.byHourBucket.find((b) => b.key === 'morning')?.value).toBe(2)
+    expect(result.byHourBucket.find((b) => b.key === 'night')?.value).toBe(1)
+  })
+
+  it('counts "ambos" both as a diaper with pee and as one with poop', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 14) }),
+      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 20) }),
+    ])
+    expect(result.averagePeePerDay).toBe(2)
+    expect(result.averagePoopPerDay).toBe(2)
+  })
+
+  it('uses the same day span for pee/poop per day as for all changes', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }),
+      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 8, 8) }),
+      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 9, 8) }),
+    ])
+    // 3 días: 1 caca en 3 días, no "1 caca en 1 día"
+    expect(result.averagePoopPerDay).toBeCloseTo(1 / 3)
+    expect(result.averagePeePerDay).toBeCloseTo(2 / 3)
+  })
+
+  it('tallies the stool colour of dirty diapers only', () => {
+    const result = summarizeDiaperStats([
+      diaperChange({ type: 'mojado' }),
+      diaperChange({ type: 'sucio', residue_color: 'amarillo' }),
+      diaperChange({ type: 'ambos', residue_color: 'amarillo' }),
+      diaperChange({ type: 'sucio', residue_color: null }),
+    ])
+    expect(result.poopColors).toEqual({
+      verde: 0,
+      amarillo: 2,
+      marron: 0,
+      meconio: 0,
+      unspecified: 1,
+    })
   })
 
   it('averages changes per calendar day across the whole logged span', () => {
@@ -368,15 +414,22 @@ describe('summarizeDiaperStats', () => {
     // 3 changes, all on the same calendar day.
     expect(result.averagePerDay).toBe(3)
   })
+})
 
-  it('averages only wet ("mojado" or "ambos") changes per day, not every change', () => {
-    const result = summarizeDiaperStats([
-      diaperChange({ type: 'mojado', changed_at: local(2026, 8, 7, 8) }),
-      diaperChange({ type: 'ambos', changed_at: local(2026, 8, 7, 14) }),
-      diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 20) }), // not wet
-    ])
-    // 2 wet changes (mojado + ambos), same calendar day.
-    expect(result.averageWetPerDay).toBe(2)
+describe('findLastPoopAt', () => {
+  it('is null when no diaper had poop', () => {
+    expect(findLastPoopAt([diaperChange({ type: 'mojado' })])).toBeNull()
+  })
+
+  it('returns the most recent "sucio" or "ambos" change', () => {
+    const latest = local(2026, 8, 9, 7)
+    expect(
+      findLastPoopAt([
+        diaperChange({ type: 'sucio', changed_at: local(2026, 8, 7, 8) }),
+        diaperChange({ type: 'ambos', changed_at: latest }),
+        diaperChange({ type: 'mojado', changed_at: local(2026, 8, 10, 8) }),
+      ]),
+    ).toBe(latest)
   })
 })
 
@@ -661,14 +714,13 @@ describe('buildStatsExportPayload - options', () => {
   ]
   const emptySleep = {
     hasEnoughData: false,
-    totalCompleted: 0,
     averageDurationMinutes: null,
     averageWakeWindowMinutes: null,
+    averageSleepsPerDay: null,
+    averageLongestStretchMinutes: null,
     byHourBucket: emptyBuckets,
-    typicalBedtime: null,
-    typicalWakeTime: null,
     averageNightSleepMinutes: null,
-    averageNapMinutes: null,
+    averageDaySleepMinutes: null,
     averageTotalSleepMinutes: null,
     longestSleep: null,
   }
@@ -687,12 +739,12 @@ describe('buildStatsExportPayload - options', () => {
   const emptyDiaper = {
     hasEnoughData: false,
     total: 0,
-    byType: { mojado: 0, sucio: 0, ambos: 0 },
     bySize: { '0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6+': 0, unspecified: 0 },
     averagePerDay: null,
-    averageWetPerDay: null,
-    peeByHourBucket: emptyBuckets,
-    poopByHourBucket: emptyBuckets,
+    averagePeePerDay: null,
+    averagePoopPerDay: null,
+    byHourBucket: emptyBuckets,
+    poopColors: { verde: 0, amarillo: 0, marron: 0, meconio: 0, unspecified: 0 },
   }
   const emptyGrowthMetric = {
     points: [],
@@ -720,6 +772,23 @@ describe('buildStatsExportPayload - options', () => {
     })
 
     expect(payload.vitamin_d).toEqual({ has_schedule: true, given: 42, total_days: 50 })
+  })
+
+  it('defaults period to "all" and last_poop_at to null when omitted', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth)
+
+    expect(payload.period).toBe('all')
+    expect(payload.diaper.last_poop_at).toBeNull()
+  })
+
+  it('passes the chosen period and last poop through', () => {
+    const payload = buildStatsExportPayload(emptySleep, emptyFeed, emptyDiaper, emptyGrowth, {
+      period: '7d',
+      lastPoopAt: '2026-10-10T08:00:00.000Z',
+    })
+
+    expect(payload.period).toBe('7d')
+    expect(payload.diaper.last_poop_at).toBe('2026-10-10T08:00:00.000Z')
   })
 
   it('defaults weekly_sleep_by_day to an empty array when omitted', () => {

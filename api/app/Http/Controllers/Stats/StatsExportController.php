@@ -19,6 +19,22 @@ class StatsExportController extends Controller
         'night' => 'Noche (18-24h)',
     ];
 
+    private const PERIOD_LABELS = [
+        '7d' => 'Últimos 7 días',
+        '30d' => 'Últimos 30 días',
+        'all' => 'Todo el historial',
+    ];
+
+    /** Mismos tonos que `DIAPER_RESIDUE_COLOR_HEX` en
+     * `web/src/lib/diaperResidueColor.ts`; `null` = sin color indicado. */
+    private const POOP_COLORS = [
+        'amarillo' => ['label' => 'Amarillo', 'hex' => '#E8B93F'],
+        'verde' => ['label' => 'Verde', 'hex' => '#5C8A3A'],
+        'marron' => ['label' => 'Marrón', 'hex' => '#8B5A2B'],
+        'meconio' => ['label' => 'Meconio', 'hex' => '#1C1C1C'],
+        'unspecified' => ['label' => 'Sin indicar', 'hex' => null],
+    ];
+
     public function store(ExportStatsRequest $request, Baby $baby): Response
     {
         $pdf = Pdf::loadView('pdf.stats', $this->buildViewData($baby, $request->validated()));
@@ -36,13 +52,20 @@ class StatsExportController extends Controller
      */
     public function buildViewData(Baby $baby, array $data): array
     {
+        $lastPoopAt = $data['diaper']['last_poop_at'] ?? null;
+
         return [
             'baby' => $baby,
             'babyAge' => BabyAgeHeadline::forBaby($baby),
             'generatedAt' => CarbonImmutable::now(),
+            'periodLabel' => self::PERIOD_LABELS[$data['period']],
             'sleep' => $data['sleep'],
             'feed' => $data['feed'],
             'diaper' => $data['diaper'],
+            'poopColorRows' => $this->poopColorRows($data['diaper']['poop_colors']),
+            'lastPoopSince' => $lastPoopAt !== null
+                ? CarbonImmutable::parse($lastPoopAt)->locale('es')->diffForHumans()
+                : null,
             'weekComparison' => $data['week_comparison'] ?? null,
             'sleepTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['sleep_hours']),
             'feedTrendPoints' => $this->weeklyTrendPoints($data['weekly_trend'], fn ($w) => $w['feed_count']),
@@ -103,6 +126,22 @@ class StatsExportController extends Controller
                 'label' => CarbonImmutable::parse($day['date'])->translatedFormat('D'),
                 'value' => $day['hours'],
             ])
+            ->all();
+    }
+
+    /**
+     * Solo los colores con al menos un pañal, en el mismo orden que la
+     * pantalla.
+     *
+     * @param  array<string, int>  $counts
+     * @return array<int, array{label: string, hex: string|null, count: int}>
+     */
+    private function poopColorRows(array $counts): array
+    {
+        return collect(self::POOP_COLORS)
+            ->map(fn (array $color, string $key) => [...$color, 'count' => (int) ($counts[$key] ?? 0)])
+            ->filter(fn (array $row) => $row['count'] > 0)
+            ->values()
             ->all();
     }
 

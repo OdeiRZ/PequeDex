@@ -11,6 +11,7 @@ import GrowthLineChart from '@/components/GrowthLineChart.vue'
 import WeeklyTrendChart from '@/components/WeeklyTrendChart.vue'
 import ActivityHeatmap from '@/components/ActivityHeatmap.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
+import SegmentedControl from '@/components/SegmentedControl.vue'
 import {
   summarizeSleepStats,
   summarizeFeedStats,
@@ -21,11 +22,14 @@ import {
   summarizeActivityHeatmap,
   summarizeVitaminDStats,
   buildStatsExportPayload,
-  formatClockTime,
+  filterByPeriod,
+  findLastPoopAt,
+  type StatsPeriod,
 } from '@/lib/stats'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
-import type { DiaperSize } from '@/stores/babies'
+import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
+import type { DiaperResidueColor, DiaperSize } from '@/stores/babies'
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -72,9 +76,30 @@ onMounted(async () => {
   }
 })
 
-const sleepStats = computed(() => summarizeSleepStats(babies.statsSleeps))
-const feedStats = computed(() => summarizeFeedStats(babies.statsFeeds))
-const diaperStats = computed(() => summarizeDiaperStats(babies.statsDiaperChanges))
+// Tomas, sueño y pañales se calculan sobre este periodo (ver
+// `StatsPeriod` en lib/stats.ts); tendencia semanal, mapa de actividad,
+// crecimiento y "Sueño esta semana" siguen sobre todo el historial.
+const period = ref<StatsPeriod>('7d')
+const periodOptions = computed(() => [
+  { value: '7d' as const, label: t('stats.period.last7') },
+  { value: '30d' as const, label: t('stats.period.last30') },
+  { value: 'all' as const, label: t('stats.period.all') },
+])
+
+const periodSleeps = computed(() =>
+  filterByPeriod(babies.statsSleeps, (s) => s.started_at, period.value),
+)
+const periodFeeds = computed(() =>
+  filterByPeriod(babies.statsFeeds, (f) => f.started_at, period.value),
+)
+const periodDiaperChanges = computed(() =>
+  filterByPeriod(babies.statsDiaperChanges, (c) => c.changed_at, period.value),
+)
+
+const sleepStats = computed(() => summarizeSleepStats(periodSleeps.value))
+const feedStats = computed(() => summarizeFeedStats(periodFeeds.value))
+const diaperStats = computed(() => summarizeDiaperStats(periodDiaperChanges.value))
+const lastPoopAt = computed(() => findLastPoopAt(babies.statsDiaperChanges))
 const growthStats = computed(() => summarizeGrowthStats(babies.growthMeasurements))
 const vitaminDStats = computed(() =>
   summarizeVitaminDStats(babies.vitaminDSchedule, babies.vitaminDAllDoses),
@@ -194,6 +219,40 @@ function percent(part: number, total: number): string {
   return total > 0 ? `${Math.round((part / total) * 100)}%` : '0%'
 }
 
+const POOP_COLOR_ORDER: (DiaperResidueColor | 'unspecified')[] = [
+  'amarillo',
+  'verde',
+  'marron',
+  'meconio',
+  'unspecified',
+]
+
+const POOP_COLOR_LABEL_KEYS: Record<DiaperResidueColor | 'unspecified', string> = {
+  amarillo: 'dashboard.diaperForm.yellow',
+  verde: 'dashboard.diaperForm.green',
+  marron: 'dashboard.diaperForm.brown',
+  meconio: 'dashboard.diaperForm.meconium',
+  unspecified: 'dashboard.diaperForm.colorUnspecified',
+}
+
+const poopColorRows = computed(() =>
+  POOP_COLOR_ORDER.map((color) => ({
+    color,
+    count: diaperStats.value.poopColors[color],
+    hex: color === 'unspecified' ? null : DIAPER_RESIDUE_COLOR_HEX[color],
+  })).filter((row) => row.count > 0),
+)
+
+// "hace 3 horas", "hace 2 días" - en el idioma de la app, sin claves
+// propias por unidad.
+function formatSince(at: string): string {
+  const minutes = Math.round((Date.now() - new Date(at).getTime()) / 60_000)
+  const rtf = new Intl.RelativeTimeFormat(dateLocale.value, { numeric: 'auto' })
+  if (minutes < 60) return rtf.format(-Math.max(minutes, 0), 'minute')
+  if (minutes < 48 * 60) return rtf.format(-Math.round(minutes / 60), 'hour')
+  return rtf.format(-Math.round(minutes / 1440), 'day')
+}
+
 // Driven by a table rather than three copy-pasted template blocks -
 // weight/height/head only differ in unit, decimal precision, and which
 // slice of `growthStats` they read.
@@ -253,6 +312,8 @@ async function onExportPdf() {
       diaperStats.value,
       growthStats.value,
       {
+        period: period.value,
+        lastPoopAt: lastPoopAt.value,
         weekComparison: weekComparison.value,
         weeklyTrend: weeklyTrend.value,
         activityHeatmap: activityHeatmap.value,
@@ -349,6 +410,11 @@ async function onExportPdf() {
     </div>
 
     <template v-else>
+      <div>
+        <SegmentedControl v-model="period" :options="periodOptions" />
+        <p class="mt-1.5 text-center text-xs text-text-muted">{{ t('stats.period.hint') }}</p>
+      </div>
+
       <!-- Tomas -->
       <section v-if="enabledCategories.includes('feed')" class="card flex flex-col gap-3 p-4">
         <h2 class="flex items-center gap-2 font-display text-sm font-bold">
@@ -447,9 +513,23 @@ async function onExportPdf() {
 
         <template v-if="sleepStats.hasEnoughData">
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.sleep.totalLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">{{ sleepStats.totalCompleted }}</div>
+            <div
+              v-if="sleepStats.averageLongestStretchMinutes !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.longestStretchLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ formatMinutes(sleepStats.averageLongestStretchMinutes) }}
+              </div>
+            </div>
+            <div
+              v-if="sleepStats.averageSleepsPerDay !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.sleep.sleepsPerDayLabel') }}</div>
+              <div class="text-lg font-bold tabular-nums">
+                {{ sleepStats.averageSleepsPerDay.toFixed(1) }}
+              </div>
             </div>
             <div class="rounded-xl bg-surface-sunken p-3">
               <div class="text-xs text-text-muted">{{ t('stats.sleep.averageLabel') }}</div>
@@ -464,18 +544,6 @@ async function onExportPdf() {
               <div class="text-xs text-text-muted">{{ t('stats.sleep.wakeWindowLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
                 {{ formatMinutes(sleepStats.averageWakeWindowMinutes) }}
-              </div>
-            </div>
-            <div v-if="sleepStats.typicalBedtime" class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.sleep.typicalBedtimeLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ formatClockTime(sleepStats.typicalBedtime) }}
-              </div>
-            </div>
-            <div v-if="sleepStats.typicalWakeTime" class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('stats.sleep.typicalWakeLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ formatClockTime(sleepStats.typicalWakeTime) }}
               </div>
             </div>
           </div>
@@ -510,10 +578,11 @@ async function onExportPdf() {
                 {{ formatMinutes(sleepStats.averageNightSleepMinutes ?? 0) }}</span
               >
               <span
-                >{{ t('stats.sleep.napsLabel') }} ·
-                {{ formatMinutes(sleepStats.averageNapMinutes ?? 0) }}</span
+                >{{ t('stats.sleep.dayLabel') }} ·
+                {{ formatMinutes(sleepStats.averageDaySleepMinutes ?? 0) }}</span
               >
             </div>
+            <p class="mt-1 text-[0.68rem] text-text-muted">{{ t('stats.sleep.nightRangeHint') }}</p>
           </div>
 
           <div>
@@ -567,22 +636,22 @@ async function onExportPdf() {
 
         <template v-if="diaperStats.hasEnoughData">
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('dashboard.diaperForm.wet') }}</div>
+            <div
+              v-if="diaperStats.averagePeePerDay !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.diaper.peePerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ percent(diaperStats.byType.mojado, diaperStats.total) }}
+                {{ diaperStats.averagePeePerDay.toFixed(1) }}
               </div>
             </div>
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('dashboard.diaperForm.dirty') }}</div>
+            <div
+              v-if="diaperStats.averagePoopPerDay !== null"
+              class="rounded-xl bg-surface-sunken p-3"
+            >
+              <div class="text-xs text-text-muted">{{ t('stats.diaper.poopPerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ percent(diaperStats.byType.sucio, diaperStats.total) }}
-              </div>
-            </div>
-            <div class="rounded-xl bg-surface-sunken p-3">
-              <div class="text-xs text-text-muted">{{ t('dashboard.diaperForm.both') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ percent(diaperStats.byType.ambos, diaperStats.total) }}
+                {{ diaperStats.averagePoopPerDay.toFixed(1) }}
               </div>
             </div>
             <div v-if="diaperStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">
@@ -591,13 +660,23 @@ async function onExportPdf() {
                 {{ diaperStats.averagePerDay.toFixed(1) }}
               </div>
             </div>
-            <div
-              v-if="diaperStats.averageWetPerDay !== null"
-              class="rounded-xl bg-surface-sunken p-3"
-            >
-              <div class="text-xs text-text-muted">{{ t('stats.diaper.wetPerDayLabel') }}</div>
-              <div class="text-lg font-bold tabular-nums">
-                {{ diaperStats.averageWetPerDay.toFixed(1) }}
+          </div>
+
+          <div v-if="poopColorRows.length > 0">
+            <div class="mb-1 text-xs text-text-muted">{{ t('stats.diaper.poopColorsLabel') }}</div>
+            <div class="flex flex-wrap gap-2">
+              <div
+                v-for="row in poopColorRows"
+                :key="row.color"
+                class="flex items-center gap-1.5 rounded-full bg-surface-sunken px-3 py-1.5 text-xs font-semibold"
+              >
+                <span
+                  v-if="row.hex"
+                  class="h-3 w-3 shrink-0 rounded-full"
+                  :style="{ backgroundColor: row.hex }"
+                ></span>
+                {{ t(POOP_COLOR_LABEL_KEYS[row.color]) }}
+                <span class="text-text-muted">· {{ row.count }}</span>
               </div>
             </div>
           </div>
@@ -621,17 +700,9 @@ async function onExportPdf() {
           </div>
 
           <div>
-            <div class="mb-1 text-xs text-text-muted">{{ t('stats.diaper.peeByHourLabel') }}</div>
+            <div class="mb-1 text-xs text-text-muted">{{ t('stats.diaper.byHourLabel') }}</div>
             <HourBucketChart
-              :buckets="diaperStats.peeByHourBucket"
-              category="diaper"
-              :format-value="formatCount"
-            />
-          </div>
-          <div>
-            <div class="mb-1 text-xs text-text-muted">{{ t('stats.diaper.poopByHourLabel') }}</div>
-            <HourBucketChart
-              :buckets="diaperStats.poopByHourBucket"
+              :buckets="diaperStats.byHourBucket"
               category="diaper"
               :format-value="formatCount"
             />
@@ -640,6 +711,18 @@ async function onExportPdf() {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.notEnoughData') }}
         </p>
+
+        <!-- Sobre todo el historial, no el periodo: "hace cuánto" es una
+             pregunta sobre ahora (ver findLastPoopAt). -->
+        <div
+          v-if="lastPoopAt"
+          class="flex items-center justify-between rounded-xl bg-surface-sunken p-3"
+        >
+          <div class="text-xs text-text-muted">{{ t('stats.diaper.lastPoopLabel') }}</div>
+          <div class="text-lg font-bold tabular-nums text-diaper">
+            {{ formatSince(lastPoopAt) }}
+          </div>
+        </div>
       </section>
 
       <!-- Vitamina D - no depende de enabledCategories/ALL_CATEGORIES,

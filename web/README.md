@@ -1367,6 +1367,10 @@ rejilla de 6 columnas con el texto algo más pequeño.
 - **Formulario** (hoja en `DashboardView.vue`): grados con un decimal y
   un stepper de ±0,1 °C limitado a 34-43 (lo mismo que valida el
   backend), dónde se tomó (axila/recto/oído/frente, opcional) y cuándo.
+  El lugar llega preseleccionado al crear con el de "Tu cuenta → Lugar
+  de toma de temperatura por defecto" (`default_temperature_method`),
+  mismo patrón que la talla de pañal por defecto; al editar siempre
+  muestra el de la propia medición.
 - **Línea temporal**: `type: 'temperature'` en `TimelineEntry`, con su
   color (`--temperature`, tema claro y oscuro) e icono de termómetro.
   Se abre para editar y se borra con swipe como el resto. Mismo formato

@@ -127,7 +127,10 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   "recientes" y "un día"), en `action_bar_categories` como categoría
   válida (desactivada por defecto en el frontend) y en el export de
   estadísticas como bloque `temperature` opcional (`null` si el bebé
-  nunca ha tenido una medición).
+  nunca ha tenido una medición). `users.default_temperature_method`
+  (`PUT /user/default-temperature-method`, nullable, mismo enum) guarda
+  el lugar preferido que el frontend preselecciona al crear, igual que
+  `default_diaper_size`.
 - `BabyController@destroy` — `DELETE /babies/{baby}`, borrado
   permanente del bebé y cuanto cuelga de él. `leave()` (desvincular al
   usuario actual, dejando el bebé para el resto) ya rechazaba salir

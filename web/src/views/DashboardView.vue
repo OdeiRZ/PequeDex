@@ -343,7 +343,9 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     editingDiaperId.value = null
   } else if (sheet === 'temperature') {
     temperatureCelsius.value = '37.0'
-    temperatureMethod.value = ''
+    // Lugar preferido del perfil (Tu cuenta), solo al crear - igual que
+    // la talla de pañal por defecto.
+    temperatureMethod.value = auth.user?.default_temperature_method ?? ''
     temperatureMeasuredAt.value = nowForInput()
     editingTemperatureId.value = null
   } else if (sheet === 'growth') {

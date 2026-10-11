@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import type { DiaperSize } from '@/stores/babies'
+import type { DiaperSize, TemperatureMethod } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -370,6 +370,31 @@ async function onSelectDefaultDiaperSize(value: DiaperSize | '') {
   }
 }
 
+// --- Ajustes: lugar de toma de temperatura por defecto ---
+
+// Mismo patrón que la talla de pañal por defecto: solo preselecciona al
+// CREAR una temperatura (ver `openSheet()` en DashboardView.vue).
+const TEMPERATURE_METHODS: TemperatureMethod[] = ['axila', 'recto', 'oido', 'frente']
+const defaultTemperatureMethod = ref<TemperatureMethod | ''>('')
+let defaultTemperatureMethodSaveToken = 0
+
+async function onSelectDefaultTemperatureMethod(value: TemperatureMethod | '') {
+  const previous = defaultTemperatureMethod.value
+  if (value === previous) return
+  defaultTemperatureMethod.value = value
+  feedback.tap()
+
+  const token = ++defaultTemperatureMethodSaveToken
+  try {
+    await auth.updateDefaultTemperatureMethod(value || null)
+  } catch {
+    if (token === defaultTemperatureMethodSaveToken) {
+      defaultTemperatureMethod.value = previous
+      toast.show(t('profile.defaultTemperatureMethod.saveError'), 'error')
+    }
+  }
+}
+
 // --- Ajustes: duración de toma al pecho por defecto ---
 
 const DEFAULT_FEED_DURATION_OPTIONS = [10, 15, 20, 30, 45]
@@ -469,6 +494,7 @@ watch(
     todaySummaryEnabled.value = auth.user?.today_summary_enabled ?? true
     interactionFeedbackEnabled.value = auth.user?.interaction_feedback_enabled ?? true
     defaultDiaperSize.value = auth.user?.default_diaper_size ?? ''
+    defaultTemperatureMethod.value = auth.user?.default_temperature_method ?? ''
     defaultFeedDurationMinutes.value = auth.user?.default_feed_duration_minutes ?? null
     soundsEnabled.value = auth.user?.sounds_enabled ?? true
     statsEnabled.value = auth.user?.stats_enabled ?? true
@@ -845,6 +871,49 @@ watch(
           @click="onSelectDefaultDiaperSize(size)"
         >
           {{ size }}
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <span class="field-label">{{ t('profile.defaultTemperatureMethod.title') }}</span>
+      <p class="text-xs text-text-muted">
+        {{ t('profile.defaultTemperatureMethod.description') }}
+      </p>
+      <div
+        class="mt-2 flex flex-wrap items-center gap-2"
+        role="radiogroup"
+        :aria-label="t('profile.defaultTemperatureMethod.title')"
+      >
+        <button
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultTemperatureMethod === ''
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultTemperatureMethod === ''"
+          @click="onSelectDefaultTemperatureMethod('')"
+        >
+          {{ t('dashboard.temperatureForm.methodUnspecified') }}
+        </button>
+        <button
+          v-for="method in TEMPERATURE_METHODS"
+          :key="method"
+          type="button"
+          role="radio"
+          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          :class="
+            defaultTemperatureMethod === method
+              ? 'border-brand bg-brand/10 text-brand'
+              : 'border-border text-text-muted'
+          "
+          :aria-checked="defaultTemperatureMethod === method"
+          @click="onSelectDefaultTemperatureMethod(method)"
+        >
+          {{ t(`dashboard.temperatureForm.methods.${method}`) }}
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\DiaperSize;
+use App\Enums\TemperatureMethod;
 use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'interaction_feedback_enabled',
         'default_diaper_size',
         'default_feed_duration_minutes',
+        'default_temperature_method',
         'sounds_enabled',
         'stats_enabled',
         'milestones_enabled',
@@ -66,6 +68,7 @@ class User extends Authenticatable
             'interaction_feedback_enabled' => 'boolean',
             'default_diaper_size' => DiaperSize::class,
             'default_feed_duration_minutes' => 'integer',
+            'default_temperature_method' => TemperatureMethod::class,
             'sounds_enabled' => 'boolean',
             'stats_enabled' => 'boolean',
             'milestones_enabled' => 'boolean',

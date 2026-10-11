@@ -12,7 +12,8 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - **Registro de temperatura** - nuevo acceso "+ Temperatura" en la
   barra de accesos, desactivado por defecto (se activa en "Tu cuenta →
   Barra de accesos"). Grados con un decimal y botones de ±0,1 °C, dónde
-  se tomó (axila, recto, oído o frente, opcional) y cuándo. En la barra
+  se tomó (axila, recto, oído o frente, opcional, preseleccionado con
+  el lugar por defecto que se elige en "Tu cuenta") y cuándo. En la barra
   sale como "+ Temp." para caber en una línea. En la línea temporal
   sigue el formato del resto de eventos: arriba la temperatura con el
   lugar entre paréntesis, debajo su nivel (baja, normal, algo alta o

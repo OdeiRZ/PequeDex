@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\DiaperSize;
+use App\Enums\TemperatureMethod;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -214,6 +215,29 @@ it('sets and clears a default diaper size, defaulting to none', function () {
         ->assertOk()
         ->assertJsonPath('default_diaper_size', null);
     expect($user->refresh()->default_diaper_size)->toBeNull();
+});
+
+it('sets and clears a default temperature method, defaulting to none', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->default_temperature_method)->toBeNull();
+
+    $this->putJson('/api/user/default-temperature-method', ['default_temperature_method' => 'oido'])
+        ->assertOk()
+        ->assertJsonPath('default_temperature_method', 'oido');
+    expect($user->refresh()->default_temperature_method)->toBe(TemperatureMethod::Oido);
+
+    $this->putJson('/api/user/default-temperature-method', ['default_temperature_method' => null])
+        ->assertOk()
+        ->assertJsonPath('default_temperature_method', null);
+});
+
+it('rejects an invalid default temperature method', function () {
+    actingAsUser();
+
+    $this->putJson('/api/user/default-temperature-method', ['default_temperature_method' => 'boca'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('default_temperature_method');
 });
 
 it('rejects an invalid default diaper size', function () {

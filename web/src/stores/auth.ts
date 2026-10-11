@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiClient, clearStoredToken, getStoredToken, storeToken } from '@/lib/api'
 import type { Category } from '@/lib/category'
-import type { DiaperSize } from './babies'
+import type { DiaperSize, TemperatureMethod } from './babies'
 import { useBabiesStore } from './babies'
 
 export interface User {
@@ -21,6 +21,7 @@ export interface User {
   // como hoy ("Sin indicar").
   default_diaper_size: DiaperSize | null
   default_feed_duration_minutes: number | null
+  default_temperature_method: TemperatureMethod | null
   // Muestran/ocultan sus respectivas tarjetas de enlace en el
   // dashboard (`SoundsLinkCard.vue`/`StatsLinkCard.vue`) - no bloquean
   // la ruta en sí (`/sonidos`/`/estadisticas` siguen accesibles
@@ -167,6 +168,13 @@ export const useAuthStore = defineStore('auth', {
     async updateDefaultDiaperSize(size: DiaperSize | null) {
       const { data } = await apiClient.put('/user/default-diaper-size', {
         default_diaper_size: size,
+      })
+      this.user = data
+    },
+
+    async updateDefaultTemperatureMethod(method: TemperatureMethod | null) {
+      const { data } = await apiClient.put('/user/default-temperature-method', {
+        default_temperature_method: method,
       })
       this.user = data
     },

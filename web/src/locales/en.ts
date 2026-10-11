@@ -628,6 +628,11 @@ export default {
       description: 'Preselected when creating a new diaper change - does not affect saved ones.',
       saveError: 'Could not save the change. Please try again.',
     },
+    defaultTemperatureMethod: {
+      title: 'Default temperature reading site',
+      description: 'Preselected when logging a new temperature - does not affect saved ones.',
+      saveError: 'Could not save the change. Please try again.',
+    },
     defaultFeedDuration: {
       title: 'Default breastfeed duration',
       description: 'Preselected when creating a new feed - does not affect saved ones.',

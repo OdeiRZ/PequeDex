@@ -634,6 +634,12 @@ export default {
       description: 'Preseleccionada al crear un pañal nuevo - no afecta a los ya guardados.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    defaultTemperatureMethod: {
+      title: 'Lugar de toma de temperatura por defecto',
+      description:
+        'Preseleccionado al registrar una temperatura nueva - no afecta a las ya guardadas.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
     defaultFeedDuration: {
       title: 'Duración de toma al pecho por defecto',
       description: 'Preseleccionada al crear una toma nueva - no afecta a las ya guardadas.',

@@ -9,6 +9,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Registro de temperatura** - nuevo acceso "+ Temperatura" en la
+  barra de accesos, desactivado por defecto (se activa en "Tu cuenta →
+  Barra de accesos"). Grados con un decimal y botones de ±0,1 °C, dónde
+  se tomó (axila, recto, oído o frente, opcional) y cuándo. Sale en la
+  línea temporal con su icono y color, con una etiqueta neutra "≥ 38
+  °C" cuando llega a ese valor, y se edita o borra como el resto.
+  Mientras haya mediciones en las últimas 48 h, el Dashboard muestra
+  una tarjeta con la última, la máxima y una minigráfica con la línea
+  de 38 °C; en bebés de menos de 3 meses con 38 °C o más añade un aviso
+  fijo para consultar con el pediatra o urgencias. Estadísticas (y el
+  PDF) tienen un bloque de temperatura si hay alguna medición.
+
 - **Crecimiento: bandas de percentiles de la OMS** - las gráficas de
   peso, talla y perímetro craneal muestran detrás de la línea del bebé
   las curvas de referencia de la OMS para su sexo (zona del percentil 3

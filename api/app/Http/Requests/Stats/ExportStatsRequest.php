@@ -131,6 +131,17 @@ class ExportStatsRequest extends FormRequest
             'weekly_trend.*.feed_count' => ['required', 'integer', 'min:0'],
             'weekly_trend.*.diaper_count' => ['required', 'integer', 'min:0'],
 
+            // `null` si el bebé nunca ha tenido una temperatura registrada.
+            'temperature' => ['nullable', 'array'],
+            'temperature.count' => ['required_with:temperature', 'integer', 'min:0'],
+            'temperature.high_count' => ['required_with:temperature', 'integer', 'min:0'],
+            'temperature.max' => ['nullable', 'array'],
+            'temperature.max.celsius' => ['required_with:temperature.max', 'numeric'],
+            'temperature.max.at' => ['required_with:temperature.max', 'date'],
+            'temperature.latest' => ['nullable', 'array'],
+            'temperature.latest.celsius' => ['required_with:temperature.latest', 'numeric'],
+            'temperature.latest.at' => ['required_with:temperature.latest', 'date'],
+
             'activity_heatmap' => ['present', 'array'],
             'activity_heatmap.*.day_of_week' => ['required', 'integer', 'min:0', 'max:6'],
             'activity_heatmap.*.hour' => ['required', 'integer', 'min:0', 'max:23'],

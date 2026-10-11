@@ -16,6 +16,8 @@ import {
   type MilestoneCategory,
   type MilkType,
   type Sleep,
+  type Temperature,
+  type TemperatureMethod,
   type TimelineEntry,
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
@@ -32,6 +34,7 @@ import EntryCard from '@/components/EntryCard.vue'
 import MilestoneStories from '@/components/MilestoneStories.vue'
 import MilestoneStoryViewer from '@/components/MilestoneStoryViewer.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
+import TemperatureCard from '@/components/TemperatureCard.vue'
 import TodaySummary from '@/components/TodaySummary.vue'
 import SoundsLinkCard from '@/components/SoundsLinkCard.vue'
 import StatsLinkCard from '@/components/StatsLinkCard.vue'
@@ -42,6 +45,7 @@ import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
 import { milestoneCategories, milestoneCategoryEmoji } from '@/lib/milestoneCategory'
 import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
+import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import {
   addDays,
   formatWeekdayDateLabel,
@@ -59,7 +63,9 @@ import {
   entryPoopColor,
   entrySleepEmoji,
   entrySleepPulsing,
+  entryTemperatureBadge,
   entryTitle,
+  formatCelsius,
   filterTimelineToDay,
   formatTime,
   groupTimelineByDay,
@@ -104,6 +110,7 @@ async function loadBabyData() {
       babies.fetchSleepPrediction(),
       babies.fetchFeedPrediction(),
       babies.fetchVitaminDSchedule(),
+      babies.fetchTemperatures(),
     ])
   } finally {
     loading.value = false
@@ -279,6 +286,7 @@ let pollTimer: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
   pollTimer = setInterval(async () => {
+    now.value = new Date()
     if (!babies.current) return
 
     // Best-effort background sync - a failed poll (offline, API asleep)
@@ -332,6 +340,11 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     diaperSize.value = auth.user?.default_diaper_size ?? ''
     diaperChangedAt.value = nowForInput()
     editingDiaperId.value = null
+  } else if (sheet === 'temperature') {
+    temperatureCelsius.value = '37.0'
+    temperatureMethod.value = ''
+    temperatureMeasuredAt.value = nowForInput()
+    editingTemperatureId.value = null
   } else if (sheet === 'growth') {
     growthMeasuredAt.value = new Date().toISOString().slice(0, 10)
     growthWeightKg.value = ''
@@ -404,6 +417,7 @@ const actionBarItems = computed(() => {
     { category: 'diaper', label: t('dashboard.quickLog.diaper') },
     { category: 'growth', label: t('dashboard.quickLog.growth') },
     { category: 'milestone', label: t('dashboard.quickLog.milestone') },
+    { category: 'temperature', label: t('dashboard.quickLog.temperature') },
   ]
   return allItems.filter((item) => enabledCategories.value.includes(item.category))
 })
@@ -846,6 +860,77 @@ async function onSubmitDiaper() {
   }
 }
 
+// --- Registro rápido: temperatura ---
+
+// Recalculado con `now` (se refresca con el sondeo de 5 s de la línea
+// temporal) para que una medición salga sola de la ventana de 48 h.
+const now = ref(new Date())
+const lastTemperatures = computed(() => recentTemperatures(babies.temperatures, now.value))
+const babyUnderThreeMonths = computed(() => isUnderThreeMonths(babies.current?.birth_date))
+
+// String, no número: es lo que da el <input type="number">, y así un
+// campo vacío se distingue de un 0.
+const temperatureCelsius = ref('37.0')
+const temperatureMethod = ref<TemperatureMethod | ''>('')
+const temperatureMeasuredAt = ref('')
+const savingTemperature = ref(false)
+const editingTemperatureId = ref<number | null>(null)
+
+const TEMPERATURE_METHODS: TemperatureMethod[] = ['axila', 'recto', 'oido', 'frente']
+
+const temperatureMethodLabels = computed<Record<string, string>>(() => ({
+  axila: t('dashboard.temperatureForm.methods.axila'),
+  recto: t('dashboard.temperatureForm.methods.recto'),
+  oido: t('dashboard.temperatureForm.methods.oido'),
+  frente: t('dashboard.temperatureForm.methods.frente'),
+}))
+
+// Mismo stepper de ±0,1 que el de ml de las tomas, sin salirse del rango
+// que acepta el backend (34-43 °C).
+function adjustTemperature(delta: number) {
+  const current = Number(temperatureCelsius.value) || 37
+  const next = Math.min(43, Math.max(34, Math.round((current + delta) * 10) / 10))
+  temperatureCelsius.value = next.toFixed(1)
+}
+
+function onSelectTemperatureMethod(value: TemperatureMethod | '') {
+  if (value !== temperatureMethod.value) feedback.select()
+  temperatureMethod.value = value
+}
+
+function openTemperatureEdit(temperature: Temperature) {
+  editingTemperatureId.value = temperature.id
+  temperatureCelsius.value = temperature.celsius.toFixed(1)
+  temperatureMethod.value = temperature.method ?? ''
+  temperatureMeasuredAt.value = toLocalInputValue(temperature.measured_at)
+  activeSheet.value = 'temperature'
+}
+
+async function onSubmitTemperature() {
+  savingTemperature.value = true
+
+  try {
+    const payload = {
+      measured_at: toUtcIso(temperatureMeasuredAt.value),
+      celsius: Number(temperatureCelsius.value),
+      method: temperatureMethod.value || null,
+    }
+
+    if (editingTemperatureId.value) {
+      await babies.updateTemperature(editingTemperatureId.value, payload)
+      toast.show(t('dashboard.temperatureForm.toastUpdated'))
+    } else {
+      await babies.createTemperature(payload)
+      toast.show(t('dashboard.temperatureForm.toastCreated'))
+    }
+    closeSheet()
+  } catch (error) {
+    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+  } finally {
+    savingTemperature.value = false
+  }
+}
+
 // Backend values (izquierdo/derecho/ambos, mojado/sucio/ambos) stay in
 // Spanish regardless of UI language - they're internal enum values, not
 // display text - so the timeline translates them for display here.
@@ -871,6 +956,10 @@ function entryTitleFor(entry: TimelineEntry): string {
     t,
     (side) => sideLabels.value[side ?? ''] ?? side ?? '',
     (type) => diaperTypeLabels.value[type] ?? type,
+    (celsius, method) =>
+      method
+        ? ` · ${temperatureMethodLabels.value[method] ?? method}`
+        : formatCelsius(celsius, dateLocale.value),
   )
 }
 
@@ -896,6 +985,8 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
     } else if (entry.type === 'sleep') {
       await babies.deleteSleep(entry.data.id)
       void babies.fetchSleepPrediction().catch(() => {})
+    } else if (entry.type === 'temperature') {
+      await babies.deleteTemperature(entry.data.id)
     } else {
       await babies.deleteDiaperChange(entry.data.id)
     }
@@ -910,6 +1001,8 @@ function onOpenEntry(entry: (typeof babies.timeline)[number]) {
     openFeedEdit(entry.data)
   } else if (entry.type === 'sleep') {
     openSleepEdit(entry.data)
+  } else if (entry.type === 'temperature') {
+    openTemperatureEdit(entry.data)
   } else {
     openDiaperEdit(entry.data)
   }
@@ -1794,6 +1887,16 @@ const sleepPredictionDue = computed(() => {
               class="dash-enter -mb-2"
               @open-history="openSheet('vitaminDHistory')"
             />
+            <!-- Solo mientras haya alguna medición en las últimas 48 h,
+                 aunque el acceso "+ Temperatura" esté desactivado. -->
+            <TemperatureCard
+              v-if="lastTemperatures.length > 0"
+              class="dash-enter"
+              :temperatures="lastTemperatures"
+              :date-locale="dateLocale"
+              :under-three-months="babyUnderThreeMonths"
+              @add="openSheet('temperature')"
+            />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"
@@ -1897,7 +2000,11 @@ const sleepPredictionDue = computed(() => {
                     :poop-color="entryPoopColor(item.entry)"
                     :emoji="entrySleepEmoji(item.entry)"
                     :emoji-pulsing="entrySleepPulsing(item.entry)"
-                    :badge="entryDuration(item.entry) ?? entryDiaperSizeLabelFor(item.entry)"
+                    :badge="
+                      entryDuration(item.entry) ??
+                      entryDiaperSizeLabelFor(item.entry) ??
+                      entryTemperatureBadge(item.entry, t)
+                    "
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"
@@ -2178,6 +2285,125 @@ const sleepPredictionDue = computed(() => {
               </button>
               <button v-press type="submit" :disabled="savingSleep" class="btn-primary flex-1">
                 {{ savingSleep ? t('common.saving') : t('common.save') }}
+              </button>
+            </div>
+          </form>
+        </BottomSheet>
+
+        <BottomSheet :open="activeSheet === 'temperature'" @update:open="closeSheet">
+          <h3 class="mb-4 flex items-center gap-2 font-display text-base font-bold">
+            <span
+              class="grid h-7 w-7 place-items-center rounded-lg"
+              :class="[categoryText.temperature, categoryBg.temperature]"
+            >
+              <CategoryIcon category="temperature" class="h-4 w-4" />
+            </span>
+            {{
+              editingTemperatureId
+                ? t('dashboard.temperatureForm.editTitle')
+                : t('dashboard.quickLog.temperature')
+            }}
+          </h3>
+          <form class="flex flex-col gap-4" @submit.prevent="onSubmitTemperature">
+            <div>
+              <label for="temperature-celsius" class="field-label">{{
+                t('dashboard.temperatureForm.value')
+              }}</label>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  :aria-label="t('dashboard.temperatureForm.decrease')"
+                  @click="adjustTemperature(-0.1)"
+                >
+                  −
+                </button>
+                <div class="relative flex-1">
+                  <input
+                    id="temperature-celsius"
+                    v-model="temperatureCelsius"
+                    type="number"
+                    inputmode="decimal"
+                    min="34"
+                    max="43"
+                    step="0.1"
+                    required
+                    class="field-input pr-10 text-center"
+                  />
+                  <span
+                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-muted"
+                    >°C</span
+                  >
+                </div>
+                <button
+                  type="button"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  :aria-label="t('dashboard.temperatureForm.increase')"
+                  @click="adjustTemperature(0.1)"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">{{ t('dashboard.temperatureForm.methodLabel') }}</span>
+              <div
+                class="flex flex-wrap items-center gap-2"
+                role="radiogroup"
+                :aria-label="t('dashboard.temperatureForm.methodLabel')"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    temperatureMethod === ''
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-checked="temperatureMethod === ''"
+                  @click="onSelectTemperatureMethod('')"
+                >
+                  {{ t('dashboard.temperatureForm.methodUnspecified') }}
+                </button>
+                <button
+                  v-for="method in TEMPERATURE_METHODS"
+                  :key="method"
+                  type="button"
+                  role="radio"
+                  class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+                  :class="
+                    temperatureMethod === method
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-border text-text-muted'
+                  "
+                  :aria-checked="temperatureMethod === method"
+                  @click="onSelectTemperatureMethod(method)"
+                >
+                  {{ temperatureMethodLabels[method] }}
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">{{ t('dashboard.temperatureForm.when') }}</span>
+              <DateTimeWheel
+                v-model="temperatureMeasuredAt"
+                :min="minDateTime"
+                :date-locale="dateLocale"
+                :ariaLabel="t('dashboard.temperatureForm.when')"
+              />
+            </div>
+            <div class="mt-1 flex gap-3">
+              <button type="button" class="btn-ghost flex-1" @click="cancelSheet">
+                {{ t('common.cancel') }}
+              </button>
+              <button
+                v-press
+                type="submit"
+                :disabled="savingTemperature"
+                class="btn-primary flex-1"
+              >
+                {{ savingTemperature ? t('common.saving') : t('common.save') }}
               </button>
             </div>
           </form>

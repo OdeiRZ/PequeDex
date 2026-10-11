@@ -172,6 +172,9 @@ const actionBarToggleOptions = computed(() => [
   { category: 'sleep' as const, label: t('dashboard.quickLog.sleep') },
   { category: 'diaper' as const, label: t('dashboard.quickLog.diaper') },
   { category: 'growth' as const, label: t('dashboard.quickLog.growth') },
+  // Desactivada por defecto (no está en ALL_CATEGORIES): solo hace falta
+  // cuando el bebé está malito.
+  { category: 'temperature' as const, label: t('dashboard.quickLog.temperature') },
 ])
 
 // Guardado al vuelo (como el selector de idioma), no un formulario con

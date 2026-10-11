@@ -320,6 +320,27 @@
         @endif
     </div>
 
+    {{-- Temperatura - solo si el bebé tiene alguna medición registrada. --}}
+    @if ($temperature !== null)
+        @php
+            $fmtCelsius = fn ($c) => number_format($c, 1, ',', '').' °C';
+            $fmtWhen = fn ($at) => \Carbon\CarbonImmutable::parse($at)->translatedFormat('j M, H:i');
+        @endphp
+        <div class="card" style="page-break-inside: avoid;">
+            <div class="card-title"><span class="bar" style="background: #c0603f;"></span>Temperatura</div>
+            @if ($temperature['count'] === 0)
+                <p class="empty">Sin mediciones en este periodo.</p>
+            @else
+                @include('pdf.partials.tiles', ['tiles' => [
+                    ['label' => 'Mediciones', 'value' => (string) $temperature['count']],
+                    ['label' => 'De 38 °C o más', 'value' => (string) $temperature['high_count']],
+                    ['label' => 'Máxima', 'value' => $temperature['max'] !== null ? $fmtCelsius($temperature['max']['celsius']) : null, 'note' => $temperature['max'] !== null ? $fmtWhen($temperature['max']['at']) : null, 'color' => '#c0603f'],
+                    ['label' => 'Última', 'value' => $temperature['latest'] !== null ? $fmtCelsius($temperature['latest']['celsius']) : null, 'note' => $temperature['latest'] !== null ? $fmtWhen($temperature['latest']['at']) : null],
+                ]])
+            @endif
+        </div>
+    @endif
+
     {{-- Vitamina D - solo si hay (o hubo) una pauta activada. --}}
     @if ($vitaminD['has_schedule'])
         <div class="card" style="page-break-inside: avoid;">

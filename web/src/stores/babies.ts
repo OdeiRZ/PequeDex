@@ -56,6 +56,18 @@ export interface DiaperChange {
   notes: string | null
 }
 
+export type TemperatureMethod = 'axila' | 'recto' | 'oido' | 'frente'
+
+export interface Temperature {
+  id: number
+  baby_id: number
+  user_id: number
+  measured_at: string
+  celsius: number
+  method: TemperatureMethod | null
+  notes: string | null
+}
+
 export interface GrowthMeasurement {
   id: number
   baby_id: number
@@ -136,6 +148,14 @@ export type TimelineEntry =
   | { type: 'feed'; at: string; data: Feed }
   | { type: 'sleep'; at: string; data: Sleep }
   | { type: 'diaper_change'; at: string; data: DiaperChange }
+  | { type: 'temperature'; at: string; data: Temperature }
+
+interface CreateTemperaturePayload {
+  measured_at: string
+  celsius: number
+  method?: TemperatureMethod | null
+  notes?: string | null
+}
 
 interface CreateFeedPayload {
   type: FeedType
@@ -230,6 +250,12 @@ interface BabiesState {
   statsSleeps: Sleep[]
   statsFeeds: Feed[]
   statsDiaperChanges: DiaperChange[]
+  statsTemperatures: Temperature[]
+  /** Todas las temperaturas del bebé actual, para la tarjeta de las
+   * últimas 48 h del Dashboard - aparte de `timeline` (que solo trae
+   * las 50 entradas más recientes de todo y en un día ajetreado podría
+   * dejar fuera alguna medición). Pocas filas por naturaleza. */
+  temperatures: Temperature[]
   vitaminDSchedule: VitaminDSchedule | null
   /** Last 14 days only, embedded in fetchVitaminDSchedule()'s response -
    * enough for the Dashboard's retroactive editor without a request per
@@ -309,6 +335,8 @@ export const useBabiesStore = defineStore('babies', {
     statsSleeps: [],
     statsFeeds: [],
     statsDiaperChanges: [],
+    statsTemperatures: [],
+    temperatures: [],
     vitaminDSchedule: null,
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
@@ -488,6 +516,62 @@ export const useBabiesStore = defineStore('babies', {
       }
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+    },
+
+    async fetchTemperatures() {
+      if (!this.current) {
+        return
+      }
+
+      const { data } = await apiClient.get(`/babies/${this.current.id}/temperatures`)
+      this.temperatures = data.data
+    },
+
+    async createTemperature(payload: CreateTemperaturePayload) {
+      const { data } = await apiClient.post(`/babies/${this.current!.id}/temperatures`, payload)
+      const entry: TimelineEntry = {
+        type: 'temperature',
+        at: data.data.measured_at,
+        data: data.data,
+      }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      this.temperatures = upsertByDate(this.temperatures, data.data, (t) => t.measured_at)
+    },
+
+    async updateTemperature(id: number, payload: CreateTemperaturePayload) {
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/temperatures/${id}`,
+        payload,
+      )
+      const entry: TimelineEntry = {
+        type: 'temperature',
+        at: data.data.measured_at,
+        data: data.data,
+      }
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      this.temperatures = upsertByDate(this.temperatures, data.data, (t) => t.measured_at)
+    },
+
+    // Mismo borrado optimista que deleteFeed() más abajo.
+    async deleteTemperature(id: number) {
+      const previous = this.timeline
+      const previousDay = this.dayTimeline
+      const previousTemperatures = this.temperatures
+      const keep = (entry: TimelineEntry) => !(entry.type === 'temperature' && entry.data.id === id)
+      this.timeline = this.timeline.filter(keep)
+      this.dayTimeline = this.dayTimeline.filter(keep)
+      this.temperatures = this.temperatures.filter((t) => t.id !== id)
+
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/temperatures/${id}`)
+      } catch (error) {
+        this.timeline = previous
+        this.dayTimeline = previousDay
+        this.temperatures = previousTemperatures
+        throw error
+      }
     },
 
     // Optimistic: removed from `timeline` synchronously, before the
@@ -808,14 +892,16 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       const babyId = this.current.id
-      const [sleeps, feeds, diaperChanges] = await Promise.all([
+      const [sleeps, feeds, diaperChanges, temperatures] = await Promise.all([
         apiClient.get(`/babies/${babyId}/sleeps`),
         apiClient.get(`/babies/${babyId}/feeds`),
         apiClient.get(`/babies/${babyId}/diaper-changes`),
+        apiClient.get(`/babies/${babyId}/temperatures`),
       ])
       this.statsSleeps = sleeps.data.data
       this.statsFeeds = feeds.data.data
       this.statsDiaperChanges = diaperChanges.data.data
+      this.statsTemperatures = temperatures.data.data
     },
 
     // Same reasoning as exportContractionsPdf() for returning a Blob

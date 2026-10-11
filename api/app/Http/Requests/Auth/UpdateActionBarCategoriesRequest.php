@@ -25,7 +25,7 @@ class UpdateActionBarCategoriesRequest extends FormRequest
             'action_bar_categories' => ['required', 'array', 'min:3'],
             'action_bar_categories.*' => [
                 'string',
-                Rule::in(['feed', 'sleep', 'diaper', 'growth', 'milestone']),
+                Rule::in(['feed', 'sleep', 'diaper', 'growth', 'milestone', 'temperature']),
                 'distinct',
             ],
         ];

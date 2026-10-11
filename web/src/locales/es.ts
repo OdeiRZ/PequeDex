@@ -249,6 +249,14 @@ export default {
       hint: 'Toca una celda para ver el detalle',
       cellLabel: '{day}, {hour}:00 · {count} eventos',
     },
+    temperature: {
+      title: 'Temperatura',
+      countLabel: 'Mediciones',
+      highLabel: 'De 38 °C o más',
+      maxLabel: 'Máxima',
+      latestLabel: 'Última',
+      noneInPeriod: 'Sin mediciones en este periodo.',
+    },
     vitaminD: {
       title: 'Vitamina D',
       givenLabel: 'Tomas dadas',
@@ -304,6 +312,7 @@ export default {
       diaper: 'Pañal eliminado.',
       growth: 'Medida eliminada.',
       milestone: 'Hito eliminado.',
+      temperature: 'Temperatura eliminada.',
     },
     removeError: {
       feed: 'No se ha podido eliminar la toma.',
@@ -311,6 +320,7 @@ export default {
       diaper: 'No se ha podido eliminar el pañal.',
       growth: 'No se ha podido eliminar la medida.',
       milestone: 'No se ha podido eliminar el hito.',
+      temperature: 'No se ha podido eliminar la temperatura.',
     },
     babySwitcher: {
       unnamed: 'Bebé sin nombre',
@@ -357,6 +367,7 @@ export default {
       diaper: '+ Pañal',
       growth: '+ Medida',
       milestone: '+ Hito',
+      temperature: '+ Temperatura',
     },
     todaySummary: {
       feed: 'toma | tomas',
@@ -409,6 +420,35 @@ export default {
       day: 'día',
       hour: 'hora',
       minute: 'minuto',
+    },
+    temperatureCard: {
+      title: 'Temperatura',
+      window: 'últimas 48 h',
+      add: '+ Añadir',
+      max: 'Máx.',
+      chartLabel: '{count} mediciones en las últimas 48 horas',
+      axisStart: 'hace 48 h',
+      axisEnd: 'ahora',
+      thresholdHint: '- - 38 °C',
+      infantWarning:
+        'En bebés de menos de 3 meses, ante fiebre (38 °C o más) consulta con tu pediatra o acude a urgencias.',
+    },
+    temperatureForm: {
+      editTitle: 'Editar temperatura',
+      value: 'Temperatura',
+      decrease: 'Bajar 0,1 °C',
+      increase: 'Subir 0,1 °C',
+      methodLabel: 'Dónde se tomó',
+      methodUnspecified: 'Sin indicar',
+      methods: {
+        axila: 'Axila',
+        recto: 'Recto',
+        oido: 'Oído',
+        frente: 'Frente',
+      },
+      when: 'Cuándo',
+      toastCreated: 'Temperatura registrada.',
+      toastUpdated: 'Temperatura actualizada.',
     },
     diaperForm: {
       editTitle: 'Editar pañal',
@@ -472,6 +512,7 @@ export default {
     },
     timeline: {
       title: 'Línea temporal',
+      feverBadge: '≥ 38 °C',
       empty: 'Todavía no hay nada registrado.',
       feed: 'Toma',
       sleep: 'Sueño',

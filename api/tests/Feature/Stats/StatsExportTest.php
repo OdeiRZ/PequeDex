@@ -196,6 +196,34 @@ it('shows no deltas for the whole history', function () {
     expect(array_filter($notes))->toBe([]);
 });
 
+it('renders the temperature section when the payload carries one', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['temperature'] = [
+        'count' => 3,
+        'high_count' => 1,
+        'max' => ['celsius' => 38.4, 'at' => '2026-08-30T03:00:00Z'],
+        'latest' => ['celsius' => 37.1, 'at' => '2026-08-30T09:00:00Z'],
+    ];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+    expect(app(StatsExportController::class)->buildViewData($baby, $payload)['temperature']['high_count'])->toBe(1);
+});
+
+it('rejects a temperature max missing its date', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['temperature'] = ['count' => 1, 'high_count' => 0, 'max' => ['celsius' => 37.0], 'latest' => null];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['temperature.max.at']);
+});
+
 it('rejects an unknown period', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

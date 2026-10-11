@@ -16,6 +16,7 @@ use App\Http\Controllers\Milestones\MilestoneController;
 use App\Http\Controllers\Sleeps\SleepController;
 use App\Http\Controllers\Sleeps\SleepPredictionController;
 use App\Http\Controllers\Stats\StatsExportController;
+use App\Http\Controllers\Temperatures\TemperatureController;
 use App\Http\Controllers\VitaminD\VitaminDDoseController;
 use App\Http\Controllers\VitaminD\VitaminDScheduleController;
 use Illuminate\Http\Request;
@@ -83,6 +84,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);
     Route::put('/babies/{baby}/diaper-changes/{diaperChange}', [DiaperChangeController::class, 'update']);
     Route::delete('/babies/{baby}/diaper-changes/{diaperChange}', [DiaperChangeController::class, 'destroy']);
+
+    Route::get('/babies/{baby}/temperatures', [TemperatureController::class, 'index']);
+    Route::post('/babies/{baby}/temperatures', [TemperatureController::class, 'store']);
+    Route::put('/babies/{baby}/temperatures/{temperature}', [TemperatureController::class, 'update']);
+    Route::delete('/babies/{baby}/temperatures/{temperature}', [TemperatureController::class, 'destroy']);
 
     Route::get('/babies/{baby}/growth-measurements', [GrowthMeasurementController::class, 'index']);
     Route::get('/babies/{baby}/growth-reference', [GrowthReferenceController::class, 'show']);

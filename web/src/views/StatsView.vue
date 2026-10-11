@@ -26,11 +26,13 @@ import {
   filterPreviousPeriod,
   findLastPoopAt,
   summarizePeriodDeltas,
+  summarizeTemperatureStats,
   type StatsPeriod,
 } from '@/lib/stats'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
+import { formatCelsius } from '@/lib/timelineEntry'
 import type { DiaperResidueColor, DiaperSize } from '@/stores/babies'
 
 const { t, locale } = useI18n()
@@ -97,6 +99,24 @@ const periodSleeps = computed(() =>
 const periodFeeds = computed(() =>
   filterByPeriod(babies.statsFeeds, (f) => f.started_at, period.value),
 )
+// Temperatura: sobre el periodo elegido, como tomas/sueño/pañales. El
+// bloque solo aparece si el bebé tiene alguna medición registrada.
+const hasAnyTemperature = computed(() => babies.statsTemperatures.length > 0)
+const temperatureStats = computed(() =>
+  summarizeTemperatureStats(
+    filterByPeriod(babies.statsTemperatures, (t) => t.measured_at, period.value),
+  ),
+)
+
+function formatTemperatureDate(at: string): string {
+  return new Date(at).toLocaleString(dateLocale.value, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 const periodDiaperChanges = computed(() =>
   filterByPeriod(babies.statsDiaperChanges, (c) => c.changed_at, period.value),
 )
@@ -400,6 +420,7 @@ async function onExportPdf() {
         period: period.value,
         lastPoopAt: lastPoopAt.value,
         periodDeltas: periodDeltas.value,
+        temperature: hasAnyTemperature.value ? temperatureStats.value : null,
         weekComparison: weekComparison.value,
         weeklyTrend: weeklyTrend.value,
         activityHeatmap: activityHeatmap.value,
@@ -844,6 +865,46 @@ async function onExportPdf() {
             {{ formatSince(lastPoopAt) }}
           </div>
         </div>
+      </section>
+
+      <!-- Temperatura - solo si el bebé tiene alguna medición, se use o
+           no el acceso "+ Temperatura" ahora mismo. -->
+      <section v-if="hasAnyTemperature" class="card flex flex-col gap-3 p-4">
+        <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+          <span class="h-4 w-1.5 shrink-0 rounded-full bg-temperature"></span>
+          {{ t('stats.temperature.title') }}
+        </h2>
+        <div v-if="temperatureStats.count > 0" class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.temperature.countLabel') }}</div>
+            <div class="text-lg font-bold tabular-nums">{{ temperatureStats.count }}</div>
+          </div>
+          <div class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.temperature.highLabel') }}</div>
+            <div class="text-lg font-bold tabular-nums">{{ temperatureStats.highCount }}</div>
+          </div>
+          <div v-if="temperatureStats.max" class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.temperature.maxLabel') }}</div>
+            <div class="text-lg font-bold tabular-nums text-temperature">
+              {{ formatCelsius(temperatureStats.max.celsius, dateLocale) }}
+            </div>
+            <div class="text-[0.68rem] text-text-muted">
+              {{ formatTemperatureDate(temperatureStats.max.at) }}
+            </div>
+          </div>
+          <div v-if="temperatureStats.latest" class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.temperature.latestLabel') }}</div>
+            <div class="text-lg font-bold tabular-nums">
+              {{ formatCelsius(temperatureStats.latest.celsius, dateLocale) }}
+            </div>
+            <div class="text-[0.68rem] text-text-muted">
+              {{ formatTemperatureDate(temperatureStats.latest.at) }}
+            </div>
+          </div>
+        </div>
+        <p v-else class="py-2 text-center text-sm text-text-muted">
+          {{ t('stats.temperature.noneInPeriod') }}
+        </p>
       </section>
 
       <!-- Vitamina D - no depende de enabledCategories/ALL_CATEGORIES,

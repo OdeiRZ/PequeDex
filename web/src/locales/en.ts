@@ -248,6 +248,14 @@ export default {
       hint: 'Tap a cell to see the detail',
       cellLabel: '{day}, {hour}:00 · {count} events',
     },
+    temperature: {
+      title: 'Temperature',
+      countLabel: 'Readings',
+      highLabel: '38 °C or higher',
+      maxLabel: 'Highest',
+      latestLabel: 'Latest',
+      noneInPeriod: 'No readings in this period.',
+    },
     vitaminD: {
       title: 'Vitamin D',
       givenLabel: 'Doses given',
@@ -303,6 +311,7 @@ export default {
       diaper: 'Diaper change deleted.',
       growth: 'Measurement deleted.',
       milestone: 'Milestone deleted.',
+      temperature: 'Temperature deleted.',
     },
     removeError: {
       feed: 'Could not delete the feed.',
@@ -310,6 +319,7 @@ export default {
       diaper: 'Could not delete the diaper change.',
       growth: 'Could not delete the measurement.',
       milestone: 'Could not delete the milestone.',
+      temperature: 'Could not delete the temperature.',
     },
     babySwitcher: {
       unnamed: 'Unnamed baby',
@@ -355,6 +365,7 @@ export default {
       diaper: '+ Diaper',
       growth: '+ Measurement',
       milestone: '+ Milestone',
+      temperature: '+ Temperature',
     },
     todaySummary: {
       feed: 'feed | feeds',
@@ -407,6 +418,35 @@ export default {
       day: 'day',
       hour: 'hour',
       minute: 'minute',
+    },
+    temperatureCard: {
+      title: 'Temperature',
+      window: 'last 48 h',
+      add: '+ Add',
+      max: 'Max',
+      chartLabel: '{count} readings in the last 48 hours',
+      axisStart: '48 h ago',
+      axisEnd: 'now',
+      thresholdHint: '- - 38 °C',
+      infantWarning:
+        'For babies under 3 months, with a fever (38 °C or higher) contact your paediatrician or go to A&E.',
+    },
+    temperatureForm: {
+      editTitle: 'Edit temperature',
+      value: 'Temperature',
+      decrease: 'Lower by 0.1 °C',
+      increase: 'Raise by 0.1 °C',
+      methodLabel: 'Where it was taken',
+      methodUnspecified: 'Not specified',
+      methods: {
+        axila: 'Armpit',
+        recto: 'Rectal',
+        oido: 'Ear',
+        frente: 'Forehead',
+      },
+      when: 'When',
+      toastCreated: 'Temperature logged.',
+      toastUpdated: 'Temperature updated.',
     },
     diaperForm: {
       editTitle: 'Edit diaper',
@@ -470,6 +510,7 @@ export default {
     },
     timeline: {
       title: 'Timeline',
+      feverBadge: '≥ 38 °C',
       empty: 'Nothing logged yet.',
       feed: 'Feed',
       sleep: 'Sleep',

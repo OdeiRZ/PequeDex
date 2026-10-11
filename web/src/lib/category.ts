@@ -1,5 +1,9 @@
-export type Category = 'feed' | 'sleep' | 'diaper' | 'growth' | 'milestone'
+export type Category = 'feed' | 'sleep' | 'diaper' | 'growth' | 'milestone' | 'temperature'
 
+// Las categorías visibles por defecto (usuario sin barra personalizada,
+// `action_bar_categories` a null). 'temperature' existe pero NO va aquí:
+// se activa a mano desde "Barra de accesos", porque solo hace falta
+// cuando el bebé está malito, no a diario.
 export const ALL_CATEGORIES: Category[] = ['feed', 'sleep', 'diaper', 'growth', 'milestone']
 
 // Numero minimo de categorias que la barra de accesos debe mantener
@@ -17,6 +21,7 @@ export const categoryText: Record<Category, string> = {
   diaper: 'text-diaper',
   growth: 'text-growth',
   milestone: 'text-milestone',
+  temperature: 'text-temperature',
 }
 
 export const categoryBg: Record<Category, string> = {
@@ -25,6 +30,7 @@ export const categoryBg: Record<Category, string> = {
   diaper: 'bg-diaper/15',
   growth: 'bg-growth/15',
   milestone: 'bg-milestone/15',
+  temperature: 'bg-temperature/15',
 }
 
 // Solid (non-tinted) background - used where a toggled-on state needs to
@@ -37,6 +43,7 @@ export const categorySolidBg: Record<Category, string> = {
   diaper: 'bg-diaper',
   growth: 'bg-growth',
   milestone: 'bg-milestone',
+  temperature: 'bg-temperature',
 }
 
 // Ring in the category's own color, paired with `.card-interactive`'s
@@ -51,4 +58,5 @@ export const categoryRing: Record<Category, string> = {
   diaper: 'hover:ring-diaper/40 active:ring-diaper/40',
   growth: 'hover:ring-growth/40 active:ring-growth/40',
   milestone: 'hover:ring-milestone/40 active:ring-milestone/40',
+  temperature: 'hover:ring-temperature/40 active:ring-temperature/40',
 }

@@ -116,6 +116,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   fila que se está editando — el campo `user_id` en `feeds`/`sleeps`/
   `diaper_changes` es solo trazabilidad de quién lo registró, nunca se
   usa para decidir quién puede verlo o editarlo.
+- `app/Http/Controllers/Temperatures/TemperatureController.php` — CRUD
+  de `temperatures` (`measured_at`, `celsius` decimal con un decimal,
+  `method` opcional: `axila`/`recto`/`oido`/`frente` vía
+  `App\Enums\TemperatureMethod`, `notes`), mismo patrón que los pañales
+  (`AuthorizesBabyAccess`, `ValidatesNotBeforeBirth`, nada en el
+  futuro). `celsius` se valida entre 34 y 43 °C: fuera de ahí es casi
+  seguro un error al teclear (3.7 en vez de 37). Entra en
+  `TimelineController` como `type: 'temperature'` (los dos modos,
+  "recientes" y "un día"), en `action_bar_categories` como categoría
+  válida (desactivada por defecto en el frontend) y en el export de
+  estadísticas como bloque `temperature` opcional (`null` si el bebé
+  nunca ha tenido una medición).
 - `BabyController@destroy` — `DELETE /babies/{baby}`, borrado
   permanente del bebé y cuanto cuelga de él. `leave()` (desvincular al
   usuario actual, dejando el bebé para el resto) ya rechazaba salir

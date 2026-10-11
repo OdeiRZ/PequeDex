@@ -135,12 +135,36 @@ export function entryMilkDroplet(entry: TimelineEntry): string | undefined {
   return undefined
 }
 
+// Umbral habitual de fiebre en bebés. Solo marca la cifra con una
+// etiqueta neutra, no diagnostica nada.
+export const FEVER_THRESHOLD_CELSIUS = 38
+
+export function formatCelsius(celsius: number, locale?: string): string {
+  return `${celsius.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} °C`
+}
+
+export function entryTemperatureHigh(entry: TimelineEntry): boolean {
+  return entry.type === 'temperature' && entry.data.celsius >= FEVER_THRESHOLD_CELSIUS
+}
+
+// Mismo hueco de badge que la duración/talla - "≥ 38 °C" solo cuando
+// llega al umbral.
+export function entryTemperatureBadge(entry: TimelineEntry, t: Translate): string | undefined {
+  return entryTemperatureHigh(entry) ? t('dashboard.timeline.feverBadge') : undefined
+}
+
 export function entryTitle(
   entry: TimelineEntry,
   t: Translate,
   sideLabel: (side: string | null) => string,
   diaperTypeLabel: (type: string) => string,
+  temperatureLabel: (celsius: number, method: string | null) => string = (celsius) =>
+    `${celsius.toFixed(1)} °C`,
 ): string {
+  if (entry.type === 'temperature') {
+    return temperatureLabel(entry.data.celsius, entry.data.method)
+  }
+
   if (entry.type === 'feed') {
     if (entry.data.type === 'biberon') {
       return t('dashboard.timeline.bottleSummary', { amount: entry.data.amount_ml })

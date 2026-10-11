@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 class TimelineController extends Controller
 {
     /**
-     * Merges feeds/sleeps/diaper_changes into one chronological list -
+     * Merges feeds/sleeps/diaper_changes/temperatures into one chronological list -
      * lets the dashboard show a single timeline without firing 3
      * requests and merging them by hand. Merged and sorted in PHP rather
      * than a SQL UNION across three differently-shaped tables: a
@@ -67,6 +67,10 @@ class TimelineController extends Controller
                     'type' => 'diaper_change',
                     'at' => $diaperChange->changed_at,
                     'data' => $diaperChange,
+                ]))->concat($baby->temperatures()->whereBetween('measured_at', [$rangeStart, $dayEnd])->orderByDesc('measured_at')->get()->map(fn ($temperature) => [
+                    'type' => 'temperature',
+                    'at' => $temperature->measured_at,
+                    'data' => $temperature,
                 ]))
                 ->sortByDesc('at')
                 ->values();
@@ -91,6 +95,10 @@ class TimelineController extends Controller
                 'type' => 'diaper_change',
                 'at' => $diaperChange->changed_at,
                 'data' => $diaperChange,
+            ]))->concat($baby->temperatures()->orderByDesc('measured_at')->limit($limit)->get()->map(fn ($temperature) => [
+                'type' => 'temperature',
+                'at' => $temperature->measured_at,
+                'data' => $temperature,
             ]))
             ->sortByDesc('at')
             ->values()

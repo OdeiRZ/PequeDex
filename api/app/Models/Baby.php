@@ -88,6 +88,14 @@ class Baby extends Model
     }
 
     /**
+     * @return HasMany<Temperature, $this>
+     */
+    public function temperatures(): HasMany
+    {
+        return $this->hasMany(Temperature::class);
+    }
+
+    /**
      * @return HasMany<GrowthMeasurement, $this>
      */
     public function growthMeasurements(): HasMany

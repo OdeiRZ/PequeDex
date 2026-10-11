@@ -109,7 +109,7 @@ const rhythm = computed<RhythmData>(() => {
       if (!props.enabledCategories.includes('diaper')) continue
       const at = new Date(entry.data.changed_at)
       if (at >= start && at <= end) diaperTicks.push({ left: toPercent(at), time: toTime(at) })
-    } else {
+    } else if (entry.type === 'sleep') {
       if (!props.enabledCategories.includes('sleep')) continue
       const segStart = new Date(entry.data.started_at)
       const segEnd = entry.data.ended_at ? new Date(entry.data.ended_at) : now

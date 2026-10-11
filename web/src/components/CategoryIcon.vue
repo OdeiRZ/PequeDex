@@ -52,6 +52,12 @@ defineProps<{ category: Category }>()
       <path stroke-width="2.2" d="M14.5 6v2.8a2 2 0 0 0 2 2H20" />
     </template>
     <path v-else-if="category === 'growth'" d="M4 20 18 6M8 20h12V8" />
+    <!-- Termómetro: tubo con el bulbo relleno abajo. -->
+    <template v-else-if="category === 'temperature'">
+      <path stroke-width="2.2" d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0Z" />
+      <circle fill="currentColor" stroke="none" cx="12" cy="17.5" r="1.9" />
+      <path stroke-width="2" d="M12 15.5V10" />
+    </template>
     <path
       v-else-if="category === 'milestone'"
       fill="currentColor"

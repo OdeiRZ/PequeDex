@@ -7,6 +7,7 @@ import type {
   FeedType,
   GrowthMeasurement,
   Sleep,
+  Temperature,
   VitaminDDose,
   VitaminDSchedule,
 } from '@/stores/babies'
@@ -573,6 +574,34 @@ export function findLastPoopAt(changes: DiaperChange[]): string | null {
   return latest
 }
 
+// --- Temperatura ---
+// Sin MIN_SAMPLE_SIZE: no es una media de hábitos, es un registro
+// puntual de cuando el bebé está malito - una sola medición ya cuenta.
+
+export interface TemperatureStats {
+  count: number
+  max: { celsius: number; at: string } | null
+  /** Mediciones de 38 °C o más (`FEVER_THRESHOLD_CELSIUS`). */
+  highCount: number
+  latest: { celsius: number; at: string } | null
+}
+
+export function summarizeTemperatureStats(
+  temperatures: Temperature[],
+  feverThreshold = 38,
+): TemperatureStats {
+  let max: TemperatureStats['max'] = null
+  let latest: TemperatureStats['latest'] = null
+  let highCount = 0
+  for (const t of temperatures) {
+    if (max === null || t.celsius > max.celsius) max = { celsius: t.celsius, at: t.measured_at }
+    if (latest === null || t.measured_at > latest.at)
+      latest = { celsius: t.celsius, at: t.measured_at }
+    if (t.celsius >= feverThreshold) highCount++
+  }
+  return { count: temperatures.length, max, highCount, latest }
+}
+
 export interface GrowthMetricPoint {
   date: string
   value: number
@@ -952,6 +981,14 @@ export interface StatsExportPayload {
     feed_count: number
     diaper_count: number
   }[]
+  /** `null` si el bebé no tiene ninguna temperatura registrada nunca -
+   * así el PDF no saca una sección vacía a quien no usa la función. */
+  temperature: {
+    count: number
+    max: { celsius: number; at: string } | null
+    high_count: number
+    latest: { celsius: number; at: string } | null
+  } | null
   activity_heatmap: { day_of_week: number; hour: number; count: number }[]
   vitamin_d: { has_schedule: boolean; given: number; total_days: number }
   weekly_sleep_by_day: { date: string; hours: number }[]
@@ -990,6 +1027,7 @@ export interface StatsExportOptions {
   period?: StatsPeriod
   periodDeltas?: PeriodDeltas | null
   lastPoopAt?: string | null
+  temperature?: TemperatureStats | null
   weekComparison?: WeekComparison | null
   weeklyTrend?: WeeklyTrendPoint[]
   activityHeatmap?: HeatmapCell[]
@@ -1008,6 +1046,7 @@ export function buildStatsExportPayload(
     period = 'all',
     periodDeltas = null,
     lastPoopAt = null,
+    temperature = null,
     weekComparison = null,
     weeklyTrend = [],
     activityHeatmap = [],
@@ -1081,6 +1120,14 @@ export function buildStatsExportPayload(
       feed_count: w.feedCount,
       diaper_count: w.diaperCount,
     })),
+    temperature: temperature
+      ? {
+          count: temperature.count,
+          max: temperature.max,
+          high_count: temperature.highCount,
+          latest: temperature.latest,
+        }
+      : null,
     activity_heatmap: activityHeatmap.map((c) => ({
       day_of_week: c.dayOfWeek,
       hour: c.hour,

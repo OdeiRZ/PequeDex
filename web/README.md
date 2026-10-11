@@ -1355,6 +1355,37 @@ parpadeo del contenido viejo). Cada intervalo de sondeo en
 Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
 breve solape de montaje es inofensivo.
 
+## Temperatura
+
+Un tipo de registro más, para cuando el bebé está malito. **"+
+Temperatura"** es una categoría de la barra de accesos (`'temperature'`
+en `lib/category.ts`), pero **no** está en `ALL_CATEGORIES` (las
+visibles por defecto): se activa a mano en "Tu cuenta → Barra de
+accesos". Con las 6 categorías a la vez, `ActionBar.vue` usa una
+rejilla de 6 columnas con el texto algo más pequeño.
+
+- **Formulario** (hoja en `DashboardView.vue`): grados con un decimal y
+  un stepper de ±0,1 °C limitado a 34-43 (lo mismo que valida el
+  backend), dónde se tomó (axila/recto/oído/frente, opcional) y cuándo.
+- **Línea temporal**: `type: 'temperature'` en `TimelineEntry`, con su
+  color (`--temperature`, tema claro y oscuro) e icono de termómetro.
+  Se abre para editar y se borra con swipe como el resto. A partir de
+  38 °C (`FEVER_THRESHOLD_CELSIUS` en `lib/timelineEntry.ts`) lleva una
+  etiqueta neutra "≥ 38 °C", sin poner "fiebre" como diagnóstico. No
+  pinta nada en "Ritmo" (`DailyRhythm.vue` la ignora).
+- **Tarjeta "últimas 48 h"** (`TemperatureCard.vue`): solo aparece si
+  hay alguna medición en las últimas 48 h, aunque el acceso esté
+  desactivado. Última medición, máxima y una minigráfica de las 48 h
+  completas con la línea de 38 °C discontinua. Se alimenta de
+  `babies.temperatures` (todas las del bebé) en vez de `timeline`,
+  que solo trae las 50 entradas más recientes de todo. En **menores de
+  3 meses** (`isUnderThreeMonths()` en `lib/temperature.ts`) con alguna
+  medición de 38 °C o más muestra un aviso fijo: consultar con el
+  pediatra o urgencias, la indicación estándar a esa edad.
+- **Estadísticas**: bloque "Temperatura" (mediciones, de 38 °C o más,
+  máxima y última, sobre el periodo elegido) solo si el bebé tiene
+  alguna medición; también en el PDF.
+
 ## Recordatorio de vitamina D
 
 `VitaminDReminderCard.vue` + `composables/useVitaminDReminder.ts` - un

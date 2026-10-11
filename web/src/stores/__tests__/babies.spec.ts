@@ -127,13 +127,14 @@ describe('useBabiesStore', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
   })
 
-  it('fetches the full sleep/feed/diaper history in parallel for the stats page', async () => {
+  it('fetches the full sleep/feed/diaper/temperature history in parallel for the stats page', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { data: baby } })
     vi.mocked(apiClient.get).mockImplementation((url: string) => {
       if (url === '/babies/1/sleeps') return Promise.resolve({ data: { data: [{ id: 1 }] } })
       if (url === '/babies/1/feeds') return Promise.resolve({ data: { data: [{ id: 2 }] } })
       if (url === '/babies/1/diaper-changes')
         return Promise.resolve({ data: { data: [{ id: 3 }] } })
+      if (url === '/babies/1/temperatures') return Promise.resolve({ data: { data: [{ id: 4 }] } })
       throw new Error(`unexpected GET ${url}`)
     })
     const store = useBabiesStore()
@@ -144,6 +145,38 @@ describe('useBabiesStore', () => {
     expect(store.statsSleeps).toEqual([{ id: 1 }])
     expect(store.statsFeeds).toEqual([{ id: 2 }])
     expect(store.statsDiaperChanges).toEqual([{ id: 3 }])
+    expect(store.statsTemperatures).toEqual([{ id: 4 }])
+  })
+
+  it('folds a new temperature into the timeline and the recent temperatures list', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    const temperature = {
+      id: 9,
+      baby_id: 1,
+      user_id: 1,
+      measured_at: '2026-10-11T08:00:00Z',
+      celsius: 38.1,
+      method: null,
+      notes: null,
+    }
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: temperature } })
+    await store.createTemperature({ measured_at: temperature.measured_at, celsius: 38.1 })
+
+    expect(store.timeline[0]).toEqual({
+      type: 'temperature',
+      at: temperature.measured_at,
+      data: temperature,
+    })
+    expect(store.temperatures).toEqual([temperature])
+
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({})
+    await store.deleteTemperature(9)
+
+    expect(store.timeline).toEqual([])
+    expect(store.temperatures).toEqual([])
   })
 
   it('creates a feed, folding the response into the timeline without refetching it', async () => {

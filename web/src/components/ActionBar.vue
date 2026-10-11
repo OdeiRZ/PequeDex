@@ -54,7 +54,7 @@ interface SizeConfig {
 // below is defined - a plain number index would type as possibly
 // `undefined` under noUncheckedIndexedAccess even for a key we just
 // clamped into range.
-const SIZES: Record<3 | 4 | 5, SizeConfig> = {
+const SIZES: Record<3 | 4 | 5 | 6, SizeConfig> = {
   3: {
     gridCols: 'grid-cols-3',
     padding: 'p-3',
@@ -79,11 +79,21 @@ const SIZES: Record<3 | 4 | 5, SizeConfig> = {
     icon: 'h-4 w-4',
     text: 'text-[0.65rem]',
   },
+  // Las 6 a la vez (con "+ Temperatura" activada) - mismo icono que con
+  // 5, solo el texto algo más pequeño para que quepa en una fila.
+  6: {
+    gridCols: 'grid-cols-6',
+    padding: 'p-2',
+    gap: 'gap-1',
+    wrapper: 'h-8 w-8',
+    icon: 'h-4 w-4',
+    text: 'text-[0.56rem] leading-tight text-center',
+  },
 }
 
 const sizes = computed(() => {
   const count = props.items.length
-  return SIZES[count === 3 || count === 4 ? count : 5]
+  return SIZES[count === 3 || count === 4 || count === 6 ? count : 5]
 })
 </script>
 

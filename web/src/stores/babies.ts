@@ -13,8 +13,75 @@ export interface Baby {
   due_date: string | null
   birth_date: string | null
   sex: BabySex | null
+  /** Comunidad autónoma - decide la plantilla de vacunas. */
+  region: Region | null
+  vaccinations_enabled: boolean
   invite_code: string
   water_broke_at: string | null
+}
+
+export type Region =
+  | 'andalucia'
+  | 'aragon'
+  | 'asturias'
+  | 'baleares'
+  | 'canarias'
+  | 'cantabria'
+  | 'castilla_la_mancha'
+  | 'castilla_y_leon'
+  | 'cataluna'
+  | 'ceuta'
+  | 'comunidad_valenciana'
+  | 'extremadura'
+  | 'galicia'
+  | 'la_rioja'
+  | 'madrid'
+  | 'melilla'
+  | 'murcia'
+  | 'navarra'
+  | 'pais_vasco'
+
+export interface Vaccination {
+  id: number
+  baby_id: number
+  user_id: number | null
+  /** Clave de la plantilla; null en las añadidas a mano. */
+  code: string | null
+  name: string
+  age_label: string | null
+  due_date: string | null
+  given_at: string | null
+  optional: boolean
+  notes: string | null
+}
+
+export interface VaccinationTemplateInfo {
+  source: string
+  year: number
+  /** false = la comunidad no tiene plantilla propia y se usa la común. */
+  region_specific: boolean
+}
+
+export interface Checkup {
+  id: number
+  baby_id: number
+  user_id: number
+  scheduled_at: string
+  reason: string | null
+  notes: string | null
+}
+
+export interface SaveVaccinationPayload {
+  name: string
+  due_date: string | null
+  given_at: string | null
+  notes: string | null
+}
+
+export interface SaveCheckupPayload {
+  scheduled_at: string
+  reason: string | null
+  notes: string | null
 }
 
 export type FeedType = 'pecho' | 'biberon' | 'solido'
@@ -261,6 +328,9 @@ interface BabiesState {
    * del Dashboard ("lleva 3 días sin caca" necesita ir más atrás que
    * las 50 entradas de `timeline`). */
   recentDiaperChanges: DiaperChange[]
+  vaccinations: Vaccination[]
+  vaccinationTemplate: VaccinationTemplateInfo | null
+  checkups: Checkup[]
   vitaminDSchedule: VitaminDSchedule | null
   /** Last 14 days only, embedded in fetchVitaminDSchedule()'s response -
    * enough for the Dashboard's retroactive editor without a request per
@@ -325,6 +395,17 @@ function upsertByDate<T extends { id: number }>(
   return [...withoutExisting.slice(0, insertAt), item, ...withoutExisting.slice(insertAt)]
 }
 
+// Mismo orden que devuelve el backend: por fecha prevista, las que no
+// tienen fecha al final.
+function sortVaccinations(list: Vaccination[]): Vaccination[] {
+  return [...list].sort((a, b) => {
+    if (a.due_date === b.due_date) return a.id - b.id
+    if (a.due_date === null) return 1
+    if (b.due_date === null) return -1
+    return a.due_date.localeCompare(b.due_date)
+  })
+}
+
 export const useBabiesStore = defineStore('babies', {
   state: (): BabiesState => ({
     current: null,
@@ -343,6 +424,9 @@ export const useBabiesStore = defineStore('babies', {
     statsTemperatures: [],
     temperatures: [],
     recentDiaperChanges: [],
+    vaccinations: [],
+    vaccinationTemplate: null,
+    checkups: [],
     vitaminDSchedule: null,
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
@@ -544,6 +628,82 @@ export const useBabiesStore = defineStore('babies', {
         params: { since },
       })
       this.recentDiaperChanges = data.data
+    },
+
+    // --- Vacunas y revisiones ---
+
+    async fetchVaccinations() {
+      if (!this.current) {
+        return
+      }
+
+      const babyId = this.current.id
+      const [vaccinations, checkups] = await Promise.all([
+        apiClient.get(`/babies/${babyId}/vaccinations`),
+        apiClient.get(`/babies/${babyId}/checkups`),
+      ])
+      this.vaccinations = vaccinations.data.data
+      this.vaccinationTemplate = vaccinations.data.template
+      this.checkups = checkups.data.data
+    },
+
+    /** Activa/desactiva y elige la comunidad; el backend genera (o
+     * rehace) la lista desde la plantilla y devuelve el bebé y la lista. */
+    async updateVaccinationSettings(payload: {
+      vaccinations_enabled: boolean
+      region: Region | null
+    }) {
+      const { data } = await apiClient.put(
+        `/babies/${this.current!.id}/vaccinations/settings`,
+        payload,
+      )
+      this.current = data.baby
+      this.babies = this.babies.map((baby) => (baby.id === data.baby.id ? data.baby : baby))
+      this.vaccinations = data.data
+      this.vaccinationTemplate = data.template
+    },
+
+    async saveVaccination(id: number | null, payload: SaveVaccinationPayload) {
+      const babyId = this.current!.id
+      const { data } = id
+        ? await apiClient.put(`/babies/${babyId}/vaccinations/${id}`, payload)
+        : await apiClient.post(`/babies/${babyId}/vaccinations`, payload)
+      const saved: Vaccination = data.data
+      const others = this.vaccinations.filter((v) => v.id !== saved.id)
+      this.vaccinations = sortVaccinations([...others, saved])
+    },
+
+    async deleteVaccination(id: number) {
+      const previous = this.vaccinations
+      this.vaccinations = this.vaccinations.filter((v) => v.id !== id)
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/vaccinations/${id}`)
+      } catch (error) {
+        this.vaccinations = previous
+        throw error
+      }
+    },
+
+    async saveCheckup(id: number | null, payload: SaveCheckupPayload) {
+      const babyId = this.current!.id
+      const { data } = id
+        ? await apiClient.put(`/babies/${babyId}/checkups/${id}`, payload)
+        : await apiClient.post(`/babies/${babyId}/checkups`, payload)
+      const saved: Checkup = data.data
+      this.checkups = [...this.checkups.filter((c) => c.id !== saved.id), saved].sort(
+        (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
+      )
+    },
+
+    async deleteCheckup(id: number) {
+      const previous = this.checkups
+      this.checkups = this.checkups.filter((c) => c.id !== id)
+      try {
+        await apiClient.delete(`/babies/${this.current!.id}/checkups/${id}`)
+      } catch (error) {
+        this.checkups = previous
+        throw error
+      }
     },
 
     async fetchTemperatures() {

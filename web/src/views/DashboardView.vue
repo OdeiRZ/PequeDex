@@ -15,6 +15,7 @@ import {
   type GrowthMeasurement,
   type MilestoneCategory,
   type MilkType,
+  type Region,
   type Sleep,
   type Temperature,
   type TemperatureMethod,
@@ -28,6 +29,7 @@ import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoryIcon from '@/components/CategoryIcon.vue'
 import DailyAlertsCard from '@/components/DailyAlertsCard.vue'
+import VaccinationsLinkCard from '@/components/VaccinationsLinkCard.vue'
 import DailyRhythm from '@/components/DailyRhythm.vue'
 import DateTimeWheel from '@/components/DateTimeWheel.vue'
 import DeleteButton from '@/components/DeleteButton.vue'
@@ -48,6 +50,7 @@ import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
+import { REGIONS, nextUpcoming } from '@/lib/vaccinations'
 import {
   addDays,
   formatWeekdayDateLabel,
@@ -116,6 +119,14 @@ async function loadBabyData() {
       babies.fetchVitaminDSchedule(),
       babies.fetchTemperatures(),
       babies.fetchRecentDiaperChanges(),
+      // Solo si están activadas para este bebé - si no, vaciar lo del
+      // bebé anterior.
+      babies.current?.vaccinations_enabled
+        ? babies.fetchVaccinations()
+        : Promise.resolve().then(() => {
+            babies.vaccinations = []
+            babies.checkups = []
+          }),
     ])
   } finally {
     loading.value = false
@@ -380,6 +391,8 @@ function openSheet(sheet: Exclude<Sheet, null>) {
     vitaminDEnabled.value = babies.vitaminDSchedule?.enabled ?? false
     vitaminDStartDate.value = babies.vitaminDSchedule?.start_date ?? todayDateOnlyString()
     vitaminDEndDate.value = babies.vitaminDSchedule?.end_date ?? addDays(todayDateOnlyString(), 365)
+    vaccinationsEnabled.value = babies.current?.vaccinations_enabled ?? false
+    babyRegion.value = babies.current?.region ?? ''
   } else if (sheet === 'addBaby') {
     addBabyWizardRef.value?.reset()
     inviteCodeInput.value = ''
@@ -934,6 +947,15 @@ watch(
   { immediate: true },
 )
 
+// --- Vacunas y revisiones (lib/vaccinations.ts) ---
+const upcomingVaccination = computed(() =>
+  nextUpcoming(babies.vaccinations, babies.checkups, now.value),
+)
+const vaccinationsGiven = computed(() => babies.vaccinations.filter((v) => v.given_at).length)
+const vaccinationsTotal = computed(
+  () => babies.vaccinations.filter((v) => !v.optional || v.given_at).length,
+)
+
 const babyUnderThreeMonths = computed(() => isUnderThreeMonths(babies.current?.birth_date))
 
 // String, no número: es lo que da el <input type="number">, y así un
@@ -1177,6 +1199,8 @@ const deleteBabyError = ref<string | null>(null)
 const vitaminDEnabled = ref(false)
 const vitaminDStartDate = ref('')
 const vitaminDEndDate = ref('')
+const vaccinationsEnabled = ref(false)
+const babyRegion = ref<Region | ''>('')
 const savingVitaminDDoseDate = ref<string | null>(null)
 
 async function onToggleVitaminDDose(date: string, given: boolean) {
@@ -1383,6 +1407,18 @@ async function onSaveBabySettings() {
     }
 
     await Promise.all(saves)
+    // Después de guardar la fecha de nacimiento (de ella salen las fechas
+    // previstas), y solo si hay algo que cambiar.
+    const nextRegion = babyRegion.value || null
+    if (
+      vaccinationsEnabled.value !== (babies.current?.vaccinations_enabled ?? false) ||
+      nextRegion !== (babies.current?.region ?? null)
+    ) {
+      await babies.updateVaccinationSettings({
+        vaccinations_enabled: vaccinationsEnabled.value,
+        region: nextRegion,
+      })
+    }
     closeSheet()
     toast.show(t('dashboard.babySettings.toastSaved'))
   } catch {
@@ -1971,6 +2007,16 @@ const sleepPredictionDue = computed(() => {
               :alerts="visibleAlerts"
               @dismiss="onDismissAlert"
             />
+            <!-- Arriba solo cuando hay algo en los próximos días; si no,
+                 se queda más abajo junto a la de Estadísticas. -->
+            <VaccinationsLinkCard
+              v-if="babies.current?.vaccinations_enabled && upcomingVaccination"
+              class="dash-enter"
+              :upcoming="upcomingVaccination"
+              :given="vaccinationsGiven"
+              :total="vaccinationsTotal"
+              :date-locale="dateLocale"
+            />
             <TodaySummary
               v-if="auth.user?.today_summary_enabled"
               class="dash-enter"
@@ -1983,6 +2029,14 @@ const sleepPredictionDue = computed(() => {
               class="dash-enter"
             />
             <StatsLinkCard v-if="auth.user?.stats_enabled" class="dash-enter" />
+            <VaccinationsLinkCard
+              v-if="babies.current?.vaccinations_enabled && !upcomingVaccination"
+              class="dash-enter"
+              :upcoming="null"
+              :given="vaccinationsGiven"
+              :total="vaccinationsTotal"
+              :date-locale="dateLocale"
+            />
 
             <section
               v-if="enabledCategories.includes('milestone')"
@@ -2967,6 +3021,48 @@ const sleepPredictionDue = computed(() => {
                   class="field-input w-full min-w-0"
                 />
               </div>
+            </div>
+
+            <!-- Vacunas y revisiones: por bebé, como la vitamina D. La
+                 comunidad decide la plantilla de vacunas. -->
+            <div class="border-t border-border pt-4">
+              <div class="flex items-center justify-between gap-3">
+                <span class="field-label mb-0">{{
+                  t('dashboard.babySettings.vaccinations.title')
+                }}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="vaccinationsEnabled"
+                  :aria-label="t('dashboard.babySettings.vaccinations.title')"
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="vaccinationsEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+                  @click="vaccinationsEnabled = !vaccinationsEnabled"
+                >
+                  <span
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
+                    :style="{ left: vaccinationsEnabled ? '22px' : '2px' }"
+                  />
+                </button>
+              </div>
+              <p class="mt-1 text-xs text-text-muted">
+                {{ t('dashboard.babySettings.vaccinations.description') }}
+              </p>
+            </div>
+
+            <div v-if="vaccinationsEnabled" class="min-w-0">
+              <label for="baby-region" class="field-label">{{
+                t('dashboard.babySettings.vaccinations.region')
+              }}</label>
+              <select id="baby-region" v-model="babyRegion" class="field-input w-full min-w-0">
+                <option value="">{{ t('dashboard.babySettings.vaccinations.regionNone') }}</option>
+                <option v-for="region in REGIONS" :key="region" :value="region">
+                  {{ t(`regions.${region}`) }}
+                </option>
+              </select>
+              <p class="mt-1 text-xs text-text-muted">
+                {{ t('dashboard.babySettings.vaccinations.regionHint') }}
+              </p>
             </div>
 
             <div class="mt-1 flex gap-3">

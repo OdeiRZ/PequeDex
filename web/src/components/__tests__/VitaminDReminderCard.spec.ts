@@ -32,6 +32,8 @@ beforeEach(() => {
     due_date: null,
     birth_date: '2026-01-01',
     sex: null,
+    region: null,
+    vaccinations_enabled: false,
     invite_code: 'ABCD1234',
     water_broke_at: null,
   }

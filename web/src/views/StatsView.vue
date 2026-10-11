@@ -619,19 +619,24 @@ async function onExportPdf() {
             </div>
             <p class="mt-1 text-[0.68rem] text-text-muted">{{ t('stats.sleep.nightRangeHint') }}</p>
           </div>
-
-          <div>
-            <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
-            <HourBucketChart
-              :buckets="sleepStats.byHourBucket"
-              category="sleep"
-              :format-value="formatMinutes"
-            />
-          </div>
         </template>
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.notEnoughData') }}
         </p>
+
+        <!-- Antes vivía en el Dashboard. Siempre los últimos 7 días de
+             calendario, independiente del selector de periodo y de
+             hasEnoughData. -->
+        <WeeklySleep :sleeps="babies.statsSleeps" :date-locale="dateLocale" />
+
+        <div v-if="sleepStats.hasEnoughData">
+          <div class="mb-1 text-xs text-text-muted">{{ t('stats.sleep.byHourLabel') }}</div>
+          <HourBucketChart
+            :buckets="sleepStats.byHourBucket"
+            category="sleep"
+            :format-value="formatMinutes"
+          />
+        </div>
 
         <!-- Récord: aparece siempre que haya al menos un sueño
              completado, sin depender de hasEnoughData - es un dato
@@ -650,10 +655,6 @@ async function onExportPdf() {
             {{ formatMinutes(sleepStats.longestSleep.minutes) }}
           </div>
         </div>
-
-        <!-- Antes vivía en el Dashboard. Siempre los últimos 7 días de
-             calendario, independiente del selector de periodo. -->
-        <WeeklySleep :sleeps="babies.statsSleeps" :date-locale="dateLocale" />
       </section>
 
       <!-- Pañales -->

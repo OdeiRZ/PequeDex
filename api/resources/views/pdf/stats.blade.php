@@ -227,7 +227,25 @@
                 </tr>
             </table>
         @endif
+    @endif
 
+    {{-- Sueño esta semana - antes vivía en el Dashboard, mismos 7 días
+         de calendario que WeeklySleep.vue, reutilizando el mismo
+         partial de barra horizontal que ya usa "Tendencia semanal" más
+         abajo (misma limitación de dompdf: sin flexbox para crecer una
+         barra vertical). Sin condición de "hay datos" - un día sin
+         sueño registrado es él mismo un dato (barra en 0h), igual que
+         en pantalla. Mismo orden que en pantalla: entre el reparto
+         día/noche y los minutos por franja. --}}
+    <p class="stats-label" style="margin-bottom: 4px;">Sueño esta semana</p>
+    @include('pdf.partials.weekly-trend-bars', [
+        'points' => $dailySleepPoints,
+        'color' => '#5b5a8c',
+        'format' => fn ($value) => number_format($value, 1).'h',
+    ])
+
+    @if ($sleep['has_enough_data'])
+        <p class="stats-label" style="margin-bottom: 4px;">Minutos dormidos por franja</p>
         @include('pdf.partials.bucket-grid', [
             'buckets' => $sleep['by_hour_bucket'],
             'labels' => $hourBucketLabels,
@@ -248,20 +266,6 @@
             </tr>
         </table>
     @endif
-
-    {{-- Sueño esta semana - antes vivía en el Dashboard, mismos 7 días
-         de calendario que WeeklySleep.vue, reutilizando el mismo
-         partial de barra horizontal que ya usa "Tendencia semanal" más
-         abajo (misma limitación de dompdf: sin flexbox para crecer una
-         barra vertical). Sin condición de "hay datos" - un día sin
-         sueño registrado es él mismo un dato (barra en 0h), igual que
-         en pantalla. --}}
-    <p class="stats-label" style="margin-bottom: 4px;">Sueño esta semana</p>
-    @include('pdf.partials.weekly-trend-bars', [
-        'points' => $dailySleepPoints,
-        'color' => '#5b5a8c',
-        'format' => fn ($value) => number_format($value, 1).'h',
-    ])
 
     {{-- Pañales --}}
     <h2 class="diaper">Pañales</h2>

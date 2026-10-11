@@ -79,15 +79,16 @@ const SIZES: Record<3 | 4 | 5 | 6, SizeConfig> = {
     icon: 'h-4 w-4',
     text: 'text-[0.65rem]',
   },
-  // Las 6 a la vez (con "+ Temperatura" activada) - mismo icono que con
-  // 5, solo el texto algo más pequeño para que quepa en una fila.
+  // Las 6 a la vez (con la temperatura activada) - mismo icono que con
+  // 5, texto un poco más pequeño y sin saltos de línea (la temperatura
+  // usa aquí su rótulo corto, "+ Temp.", ver DashboardView.vue).
   6: {
     gridCols: 'grid-cols-6',
     padding: 'p-2',
     gap: 'gap-1',
     wrapper: 'h-8 w-8',
     icon: 'h-4 w-4',
-    text: 'text-[0.56rem] leading-tight text-center',
+    text: 'text-[0.6rem] whitespace-nowrap',
   },
 }
 

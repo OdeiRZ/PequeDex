@@ -12,9 +12,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - **Registro de temperatura** - nuevo acceso "+ Temperatura" en la
   barra de accesos, desactivado por defecto (se activa en "Tu cuenta →
   Barra de accesos"). Grados con un decimal y botones de ±0,1 °C, dónde
-  se tomó (axila, recto, oído o frente, opcional) y cuándo. Sale en la
-  línea temporal con su icono y color, con una etiqueta neutra "≥ 38
-  °C" cuando llega a ese valor, y se edita o borra como el resto.
+  se tomó (axila, recto, oído o frente, opcional) y cuándo. En la barra
+  sale como "+ Temp." para caber en una línea. En la línea temporal
+  sigue el formato del resto de eventos: arriba la temperatura con el
+  lugar entre paréntesis, debajo su nivel (baja, normal, algo alta o
+  alta) con un indicador de color, y la hora a la derecha; se edita o
+  borra como el resto.
   Mientras haya mediciones en las últimas 48 h, el Dashboard muestra
   una tarjeta con la última, la máxima y una minigráfica con la línea
   de 38 °C; en bebés de menos de 3 meses con 38 °C o más añade un aviso

@@ -366,6 +366,7 @@ export default {
       growth: '+ Measurement',
       milestone: '+ Milestone',
       temperature: '+ Temperature',
+      temperatureShort: '+ Temp.',
     },
     todaySummary: {
       feed: 'feed | feeds',
@@ -510,7 +511,12 @@ export default {
     },
     timeline: {
       title: 'Timeline',
-      feverBadge: '≥ 38 °C',
+      temperatureLevel: {
+        low: 'Low',
+        normal: 'Normal',
+        elevated: 'Slightly high',
+        high: 'High',
+      },
       empty: 'Nothing logged yet.',
       feed: 'Feed',
       sleep: 'Sleep',

@@ -64,6 +64,7 @@ import {
   entrySleepEmoji,
   entrySleepPulsing,
   entryTemperatureBadge,
+  entryTemperatureGauge,
   entryTitle,
   formatCelsius,
   filterTimelineToDay,
@@ -417,7 +418,7 @@ const actionBarItems = computed(() => {
     { category: 'diaper', label: t('dashboard.quickLog.diaper') },
     { category: 'growth', label: t('dashboard.quickLog.growth') },
     { category: 'milestone', label: t('dashboard.quickLog.milestone') },
-    { category: 'temperature', label: t('dashboard.quickLog.temperature') },
+    { category: 'temperature', label: t('dashboard.quickLog.temperatureShort') },
   ]
   return allItems.filter((item) => enabledCategories.value.includes(item.category))
 })
@@ -958,7 +959,7 @@ function entryTitleFor(entry: TimelineEntry): string {
     (type) => diaperTypeLabels.value[type] ?? type,
     (celsius, method) =>
       method
-        ? ` · ${temperatureMethodLabels.value[method] ?? method}`
+        ? `${formatCelsius(celsius, dateLocale.value)} (${(temperatureMethodLabels.value[method] ?? method).toLocaleLowerCase(dateLocale.value)})`
         : formatCelsius(celsius, dateLocale.value),
   )
 }
@@ -2005,6 +2006,7 @@ const sleepPredictionDue = computed(() => {
                       entryDiaperSizeLabelFor(item.entry) ??
                       entryTemperatureBadge(item.entry, t)
                     "
+                    :gauge="entryTemperatureGauge(item.entry)"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"

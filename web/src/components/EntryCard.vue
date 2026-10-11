@@ -40,6 +40,10 @@ const props = withDefaults(
      * now" reads differently at a glance from "was asleep, already
      * woke up". */
     emojiPulsing?: boolean
+    /** Indicador de 4 segmentos junto al badge (nivel de una
+     * temperatura): `step` segmentos llenos en `color`. También pinta
+     * el texto del badge en ese color en vez del de la categoría. */
+    gauge?: { step: number; color: string } | null
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -208,11 +212,24 @@ function openEntry() {
               v-if="badge || dropletColor || poopColor || emoji"
               class="mt-0.5 flex min-h-5 items-center gap-1 text-sm"
               :class="
-                badge ? ['font-bold', categoryText[category]] : 'tabular-nums text-text-muted'
+                badge
+                  ? ['font-bold', !gauge && categoryText[category]]
+                  : 'tabular-nums text-text-muted'
               "
             >
-              <span v-if="badge">{{ badge }}</span>
+              <span v-if="badge" :style="gauge ? { color: gauge.color } : undefined">{{
+                badge
+              }}</span>
               <span v-else>{{ meta }}</span>
+              <span v-if="gauge" class="ml-1 flex shrink-0 items-center gap-0.5" aria-hidden="true">
+                <span
+                  v-for="segment in 4"
+                  :key="segment"
+                  class="h-1.5 w-2.5 rounded-full"
+                  :class="segment > gauge.step && 'bg-text-muted/20'"
+                  :style="segment <= gauge.step ? { backgroundColor: gauge.color } : undefined"
+                ></span>
+              </span>
               <svg
                 v-if="dropletColor"
                 viewBox="0 0 24 24"

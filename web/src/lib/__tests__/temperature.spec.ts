@@ -3,7 +3,9 @@ import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { summarizeTemperatureStats } from '@/lib/stats'
 import {
   entryTemperatureBadge,
+  entryTemperatureGauge,
   entryTemperatureHigh,
+  temperatureLevel,
   entryTitle,
   formatCelsius,
 } from '@/lib/timelineEntry'
@@ -91,10 +93,21 @@ describe('temperature timeline entries', () => {
     expect(formatCelsius(37.45, 'en-GB')).toBe('37.5 °C')
   })
 
-  it('marks 38 °C or more with a neutral badge only', () => {
+  it('treats 38 °C or more as high', () => {
     expect(entryTemperatureHigh(entry(38))).toBe(true)
-    expect(entryTemperatureBadge(entry(38), t)).toBe('dashboard.timeline.feverBadge')
-    expect(entryTemperatureBadge(entry(37.9), t)).toBeUndefined()
+    expect(entryTemperatureHigh(entry(37.9))).toBe(false)
+  })
+
+  it('labels every reading with its level, low / normal / slightly high / high', () => {
+    expect(entryTemperatureBadge(entry(35.9), t)).toBe('dashboard.timeline.temperatureLevel.low')
+    expect(entryTemperatureBadge(entry(36), t)).toBe('dashboard.timeline.temperatureLevel.normal')
+    expect(entryTemperatureBadge(entry(37.4), t)).toBe('dashboard.timeline.temperatureLevel.normal')
+    expect(entryTemperatureBadge(entry(37.5), t)).toBe(
+      'dashboard.timeline.temperatureLevel.elevated',
+    )
+    expect(entryTemperatureBadge(entry(38), t)).toBe('dashboard.timeline.temperatureLevel.high')
+    expect(entryTemperatureGauge(entry(37.6))?.step).toBe(3)
+    expect(temperatureLevel(39.1)).toBe('high')
   })
 
   it('builds the title from the value and method label', () => {

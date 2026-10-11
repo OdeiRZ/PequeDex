@@ -1369,10 +1369,16 @@ rejilla de 6 columnas con el texto algo más pequeño.
   backend), dónde se tomó (axila/recto/oído/frente, opcional) y cuándo.
 - **Línea temporal**: `type: 'temperature'` en `TimelineEntry`, con su
   color (`--temperature`, tema claro y oscuro) e icono de termómetro.
-  Se abre para editar y se borra con swipe como el resto. A partir de
-  38 °C (`FEVER_THRESHOLD_CELSIUS` en `lib/timelineEntry.ts`) lleva una
-  etiqueta neutra "≥ 38 °C", sin poner "fiebre" como diagnóstico. No
-  pinta nada en "Ritmo" (`DailyRhythm.vue` la ignora).
+  Se abre para editar y se borra con swipe como el resto. Mismo formato
+  de dos alturas que los demás eventos: arriba la temperatura y, si se
+  indicó, dónde se tomó entre paréntesis ("38,2 °C (axila)"); debajo el
+  nivel ("Baja" < 36, "Normal" 36-37,4, "Algo alta" 37,5-37,9, "Alta"
+  ≥ 38 - `temperatureLevel()` en `lib/timelineEntry.ts`, la misma
+  escala sea cual sea el método) con un indicador de 4 segmentos
+  coloreado (prop `gauge` de `EntryCard.vue`), y la hora a la derecha.
+  En la barra de accesos usa el rótulo corto "+ Temp." para no saltar
+  de línea con 6 accesos. No pinta nada en "Ritmo" (`DailyRhythm.vue`
+  la ignora).
 - **Tarjeta "últimas 48 h"** (`TemperatureCard.vue`): solo aparece si
   hay alguna medición en las últimas 48 h, aunque el acceso esté
   desactivado. Última medición, máxima y una minigráfica de las 48 h

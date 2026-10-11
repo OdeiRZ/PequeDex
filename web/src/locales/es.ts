@@ -368,6 +368,7 @@ export default {
       growth: '+ Medida',
       milestone: '+ Hito',
       temperature: '+ Temperatura',
+      temperatureShort: '+ Temp.',
     },
     todaySummary: {
       feed: 'toma | tomas',
@@ -512,7 +513,12 @@ export default {
     },
     timeline: {
       title: 'Línea temporal',
-      feverBadge: '≥ 38 °C',
+      temperatureLevel: {
+        low: 'Baja',
+        normal: 'Normal',
+        elevated: 'Algo alta',
+        high: 'Alta',
+      },
       empty: 'Todavía no hay nada registrado.',
       feed: 'Toma',
       sleep: 'Sueño',

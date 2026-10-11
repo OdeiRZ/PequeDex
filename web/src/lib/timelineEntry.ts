@@ -147,10 +147,40 @@ export function entryTemperatureHigh(entry: TimelineEntry): boolean {
   return entry.type === 'temperature' && entry.data.celsius >= FEVER_THRESHOLD_CELSIUS
 }
 
-// Mismo hueco de badge que la duración/talla - "≥ 38 °C" solo cuando
-// llega al umbral.
+export type TemperatureLevel = 'low' | 'normal' | 'elevated' | 'high'
+
+// Escala orientativa, la misma sea cual sea el método (la rectal suele
+// dar unas décimas más; no se ajusta para no fingir más precisión de la
+// que hay): baja < 36, normal 36-37,4, algo alta 37,5-37,9, alta ≥ 38.
+// `step` (1-4) llena los segmentos del indicador de la línea temporal;
+// colores fijos (no del tema) para que se lean igual en claro/oscuro.
+export const TEMPERATURE_LEVELS: Record<TemperatureLevel, { step: number; color: string }> = {
+  low: { step: 1, color: '#4a8fc4' },
+  normal: { step: 2, color: '#4f9a62' },
+  elevated: { step: 3, color: '#d79a2b' },
+  high: { step: 4, color: '#cc4b3c' },
+}
+
+export function temperatureLevel(celsius: number): TemperatureLevel {
+  if (celsius < 36) return 'low'
+  if (celsius < 37.5) return 'normal'
+  if (celsius < FEVER_THRESHOLD_CELSIUS) return 'elevated'
+  return 'high'
+}
+
+// Segunda línea de la fila (el hueco de badge, como la duración de un
+// sueño o la talla de un pañal): el nivel en texto - así la hora pasa
+// a la derecha, igual que en el resto de eventos con estado.
 export function entryTemperatureBadge(entry: TimelineEntry, t: Translate): string | undefined {
-  return entryTemperatureHigh(entry) ? t('dashboard.timeline.feverBadge') : undefined
+  if (entry.type !== 'temperature') return undefined
+  return t(`dashboard.timeline.temperatureLevel.${temperatureLevel(entry.data.celsius)}`)
+}
+
+export function entryTemperatureGauge(
+  entry: TimelineEntry,
+): { step: number; color: string } | undefined {
+  if (entry.type !== 'temperature') return undefined
+  return TEMPERATURE_LEVELS[temperatureLevel(entry.data.celsius)]
 }
 
 export function entryTitle(

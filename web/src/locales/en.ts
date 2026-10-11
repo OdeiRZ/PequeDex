@@ -320,6 +320,13 @@ export default {
       hint: 'Tap a cell to see the detail',
       cellLabel: '{day}, {hour}:00 · {count} events',
     },
+    vaccinations: {
+      open: 'Open record',
+      givenLabel: 'Vaccines given',
+      overdue: '{n} past its due date | {n} past their due date',
+      nextLabel: 'Next vaccine',
+      nextCheckupLabel: 'Next check-up',
+    },
     temperature: {
       title: 'Temperature',
       countLabel: 'Readings',

@@ -86,6 +86,7 @@ class StatsExportController extends Controller
             'heatmapSummary' => $this->heatmapSummary($this->heatmapGrid($data['activity_heatmap'])),
             'vitaminD' => $data['vitamin_d'],
             'temperature' => $data['temperature'] ?? null,
+            'vaccinations' => $data['vaccinations'] ?? null,
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
                 $this->growthMetric($baby, 'weight', 'Peso', 'kg', 1, $data['growth']['weight_kg']),

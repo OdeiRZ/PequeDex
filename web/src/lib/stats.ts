@@ -8,6 +8,8 @@ import type {
   GrowthMeasurement,
   Sleep,
   Temperature,
+  Vaccination,
+  Checkup,
   VitaminDDose,
   VitaminDSchedule,
 } from '@/stores/babies'
@@ -602,6 +604,47 @@ export function summarizeTemperatureStats(
   return { count: temperatures.length, max, highCount, latest }
 }
 
+// --- Vacunas y revisiones ---
+// Fechas de calendario, sin franjas horarias que dependan de la zona -
+// pero se resume aquí igualmente para que el PDF reciba lo mismo que se
+// ve en pantalla, como el resto de bloques.
+
+export interface VaccinationStats {
+  given: number
+  /** Las no opcionales, más las opcionales que sí se pusieron. */
+  total: number
+  overdue: number
+  givenList: { name: string; date: string }[]
+  /** Las próximas pendientes (no opcionales), como mucho 5. */
+  upcomingList: { name: string; date: string | null }[]
+  nextCheckup: { reason: string | null; at: string } | null
+}
+
+export function summarizeVaccinationStats(
+  vaccinations: Vaccination[],
+  checkups: Checkup[],
+  now: Date = new Date(),
+): VaccinationStats {
+  const todayKey = toDateOnlyString(now)
+  const givenList = vaccinations
+    .filter((v) => v.given_at)
+    .map((v) => ({ name: v.name, date: v.given_at as string }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const pending = vaccinations.filter((v) => !v.given_at && !v.optional)
+  const nextCheckup = checkups
+    .filter((c) => new Date(c.scheduled_at).getTime() >= now.getTime())
+    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]
+
+  return {
+    given: givenList.length,
+    total: vaccinations.filter((v) => !v.optional || v.given_at).length,
+    overdue: pending.filter((v) => v.due_date !== null && v.due_date < todayKey).length,
+    givenList,
+    upcomingList: pending.slice(0, 5).map((v) => ({ name: v.name, date: v.due_date })),
+    nextCheckup: nextCheckup ? { reason: nextCheckup.reason, at: nextCheckup.scheduled_at } : null,
+  }
+}
+
 export interface GrowthMetricPoint {
   date: string
   value: number
@@ -989,6 +1032,15 @@ export interface StatsExportPayload {
     high_count: number
     latest: { celsius: number; at: string } | null
   } | null
+  /** `null` si "Vacunas y revisiones" no está activado para el bebé. */
+  vaccinations: {
+    given: number
+    total: number
+    overdue: number
+    given_list: { name: string; date: string }[]
+    upcoming_list: { name: string; date: string | null }[]
+    next_checkup: { reason: string | null; at: string } | null
+  } | null
   activity_heatmap: { day_of_week: number; hour: number; count: number }[]
   vitamin_d: { has_schedule: boolean; given: number; total_days: number }
   weekly_sleep_by_day: { date: string; hours: number }[]
@@ -1028,6 +1080,7 @@ export interface StatsExportOptions {
   periodDeltas?: PeriodDeltas | null
   lastPoopAt?: string | null
   temperature?: TemperatureStats | null
+  vaccinations?: VaccinationStats | null
   weekComparison?: WeekComparison | null
   weeklyTrend?: WeeklyTrendPoint[]
   activityHeatmap?: HeatmapCell[]
@@ -1047,6 +1100,7 @@ export function buildStatsExportPayload(
     periodDeltas = null,
     lastPoopAt = null,
     temperature = null,
+    vaccinations = null,
     weekComparison = null,
     weeklyTrend = [],
     activityHeatmap = [],
@@ -1126,6 +1180,16 @@ export function buildStatsExportPayload(
           max: temperature.max,
           high_count: temperature.highCount,
           latest: temperature.latest,
+        }
+      : null,
+    vaccinations: vaccinations
+      ? {
+          given: vaccinations.given,
+          total: vaccinations.total,
+          overdue: vaccinations.overdue,
+          given_list: vaccinations.givenList,
+          upcoming_list: vaccinations.upcomingList,
+          next_checkup: vaccinations.nextCheckup,
         }
       : null,
     activity_heatmap: activityHeatmap.map((c) => ({

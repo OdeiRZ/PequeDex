@@ -131,6 +131,27 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   (`PUT /user/default-temperature-method`, nullable, mismo enum) guarda
   el lugar preferido que el frontend preselecciona al crear, igual que
   `default_diaper_size`.
+- `app/Services/Vaccinations/VaccinationTemplates.php` +
+  `resources/vaccination-templates/` — las plantillas de vacunas son
+  datos, no código: `comun.php` es el calendario común del Consejo
+  Interterritorial (recomendado 2026, aprobado el 12/12/2025, parte
+  0-14 años) y cada comunidad con variaciones tiene su fichero, que
+  solo dice lo que cambia (`replace`/`add`/`remove` por `code`). Hoy
+  solo `cantabria.php` (instrucción de Salud Pública del 23/01/2026:
+  MenACWY en lugar de MenC a los 4 y 12 meses). Una comunidad sin
+  fichero usa el común - añadir otra es añadir un fichero. Cada
+  elemento lleva `months` (fecha prevista = nacimiento + N meses),
+  `age_label` y `optional` (hepatitis B al nacer, VRS, gripe).
+  `babies.region` (`App\Enums\Region`, 17 comunidades + Ceuta y
+  Melilla) y `babies.vaccinations_enabled` se cambian con `PUT
+  /babies/{baby}/vaccinations/settings`, que genera la lista al
+  activar (sin duplicar si ya existe) y, al cambiar de comunidad,
+  rehace las de plantilla todavía sin poner (conserva las puestas y
+  las añadidas a mano). Desactivar no borra nada. CRUD en
+  `/vaccinations` (marcar como puesta: `given_at`, no futura ni antes
+  del nacimiento) y `/checkups` (revisiones a mano, pueden estar en el
+  futuro). El export de estadísticas acepta un bloque `vaccinations`
+  opcional (resumen, próximas y puestas).
 - Avisos suaves del Dashboard: `GET /babies/{baby}/diaper-changes`
   acepta un `since` opcional (fecha) para pedir solo los últimos días
   en vez del historial entero, y `users.alerts_enabled` (`PUT

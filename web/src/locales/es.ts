@@ -321,6 +321,13 @@ export default {
       hint: 'Toca una celda para ver el detalle',
       cellLabel: '{day}, {hour}:00 · {count} eventos',
     },
+    vaccinations: {
+      open: 'Ver cartilla',
+      givenLabel: 'Vacunas puestas',
+      overdue: '{n} con fecha pasada | {n} con fecha pasada',
+      nextLabel: 'Próxima vacuna',
+      nextCheckupLabel: 'Próxima revisión',
+    },
     temperature: {
       title: 'Temperatura',
       countLabel: 'Mediciones',

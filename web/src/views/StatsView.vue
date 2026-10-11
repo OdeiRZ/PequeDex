@@ -27,12 +27,14 @@ import {
   findLastPoopAt,
   summarizePeriodDeltas,
   summarizeTemperatureStats,
+  summarizeVaccinationStats,
   type StatsPeriod,
 } from '@/lib/stats'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { formatCelsius } from '@/lib/timelineEntry'
+import { parseDateOnly } from '@/lib/localDate'
 import type { DiaperResidueColor, DiaperSize } from '@/stores/babies'
 
 const { t, locale } = useI18n()
@@ -75,6 +77,7 @@ onMounted(async () => {
       // Las bandas de la OMS son un extra: si fallan, la gráfica sale
       // igual, solo sin ellas.
       babies.fetchGrowthReference().catch(() => {}),
+      babies.current?.vaccinations_enabled ? babies.fetchVaccinations() : Promise.resolve(),
       babies.fetchVitaminDSchedule(),
       babies.fetchAllVitaminDDoses(),
     ])
@@ -114,6 +117,20 @@ function formatTemperatureDate(at: string): string {
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
+  })
+}
+
+// Vacunas: todo el historial (no depende del periodo), solo si están
+// activadas para el bebé.
+const vaccinationStats = computed(() =>
+  summarizeVaccinationStats(babies.vaccinations, babies.checkups),
+)
+
+function formatShortDate(date: string): string {
+  return parseDateOnly(date).toLocaleDateString(dateLocale.value, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   })
 }
 
@@ -421,6 +438,7 @@ async function onExportPdf() {
         lastPoopAt: lastPoopAt.value,
         periodDeltas: periodDeltas.value,
         temperature: hasAnyTemperature.value ? temperatureStats.value : null,
+        vaccinations: babies.current?.vaccinations_enabled ? vaccinationStats.value : null,
         weekComparison: weekComparison.value,
         weeklyTrend: weeklyTrend.value,
         activityHeatmap: activityHeatmap.value,
@@ -905,6 +923,57 @@ async function onExportPdf() {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.temperature.noneInPeriod') }}
         </p>
+      </section>
+
+      <!-- Vacunas y revisiones -->
+      <section v-if="babies.current?.vaccinations_enabled" class="card flex flex-col gap-3 p-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="flex items-center gap-2 font-display text-sm font-bold">
+            <span class="h-4 w-1.5 shrink-0 rounded-full bg-growth"></span>
+            {{ t('vaccinations.title') }}
+          </h2>
+          <RouterLink
+            :to="{ name: 'vaccinations' }"
+            class="text-xs font-semibold text-brand underline"
+            @click="feedback.nav()"
+            >{{ t('stats.vaccinations.open') }}</RouterLink
+          >
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.vaccinations.givenLabel') }}</div>
+            <div class="text-lg font-bold tabular-nums">
+              {{ vaccinationStats.given }}/{{ vaccinationStats.total }}
+            </div>
+            <div v-if="vaccinationStats.overdue > 0" class="text-[0.68rem] text-danger">
+              {{ t('stats.vaccinations.overdue', vaccinationStats.overdue) }}
+            </div>
+          </div>
+          <div v-if="vaccinationStats.upcomingList[0]" class="rounded-xl bg-surface-sunken p-3">
+            <div class="text-xs text-text-muted">{{ t('stats.vaccinations.nextLabel') }}</div>
+            <div class="text-sm font-bold">{{ vaccinationStats.upcomingList[0].name }}</div>
+            <div
+              v-if="vaccinationStats.upcomingList[0].date"
+              class="text-[0.68rem] tabular-nums text-text-muted"
+            >
+              {{ formatShortDate(vaccinationStats.upcomingList[0].date) }}
+            </div>
+          </div>
+          <div
+            v-if="vaccinationStats.nextCheckup"
+            class="col-span-2 rounded-xl bg-surface-sunken p-3"
+          >
+            <div class="text-xs text-text-muted">
+              {{ t('stats.vaccinations.nextCheckupLabel') }}
+            </div>
+            <div class="text-sm font-bold">
+              {{ vaccinationStats.nextCheckup.reason || t('vaccinations.checkups.defaultReason') }}
+            </div>
+            <div class="text-[0.68rem] tabular-nums text-text-muted">
+              {{ formatTemperatureDate(vaccinationStats.nextCheckup.at) }}
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Vitamina D - no depende de enabledCategories/ALL_CATEGORIES,

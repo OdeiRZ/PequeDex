@@ -142,6 +142,21 @@ class ExportStatsRequest extends FormRequest
             'temperature.latest.celsius' => ['required_with:temperature.latest', 'numeric'],
             'temperature.latest.at' => ['required_with:temperature.latest', 'date'],
 
+            // `null` si "Vacunas y revisiones" no está activado para el bebé.
+            'vaccinations' => ['nullable', 'array'],
+            'vaccinations.given' => ['required_with:vaccinations', 'integer', 'min:0'],
+            'vaccinations.total' => ['required_with:vaccinations', 'integer', 'min:0'],
+            'vaccinations.overdue' => ['required_with:vaccinations', 'integer', 'min:0'],
+            'vaccinations.given_list' => ['present_with:vaccinations', 'array'],
+            'vaccinations.given_list.*.name' => ['required', 'string', 'max:255'],
+            'vaccinations.given_list.*.date' => ['required', 'date'],
+            'vaccinations.upcoming_list' => ['present_with:vaccinations', 'array', 'max:5'],
+            'vaccinations.upcoming_list.*.name' => ['required', 'string', 'max:255'],
+            'vaccinations.upcoming_list.*.date' => ['nullable', 'date'],
+            'vaccinations.next_checkup' => ['nullable', 'array'],
+            'vaccinations.next_checkup.reason' => ['nullable', 'string', 'max:255'],
+            'vaccinations.next_checkup.at' => ['required_with:vaccinations.next_checkup', 'date'],
+
             'activity_heatmap' => ['present', 'array'],
             'activity_heatmap.*.day_of_week' => ['required', 'integer', 'min:0', 'max:6'],
             'activity_heatmap.*.hour' => ['required', 'integer', 'min:0', 'max:23'],

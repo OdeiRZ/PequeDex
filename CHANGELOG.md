@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Vacunas y revisiones** - una cartilla digital por bebé, en
+  `/vacunas`. Se activa en los ajustes del bebé eligiendo la comunidad
+  autónoma: la lista de vacunas sale del calendario común del Consejo
+  Interterritorial 2026 o, en Cantabria, de su variante (MenACWY en
+  lugar de MenC a los 4 y 12 meses). Las demás comunidades usan el
+  común, con un aviso de que puede haber alguna vacuna más. Cada
+  vacuna tiene su fecha prevista desde el nacimiento, se marca como
+  puesta con fecha y nota, y todo es editable (también se pueden
+  añadir vacunas propias). Las revisiones con el pediatra se añaden a
+  mano. En el Dashboard, una tarjeta resume cuántas van puestas y se
+  destaca cuando hay una vacuna o revisión en los próximos 7 días o
+  una vacuna atrasada. También en Estadísticas y en el PDF.
+
 - **Avisos suaves en el Dashboard** - "Lleva N días sin caca" (3 días
   o más, solo si se están registrando pañales) y "Hoy solo N pañales
   con pis" (menos de 4 a partir de las 18:00, en bebés de 5 días o más

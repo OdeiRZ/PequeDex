@@ -341,6 +341,41 @@
         </div>
     @endif
 
+    {{-- Vacunas y revisiones - solo si están activadas para el bebé. --}}
+    @if ($vaccinations !== null)
+        @php
+            $fmtDay = fn ($d) => \Carbon\CarbonImmutable::parse($d)->format('d/m/Y');
+        @endphp
+        <div class="card">
+            <div class="card-title"><span class="bar" style="background: {{ $colors['growth'] }};"></span>Vacunas y revisiones</div>
+            @include('pdf.partials.tiles', ['tiles' => [
+                ['label' => 'Vacunas puestas', 'value' => $vaccinations['given'].'/'.$vaccinations['total'], 'note' => $vaccinations['overdue'] > 0 ? $vaccinations['overdue'].' con fecha pasada' : null],
+                ['label' => 'Próxima revisión', 'value' => $vaccinations['next_checkup'] !== null ? ($vaccinations['next_checkup']['reason'] ?: 'Revisión') : null, 'note' => $vaccinations['next_checkup'] !== null ? \Carbon\CarbonImmutable::parse($vaccinations['next_checkup']['at'])->translatedFormat('j M Y, H:i') : null],
+            ]])
+            @foreach ([['Próximas', $vaccinations['upcoming_list']], ['Puestas', $vaccinations['given_list']]] as [$listTitle, $list])
+                @if (count($list) > 0)
+                    <div style="page-break-inside: avoid;">
+                        <p class="sub-label">{{ $listTitle }}</p>
+                        <table class="tiles" style="margin-top: -8px;">
+                            @foreach ($list as $item)
+                                <tr>
+                                    <td style="padding: 6px 11px;">
+                                        <table style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 0; font-size: 11px; font-weight: bold;">{{ $item['name'] }}</td>
+                                                <td style="padding: 0; text-align: right; font-size: 10px; color: #7a6f66; white-space: nowrap;">{{ $item['date'] ? $fmtDay($item['date']) : 'Sin fecha' }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    @endif
+
     {{-- Vitamina D - solo si hay (o hubo) una pauta activada. --}}
     @if ($vitaminD['has_schedule'])
         <div class="card" style="page-break-inside: avoid;">

@@ -1355,6 +1355,41 @@ parpadeo del contenido viejo). Cada intervalo de sondeo en
 Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
 breve solape de montaje es inofensivo.
 
+## Vacunas y revisiones (`/vacunas`)
+
+Una cartilla digital por bebé: qué vacunas se han puesto y cuándo, y las
+revisiones con el pediatra. Se activa en los ajustes del bebé (tarjeta
+principal → ajustes, debajo de la vitamina D) junto con la **comunidad
+autónoma**, que decide la plantilla de vacunas.
+
+- **Plantillas en el backend** (ver `api/README.md`): el calendario
+  común del Consejo Interterritorial 2026 como base y, de momento,
+  Cantabria (MenACWY en lugar de MenC a los 4 y 12 meses desde el
+  1/2/2026). Cualquier otra comunidad usa el común, y la pantalla lo
+  dice ("tu comunidad puede añadir alguna vacuna"). Al activar se
+  genera la lista con las fechas previstas desde la fecha de
+  nacimiento; al cambiar de comunidad se rehacen las de plantilla
+  todavía sin poner.
+- **`VaccinationsView.vue`**: vacunas agrupadas por edad del calendario
+  ("2 meses", "3-4 años"...), cada una con su estado (puesta con fecha,
+  prevista, "según el caso" para las opcionales: hepatitis B al nacer,
+  VRS y gripe). Tocar una abre una hoja para marcarla como puesta (hoy
+  por defecto), cambiar la fecha prevista, añadir una nota (lote,
+  reacción...) o borrarla; también se pueden añadir vacunas propias.
+- **Revisiones a mano**: sin plantilla, porque cada comunidad tiene su
+  propio programa y la fecha real la da el centro de salud. Fecha,
+  hora, motivo y nota. Los campos de fecha y hora son nativos y van
+  apilados a todo el ancho (la rueda `DateTimeWheel` no llega al
+  futuro).
+- **Dashboard** (`VaccinationsLinkCard.vue`): enlace a la cartilla con
+  "N de M vacunas puestas". Si hay una vacuna atrasada o prevista en los
+  próximos 7 días, o una revisión en ese plazo (`nextUpcoming()` en
+  `lib/vaccinations.ts`), la tarjeta sube arriba, se tiñe de "warning"
+  y dice cuál y cuándo.
+- **Estadísticas y PDF**: bloque con vacunas puestas, las que tienen la
+  fecha prevista ya pasada, la próxima vacuna y la próxima revisión; el
+  PDF lista además las próximas (hasta 5) y las ya puestas.
+
 ## Avisos suaves
 
 `DailyAlertsCard.vue` + `lib/dailyAlerts.ts` - avisos en el Dashboard

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { groupVaccinations, nextUpcoming, vaccinationStatus } from '@/lib/vaccinations'
+import { summarizeVaccinationStats } from '@/lib/stats'
 import type { Checkup, Vaccination } from '@/stores/babies'
 
 let id = 1
@@ -80,6 +81,27 @@ describe('nextUpcoming', () => {
   it('flags an overdue vaccine first', () => {
     const item = nextUpcoming([vaccination({ due_date: '2026-10-05' })], [], now)
     expect(item).toMatchObject({ kind: 'vaccination', overdue: true })
+  })
+})
+
+describe('summarizeVaccinationStats', () => {
+  it('counts given, required and overdue, and lists given and the next 5 pending', () => {
+    const stats = summarizeVaccinationStats(
+      [
+        vaccination({ name: 'A', given_at: '2026-10-02' }),
+        vaccination({ name: 'B', due_date: '2026-10-01' }), // atrasada
+        vaccination({ name: 'Opcional', optional: true }),
+        ...['C', 'D', 'E', 'F', 'G'].map((name) => vaccination({ name, due_date: '2026-12-01' })),
+      ],
+      [checkup(new Date(2026, 9, 20, 9).toISOString(), 'Revisión 4 meses')],
+      now,
+    )
+    expect(stats.given).toBe(1)
+    expect(stats.total).toBe(7)
+    expect(stats.overdue).toBe(1)
+    expect(stats.givenList).toEqual([{ name: 'A', date: '2026-10-02' }])
+    expect(stats.upcomingList.map((v) => v.name)).toEqual(['B', 'C', 'D', 'E', 'F'])
+    expect(stats.nextCheckup?.reason).toBe('Revisión 4 meses')
   })
 })
 

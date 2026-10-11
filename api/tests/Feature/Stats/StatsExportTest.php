@@ -212,6 +212,39 @@ it('renders the temperature section when the payload carries one', function () {
     expect(app(StatsExportController::class)->buildViewData($baby, $payload)['temperature']['high_count'])->toBe(1);
 });
 
+it('renders the vaccinations section when the payload carries one', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['vaccinations'] = [
+        'given' => 4,
+        'total' => 24,
+        'overdue' => 1,
+        'given_list' => [['name' => 'Hexavalente (DTPa-VPI-Hib-HB)', 'date' => '2026-10-01']],
+        'upcoming_list' => [['name' => 'Meningococo ACWY', 'date' => '2026-12-01'], ['name' => 'Vacuna propia', 'date' => null]],
+        'next_checkup' => ['reason' => 'Revisión de los 4 meses', 'at' => '2026-12-01T09:30:00Z'],
+    ];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('rejects more than 5 upcoming vaccines in the export', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['vaccinations'] = [
+        'given' => 0, 'total' => 6, 'overdue' => 0, 'given_list' => [],
+        'upcoming_list' => array_fill(0, 6, ['name' => 'X', 'date' => null]),
+        'next_checkup' => null,
+    ];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['vaccinations.upcoming_list']);
+});
+
 it('rejects a temperature max missing its date', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

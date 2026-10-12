@@ -100,14 +100,20 @@ jobs:
         env:
           TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
         run: |
-          CLEAN=""
-          if [ "${{ inputs.allow_non_empty }}" = "true" ]; then CLEAN="--clean --if-exists"; fi
+          export CLEAN=""
+          if [ "${{ inputs.allow_non_empty }}" = "true" ]; then export CLEAN="--clean --if-exists"; fi
           docker run --rm -e TARGET -e CLEAN -v "$PWD/restore:/restore" postgres:18 \
             sh -c 'pg_restore -d "$TARGET" $CLEAN --no-owner --no-privileges /restore/pequedex.dump' \
             2> restore/errors.log || true
           echo "Líneas de aviso/error de pg_restore: $(wc -l < restore/errors.log)"
           # Solo los avisos (nombres de objetos, nunca datos), por si algo falla.
           grep -E "^pg_restore: (error|warning)" restore/errors.log | head -15 || true
+          # "ya existe" = no se pudo sustituir lo que había: los datos del destino
+          # NO se actualizaron, aunque los recuentos de después salgan bien.
+          if grep -q "already exists" restore/errors.log; then
+            echo "::error::La restauración chocó con objetos que ya existían: el destino NO se ha actualizado."
+            exit 1
+          fi
 
       - name: Comprobar el contenido restaurado
         env:

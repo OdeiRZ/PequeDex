@@ -58,7 +58,10 @@ async function onUndo() {
           <path d="m8.5 8.5 7 7" />
         </svg>
       </span>
-      <div class="min-w-0 max-w-[11.5rem]">
+      <!-- Ancho en % del bloque, no fijo: "Dar" queda en el mismo punto
+           relativo a cualquier ancho de pantalla (58% = los 184px de
+           antes en un móvil de 375px). -->
+      <div class="min-w-0 max-w-[58%] flex-1">
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.title') }}</div>
         <div class="text-xs text-text-muted">
           {{
@@ -114,7 +117,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="mr-5 shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
+        class="mr-[6%] shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
         :disabled="saving"
         @click="onUndo"
       >

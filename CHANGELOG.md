@@ -15,6 +15,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   bloqueado); al volver a ella se refresca en el momento. El sondeo
   constante estaba agotando la transferencia mensual del plan gratuito
   de Neon (5 GB) y no dejaba dormir nunca a la base de datos.
+- **Recordatorio de vitamina D** - los botones "Dar" y "Deshacer" se
+  colocan en proporción al ancho del bloque (58 % para la columna de
+  texto, 6 % de margen a la derecha) en vez de con medidas fijas en
+  píxeles, así mantienen su sitio relativo con cualquier ancho de
+  pantalla o nivel de zoom.
 
 ### Añadido
 

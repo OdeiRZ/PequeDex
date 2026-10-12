@@ -21,11 +21,28 @@ class DiaperChangeController extends Controller
         // `since` opcional: los avisos del Dashboard solo necesitan los
         // últimos días, no el historial entero (Estadísticas sí lo pide
         // completo, sin `since`).
-        $since = $request->validate(['since' => ['nullable', 'date']])['since'] ?? null;
+        $validated = $request->validate([
+            'since' => ['nullable', 'date'],
+            'compact' => ['nullable', 'boolean'],
+        ]);
+        $since = $validated['since'] ?? null;
 
         $query = $baby->diaperChanges()->orderByDesc('changed_at');
         if ($since !== null) {
             $query->where('changed_at', '>=', $since);
+        }
+
+        // `compact`: solo lo que usan los avisos del Dashboard (id, hora y
+        // tipo), sin hidratar un modelo por fila. Con ~140 pañales eran ~18 ms
+        // y 20 KB; en producción (una fracción de CPU) se notaba. Las horas
+        // salen con el mismo formato que las del modelo ("...000000Z").
+        if ($request->boolean('compact')) {
+            return response()->json(['data' => $query->toBase()->get(['id', 'baby_id', 'changed_at', 'type'])->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'baby_id' => (int) $row->baby_id,
+                'changed_at' => gmdate('Y-m-d\TH:i:s.000000\Z', (int) strtotime((string) $row->changed_at)),
+                'type' => $row->type,
+            ])->all()]);
         }
 
         return response()->json(['data' => $query->get()]);

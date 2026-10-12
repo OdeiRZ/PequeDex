@@ -7,6 +7,7 @@ import {
   useBabiesStore,
   type BabySex,
   type DiaperChange,
+  type RecentDiaperChange,
   type DiaperResidueColor,
   type DiaperSize,
   type DiaperType,
@@ -995,7 +996,7 @@ const lastTemperatures = computed(() => recentTemperatures(babies.temperatures, 
 // lo que registra el otro cuidador gracias al sondeo de 5 s), sin
 // duplicar por id.
 const alertDiaperChanges = computed(() => {
-  const byId = new Map<number, DiaperChange>()
+  const byId = new Map<number, RecentDiaperChange>()
   for (const change of babies.recentDiaperChanges) byId.set(change.id, change)
   for (const entry of babies.timeline) {
     if (entry.type === 'diaper_change') byId.set(entry.data.id, entry.data)

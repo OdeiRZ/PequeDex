@@ -48,7 +48,7 @@ it('returns every dashboard section exactly as its own endpoint does', function 
         'feed_prediction' => "/api/babies/{$baby->id}/feed-prediction",
         'vitamin_d_schedule' => "/api/babies/{$baby->id}/vitamin-d-schedule",
         'temperatures' => "/api/babies/{$baby->id}/temperatures",
-        'recent_diaper_changes' => "/api/babies/{$baby->id}/diaper-changes?since=".urlencode($since),
+        'recent_diaper_changes' => "/api/babies/{$baby->id}/diaper-changes?compact=1&since=".urlencode($since),
     ];
 
     foreach ($endpoints as $section => $uri) {

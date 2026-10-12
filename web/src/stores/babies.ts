@@ -146,6 +146,10 @@ export interface DiaperChange {
   notes: string | null
 }
 
+/** Lo que trae la lista de pañales recientes (modo `compact` del API): solo
+ * lo que usan los avisos del Dashboard. */
+export type RecentDiaperChange = Pick<DiaperChange, 'id' | 'baby_id' | 'changed_at' | 'type'>
+
 export type TemperatureMethod = 'axila' | 'recto' | 'oido' | 'frente'
 
 export interface Temperature {
@@ -393,7 +397,7 @@ interface BabiesState {
   /** Pañales de los últimos `ALERTS_WINDOW_DAYS` días, para los avisos
    * del Dashboard ("lleva 3 días sin caca" necesita ir más atrás que
    * las 50 entradas de `timeline`). */
-  recentDiaperChanges: DiaperChange[]
+  recentDiaperChanges: RecentDiaperChange[]
   /** Registros creados sin conexión, pendientes de enviar
    * (lib/offlineQueue.ts). Persistidos en el propio móvil. */
   offlineQueue: QueuedLog[]
@@ -495,7 +499,7 @@ export interface BabiesSnapshotData {
   vitaminDSchedule: VitaminDSchedule | null
   vitaminDRecentDoses: VitaminDDose[]
   temperatures: Temperature[]
-  recentDiaperChanges: DiaperChange[]
+  recentDiaperChanges: RecentDiaperChange[]
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
@@ -1063,7 +1067,7 @@ export const useBabiesStore = defineStore('babies', {
 
       const since = new Date(Date.now() - ALERTS_WINDOW_DAYS * 86_400_000).toISOString()
       const { data } = await apiClient.get(`/babies/${this.current.id}/diaper-changes`, {
-        params: { since },
+        params: { since, compact: 1 },
       })
       this.recentDiaperChanges = withoutPendingDeletes(
         data.data,

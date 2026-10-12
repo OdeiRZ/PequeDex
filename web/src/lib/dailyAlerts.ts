@@ -21,11 +21,14 @@ export const ALERTS_WINDOW_DAYS = 7
 
 const DAY_MS = 86_400_000
 
-function hasPoop(change: DiaperChange): boolean {
+/** Los avisos solo miran la hora y el tipo (la lista reciente del API viene compacta). */
+type AlertDiaperChange = Pick<DiaperChange, 'changed_at' | 'type'>
+
+function hasPoop(change: AlertDiaperChange): boolean {
   return change.type === 'sucio' || change.type === 'ambos'
 }
 
-function hasPee(change: DiaperChange): boolean {
+function hasPee(change: AlertDiaperChange): boolean {
   return change.type === 'mojado' || change.type === 'ambos'
 }
 
@@ -37,7 +40,7 @@ function startOfDay(date: Date): Date {
 
 export function computeDailyAlerts(
   /** Los pañales de los últimos `ALERTS_WINDOW_DAYS` días, en cualquier orden. */
-  changes: DiaperChange[],
+  changes: AlertDiaperChange[],
   birthDate: string | null | undefined,
   now: Date = new Date(),
 ): DailyAlert[] {

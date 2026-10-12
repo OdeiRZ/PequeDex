@@ -37,6 +37,8 @@ class BootstrapController extends Controller
         $query = array_filter([
             'tz' => $request->query('tz'),
             'since' => $request->query('since'),
+            // Los pañales recientes del Dashboard solo necesitan lo mínimo.
+            'compact' => 1,
         ], fn ($value) => $value !== null);
 
         $sections = [

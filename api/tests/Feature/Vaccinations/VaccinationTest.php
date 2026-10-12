@@ -15,11 +15,48 @@ function babyForVaccinationTest(User $user, array $attributes = []): Baby
     return $baby;
 }
 
-it('uses the common calendar for a region without its own template', function () {
-    $template = VaccinationTemplates::forRegion(Region::Madrid);
+it('uses the common calendar without a region', function () {
+    $template = VaccinationTemplates::forRegion(null);
 
     expect($template['region_specific'])->toBeFalse()
         ->and(collect($template['items'])->firstWhere('code', 'men_4m')['name'])->toBe('Meningococo C');
+});
+
+it('has a valid template for every region, only touching codes the common one has', function (Region $region) {
+    $common = collect(VaccinationTemplates::forRegion(null)['items'])->pluck('code');
+    $overrides = require resource_path("vaccination-templates/{$region->value}.php");
+    $template = VaccinationTemplates::forRegion($region);
+    $codes = collect($template['items'])->pluck('code');
+
+    expect($template['region_specific'])->toBeTrue()
+        ->and($template['year'])->toBe(2026)
+        ->and($template['source'])->not->toBeEmpty()
+        // Un código mal escrito en replace/remove no fallaría solo: se ignoraría.
+        ->and($common->intersect(array_keys($overrides['replace'] ?? []))->count())->toBe(count($overrides['replace'] ?? []))
+        ->and($common->intersect($overrides['remove'] ?? [])->count())->toBe(count($overrides['remove'] ?? []))
+        ->and($codes->duplicates())->toBeEmpty();
+
+    foreach ($template['items'] as $item) {
+        expect($item['months'])->toBeInt()->toBeGreaterThanOrEqual(0)->toBeLessThanOrEqual(216)
+            ->and($item['name'])->not->toBeEmpty()
+            ->and($item['age_label'])->not->toBeEmpty();
+    }
+})->with(Region::cases());
+
+it('applies the regional differences that matter most', function () {
+    $items = fn (Region $region) => collect(VaccinationTemplates::forRegion($region)['items'])->keyBy('code');
+
+    // Madrid y Navarra: MenACWY solo a los 12 meses.
+    expect($items(Region::Madrid)['men_4m']['name'])->toBe('Meningococo C')
+        ->and($items(Region::Madrid)['men_12m']['name'])->toBe('Meningococo ACWY')
+        ->and($items(Region::Navarra)['men_4m']['name'])->toBe('Meningococo C')
+        // Cataluña: hepatitis A, y dTpa a los 11-12 en lugar de Td a los 14.
+        ->and($items(Region::Cataluna)->has('hepa_15m'))->toBeTrue()
+        ->and($items(Region::Cataluna)->has('td_14y'))->toBeFalse()
+        // Andalucía: MenB de refuerzo a los 15 meses.
+        ->and($items(Region::Andalucia)['menb_12m']['months'])->toBe(15)
+        // Galicia: segunda dosis de triple vírica a los 2 años.
+        ->and($items(Region::Galicia)['tv_3y']['months'])->toBe(24);
 });
 
 it('swaps MenC for MenACWY at 4 and 12 months in Cantabria', function () {

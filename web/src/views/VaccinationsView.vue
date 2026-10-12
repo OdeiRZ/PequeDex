@@ -254,6 +254,7 @@ async function onDeleteCheckup() {
           <template v-if="!babies.vaccinationTemplate.region_specific">
             {{ t('vaccinations.commonTemplateNote') }}</template
           >
+          {{ t('vaccinations.compiledNote') }}
         </p>
 
         <div v-for="group in groups" :key="group.label" class="flex flex-col gap-1.5">

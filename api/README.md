@@ -136,10 +136,17 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   datos, no código: `comun.php` es el calendario común del Consejo
   Interterritorial (recomendado 2026, aprobado el 12/12/2025, parte
   0-14 años) y cada comunidad con variaciones tiene su fichero, que
-  solo dice lo que cambia (`replace`/`add`/`remove` por `code`). Hoy
-  solo `cantabria.php` (instrucción de Salud Pública del 23/01/2026:
-  MenACWY en lugar de MenC a los 4 y 12 meses). Una comunidad sin
-  fichero usa el común - añadir otra es añadir un fichero. Cada
+  solo dice lo que cambia (`replace`/`add`/`remove` por `code`). Hay
+  fichero para las 17 comunidades + Ceuta y Melilla, recopilados en
+  2026, cada uno con su fuente y fecha en la cabecera. 13 salen del
+  calendario oficial completo (Andalucía, Baleares, Canarias, Cantabria,
+  Castilla-La Mancha, Castilla y León, Cataluña, C. Valenciana,
+  Extremadura, Galicia, La Rioja, Madrid, País Vasco); en Aragón,
+  Asturias, Murcia, Navarra, Ceuta y Melilla no se encontró el oficial
+  de 2026 legible y solo se aplica el cambio de meningococo (MenACWY),
+  contrastado con el CAV-AEP. Sin comunidad indicada se usa el común.
+  Un test recorre todas las comunidades y comprueba que `replace`/
+  `remove` solo usan códigos que existen en el común. Cada
   elemento lleva `months` (fecha prevista = nacimiento + N meses),
   `age_label` y `optional` (hepatitis B al nacer, VRS, gripe).
   `babies.region` (`App\Enums\Region`, 17 comunidades + Ceuta y

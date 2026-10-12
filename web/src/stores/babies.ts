@@ -73,7 +73,7 @@ export interface Vaccination {
 export interface VaccinationTemplateInfo {
   source: string
   year: number
-  /** false = la comunidad no tiene plantilla propia y se usa la común. */
+  /** false = sin comunidad indicada: se usa el calendario común. */
   region_specific: boolean
 }
 

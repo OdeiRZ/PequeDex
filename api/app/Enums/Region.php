@@ -4,8 +4,9 @@ namespace App\Enums;
 
 /**
  * Comunidades y ciudades autónomas. Decide qué plantilla de vacunas se
- * aplica (ver App\Services\Vaccinations\VaccinationTemplates): las que
- * no tienen plantilla propia usan el calendario común.
+ * aplica (ver App\Services\Vaccinations\VaccinationTemplates): cada una
+ * tiene su fichero en resources/vaccination-templates (recopilados en
+ * 2026); sin comunidad indicada se usa el calendario común.
  */
 enum Region: string
 {

@@ -191,7 +191,10 @@ export default {
     vaccinesTitle: 'Vaccines',
     progress: '{given} of {total} given',
     templateSource: 'Template: {source} ({year}).',
-    commonTemplateNote: 'Your region may add a vaccine; you can adjust it by hand.',
+    commonTemplateNote:
+      'Choose your region in the baby settings to use its schedule; you can also adjust it by hand.',
+    compiledNote:
+      'Schedules were compiled in 2026 and may change in later years: if in doubt, follow what your health centre tells you.',
     customGroup: 'Added by hand',
     status: {
       given: 'Given {date}',
@@ -458,7 +461,7 @@ export default {
         region: 'Region (Spain)',
         regionNone: 'Not specified (common schedule)',
         regionHint:
-          'Sets the vaccine schedule. Regions without their own template use the common one, and everything can be edited. Changing it rebuilds the pending ones; given and edited vaccines are kept.',
+          "Sets your region's vaccine schedule (none: the common one), and everything can be edited. Changing it rebuilds the pending ones; given and edited vaccines are kept.",
       },
       vitaminD: {
         title: 'Vitamin D reminder',

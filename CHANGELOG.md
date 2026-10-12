@@ -7,6 +7,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- **Vacunas: calendario de cada comunidad autónoma** - además del
+  común y Cantabria, ya hay plantilla para las 17 comunidades y Ceuta y
+  Melilla, con sus diferencias (p.ej. MenACWY en vez de MenC a los 4 y
+  12 meses en casi todas, solo a los 12 en Madrid y Navarra; dosis de
+  neumococo a los 6 meses; rotavirus en 3 dosis; segunda dosis de
+  triple vírica y varicela a los 2, 3 o 4 años; hepatitis A en
+  Cataluña; Tdpa/dTpa en la adolescencia). En Aragón, Asturias, Murcia,
+  Navarra, Ceuta y Melilla solo se aplica el cambio de meningococo,
+  por no encontrar su calendario oficial de 2026. La pantalla de
+  vacunas avisa de que los calendarios se recopilaron en 2026 y pueden
+  cambiar en años posteriores.
+
 ### Cambiado
 
 - **Menos consumo de la base de datos** - el Dashboard sincroniza la

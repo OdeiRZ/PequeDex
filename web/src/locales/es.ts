@@ -192,7 +192,10 @@ export default {
     vaccinesTitle: 'Vacunas',
     progress: '{given} de {total} puestas',
     templateSource: 'Plantilla: {source} ({year}).',
-    commonTemplateNote: 'Tu comunidad puede añadir alguna vacuna; puedes ajustarlo a mano.',
+    commonTemplateNote:
+      'Elige tu comunidad en los ajustes del bebé para usar su calendario; también puedes ajustarlo a mano.',
+    compiledNote:
+      'Los calendarios se recopilaron en 2026 y pueden cambiar en años posteriores: ante cualquier duda, manda lo que te indiquen en tu centro de salud.',
     customGroup: 'Añadidas a mano',
     status: {
       given: 'Puesta {date}',
@@ -462,7 +465,7 @@ export default {
         region: 'Comunidad autónoma',
         regionNone: 'Sin indicar (calendario común)',
         regionHint:
-          'Decide el calendario de vacunas. Si tu comunidad no tiene plantilla propia se usa el común, y todo se puede editar. Al cambiarla se rehacen las pendientes; las puestas y las que hayas editado se conservan.',
+          'Decide el calendario de vacunas de tu comunidad (sin indicar, el común), y todo se puede editar. Al cambiarla se rehacen las pendientes; las puestas y las que hayas editado se conservan.',
       },
       vitaminD: {
         title: 'Recordatorio de vitamina D',

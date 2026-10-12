@@ -143,7 +143,11 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     (MenACWY); no se encontró su calendario oficial de 2026 legible
     (en Ceuta y Melilla falta además la hepatitis A, que sí vacunan).
 20. ✅ Resumen para la consulta: un PDF de una página con los últimos
-    14 días y un recuadro de preguntas para el pediatra.
+    14 días y una ficha grande del bebé (nombre, edad, sexo, nacimiento),
+    más una gráfica del sueño de los últimos 7 días, el color de las
+    cacas y, si se escriben, las preguntas para el pediatra al final.
+    Se elige en una hoja con dos filas iguales (para ti / para el
+    pediatra).
 
 ## Copias de seguridad
 

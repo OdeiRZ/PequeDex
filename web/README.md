@@ -1819,17 +1819,30 @@ interpretación clínica) y **última caca** ("hace 5 horas"), esta sobre
 todo el historial (`findLastPoopAt()`) - es una pregunta sobre ahora.
 
 **Resumen para la consulta** - el botón de descarga abre una hoja con
-dos opciones: "Completo" (el PDF de siempre, con el periodo elegido) y
-"Resumen para la consulta", una sola página para el pediatra
-(`api/resources/views/pdf/consult-summary.blade.php`). El resumen usa
-siempre los últimos 14 días (`SUMMARY_PERIOD = '14d'` en
+dos filas de la misma forma, cada una con "para quién es", qué lleva y
+su propio botón Descargar: "Para ti" (las estadísticas completas, el PDF
+de siempre con el periodo elegido) y "Para el pediatra" (el resumen de
+una página, `api/resources/views/pdf/consult-summary.blade.php`). Las
+preguntas para la consulta son opcionales y van plegadas tras un enlace
+dentro de la fila del pediatra (`exportQuestionsOpen` en
+`StatsView.vue`); el estado vive en la vista y no se guarda. El resumen
+usa siempre los últimos 14 días (`SUMMARY_PERIOD = '14d'` en
 `lib/stats.ts`, un periodo que no aparece en el selector) y el mismo
 payload y endpoint que el completo, con `mode: 'summary'`, las
-`questions` que se escriben en la hoja (hasta 1000 caracteres; sin
-ellas, el PDF deja líneas en blanco para apuntarlas a mano) y
+`questions` que se escriben (hasta 1000 caracteres) y
 `high_temperatures` (las de 38 °C o más del periodo, como mucho 10). El
 backend elige la plantilla según `mode` y filtra las vacunas puestas
-dentro del periodo. Sin gráficas: fichas de 3 en 3 y filas.
+dentro del periodo.
+
+El PDF abre con una ficha grande del bebé (nombre, edad, sexo, fecha de
+nacimiento y periodo), sigue con las secciones de crecimiento, tomas,
+sueño (con una gráfica de las horas de los últimos 7 días, la duración
+media de cada sueño y el tiempo despierto entre sueños), pañales (con
+el color de las cacas y el total de cambios), temperatura, vacunas
+(con la vitamina D como una fila más cuando las vacunas están activas) y
+termina con las preguntas, que solo aparecen si se escribió alguna. Es
+todo con datos que el frontend ya calculaba para el PDF completo, sin
+endpoint nuevo.
 
 **Export a PDF** - botón en la cabecera (icono descargar, mismo patrón
 visual y de estados `exporting`/`justExported` que `ContractionsView.vue`),

@@ -189,9 +189,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `mode` (`full` por defecto, o `summary`), `questions` (nullable, hasta
   1000 caracteres), `high_temperatures` (hasta 10 `{celsius, at}`) y el
   periodo `14d`. Con `summary` renderiza `pdf/consult-summary.blade.php`
-  (una página, fichas de 3 en 3, sin gráficas) y devuelve
+  (una página: ficha grande del bebé, fichas de 3 en 3, gráfica de las
+  horas de sueño de 7 días y color de las cacas) y devuelve
   `resumen-consulta.pdf`; `StatsExportController::recentVaccines()`
-  filtra las vacunas puestas dentro del periodo.
+  filtra las vacunas puestas dentro del periodo. El bloque de preguntas
+  va al final y solo si `questions` trae texto. `vaccinations` puede ser
+  `null` (vacunas desactivadas): las listas `given_list` y
+  `upcoming_list` solo son obligatorias cuando es un objeto.
 - Avisos suaves del Dashboard: `GET /babies/{baby}/diaper-changes`
   acepta un `since` opcional (fecha) para pedir solo los últimos días
   en vez del historial entero, y `users.alerts_enabled` (`PUT

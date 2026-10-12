@@ -158,6 +158,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   o más bebés merece repetirse; los scripts de backtest están en la
   carpeta de pruebas del autor, no en el repositorio.
 
+- **Resumen para la consulta, rehecho**: una ficha del bebé mucho más
+  grande y relevante arriba (nombre en grande, edad, sexo, fecha de
+  nacimiento y periodo) en lugar de una línea de texto; el bloque de
+  "Preguntas para la consulta" pasa al final y **solo sale si se ha
+  escrito alguna** (antes siempre salía, con líneas en blanco); y se
+  rellena más la página con información que ya se calculaba: gráfica de
+  las horas de sueño de los últimos 7 días, duración media de cada sueño,
+  tiempo despierto entre sueños, sueño de día, total de tomas, lado de
+  las tomas de pecho, color de las cacas, total de cambios de pañal y
+  la vitamina D como una fila de "Vacunas y revisiones". Se comprobó que
+  cabe en una página incluso con todo activado y con preguntas.
+- **La hoja de descarga del PDF, más clara**: dos filas con la misma
+  forma ("Para ti: estadísticas completas" y "Para el pediatra: resumen
+  de una página"), cada una con su botón Descargar, en lugar de una
+  tarjeta que descargaba al tocarla y otra con un botón aparte. Las
+  preguntas para la consulta van plegadas tras un enlace.
+
 ### Corregido
 
 - **Los dos PDF (completo y resumen) fallaban con un error 422** cuando el

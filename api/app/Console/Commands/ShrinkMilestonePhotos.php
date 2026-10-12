@@ -18,7 +18,9 @@ use Illuminate\Support\Str;
  */
 class ShrinkMilestonePhotos extends Command
 {
-    protected $signature = 'milestones:shrink-photos {--apply : Guardar los cambios (sin esto, solo se muestra lo que se ahorraría)}';
+    protected $signature = 'milestones:shrink-photos
+        {--apply : Guardar los cambios (sin esto, solo se muestra lo que se ahorraría)}
+        {--backup= : Carpeta local donde copiar cada original ANTES de sustituirla (con --apply)}';
 
     protected $description = 'Reduce las fotos de hitos antiguas a WebP de 1600 px como máximo';
 
@@ -28,6 +30,7 @@ class ShrinkMilestonePhotos extends Command
     public function handle(PhotoProcessor $processor): int
     {
         $apply = (bool) $this->option('apply');
+        $backup = $this->option('backup') ?: null;
         $disk = Storage::disk(config('filesystems.milestones_disk'));
         $before = 0;
         $after = 0;
@@ -35,7 +38,7 @@ class ShrinkMilestonePhotos extends Command
 
         $this->info($apply ? 'Reduciendo las fotos (se guardan los cambios).' : 'Simulación: no se cambia nada (usa --apply para guardar).');
 
-        Milestone::query()->whereNotNull('photo_path')->orderBy('id')->each(function (Milestone $milestone) use ($processor, $disk, $apply, &$before, &$after, &$changed) {
+        Milestone::query()->whereNotNull('photo_path')->orderBy('id')->each(function (Milestone $milestone) use ($processor, $disk, $apply, $backup, &$before, &$after, &$changed) {
             $path = $milestone->photo_path;
 
             if (! $disk->exists($path)) {
@@ -68,6 +71,12 @@ class ShrinkMilestonePhotos extends Command
                 return;
             }
 
+            // La original se copia a disco local antes de tocar nada: si
+            // la copia falla, esa foto se deja como está.
+            if ($backup !== null && ! $this->backUp($backup, $milestone, $path, $original)) {
+                return;
+            }
+
             $newPath = "milestones/{$milestone->baby_id}/".Str::uuid().'.webp';
             $disk->put($newPath, $webp);
 
@@ -92,6 +101,25 @@ class ShrinkMilestonePhotos extends Command
         ));
 
         return self::SUCCESS;
+    }
+
+    private function backUp(string $directory, Milestone $milestone, string $path, string $original): bool
+    {
+        $target = rtrim($directory, '/\\').DIRECTORY_SEPARATOR."hito-{$milestone->id}-".basename($path);
+
+        if (! is_dir($directory) && ! @mkdir($directory, 0777, true) && ! is_dir($directory)) {
+            $this->error("Hito {$milestone->id}: no se pudo crear la carpeta de copias {$directory}, se deja la original.");
+
+            return false;
+        }
+
+        if (@file_put_contents($target, $original) !== strlen($original)) {
+            $this->error("Hito {$milestone->id}: no se pudo copiar la original a {$target}, se deja como está.");
+
+            return false;
+        }
+
+        return true;
     }
 
     private function shrink(PhotoProcessor $processor, string $binary): ?string

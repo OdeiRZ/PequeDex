@@ -343,7 +343,9 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `MilestoneController::storePhoto()` guarda entonces el original. Las
   fotos subidas antes se reducen con `php artisan milestones:shrink-photos`
   (`App\Console\Commands\ShrinkMilestonePhotos`): sin `--apply` es una
-  simulación; con él sube la versión reducida al disco de los hitos
+  simulación; `--backup=<carpeta>` copia antes cada original a disco local
+  (si la copia falla, esa foto se deja como está); con `--apply` sube la
+  versión reducida al disco de los hitos
   (`MILESTONES_DISK`), apunta el hito a ella y borra la original solo si la
   nueva existe. Contra producción hay que ejecutarlo con las variables de
   Neon y del almacén de fotos puestas (Render gratuito no tiene terminal).

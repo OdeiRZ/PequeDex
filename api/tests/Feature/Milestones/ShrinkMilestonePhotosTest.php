@@ -53,6 +53,34 @@ it('replaces an old big photo with a shrunken WebP and deletes the original with
         ->and(strlen($stored))->toBeLessThan(strlen($jpeg) / 2);
 });
 
+it('copies the original to a local folder before replacing it when asked to', function () {
+    $jpeg = bigJpeg();
+    Storage::disk('public')->put('milestones/1/vieja.jpg', $jpeg);
+    $milestone = Milestone::factory()->create(['photo_path' => 'milestones/1/vieja.jpg']);
+    $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'copias-'.uniqid();
+
+    $this->artisan('milestones:shrink-photos', ['--apply' => true, '--backup' => $dir])->assertSuccessful();
+
+    // La copia es idéntica a la original, y el hito apunta ya a la reducida.
+    expect(file_get_contents("{$dir}/hito-{$milestone->id}-vieja.jpg"))->toBe($jpeg)
+        ->and($milestone->fresh()->photo_path)->toEndWith('.webp');
+    Storage::disk('public')->assertMissing('milestones/1/vieja.jpg');
+
+    array_map('unlink', glob("{$dir}/*"));
+    rmdir($dir);
+});
+
+it('does not write the backup nor change anything in a simulation', function () {
+    Storage::disk('public')->put('milestones/1/vieja.jpg', bigJpeg());
+    Milestone::factory()->create(['photo_path' => 'milestones/1/vieja.jpg']);
+    $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'copias-'.uniqid();
+
+    $this->artisan('milestones:shrink-photos', ['--backup' => $dir])->assertSuccessful();
+
+    expect(is_dir($dir))->toBeFalse();
+    Storage::disk('public')->assertExists('milestones/1/vieja.jpg');
+});
+
 it('leaves alone a photo that is already a small WebP, and a missing file', function () {
     $image = imagecreatetruecolor(400, 300);
     ob_start();

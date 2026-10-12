@@ -153,6 +153,17 @@ export default {
     unavailable: 'Audio pendiente',
     unavailableHint: 'Este sonido estará disponible próximamente.',
   },
+  offline: {
+    queued: 'Sin conexión: guardado en el móvil, se enviará al volver.',
+    banner: 'Sin conexión.',
+    pending: '{count} registro pendiente de enviar. | {count} registros pendientes de enviar.',
+    pendingBadge: 'Pendiente',
+    pendingNoEdit: 'Todavía no se ha enviado. Podrás editarlo cuando haya conexión.',
+    needsConnection: 'Sin conexión. Para editar o borrar hace falta conexión.',
+    sent: 'Enviado {count} registro guardado sin conexión. | Enviados {count} registros guardados sin conexión.',
+    rejected:
+      'No se ha podido guardar {count} registro hecho sin conexión. | No se han podido guardar {count} registros hechos sin conexión.',
+  },
   regions: {
     andalucia: 'Andalucía',
     aragon: 'Aragón',

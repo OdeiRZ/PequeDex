@@ -1327,6 +1327,33 @@ con foto se quedaba así de "colgado" en el móvil - ver `api/README.md`
 sobre `docker/uploads.ini`). Ahora cada uno muestra
 `t('dashboard.saveError')` por toast si falla.
 
+## Registro sin conexión
+
+`lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Solo
+**crear** tomas, sueños, pañales y temperaturas:
+
+- Cada creación lleva un `client_uuid` generado en el móvil. Si el
+  `POST` falla **sin respuesta** (`isNetworkError()`: sin red, caída,
+  tiempo agotado - no un 422), el registro va a `babies.offlineQueue`
+  (persistida en `localStorage`, `pequedex.offlineQueue`) y se añade a
+  la línea temporal como entrada provisional (`pending` = su uuid, id
+  negativo), con la etiqueta "Pendiente" en `EntryCard`. La vista
+  avisa "guardado en el móvil" en vez de "guardado".
+- `fetchTimeline()` vuelve a añadir los pendientes del bebé actual
+  (`withPendingEntries()`) para que el sondeo de 5 s no los borre.
+- La cola se envía en orden en cada sondeo, al volver la conexión
+  (evento `online`) y al cargar el Dashboard. Se para en el primer
+  fallo de red; un registro que el servidor rechaza (validación) se
+  descarta y se avisa. El servidor reconoce un `client_uuid` repetido y
+  devuelve el registro ya creado, así que un reintento tras un corte no
+  duplica nada (ver `api/README.md`).
+- Pendientes: borrar los quita de la cola; "Finalizar" (sueño en curso,
+  toma de pecho) cambia el registro en la cola (`updateQueued()`);
+  abrirlos para editar avisa de que hay que esperar al envío.
+- Editar o borrar registros ya guardados sigue necesitando conexión
+  (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
+  muestra "Sin conexión" y cuántos registros quedan por enviar.
+
 ## Pantallas que no cargan
 
 Todas las rutas salvo el Dashboard se cargan bajo demanda

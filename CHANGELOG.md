@@ -9,6 +9,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Registro sin conexión** - si al guardar una toma, un sueño, un
+  pañal o una temperatura no hay conexión, ya no sale el error rojo: el
+  registro se guarda en el propio móvil, aparece al momento en la línea
+  temporal marcado como "Pendiente" y se envía solo al volver la
+  conexión (o en el siguiente refresco). Un aviso indica cuántos quedan
+  por enviar. Los pendientes se pueden borrar y "Finalizar" (sueño o
+  toma en curso), pero no editar hasta que se envíen; editar o borrar
+  registros ya guardados sigue necesitando conexión, con un mensaje
+  claro. Cada registro lleva un identificador generado en el móvil, así
+  que un reintento tras un corte nunca lo duplica. Sin servicios
+  externos: todo con lo que ya había.
+
 - **Gráfica de temperatura del periodo** - el bloque Temperatura de
   Estadísticas (y del PDF) añade una gráfica con todas las mediciones
   del periodo elegido, cada punto en el color de su nivel (azul baja,

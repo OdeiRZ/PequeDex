@@ -50,6 +50,7 @@ import { nowForInput, toLocalInputValue, toUtcIso } from '@/lib/datetimeInput'
 import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
+import { isNetworkError } from '@/lib/offlineQueue'
 import { REGIONS, nextUpcoming } from '@/lib/vaccinations'
 import {
   addDays,
@@ -110,6 +111,9 @@ async function loadBabyData() {
   rhythmDate.value = todayDateOnlyString()
 
   try {
+    // Lo que quedó en cola de la última vez sin conexión, antes de pedir
+    // la línea temporal (así ya viene incluido).
+    await flushQueue().catch(() => {})
     await Promise.all([
       babies.fetchTimeline(),
       babies.fetchGrowthMeasurements(),
@@ -310,15 +314,57 @@ onMounted(() => {
     // just tries again. Without this catch, a rejected fetchTimeline()
     // here was an unhandled promise rejection.
     try {
+      await flushQueue()
       await babies.fetchTimeline()
     } catch {
       // ignored, see comment above
     }
   }, 5000)
+  window.addEventListener('online', onOnline)
+  window.addEventListener('offline', onOffline)
 })
+
+// --- Registro sin conexión (lib/offlineQueue.ts) ---
+
+const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
+const pendingCount = computed(() => babies.offlineQueue.length)
+
+// Envía lo que haya en cola; avisa si el servidor rechazó alguno (p.ej.
+// una fecha que ya no es válida) - se descarta, no se reintenta.
+async function flushQueue() {
+  if (babies.offlineQueue.length === 0) return
+  const { sent, rejected } = await babies.flushOfflineQueue()
+  if (sent > 0) toast.show(t('offline.sent', { count: sent }, sent))
+  if (rejected > 0) toast.show(t('offline.rejected', { count: rejected }, rejected), 'error')
+}
+
+async function onOnline() {
+  isOnline.value = true
+  try {
+    await flushQueue()
+    await babies.fetchTimeline()
+  } catch {
+    // el sondeo lo reintenta
+  }
+}
+
+function onOffline() {
+  isOnline.value = false
+}
+
+// Sin conexión, editar o borrar algo ya guardado no puede funcionar:
+// un mensaje claro en vez del genérico "No se ha podido guardar".
+function saveErrorMessage(error: unknown): string {
+  return (
+    extractValidationMessage(error) ??
+    (isNetworkError(error) ? t('offline.needsConnection') : t('dashboard.saveError'))
+  )
+}
 
 onUnmounted(() => {
   clearInterval(pollTimer)
+  window.removeEventListener('online', onOnline)
+  window.removeEventListener('offline', onOffline)
 })
 
 // --- Hojas inferiores: una por cada botón de la barra de acciones, más
@@ -604,8 +650,8 @@ async function onSubmitFeed() {
       await babies.updateFeed(editingFeedId.value, payload)
       toast.show(t('dashboard.feedForm.toastUpdated'))
     } else {
-      await babies.createFeed(payload)
-      toast.show(t('dashboard.feedForm.toastCreated'))
+      const result = await babies.createFeed(payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.feedForm.toastCreated'))
     }
     // Fire-and-forget: the prediction is a nice-to-have next to the
     // save that already succeeded (the timeline entry is there
@@ -614,7 +660,7 @@ async function onSubmitFeed() {
     void babies.fetchFeedPrediction().catch(() => {})
     closeSheet()
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   } finally {
     savingFeed.value = false
   }
@@ -661,6 +707,17 @@ function roundUpToFeedDurationOption(elapsedMinutes: number): number {
 async function onFinishFeed(feed: Feed) {
   feedback.tap()
 
+  // Toma creada sin conexión, todavía en cola: se cambia en la cola.
+  if (feed.id < 0) {
+    const startedMs = new Date(feed.started_at).getTime()
+    const minutes = roundUpToFeedDurationOption(Math.max((Date.now() - startedMs) / 60_000, 0))
+    babies.updateQueued(feed.id, {
+      ended_at: new Date(Math.min(startedMs + minutes * 60_000, Date.now())).toISOString(),
+    })
+    toast.show(t('offline.queued'))
+    return
+  }
+
   const startedAtMs = new Date(feed.started_at).getTime()
   const elapsedMinutes = (Date.now() - startedAtMs) / 60_000
   const roundedMinutes = roundUpToFeedDurationOption(Math.max(elapsedMinutes, 0))
@@ -682,7 +739,7 @@ async function onFinishFeed(feed: Feed) {
     toast.show(t('dashboard.feedForm.toastUpdated'))
     void babies.fetchFeedPrediction().catch(() => {})
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   }
 }
 
@@ -722,6 +779,13 @@ function openSleepEdit(sleep: Sleep) {
 async function onFinishSleep(sleep: Sleep) {
   feedback.tap()
 
+  // Sueño creado sin conexión, todavía en cola: se cambia en la cola.
+  if (sleep.id < 0) {
+    babies.updateQueued(sleep.id, { ended_at: new Date().toISOString() })
+    toast.show(t('offline.queued'))
+    return
+  }
+
   try {
     await babies.updateSleep(sleep.id, {
       started_at: sleep.started_at,
@@ -730,7 +794,7 @@ async function onFinishSleep(sleep: Sleep) {
     toast.show(t('dashboard.sleepForm.toastUpdated'))
     void babies.fetchSleepPrediction().catch(() => {})
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   }
 }
 
@@ -747,8 +811,8 @@ async function onSubmitSleep() {
       await babies.updateSleep(editingSleepId.value, payload)
       toast.show(t('dashboard.sleepForm.toastUpdated'))
     } else {
-      await babies.createSleep(payload)
-      toast.show(t('dashboard.sleepForm.toastCreated'))
+      const result = await babies.createSleep(payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.sleepForm.toastCreated'))
     }
     // Fire-and-forget, same reasoning as onSubmitFeed's prediction
     // refresh: the save already succeeded, a failed refresh here
@@ -756,7 +820,7 @@ async function onSubmitSleep() {
     void babies.fetchSleepPrediction().catch(() => {})
     closeSheet()
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   } finally {
     savingSleep.value = false
   }
@@ -869,12 +933,12 @@ async function onSubmitDiaper() {
       await babies.updateDiaperChange(editingDiaperId.value, payload)
       toast.show(t('dashboard.diaperForm.toastUpdated'))
     } else {
-      await babies.createDiaperChange(payload)
-      toast.show(t('dashboard.diaperForm.toastCreated'))
+      const result = await babies.createDiaperChange(payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.diaperForm.toastCreated'))
     }
     closeSheet()
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   } finally {
     savingDiaper.value = false
   }
@@ -1010,12 +1074,14 @@ async function onSubmitTemperature() {
       await babies.updateTemperature(editingTemperatureId.value, payload)
       toast.show(t('dashboard.temperatureForm.toastUpdated'))
     } else {
-      await babies.createTemperature(payload)
-      toast.show(t('dashboard.temperatureForm.toastCreated'))
+      const result = await babies.createTemperature(payload)
+      toast.show(
+        result === 'queued' ? t('offline.queued') : t('dashboard.temperatureForm.toastCreated'),
+      )
     }
     closeSheet()
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   } finally {
     savingTemperature.value = false
   }
@@ -1068,6 +1134,13 @@ function entryEndTimeFor(entry: TimelineEntry): string | undefined {
 async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
   const key = entry.type === 'diaper_change' ? 'diaper' : entry.type
 
+  // Todavía en la cola sin conexión: se quita de la cola, sin servidor.
+  if (entry.pending) {
+    babies.removeQueued(entry.pending)
+    toast.show(t(`dashboard.toastRemoved.${key}`))
+    return
+  }
+
   try {
     if (entry.type === 'feed') {
       await babies.deleteFeed(entry.data.id)
@@ -1087,6 +1160,11 @@ async function onDeleteEntry(entry: (typeof babies.timeline)[number]) {
 }
 
 function onOpenEntry(entry: (typeof babies.timeline)[number]) {
+  // Sin id real todavía: no se puede editar hasta que se envíe.
+  if (entry.pending) {
+    toast.show(t('offline.pendingNoEdit'))
+    return
+  }
   if (entry.type === 'feed') {
     openFeedEdit(entry.data)
   } else if (entry.type === 'sleep') {
@@ -1659,7 +1737,7 @@ async function onSubmitMilestone() {
     }
     closeSheet()
   } catch (error) {
-    toast.show(extractValidationMessage(error) ?? t('dashboard.saveError'), 'error')
+    toast.show(saveErrorMessage(error), 'error')
   } finally {
     savingMilestone.value = false
   }
@@ -1987,6 +2065,35 @@ const sleepPredictionDue = computed(() => {
           />
 
           <template v-if="isBorn">
+            <!-- Sin conexión o con registros en cola: un aviso discreto en
+                 vez de errores rojos al guardar. -->
+            <div
+              v-if="!isOnline || pendingCount > 0"
+              class="flex items-center gap-2 rounded-2xl border border-border bg-surface-sunken px-3 py-2 text-xs text-text-muted"
+              role="status"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-4 w-4 shrink-0"
+                aria-hidden="true"
+              >
+                <path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.7" />
+                <path d="M19 13a10 10 0 0 0-3-2M12 20h.01" />
+              </svg>
+              <span>
+                {{ isOnline ? '' : t('offline.banner') }}
+                {{
+                  pendingCount > 0
+                    ? t('offline.pending', { count: pendingCount }, pendingCount)
+                    : ''
+                }}
+              </span>
+            </div>
             <VitaminDReminderCard
               class="dash-enter -mb-2"
               @open-history="openSheet('vitaminDHistory')"
@@ -2134,6 +2241,7 @@ const sleepPredictionDue = computed(() => {
                       entryTemperatureBadge(item.entry, t)
                     "
                     :gauge="entryTemperatureGauge(item.entry)"
+                    :pending="!!item.entry.pending"
                     :swipe-to-delete="auth.user?.swipe_to_delete_enabled"
                     :style="{ '--stagger-index': index }"
                     @open="onOpenEntry(item.entry)"

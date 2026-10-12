@@ -4,6 +4,17 @@ import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
 import type { StatsExportPayload } from '@/lib/stats'
 import type { GrowthReferenceCurves } from '@/lib/growthReference'
 import { ALERTS_WINDOW_DAYS } from '@/lib/dailyAlerts'
+import {
+  endpointFor,
+  isNetworkError,
+  loadQueue,
+  newClientUuid,
+  pendingEntry,
+  saveQueue,
+  withPendingEntries,
+  type QueuedLog,
+  type QueuedLogType,
+} from '@/lib/offlineQueue'
 
 export type BabySex = 'nino' | 'nina'
 
@@ -212,11 +223,14 @@ export interface Contraction {
   intensity: 0 | 1 | 2
 }
 
+/** `pending`: el `client_uuid` de un registro creado sin conexión que
+ * todavía está en la cola (lib/offlineQueue.ts), sin guardar en el
+ * servidor. Ausente en las entradas normales. */
 export type TimelineEntry =
-  | { type: 'feed'; at: string; data: Feed }
-  | { type: 'sleep'; at: string; data: Sleep }
-  | { type: 'diaper_change'; at: string; data: DiaperChange }
-  | { type: 'temperature'; at: string; data: Temperature }
+  | { type: 'feed'; at: string; data: Feed; pending?: string }
+  | { type: 'sleep'; at: string; data: Sleep; pending?: string }
+  | { type: 'diaper_change'; at: string; data: DiaperChange; pending?: string }
+  | { type: 'temperature'; at: string; data: Temperature; pending?: string }
 
 interface CreateTemperaturePayload {
   measured_at: string
@@ -328,6 +342,10 @@ interface BabiesState {
    * del Dashboard ("lleva 3 días sin caca" necesita ir más atrás que
    * las 50 entradas de `timeline`). */
   recentDiaperChanges: DiaperChange[]
+  /** Registros creados sin conexión, pendientes de enviar
+   * (lib/offlineQueue.ts). Persistidos en el propio móvil. */
+  offlineQueue: QueuedLog[]
+  flushingQueue: boolean
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
@@ -424,6 +442,8 @@ export const useBabiesStore = defineStore('babies', {
     statsTemperatures: [],
     temperatures: [],
     recentDiaperChanges: [],
+    offlineQueue: loadQueue(),
+    flushingQueue: false,
     vaccinations: [],
     vaccinationTemplate: null,
     checkups: [],
@@ -532,7 +552,9 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`)
-      this.timeline = data.data
+      // Lo que sigue en la cola sin conexión no viene del servidor:
+      // se vuelve a añadir para que no desaparezca en cada sondeo.
+      this.timeline = withPendingEntries(data.data, this.offlineQueue, this.current.id)
     },
 
     // `date` is a plain "YYYY-MM-DD" - the backend returns every entry
@@ -555,11 +577,120 @@ export const useBabiesStore = defineStore('babies', {
     // making creating something feel as slow as the old (pre-optimistic)
     // delete did. Folded straight into `timeline` via upsertTimelineEntry
     // instead.
-    async createFeed(payload: CreateFeedPayload) {
-      const { data } = await apiClient.post(`/babies/${this.current!.id}/feeds`, payload)
-      const entry: TimelineEntry = { type: 'feed', at: data.data.started_at, data: data.data }
+    // --- Registro sin conexión (lib/offlineQueue.ts) ---
+
+    /** Crea un registro; si no hay red, lo deja en la cola y lo muestra
+     * como pendiente. 'queued' para que la vista avise de ello en vez de
+     * "guardado". Un error con respuesta (validación...) se relanza. */
+    async createLog(
+      type: QueuedLogType,
+      payload: Record<string, unknown>,
+    ): Promise<'saved' | 'queued'> {
+      const log: QueuedLog = {
+        clientUuid: newClientUuid(),
+        tempId: -Date.now(),
+        babyId: this.current!.id,
+        type,
+        payload,
+        queuedAt: new Date().toISOString(),
+      }
+      try {
+        const { data } = await apiClient.post(endpointFor(log), {
+          ...payload,
+          client_uuid: log.clientUuid,
+        })
+        this.applyCreatedLog(type, data.data)
+        return 'saved'
+      } catch (error) {
+        if (!isNetworkError(error)) throw error
+        this.offlineQueue = [...this.offlineQueue, log]
+        saveQueue(this.offlineQueue)
+        this.timeline = upsertTimelineEntry(this.timeline, pendingEntry(log))
+        return 'queued'
+      }
+    },
+
+    applyCreatedLog(type: QueuedLogType, data: TimelineEntry['data']) {
+      const at =
+        type === 'diaper_change'
+          ? (data as DiaperChange).changed_at
+          : type === 'temperature'
+            ? (data as Temperature).measured_at
+            : (data as Feed | Sleep).started_at
+      const entry = { type, at, data } as TimelineEntry
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      if (type === 'diaper_change') {
+        this.recentDiaperChanges = upsertByDate(
+          this.recentDiaperChanges,
+          data as DiaperChange,
+          (c) => c.changed_at,
+        )
+      }
+      if (type === 'temperature') {
+        this.temperatures = upsertByDate(
+          this.temperatures,
+          data as Temperature,
+          (t) => t.measured_at,
+        )
+      }
+    },
+
+    /** Envía la cola en orden. Para en el primer fallo de red (se
+     * reintenta en el siguiente sondeo o al volver la conexión); un
+     * registro rechazado por el servidor (p.ej. validación) se descarta
+     * y cuenta en `rejected`, para que la vista lo avise. */
+    async flushOfflineQueue(): Promise<{ sent: number; rejected: number }> {
+      if (this.flushingQueue || this.offlineQueue.length === 0) return { sent: 0, rejected: 0 }
+      this.flushingQueue = true
+      let sent = 0
+      let rejected = 0
+      try {
+        for (const log of [...this.offlineQueue]) {
+          try {
+            const { data } = await apiClient.post(endpointFor(log), {
+              ...log.payload,
+              client_uuid: log.clientUuid,
+            })
+            this.removeQueued(log.clientUuid)
+            if (this.current?.id === log.babyId) this.applyCreatedLog(log.type, data.data)
+            sent++
+          } catch (error) {
+            if (isNetworkError(error)) break
+            this.removeQueued(log.clientUuid)
+            rejected++
+          }
+        }
+      } finally {
+        this.flushingQueue = false
+      }
+      return { sent, rejected }
+    },
+
+    removeQueued(clientUuid: string) {
+      this.offlineQueue = this.offlineQueue.filter((log) => log.clientUuid !== clientUuid)
+      saveQueue(this.offlineQueue)
+      const keep = (entry: TimelineEntry) => entry.pending !== clientUuid
+      this.timeline = this.timeline.filter(keep)
+      this.dayTimeline = this.dayTimeline.filter(keep)
+    },
+
+    /** Cambia un registro todavía en cola (p.ej. "Finalizar" un sueño
+     * creado sin conexión) - se envía ya con el cambio. */
+    updateQueued(tempId: number, patch: Record<string, unknown>) {
+      const log = this.offlineQueue.find((l) => l.tempId === tempId)
+      if (!log) return
+      const updated: QueuedLog = { ...log, payload: { ...log.payload, ...patch } }
+      this.offlineQueue = this.offlineQueue.map((l) => (l.tempId === tempId ? updated : l))
+      saveQueue(this.offlineQueue)
+      this.timeline = upsertTimelineEntry(
+        this.timeline.filter((e) => e.pending !== log.clientUuid),
+        pendingEntry(updated),
+      )
+    },
+
+    async createFeed(payload: CreateFeedPayload) {
+      return this.createLog('feed', { ...payload })
     },
 
     async updateFeed(id: number, payload: CreateFeedPayload) {
@@ -570,10 +701,7 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async createSleep(payload: CreateSleepPayload) {
-      const { data } = await apiClient.post(`/babies/${this.current!.id}/sleeps`, payload)
-      const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      return this.createLog('sleep', { ...payload })
     },
 
     async updateSleep(id: number, payload: CreateSleepPayload) {
@@ -584,19 +712,7 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
-      const { data } = await apiClient.post(`/babies/${this.current!.id}/diaper-changes`, payload)
-      const entry: TimelineEntry = {
-        type: 'diaper_change',
-        at: data.data.changed_at,
-        data: data.data,
-      }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      this.recentDiaperChanges = upsertByDate(
-        this.recentDiaperChanges,
-        data.data,
-        (c) => c.changed_at,
-      )
+      return this.createLog('diaper_change', { ...payload })
     },
 
     async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
@@ -716,15 +832,7 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async createTemperature(payload: CreateTemperaturePayload) {
-      const { data } = await apiClient.post(`/babies/${this.current!.id}/temperatures`, payload)
-      const entry: TimelineEntry = {
-        type: 'temperature',
-        at: data.data.measured_at,
-        data: data.data,
-      }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      this.temperatures = upsertByDate(this.temperatures, data.data, (t) => t.measured_at)
+      return this.createLog('temperature', { ...payload })
     },
 
     async updateTemperature(id: number, payload: CreateTemperaturePayload) {

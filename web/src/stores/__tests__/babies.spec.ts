@@ -194,6 +194,7 @@ describe('useBabiesStore', () => {
       type: 'biberon',
       amount_ml: 120,
       started_at: '2026-08-30T10:00',
+      client_uuid: expect.any(String),
     })
     expect(apiClient.get).not.toHaveBeenCalled()
     expect(store.timeline).toEqual([
@@ -203,6 +204,84 @@ describe('useBabiesStore', () => {
         data: { id: 1, started_at: '2026-08-30T10:00:00Z' },
       },
     ])
+  })
+
+  it('queues a log when there is no connection and sends it later with the same client_uuid', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineQueue = []
+
+    vi.mocked(apiClient.post).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    const result = await store.createDiaperChange({
+      changed_at: '2026-10-12T08:00:00Z',
+      type: 'mojado',
+    })
+
+    expect(result).toBe('queued')
+    expect(store.offlineQueue).toHaveLength(1)
+    expect(store.timeline[0]).toMatchObject({ type: 'diaper_change', pending: expect.any(String) })
+    const queuedUuid = store.offlineQueue[0]!.clientUuid
+
+    const saved = {
+      id: 42,
+      baby_id: 1,
+      user_id: 1,
+      changed_at: '2026-10-12T08:00:00Z',
+      type: 'mojado',
+      residue_color: null,
+      size: null,
+      notes: null,
+    }
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: saved } })
+    const outcome = await store.flushOfflineQueue()
+
+    expect(outcome).toEqual({ sent: 1, rejected: 0 })
+    expect(apiClient.post).toHaveBeenLastCalledWith('/babies/1/diaper-changes', {
+      changed_at: '2026-10-12T08:00:00Z',
+      type: 'mojado',
+      client_uuid: queuedUuid,
+    })
+    expect(store.offlineQueue).toEqual([])
+    expect(store.timeline).toEqual([{ type: 'diaper_change', at: saved.changed_at, data: saved }])
+  })
+
+  it('keeps the queue on a network error during flush and drops a rejected log', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineQueue = []
+
+    vi.mocked(apiClient.post).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    await store.createTemperature({ measured_at: '2026-10-12T08:00:00Z', celsius: 37.5 })
+
+    vi.mocked(apiClient.post).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 0, rejected: 0 })
+    expect(store.offlineQueue).toHaveLength(1)
+
+    vi.mocked(apiClient.post).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 422 },
+    })
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 0, rejected: 1 })
+    expect(store.offlineQueue).toEqual([])
+    expect(store.timeline).toEqual([])
+  })
+
+  it('still throws a validation error instead of queueing', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineQueue = []
+
+    vi.mocked(apiClient.post).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 422 },
+    })
+    await expect(
+      store.createSleep({ started_at: '2026-10-12T08:00:00Z', ended_at: null }),
+    ).rejects.toBeTruthy()
+    expect(store.offlineQueue).toEqual([])
   })
 
   it('deletes a feed optimistically, without refetching the whole timeline', async () => {

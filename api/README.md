@@ -152,6 +152,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   del nacimiento) y `/checkups` (revisiones a mano, pueden estar en el
   futuro). El export de estadísticas acepta un bloque `vaccinations`
   opcional (resumen, próximas y puestas).
+- Registro sin conexión: `feeds`, `sleeps`, `diaper_changes` y
+  `temperatures` tienen un `client_uuid` (nullable, único) que manda el
+  móvil al crear. `App\Http\Controllers\Concerns\CreatesIdempotently`
+  (`createOnce()`) devuelve el registro ya existente (200) si llega otra
+  vez el mismo `client_uuid` - un reintento después de que la respuesta
+  se perdiera - en vez de crear un duplicado (201 si es nuevo). Sin
+  `client_uuid`, todo igual que antes.
 - Resumen para la consulta: `POST /babies/{baby}/stats/export` acepta
   `mode` (`full` por defecto, o `summary`), `questions` (nullable, hasta
   1000 caracteres), `high_temperatures` (hasta 10 `{celsius, at}`) y el

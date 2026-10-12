@@ -44,6 +44,9 @@ const props = withDefaults(
      * temperatura): `step` segmentos llenos en `color`. También pinta
      * el texto del badge en ese color en vez del de la categoría. */
     gauge?: { step: number; color: string } | null
+    /** Creado sin conexión y todavía en la cola (lib/offlineQueue.ts):
+     * icono de reloj junto al título. */
+    pending?: boolean
     photoSrc?: string | null
     photoAlt?: string
     /** False for a row that isn't a real, editable entity behind it -
@@ -190,6 +193,25 @@ function openEntry() {
           <div class="min-w-0 flex-1">
             <div class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
               <span class="truncate">{{ title }}</span>
+              <span
+                v-if="pending"
+                class="flex shrink-0 items-center gap-0.5 text-[0.65rem] font-semibold text-text-muted"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="h-3 w-3"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                {{ $t('offline.pendingBadge') }}
+              </span>
             </div>
 
             <!-- Segunda línea: el estado real de la entrada (duración +

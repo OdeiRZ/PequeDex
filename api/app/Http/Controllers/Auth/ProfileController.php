@@ -191,19 +191,19 @@ class ProfileController extends Controller
             throw ValidationException::withMessages(['avatar' => [$e->getMessage()]]);
         }
 
-        $user->update(['avatar' => $avatar]);
+        $user->setAvatar($avatar);
 
         return response()->json($user);
     }
 
-    // No file to clean up on disk - the avatar only ever lives in this
-    // one column, so removing it is just nulling the field out.
+    // No file to clean up on disk - the avatar only ever lives in its
+    // user_avatars row, so removing it is just deleting that row.
     public function deleteAvatar(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $user->update(['avatar' => null]);
+        $user->setAvatar(null);
 
         return response()->json(status: 204);
     }

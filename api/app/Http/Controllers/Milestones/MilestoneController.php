@@ -19,7 +19,7 @@ class MilestoneController extends Controller
         $this->authorize('view', $baby);
 
         return response()->json([
-            'data' => $baby->milestones()->with('likedBy')->orderByDesc('achieved_at')->get(),
+            'data' => $baby->milestones()->with('likedBy.avatarRecord')->orderByDesc('achieved_at')->get(),
         ]);
     }
 
@@ -41,7 +41,7 @@ class MilestoneController extends Controller
                 : null,
         ]);
 
-        return response()->json(['data' => $milestone->load('likedBy')], 201);
+        return response()->json(['data' => $milestone->load('likedBy.avatarRecord')], 201);
     }
 
     public function update(UpdateMilestoneRequest $request, Baby $baby, int $milestone): JsonResponse
@@ -65,7 +65,7 @@ class MilestoneController extends Controller
 
         $milestoneModel->update($attributes);
 
-        return response()->json(['data' => $milestoneModel->load('likedBy')]);
+        return response()->json(['data' => $milestoneModel->load('likedBy.avatarRecord')]);
     }
 
     public function destroy(Baby $baby, int $milestone): JsonResponse
@@ -108,7 +108,7 @@ class MilestoneController extends Controller
             }
         }
 
-        return response()->json(['data' => $milestoneModel->load('likedBy')]);
+        return response()->json(['data' => $milestoneModel->load('likedBy.avatarRecord')]);
     }
 
     private function deleteExistingPhoto(Milestone $milestone): void

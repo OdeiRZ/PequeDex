@@ -7,8 +7,10 @@ use App\Enums\DiaperSize;
 use App\Enums\TemperatureMethod;
 use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -27,7 +29,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'avatar',
         'action_bar_categories',
         'predictions_enabled',
         'swipe_to_delete_enabled',
@@ -50,7 +51,17 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'avatarRecord',
     ];
+
+    /**
+     * `avatar` is not a column (see UserAvatar): it is read from the
+     * avatar relation only when the user is serialized, so authenticating
+     * a request does not drag the image out of the database.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['avatar'];
 
     /**
      * Get the attributes that should be cast.
@@ -86,6 +97,31 @@ class User extends Authenticatable
     public function babies(): BelongsToMany
     {
         return $this->belongsToMany(Baby::class)->withTimestamps();
+    }
+
+    /**
+     * @return HasOne<UserAvatar, $this>
+     */
+    public function avatarRecord(): HasOne
+    {
+        return $this->hasOne(UserAvatar::class);
+    }
+
+    protected function avatar(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->avatarRecord?->data);
+    }
+
+    /** Stores the avatar (a data: URI) or removes it with null. */
+    public function setAvatar(?string $dataUri): void
+    {
+        if ($dataUri === null) {
+            $this->avatarRecord()->delete();
+        } else {
+            $this->avatarRecord()->updateOrCreate([], ['data' => $dataUri]);
+        }
+
+        $this->unsetRelation('avatarRecord');
     }
 
     /**

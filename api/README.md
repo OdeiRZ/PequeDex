@@ -50,11 +50,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
 - `app/Http/Controllers/Auth/ProfileController.php` /
   `app/Services/Users/AvatarProcessor.php` — datos personales, cambio de
   contraseña y foto de perfil, mismo patrón que MIRA MarketLens. La foto
-  se guarda como `data:` URI en `users.avatar` (columna `text`), no como
-  archivo en disco — a diferencia de la foto de un hito (ver más abajo),
-  aquí no hace falta R2: es una imagen pequeña (`AvatarProcessor`,
-  GD puro, la redimensiona a 320×320 como máximo) y una columna evita
-  depender de nada externo solo para esto. Sin errores por campo en la
+  se guarda como `data:` URI (WebP de 128×128 como máximo, ~3-6 KB) en
+  la tabla `user_avatars` (`App\Models\UserAvatar`), no como archivo en
+  disco — a diferencia de la foto de un hito (ver más abajo), aquí no
+  hace falta R2: es una imagen pequeña (`AvatarProcessor`, GD puro). En
+  **su propia tabla y no en una columna de `users`** porque Sanctum carga
+  la fila entera del usuario en cada petición autenticada: con el avatar
+  antiguo (PNG de 320 px, ~80 KB) esos 80 KB salían de Neon en cada
+  petición, sondeo incluido, y eran casi todo el consumo de red del
+  proyecto. `User::avatar` es ahora un atributo (en `$appends`) que lee
+  la relación solo al serializar el usuario; los hitos precargan
+  `likedBy.avatarRecord`. La migración `move_avatar_to_user_avatars_table`
+  copia y reduce los avatares existentes. Sin errores por campo en la
   respuesta como en LudoDex/MIRA - el frontend de esta app no los pinta,
   así que no hace falta desglosarlos aquí tampoco.
 - `ProfileController::updateActionBarCategories()` — qué categorías

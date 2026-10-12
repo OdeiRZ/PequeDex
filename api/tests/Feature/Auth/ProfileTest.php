@@ -4,6 +4,7 @@ use App\Enums\DiaperSize;
 use App\Enums\TemperatureMethod;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 it('updates the name and email', function () {
@@ -60,7 +61,7 @@ it('rejects a password change with the wrong current password', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('current_password');
 });
 
-it('uploads an avatar and stores it as a data URI', function () {
+it('uploads an avatar and stores it as a small WebP data URI', function () {
     $user = actingAsUser();
 
     $response = $this->postJson('/api/user/avatar', [
@@ -68,8 +69,30 @@ it('uploads an avatar and stores it as a data URI', function () {
     ]);
 
     $response->assertOk();
-    expect($response->json('avatar'))->toStartWith('data:image/png;base64,');
-    expect($user->refresh()->avatar)->toStartWith('data:image/png;base64,');
+    expect($response->json('avatar'))->toStartWith('data:image/webp;base64,');
+    expect($user->refresh()->avatar)->toStartWith('data:image/webp;base64,');
+
+    // 128px como mucho: la imagen guardada cabe en ese cuadrado.
+    [$width, $height] = getimagesizefromstring(base64_decode(substr($user->avatar, strlen('data:image/webp;base64,'))));
+    expect(max($width, $height))->toBe(128);
+});
+
+it('keeps the avatar out of the query that authenticates a request', function () {
+    $user = actingAsUser();
+    $user->setAvatar('data:image/webp;base64,xyz');
+
+    $queries = [];
+    DB::listen(function ($query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    // Una petición autenticada cualquiera que no serializa al usuario.
+    $this->getJson('/api/babies')->assertOk();
+
+    expect(collect($queries)->filter(fn ($sql) => str_contains($sql, 'user_avatars')))->toBeEmpty();
+
+    // En cambio, /api/user sí lo devuelve.
+    $this->getJson('/api/user')->assertOk()->assertJsonPath('avatar', 'data:image/webp;base64,xyz');
 });
 
 it('rejects an image whose dimensions are too large to safely decode', function () {
@@ -95,7 +118,8 @@ it('rejects a non-image file as the avatar', function () {
 });
 
 it('removes the avatar', function () {
-    $user = User::factory()->create(['avatar' => 'data:image/png;base64,xyz']);
+    $user = User::factory()->create();
+    $user->setAvatar('data:image/png;base64,xyz');
     $this->actingAs($user, 'sanctum');
 
     $this->deleteJson('/api/user/avatar')->assertNoContent();

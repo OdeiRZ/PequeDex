@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Rendimiento: el avatar ya no viaja en cada petición** - la foto de
+  perfil (un PNG de 320 px en base64, ~80 KB) vivía en una columna de
+  `users`, y Sanctum carga esa fila entera en todas las peticiones
+  autenticadas, así que ~80 KB salían de la base de datos en cada una,
+  sondeo incluido: era casi todo el consumo de transferencia de Neon
+  (4,27 de 5 GB) y parte de la lentitud de cada petición. Ahora el
+  avatar está en su propia tabla (`user_avatars`), solo se lee al
+  serializar el usuario, y se guarda como WebP de 128 px (~3-6 KB). La
+  migración reduce los avatares existentes. Los hitos tardaban 84 KB en
+  cargar por el mismo motivo.
+
 - **Predicción de sueño: mediana en vez de media** - un backtest sobre
   un mes de datos reales de un bebé (predecir cada siesta usando solo lo
   anterior) mostró que la media ponderada acertaba menos que la propia

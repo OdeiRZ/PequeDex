@@ -93,12 +93,17 @@ jobs:
       # (extensiones, esquemas) que el destino rechace sin que eso impida
       # restaurar los datos; lo que decide si la copia sirve es el recuento
       # de filas del paso siguiente.
+      # Con allow_non_empty (sincronizar sobre un destino que ya tiene las
+      # tablas), --clean --if-exists borra cada objeto antes de recrearlo; sin
+      # él, un destino vacío no necesita nada de eso.
       - name: Restaurar
         env:
           TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
         run: |
-          docker run --rm -e TARGET -v "$PWD/restore:/restore" postgres:18 \
-            sh -c 'pg_restore -d "$TARGET" --no-owner --no-privileges /restore/pequedex.dump' \
+          CLEAN=""
+          if [ "${{ inputs.allow_non_empty }}" = "true" ]; then CLEAN="--clean --if-exists"; fi
+          docker run --rm -e TARGET -e CLEAN -v "$PWD/restore:/restore" postgres:18 \
+            sh -c 'pg_restore -d "$TARGET" $CLEAN --no-owner --no-privileges /restore/pequedex.dump' \
             2> restore/errors.log || true
           echo "Líneas de aviso/error de pg_restore: $(wc -l < restore/errors.log)"
           # Solo los avisos (nombres de objetos, nunca datos), por si algo falla.

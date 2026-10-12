@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -20,6 +21,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Producción es PostgreSQL (Neon) pero los tests de `backend` corren en
+  # SQLite en memoria: SQL propio (p.ej. la huella UNION ALL de
+  # BabyActivityVersion) o diferencias de tipos entre las dos bases solo se
+  # verían en producción. Este trabajo pasa toda la suite contra un
+  # PostgreSQL real. Informativo de momento (no bloquea el despliegue).
+  backend-postgres:
+    name: Backend on PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pequedex_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: pdo_pgsql, mbstring, bcmath, ctype, fileinfo, gd, exif
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # phpunit.xml fija SQLite, pero no pisa las variables de entorno que ya
+      # existan: estas mandan.
+      - name: Tests (Pest) against PostgreSQL
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: pequedex_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: vendor/bin/pest
+
   backend:
     name: Backend (Laravel)
     runs-on: ubuntu-latest

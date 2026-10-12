@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Models\Baby;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ trait CreatesIdempotently
     /**
      * @template TModel of Model
      *
-     * @param  HasMany<TModel, \App\Models\Baby>  $relation
+     * @param  HasMany<TModel, Baby>  $relation
      * @param  array<string, mixed>  $attributes
      */
     protected function createOnce(HasMany $relation, array $attributes): JsonResponse

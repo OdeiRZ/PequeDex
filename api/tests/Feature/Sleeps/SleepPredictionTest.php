@@ -118,8 +118,8 @@ it('weights recent days more than older ones', function () {
     $user = actingAsUser();
     $baby = babyForSleepPredictionTest($user);
 
-    // Hace 5 días, ventanas de 60 min; el último día, de 120. La media
-    // simple sería 90; con recencia queda más cerca de 120.
+    // Hace 5 días, ventanas de 60 min; el último día, de 120. Sin
+    // recencia, la mediana caería en 60; con ella manda el último día.
     foreach ([['2026-08-20', ['08:00', '10:00', '12:00']], ['2026-08-25', ['08:00', '11:00', '14:00']]] as [$day, $starts]) {
         foreach ($starts as $start) {
             Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
@@ -132,7 +132,7 @@ it('weights recent days more than older ones', function () {
     $this->getJson("/api/babies/{$baby->id}/sleep-prediction")
         ->assertOk()
         ->assertJsonPath('data.prediction.based_on', 'average_wake_window')
-        ->assertJsonPath('data.average_wake_window_minutes', 102);
+        ->assertJsonPath('data.average_wake_window_minutes', 120);
 });
 
 it('starts from the age reference and blends it with the baby own windows', function () {
@@ -153,9 +153,19 @@ it('starts from the age reference and blends it with the baby own windows', func
         ->assertJsonPath('data.prediction.based_on', 'age_reference')
         ->assertJsonPath('data.average_wake_window_minutes', 90);
 
-    // Tres ventanas propias de 150 min el mismo día: la edad pesa como
-    // una observación más -> (150*3 + 90) / 4 = 135.
-    foreach (['11:30', '15:00', '18:30'] as $start) {
+    // Con una sola ventana propia (150 min), la referencia (peso 2) manda.
+    Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-30 11:30:00',
+        'ended_at' => '2026-08-30 12:30:00',
+    ]);
+
+    $this->getJson("/api/babies/{$baby->id}/sleep-prediction")
+        ->assertOk()
+        ->assertJsonPath('data.average_wake_window_minutes', 90);
+
+    // Con tres ventanas propias de 150 min el mismo día (más peso que la
+    // referencia), mandan los datos del bebé.
+    foreach (['15:00', '18:30'] as $start) {
         Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
             'started_at' => "2026-08-30 {$start}:00",
             'ended_at' => CarbonImmutable::parse("2026-08-30 {$start}:00")->addMinutes(60),
@@ -165,7 +175,7 @@ it('starts from the age reference and blends it with the baby own windows', func
     $this->getJson("/api/babies/{$baby->id}/sleep-prediction")
         ->assertOk()
         ->assertJsonPath('data.prediction.based_on', 'average_wake_window')
-        ->assertJsonPath('data.average_wake_window_minutes', 135);
+        ->assertJsonPath('data.average_wake_window_minutes', 150);
 });
 
 it('falls back to UTC for an unknown timezone instead of failing', function () {

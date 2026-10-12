@@ -340,18 +340,28 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   con la zona horaria del móvil; desconocida o ausente = UTC):
   1. **Ventana por número del día**: un sueño que empieza a partir de
      las 19:00 o antes de las 6:00 (hora local) es de noche; la primera
-     ventana tras la noche es la 1, luego 2, 3... Se predice con la media
-     de esa misma ventana en días anteriores (`based_on:
-     wake_window_by_number`, `window_number`), o con la media de todas si
+     ventana tras la noche es la 1, luego 2, 3... Se predice con la
+     mediana de esa misma ventana en días anteriores (`based_on:
+     wake_window_by_number`, `window_number`), o con la de todas si
      no hay bastantes (`average_wake_window`). Los despertares entre dos
      tramos de noche no cuentan como ventana.
-  2. **Recencia**: media ponderada, cada día de antigüedad pesa un 15 %
-     menos (0,85^días).
+  2. **Recencia**: mediana ponderada, cada día de antigüedad pesa un 15 %
+     menos (0,85^días). Mediana y no media porque las ventanas son muy
+     asimétricas (muchas cortas, alguna muy larga) y la media se iba
+     hacia esas colas.
   3. **Referencia por edad** (`WakeWindowReference`, misma tabla que
-     `web/src/lib/sleepReference.ts`): su punto medio pesa como una
-     observación más, así que domina con pocos datos y casi no cuenta
-     con muchos. Sin datos propios la predicción sale solo de ella
-     (`based_on: age_reference`), aunque `has_enough_data` sea false.
+     `web/src/lib/sleepReference.ts`): su punto medio entra como
+     observaciones más (`AGE_PRIOR_WEIGHT` = 2), así que domina con pocos
+     datos y casi no cuenta con muchos. Sin datos propios la predicción
+     sale solo de ella (`based_on: age_reference`), aunque
+     `has_enough_data` sea false.
+
+  Validado con un backtest sobre un mes de datos reales de un bebé
+  (2026-10-12, ver CHANGELOG): con la media, la referencia por edad sola
+  acertaba más que el predictor; con la mediana ponderada y peso 2 sube
+  de ±15 min en el 19 % de las siestas a ~39 % (error mediano de 34 a
+  20 min). Es un solo bebé de menos de un mes: valida que no hay errores
+  gordos, no que sea fiable en general.
 
   Con un sueño en curso predice el despertar con la duración media de
   los sueños del mismo tipo (noche o siesta). **Pendiente, posible

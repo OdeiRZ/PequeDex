@@ -7,6 +7,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambiado
+
+- **Predicción de sueño: mediana en vez de media** - un backtest sobre
+  un mes de datos reales de un bebé (predecir cada siesta usando solo lo
+  anterior) mostró que la media ponderada acertaba menos que la propia
+  referencia por edad: las ventanas son muy asimétricas y la media se iba
+  hacia las muy largas. Ahora se usa la mediana ponderada por recencia y
+  la referencia por edad pesa el doble: el acierto a ±15 min en siestas
+  pasa de ~19 % a ~39 % y el error mediano de 34 a 20 min. Un solo bebé
+  de menos de un mes, así que sirve para descartar errores gordos, no
+  para asegurar la fiabilidad general. El despertar de un sueño en curso
+  (error mediano de ~40-60 min) y la predicción de tomas siguen con la
+  media; pendiente de medir igual.
+
 ### Añadido
 
 - **Predicción de sueño más precisa** - la siguiente siesta se calcula

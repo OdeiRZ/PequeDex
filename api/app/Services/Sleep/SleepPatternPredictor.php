@@ -17,12 +17,13 @@ use Illuminate\Support\Collection;
  *    noche, así que se promedian por separado (con la hora local del
  *    móvil, `$timezone`). Las tomas de madrugada entre dos tramos de
  *    noche no cuentan como ventana.
- * 2. Media ponderada por recencia: cada día anterior pesa un 15 % menos
- *    (el bebé cambia de una semana a otra).
+ * 2. Ponderada por recencia: cada día anterior pesa un 15 % menos
+ *    (el bebé cambia de una semana a otra). Se usa la mediana ponderada
+ *    y no la media (ver weightedMedian()).
  * 3. Referencia por edad (WakeWindowReference) como punto de partida:
- *    pesa como una observación más, así que con pocos datos manda y con
- *    muchos apenas cuenta. Sin datos propios, la predicción sale solo
- *    de ella (`based_on: age_reference`).
+ *    entra como observaciones más (AGE_PRIOR_WEIGHT), así que con pocos
+ *    datos manda y con muchos apenas cuenta. Sin datos propios, la
+ *    predicción sale solo de ella (`based_on: age_reference`).
  *
  * Posible mejora pendiente (documentada en api/README.md): acortar la
  * ventana tras una siesta corta. Se dejó fuera porque sus umbrales no
@@ -43,8 +44,14 @@ class SleepPatternPredictor
     /** Peso que pierde cada día de antigüedad (0,85^días). */
     private const RECENCY_DECAY = 0.85;
 
-    /** Cuántas observaciones "vale" la referencia por edad. */
-    private const AGE_PRIOR_WEIGHT = 1.0;
+    /**
+     * Cuántas observaciones "vale" la referencia por edad. 2 y no 1: en un
+     * backtest con un mes de datos reales, con más peso en la referencia
+     * mejoraba el acierto (±15 min: 37 % con 1, 39 % con 2, 44 % con 5, que
+     * ya equivale a usar solo la referencia). Se queda en 2 para que los
+     * datos propios sigan contando cuando haya más historial.
+     */
+    private const AGE_PRIOR_WEIGHT = 2.0;
 
     /** Mínimo de peso acumulado para usar la media de un número de siesta concreto. */
     private const MIN_ORDINAL_WEIGHT = 1.5;
@@ -142,18 +149,14 @@ class SleepPatternPredictor
         $useNumber = $sameNumber->isNotEmpty() && self::totalWeight($sameNumber, $lastEnd) >= self::MIN_ORDINAL_WEIGHT;
         $pool = $useNumber ? $sameNumber : $windows;
 
-        $own = $pool->isNotEmpty() ? self::weightedAverage($pool, $lastEnd) : null;
         $prior = $ageReference !== null ? ($ageReference['min'] + $ageReference['max']) / 2 : null;
+        $own = $pool->isNotEmpty() ? self::weightedMedian($pool, $lastEnd, $prior) : null;
 
         if ($own === null && $prior === null) {
             return $base;
         }
 
-        $minutes = match (true) {
-            $own === null => $prior,
-            $prior === null => $own['value'],
-            default => ($own['value'] * $own['weight'] + $prior * self::AGE_PRIOR_WEIGHT) / ($own['weight'] + self::AGE_PRIOR_WEIGHT),
-        };
+        $minutes = $own['value'] ?? $prior;
         $basedOn = match (true) {
             $own === null => 'age_reference',
             $useNumber => 'wake_window_by_number',
@@ -247,6 +250,44 @@ class SleepPatternPredictor
         }
 
         return ['value' => $sum / $weights, 'weight' => $weights];
+    }
+
+    /**
+     * Mediana ponderada por recencia, con la referencia por edad como una
+     * observación más (peso AGE_PRIOR_WEIGHT). La mediana, y no la media,
+     * porque las ventanas de un bebé son muy asimétricas (muchas cortas y
+     * alguna muy larga) y la media se iba hacia esas colas: en un backtest
+     * con datos reales acertaba menos que la propia referencia por edad.
+     * `weight` es el peso de las observaciones propias (sin la referencia).
+     *
+     * @param  iterable<array{minutes: int, at: CarbonImmutable}>  $items
+     * @return array{value: float, weight: float}
+     */
+    private static function weightedMedian(iterable $items, CarbonImmutable $reference, ?float $prior = null): array
+    {
+        $points = [];
+        $own = 0.0;
+        foreach ($items as $item) {
+            $weight = self::weight($item['at'], $reference);
+            $points[] = [(float) $item['minutes'], $weight];
+            $own += $weight;
+        }
+        $total = $own;
+        if ($prior !== null) {
+            $points[] = [$prior, self::AGE_PRIOR_WEIGHT];
+            $total += self::AGE_PRIOR_WEIGHT;
+        }
+        usort($points, fn (array $a, array $b) => $a[0] <=> $b[0]);
+
+        $cumulative = 0.0;
+        foreach ($points as [$value, $weight]) {
+            $cumulative += $weight;
+            if ($cumulative >= $total / 2) {
+                return ['value' => $value, 'weight' => $own];
+            }
+        }
+
+        return ['value' => $points[array_key_last($points)][0], 'weight' => $own];
     }
 
     /**

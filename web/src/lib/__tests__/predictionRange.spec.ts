@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { formatPredictionRange } from '@/lib/predictionRange'
+import { formatPredictionAt, formatPredictionRange } from '@/lib/predictionRange'
+
+describe('formatPredictionAt', () => {
+  it('shows date and hours:minutes, without seconds', () => {
+    const formatted = formatPredictionAt('2026-10-12T15:10:00', 'es-ES')
+
+    expect(formatted).toMatch(/12\/10\/2026/)
+    expect(formatted).toMatch(/15:10/)
+    // Ni ":00" de los segundos: tras la hora y los minutos no sigue nada.
+    expect(formatted).not.toMatch(/15:10:\d\d/)
+  })
+
+  it('works in English too', () => {
+    expect(formatPredictionAt('2026-10-12T15:10:00', 'en-US')).not.toMatch(/\d{1,2}:\d{2}:\d{2}/)
+  })
+})
 
 describe('formatPredictionRange', () => {
   it('returns null without a range', () => {

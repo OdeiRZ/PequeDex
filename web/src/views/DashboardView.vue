@@ -51,7 +51,7 @@ import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import { isNetworkError } from '@/lib/offlineQueue'
-import { formatPredictionRange } from '@/lib/predictionRange'
+import { formatPredictionAt, formatPredictionRange } from '@/lib/predictionRange'
 import {
   ageInMonths,
   awakeSince,
@@ -1820,7 +1820,7 @@ const sleepPredictionLabel = computed(() => {
   // (based_on: age_reference) - se muestra antes que el aviso de
   // "faltan siestas".
   if (prediction?.prediction) {
-    const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
+    const at = formatPredictionAt(prediction.prediction.at, dateLocale.value)
     const range = usualRangeText(
       prediction.prediction.range,
       'dashboard.sleepPrediction.usualRange',
@@ -1877,7 +1877,7 @@ const feedPredictionLabel = computed(() => {
     return t('dashboard.feedPrediction.noPattern')
   }
 
-  const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
+  const at = formatPredictionAt(prediction.prediction.at, dateLocale.value)
 
   return (
     t('dashboard.feedPrediction.nextFeed', { at }) +

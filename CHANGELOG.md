@@ -29,14 +29,21 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   sección es idéntica a la de su endpoint). Si el backend aún no lo
   tiene, la app pide las cosas por separado como antes.
 
+- **Hora de las predicciones sin segundos** - la estimación de la próxima
+  toma, siesta o despertar enseñaba "12/10/2026, 15:10:00"; ahora
+  "12/10/2026, 15:10", igual que el rango habitual.
+
 - **Fotos de hitos más ligeras** - se guardaban tal cual (hasta 8 MB, una
   foto de móvil sin tocar) y se enseñaban en círculos de unas decenas de
   píxeles, así que abrir los hitos descargaba megas de más. Ahora, al
   subirlas, se reducen a WebP de 1600 px como máximo (~150-400 KB),
   respetando la orientación EXIF del móvil (si no, saldrían de lado;
   el Dockerfile añade la extensión `exif`), y las miniaturas cargan en
-  diferido. Las fotos ya subidas no se tocan. Si una imagen no se puede
-  procesar (ilegible, enorme), se guarda el original como antes.
+  diferido. Si una imagen no se puede procesar (ilegible, enorme), se
+  guarda el original como antes. Las fotos subidas antes se reducen con
+  `php artisan milestones:shrink-photos`: sin `--apply` solo cuenta lo que
+  se ahorraría; con él guarda la versión reducida, apunta el hito a ella y
+  borra la original (después de comprobar que la nueva existe).
 
 - **Sondeo condicional (ETag)** - el Dashboard pregunta cada 15 s si hay
   algo nuevo y casi siempre no lo hay, pero cada vez se leía y enviaba la

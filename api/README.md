@@ -329,7 +329,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   aplicarla, saldría de lado. Devuelve `null` si no puede o no conviene
   procesarla (ilegible, más de 50 Mpx, sin memoria suficiente) y
   `MilestoneController::storePhoto()` guarda entonces el original. Las
-  fotos ya subidas no se migran.
+  fotos subidas antes se reducen con `php artisan milestones:shrink-photos`
+  (`App\Console\Commands\ShrinkMilestonePhotos`): sin `--apply` es una
+  simulación; con él sube la versión reducida al disco de los hitos
+  (`MILESTONES_DISK`), apunta el hito a ella y borra la original solo si la
+  nueva existe. Contra producción hay que ejecutarlo con las variables de
+  Neon y del almacén de fotos puestas (Render gratuito no tiene terminal).
 - `docker/opcache.ini` + `docker/entrypoint.sh` (`php artisan optimize`) —
   sin OPcache en modo CLI y sin cachés de configuración, rutas, eventos y
   vistas, cada petición recompilaba todo Laravel. Medido en local:

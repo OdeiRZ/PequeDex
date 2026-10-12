@@ -80,7 +80,10 @@ it('rejects a measured_at in the future', function () {
     $baby = babyForGrowthTest($user);
 
     $this->postJson("/api/babies/{$baby->id}/growth-measurements", [
-        'measured_at' => now()->addDay()->toDateString(),
+        // Pasado mañana, no mañana: la regla admite hasta "ahora + 1 min",
+        // y en el último minuto del día "mañana 00:00" ya cae dentro (el
+        // CI falló así a las 23:59 UTC).
+        'measured_at' => now()->addDays(2)->toDateString(),
         'weight_grams' => 3500,
     ])->assertUnprocessable()->assertJsonValidationErrors('measured_at');
 });

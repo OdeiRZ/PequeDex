@@ -57,7 +57,8 @@ it('rejects an achieved_at in the future', function () {
     $baby = babyForMilestoneTest($user);
 
     $this->postJson("/api/babies/{$baby->id}/milestones", [
-        'achieved_at' => now()->addDay()->toDateString(),
+        // Pasado mañana: ver el mismo test en GrowthMeasurementTest.
+        'achieved_at' => now()->addDays(2)->toDateString(),
         'title' => 'Todavia no',
     ])->assertUnprocessable()->assertJsonValidationErrors('achieved_at');
 });

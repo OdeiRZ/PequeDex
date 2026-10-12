@@ -71,7 +71,12 @@ class BabyController extends Controller
         $baby = Baby::where('invite_code', $request->validated('invite_code'))->firstOrFail();
 
         try {
-            $baby->users()->attach($request->user());
+            // syncWithoutDetaching, no attach: unirse a un bebé al que ya
+            // perteneces no provoca una violación de la restricción única
+            // (que en PostgreSQL deja abortada la transacción en curso, y
+            // era el camino normal de un segundo toque), sino que no hace
+            // nada.
+            $baby->users()->syncWithoutDetaching([$request->user()->id]);
         } catch (QueryException $e) {
             // idempotent: joining a baby you're already on just confirms
             // it rather than failing - also covers a concurrent

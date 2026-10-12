@@ -93,7 +93,7 @@ jobs:
           ls -l backup
 
       - name: Guardar la copia cifrada
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pequedex-backup-${{ github.run_id }}
           path: backup/pequedex.dump.gpg
@@ -124,7 +124,7 @@ jobs:
           --health-retries 12
     steps:
       - name: Descargar la copia cifrada
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pequedex-backup-${{ github.run_id }}
           path: restore

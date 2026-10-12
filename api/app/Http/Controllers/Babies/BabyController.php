@@ -19,7 +19,12 @@ class BabyController extends Controller
     /** The authenticated user's own babies - almost always exactly one. */
     public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()->babies]);
+        // Orden explícito: sin él, PostgreSQL devuelve el físico de la tabla,
+        // que cambia al restaurar una copia (la app abre el primero de la lista).
+        return response()->json(['data' => $request->user()->babies()
+            ->orderBy('baby_user.created_at')
+            ->orderBy('babies.id')
+            ->get()]);
     }
 
     /**

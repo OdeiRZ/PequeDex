@@ -91,6 +91,20 @@ it('lists only the authenticated user\'s own babies', function () {
     $response->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $mine->id);
 });
 
+it('lists the babies in the order the user got linked to them, not in table order', function () {
+    $user = actingAsUser();
+    // El de id más bajo se vinculó DESPUÉS: el orden no puede salir del id ni del orden físico.
+    $linkedSecond = Baby::factory()->create();
+    $linkedFirst = Baby::factory()->create();
+    $linkedSecond->users()->attach($user, ['created_at' => '2026-09-29 21:19:43', 'updated_at' => '2026-09-29 21:19:43']);
+    $linkedFirst->users()->attach($user, ['created_at' => '2026-08-30 12:05:03', 'updated_at' => '2026-08-30 12:05:03']);
+
+    $this->getJson('/api/babies')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $linkedFirst->id)
+        ->assertJsonPath('data.1.id', $linkedSecond->id);
+});
+
 it('joins a baby using its invite code', function () {
     $owner = actingAsUser();
     $baby = Baby::factory()->create();

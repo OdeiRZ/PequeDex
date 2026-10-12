@@ -158,6 +158,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   o más bebés merece repetirse; los scripts de backtest están en la
   carpeta de pruebas del autor, no en el repositorio.
 
+### Corregido
+
+- **Los dos PDF (completo y resumen) fallaban con un error 422** cuando el
+  bebé no tenía activadas las vacunas: la app manda `vaccinations: null` y
+  la regla `present_with` del servidor solo mira que exista la clave, así
+  que exigía las listas de vacunas. Ahora solo las exige si hay un objeto
+  de verdad. Ninguna prueba cubría ese caso; ya hay una.
+- **El orden de los bebés se invirtió tras mudar la base de datos**: la
+  lista no tenía orden explícito y PostgreSQL devolvía el físico de la
+  tabla, que cambia al restaurar una copia. Ahora va por la fecha en que
+  cada cuidador se vinculó al bebé (y, a igualdad, por id).
+
 ### Añadido
 
 - **Predicción de sueño más precisa** - la siguiente siesta se calcula

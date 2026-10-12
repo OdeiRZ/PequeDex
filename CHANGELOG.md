@@ -151,6 +151,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
     - Ceuta y Melilla: falta además la hepatitis A, que sí incluyen en
       su calendario infantil, por no tener las edades verificadas.
 
+### Añadido
+
+- **Copias de seguridad semanales de la base de datos** - Neon gratuito
+  solo conserva 6 horas de historial. Un trabajo de GitHub Actions
+  (`backup.yml`, domingos y a mano) vuelca la base de datos, comprueba el
+  volcado, lo **cifra** (el repositorio es público) y lo guarda 90 días,
+  sin sesiones ni tokens. Necesita los secretos `NEON_DATABASE_URL` y
+  `BACKUP_PASSPHRASE`; pasos y restauración en el README. Sin coste.
+
+- **Pruebas de principio a fin con Playwright** - la app real contra el API
+  real con una SQLite desechable, en un Chrome de verdad: carga con una
+  sola petición, la sesión sobrevive a un API caído, la última foto
+  guardada aparece si el API no responde, y finalizar o borrar sin
+  conexión se encola y se envía al volver. Comprobado que el test de la
+  sesión falla si se reintroduce el fallo corregido. Trabajo `e2e` de CI,
+  informativo de momento.
+
 ### Corregido
 
 - **Abrir la app sin conexión cerraba la sesión** - al cargar, la app

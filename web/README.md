@@ -1381,6 +1381,34 @@ o 24 meses (total).
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
   muestra "Sin conexión" y cuántos registros quedan por enviar.
 
+## Pruebas de principio a fin (Playwright)
+
+`npm run e2e` levanta el **build real** de la app (`vite preview`, puerto
+4173) y el **API real** de Laravel (`artisan serve`, puerto 8765) con una
+SQLite desechable, y lo recorre con el Chrome ya instalado
+(`channel: 'chrome'`, sin descargar otro navegador). Los tests de Vitest no
+ejercitan el conjunto, y fallos como "abrir la app sin conexión cierra la
+sesión" solo se ven así. `e2e/smoke.spec.ts`:
+
+- el Dashboard carga con **una sola** petición `/bootstrap` (y ninguna de
+  las sueltas de antes);
+- con el API devolviendo 503 al abrir, **no se pierde la sesión**;
+- con el API caído en la visita siguiente, se pinta la **última foto
+  guardada** con su aviso, no la pantalla de error;
+- **finalizar un sueño sin conexión** se encola y se envía al volver la red;
+- **borrar una entrada sin conexión** se encola y se aplica al volver.
+
+Cada test crea su usuario y bebé por la API e inyecta la sesión en el
+navegador (más rápido y estable que pasar por los formularios).
+
+**Seguridad:** el API arranca con `DB_CONNECTION=sqlite` y su propia base en
+`api/database/e2e.sqlite`, y el `migrate:fresh` lleva `--database=sqlite`
+explícito: aunque `api/.env` apunte a Neon, nunca toca otra base de datos.
+Las constantes están en `e2e/constants.ts` y no en la configuración porque
+`playwright.config.ts` se vuelve a cargar en cada proceso de test (vaciaba
+la base de datos tras migrarla). En CI es el trabajo `e2e`, informativo de
+momento: no bloquea el despliegue hasta que demuestre ser estable.
+
 ## Arranque rápido: una petición y la última foto guardada
 
 Medido en producción (Render + Neon, planes gratuitos): el API

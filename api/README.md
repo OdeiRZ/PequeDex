@@ -363,15 +363,18 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   20 min). Es un solo bebé de menos de un mes: valida que no hay errores
   gordos, no que sea fiable en general.
 
-  Con un sueño en curso predice el despertar con la duración media de
-  los sueños del mismo tipo (noche o siesta). **Pendiente, posible
+  Con un sueño en curso predice el despertar con la mediana ponderada
+  por recencia de la duración de los sueños del mismo tipo (noche o
+  siesta; el campo se sigue llamando `average_sleep_duration_minutes`).
+  **Pendiente, posible
   mejora:** acortar la ventana tras una siesta corta (p.ej. de menos de
   30 min). Se dejó fuera porque sus umbrales no tienen referencia
   publicada y aprenderlos por bebé necesita muchos datos; retomarlo solo
   si las predicciones tras siestas cortas fallan claramente.
 - `app/Services/Feeds/FeedPatternPredictor.php` — misma idea que el de
-  sueño, aplicada a tomas: media móvil del hueco entre tomas del propio
-  bebé. Más simple que el de sueño porque una toma es un instante
+  sueño, aplicada a tomas: mediana móvil del hueco entre tomas del propio
+  bebé (mediana y no media, medido con datos reales; el campo se sigue
+  llamando `average_gap_minutes`). Más simple que el de sueño porque una toma es un instante
   (`started_at`), no un intervalo con su propia duración y un estado
   "en curso" — solo hay una cosa que predecir (la siguiente toma), no
   dos. Huecos de más de 8h (frente a las 6h de sueño, porque las tomas

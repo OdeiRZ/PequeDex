@@ -113,7 +113,9 @@ class SleepPatternPredictor
         }
 
         // Dormido ahora mismo: cuánto suele durar un sueño de ese tipo
-        // (noche o siesta), ponderado por recencia.
+        // (noche o siesta), con la mediana ponderada por recencia (en el
+        // backtest, mejor que la media sobre todo en siestas). El campo
+        // sigue llamándose `average_...` por compatibilidad con la app.
         if ($latest->ended_at === null) {
             if (! $base['has_enough_data']) {
                 return $base;
@@ -121,7 +123,7 @@ class SleepPatternPredictor
             $isNight = self::isNight($latest, $timezone);
             $sameKind = $completed->filter(fn (Sleep $s) => self::isNight($s, $timezone) === $isNight);
             $pool = $sameKind->count() >= 2 ? $sameKind : $completed;
-            $duration = self::weightedAverage($pool->map(fn (Sleep $s) => [
+            $duration = self::weightedMedian($pool->map(fn (Sleep $s) => [
                 'minutes' => self::minutesBetween($s->started_at, $s->ended_at),
                 'at' => CarbonImmutable::parse($s->ended_at),
             ]), CarbonImmutable::parse($latest->started_at));

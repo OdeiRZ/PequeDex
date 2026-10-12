@@ -17,9 +17,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   la referencia por edad pesa el doble: el acierto a ±15 min en siestas
   pasa de ~19 % a ~39 % y el error mediano de 34 a 20 min. Un solo bebé
   de menos de un mes, así que sirve para descartar errores gordos, no
-  para asegurar la fiabilidad general. El despertar de un sueño en curso
-  (error mediano de ~40-60 min) y la predicción de tomas siguen con la
-  media; pendiente de medir igual.
+  para asegurar la fiabilidad general. Lo mismo, medido igual, para el
+  despertar de un sueño en curso (mediana ponderada por recencia: en
+  siestas el acierto a ±30 min pasa del 39 % al 48 %; en noches, sin
+  cambio relevante) y para la predicción de la siguiente toma (mediana
+  de los últimos huecos: ±30 min del 29 % al 35 %, ±15 min del 15 % al
+  19 %). En tomas la mejora es pequeña: los huecos de un recién nacido
+  son muy irregulares (mitad entre 63 y 155 min) y ningún método simple
+  acierta mucho.
 
 ### Añadido
 

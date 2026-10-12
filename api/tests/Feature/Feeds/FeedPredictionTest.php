@@ -64,6 +64,22 @@ it('ignores an overnight gap longer than 8 hours when averaging', function () {
     $response->assertOk()->assertJsonPath('data.average_gap_minutes', 120);
 });
 
+it('uses the median gap, so one long gap does not drag the prediction', function () {
+    $user = actingAsUser();
+    $baby = babyForFeedPredictionTest($user);
+
+    // Huecos de 60, 60, 60 y 300 min: la media sería 120, la mediana 60.
+    foreach (['08:00', '09:00', '10:00', '11:00', '16:00'] as $time) {
+        Feed::factory()->for($baby)->for($user, 'loggedBy')->create([
+            'started_at' => "2026-08-30 {$time}:00",
+        ]);
+    }
+
+    $this->getJson("/api/babies/{$baby->id}/feed-prediction")
+        ->assertOk()
+        ->assertJsonPath('data.average_gap_minutes', 60);
+});
+
 it('rejects the feed prediction for a baby the user is not linked to', function () {
     actingAsUser();
     $other = User::factory()->create();

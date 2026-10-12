@@ -6,7 +6,7 @@ use App\Models\Baby;
 use Carbon\CarbonImmutable;
 
 /**
- * Same honest, no-ML estimate as SleepPatternPredictor - a rolling average
+ * Same honest, no-ML estimate as SleepPatternPredictor - a rolling median
  * over the baby's own recent feeds, with no prediction at all below the
  * minimum sample size. Simpler than sleep: a feed is a single instant
  * (started_at), not an interval with its own duration and an "ongoing"
@@ -71,7 +71,16 @@ class FeedPatternPredictor
             ];
         }
 
-        $averageGapMinutes = (int) round(array_sum($gaps) / count($gaps));
+        // Mediana y no media: los huecos entre tomas son asimétricos (rachas
+        // de tomas seguidas y alguna larga) y la media se iba hacia las
+        // largas. En un backtest con un mes de datos reales acertaba algo
+        // menos (±30 min: 29 % con la media, 35 % con la mediana). Se
+        // mantiene el nombre `average_gap_minutes` por compatibilidad.
+        sort($gaps);
+        $middle = intdiv(count($gaps), 2);
+        $averageGapMinutes = (int) round(
+            count($gaps) % 2 === 1 ? $gaps[$middle] : ($gaps[$middle - 1] + $gaps[$middle]) / 2
+        );
         $latestFeed = $feeds->last();
 
         return [

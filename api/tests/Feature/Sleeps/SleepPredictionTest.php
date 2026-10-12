@@ -75,6 +75,27 @@ it('predicts the wake-up time from the average duration when a sleep is ongoing'
     expect($response->json('data.prediction.at'))->toContain('2026-08-30T21:00:00');
 });
 
+it('predicts the wake-up with the median duration, not dragged by one long sleep', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepPredictionTest($user);
+
+    // Siestas de 60, 60, 60 y 240 min: la media saldría en ~105, la mediana en 60.
+    foreach ([['08:00', '09:00'], ['11:00', '12:00'], ['14:00', '15:00'], ['16:00', '20:00']] as [$start, $end]) {
+        Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+            'started_at' => "2026-08-30 {$start}:00",
+            'ended_at' => "2026-08-30 {$end}:00",
+        ]);
+    }
+    Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+        'started_at' => '2026-08-31 10:00:00',
+        'ended_at' => null,
+    ]);
+
+    $response = $this->getJson("/api/babies/{$baby->id}/sleep-prediction")->assertOk();
+
+    expect($response->json('data.prediction.at'))->toContain('2026-08-31T11:00:00');
+});
+
 /** Un sueño en hora local de Madrid (la API guarda UTC). */
 function madridSleep(Baby $baby, User $user, string $start, ?string $end): void
 {

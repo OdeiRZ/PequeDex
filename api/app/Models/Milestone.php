@@ -38,7 +38,7 @@ class Milestone extends Model
      * a shared screenshot's page source) stops working well before anyone
      * finds it.
      */
-    private const PHOTO_URL_TTL_MINUTES = 30;
+    public const PHOTO_URL_TTL_MINUTES = 30;
 
     /**
      * Appended to every array/JSON representation (see $appends above) - the

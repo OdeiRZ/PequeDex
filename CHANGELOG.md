@@ -9,6 +9,36 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Rendimiento: el arranque del Dashboard, más barato por dentro** - tras
+  medir en vivo, lo que quedaba no era la red sino la CPU del contenedor
+  gratuito (el API en Fráncfort y la base de datos en Londres, con una
+  fracción de CPU). Cuatro cambios:
+  - **Predicción de sueño 14 veces más rápida**: convertía fechas con Carbon
+    unas 120 veces por llamada y cargaba cada sueño como modelo; ahora
+    trabaja con filas y marcas de tiempo. Resultado idéntico, comprobado
+    sobre 1.182 predicciones con datos reales (cada paso del historial, en
+    tres zonas horarias, dormido y despierto): 46 ms → 2,5 ms.
+  - **Pañales recientes compactos** (`diaper-changes?compact=1`): los avisos
+    solo usan id, hora y tipo, y se cargaban 136 modelos completos: 17 ms y
+    20 KB → 1,8 ms y 7 KB. El listado completo sigue siendo el de por
+    defecto (Estadísticas).
+  - **Arranque en paralelo**: la petición grande ya no espera a `/babies`;
+    sale a la vez, con el bebé de la foto guardada o el último activo
+    (solo se usa si coincide con el actual; sin registros pendientes sin
+    conexión).
+  - **Bootstrap condicional (ETag/304)**: con la foto guardada, el móvil
+    envía el ETag de la última respuesta y, si no ha cambiado nada, el
+    servidor contesta 304 sin construir ni enviar nada. La huella son los
+    recuentos, últimas modificaciones y últimos ids de todas las tablas del
+    bebé en UNA consulta (`UNION ALL`, antes eran cuatro solo para el
+    sondeo) y se recuerda durante la petición. Cambia con cualquier
+    alta/edición/borrado (probado con 14 tipos), con la zona horaria, el
+    día y, mientras haya fotos de hitos, cada media vida de sus URL
+    firmadas (para que un 304 nunca deje una foto con la URL caducada). Si
+    la consulta de la huella fallara, se responde completo y sin ETag como
+    antes, en vez de romper el sondeo.
+  En local, con tus datos, el bootstrap completo pasó de 104 ms a 28 ms.
+
 - **Rendimiento: OPcache y cachés de Laravel en producción** - medido en
   vivo tras el despliegue anterior, una petición suelta al API seguía
   costando ~1 s, y la imagen de Docker no tenía OPcache (en modo CLI,

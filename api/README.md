@@ -275,7 +275,19 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   Dashboard en una petición (llama a los mismos controladores que los
   endpoints individuales, así que cada sección es idéntica; incluye
   `timeline_etag`). Acepta `tz` y `since` como ellos. Vacunas y revisiones
-  solo si están activadas para el bebé.
+  solo si están activadas para el bebé. Pide los pañales recientes en modo
+  `compact` (id, hora y tipo). **Condicional**: responde con `ETag` y
+  contesta `304` a `If-None-Match` si la huella no ha cambiado
+  (`FORMAT_VERSION` invalida las que los móviles ya guardan si cambia la
+  forma de la respuesta).
+- `app/Services/Support/BabyActivityVersion.php` — la huella: filas, última
+  modificación y último id de cada tabla del bebé (y, para las fotos de
+  hitos, cuántas hay), en UNA consulta `UNION ALL` recordada durante la
+  petición. La usan la línea temporal (4 tablas) y el bootstrap (todas).
+  Devuelve `null` si falla (se registra) y entonces se responde completo y
+  sin ETag. Ojo: es SQL propio y producción es PostgreSQL mientras los
+  tests corren en SQLite; el trabajo `backend-postgres` de CI la ejercita
+  contra PostgreSQL.
 - `app/Services/Growth/WhoGrowthStandards.php` — tablas L/M/S reales de la
   OMS (Child Growth Standards, 0–24 meses, peso/talla/perímetro craneal
   por sexo) embebidas como constantes PHP, descargadas de `cdn.who.int` y

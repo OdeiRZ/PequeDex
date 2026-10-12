@@ -75,6 +75,49 @@ test('the dashboard loads everything with a single bootstrap request', async ({
   }
 })
 
+test('reopening with nothing new asks for the dashboard in parallel and gets a 304', async ({
+  page,
+  request,
+}) => {
+  const session = await createSession(request)
+  await signIn(page, session)
+
+  // Primera visita: respuesta completa, que deja la foto guardada con su huella.
+  await page.goto('./')
+  await expect(page.getByText('Bebé E2E').first()).toBeVisible()
+  await page.waitForFunction(
+    () => {
+      const raw = localStorage.getItem('pequedex.snapshot')
+      return raw !== null && JSON.parse(raw).data.bootstrapEtag
+    },
+    null,
+    { timeout: 10_000 },
+  )
+
+  const sent: Record<string, number> = {}
+  const received: Record<string, { at: number; status: number }> = {}
+  page.on('request', (req) => {
+    const path = new URL(req.url()).pathname
+    if (path.endsWith('/bootstrap')) sent.bootstrap = Date.now()
+    if (path.endsWith('/api/babies')) sent.babies = Date.now()
+  })
+  page.on('response', (res) => {
+    const path = new URL(res.url()).pathname
+    if (path.endsWith('/bootstrap')) received.bootstrap = { at: Date.now(), status: res.status() }
+    if (path.endsWith('/api/babies')) received.babies = { at: Date.now(), status: res.status() }
+  })
+
+  await page.reload()
+  await expect(page.getByText('Bebé E2E').first()).toBeVisible()
+  await expect.poll(() => received.bootstrap?.status).toBe(304)
+
+  // En paralelo: la petición grande salió antes de que terminara la de los bebés.
+  expect(sent.bootstrap).toBeLessThanOrEqual(received.babies!.at)
+  // Y con 304 la foto ya era lo último: sin aviso de "datos guardados".
+  await expect(page.getByText('Mostrando lo último guardado')).toHaveCount(0)
+  expect(page.url()).not.toMatch(/bienvenida|login/)
+})
+
 test('opening the app while the API fails does not log the user out', async ({ page, request }) => {
   const session = await createSession(request)
   await signIn(page, session)

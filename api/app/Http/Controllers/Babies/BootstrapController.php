@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Babies;
 
+use App\Http\Controllers\Concerns\HandlesEtags;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\DiaperChanges\DiaperChangeController;
 use App\Http\Controllers\Feeds\FeedPredictionController;
@@ -13,6 +14,8 @@ use App\Http\Controllers\Vaccinations\CheckupController;
 use App\Http\Controllers\Vaccinations\VaccinationController;
 use App\Http\Controllers\VitaminD\VitaminDScheduleController;
 use App\Models\Baby;
+use App\Models\Milestone;
+use App\Services\Support\BabyActivityVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,12 +30,27 @@ use Illuminate\Http\Request;
  *
  * Parámetros opcionales, los mismos que los endpoints individuales: `tz`
  * (predicción de sueño) y `since` (pañales recientes).
+ *
+ * Es condicional (ETag): el móvil guarda una foto del Dashboard y envía el
+ * ETag de la última respuesta; si no ha cambiado nada, se contesta 304 sin
+ * construir ni enviar nada, tras UNA consulta de huella (ver
+ * BabyActivityVersion) en vez de las ~17 del arranque completo.
  */
 class BootstrapController extends Controller
 {
+    use HandlesEtags;
+
+    /** Súbelo si cambia la forma de la respuesta: invalida las huellas que los móviles ya tienen guardadas. */
+    private const FORMAT_VERSION = 2;
+
     public function show(Request $request, Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
+
+        $etag = $this->etag($baby, $request);
+        if ($etag !== null && $this->etagMatches($request->header('If-None-Match'), $etag)) {
+            return response()->json(status: 304)->header('ETag', $etag);
+        }
 
         $query = array_filter([
             'tz' => $request->query('tz'),
@@ -74,6 +92,41 @@ class BootstrapController extends Controller
             }
         }
 
-        return response()->json($body);
+        $response = response()->json($body);
+
+        return $etag === null ? $response : $response->header('ETag', $etag);
+    }
+
+    /**
+     * Qué hace cambiar la respuesta: los datos del bebé (huella), el propio
+     * bebé, lo que dependa del día (edad para las predicciones, ventana de la
+     * vitamina D), los parámetros y las URL firmadas de las fotos de los
+     * hitos, que caducan: mientras haya fotos, la huella cambia cada media
+     * vida de esas URL, para que un 304 nunca deje en el móvil una foto
+     * cuya URL ya caducó.
+     */
+    private function etag(Baby $baby, Request $request): ?string
+    {
+        $versions = BabyActivityVersion::for($baby, BabyActivityVersion::DASHBOARD);
+
+        // Sin huella (no se pudo calcular): respuesta completa y sin ETag.
+        if ($versions === null) {
+            return null;
+        }
+
+        $photoWindow = $versions['milestones']['with_photo'] > 0
+            ? intdiv(now()->getTimestamp(), Milestone::PHOTO_URL_TTL_MINUTES * 30)
+            : null;
+
+        return '"'.md5((string) json_encode([
+            self::FORMAT_VERSION,
+            $baby->updated_at?->toIso8601String(),
+            (bool) $baby->vaccinations_enabled,
+            $request->query('tz'),
+            substr((string) $request->query('since'), 0, 10),
+            now()->toDateString(),
+            $photoWindow,
+            $versions,
+        ])).'"';
     }
 }

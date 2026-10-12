@@ -1434,6 +1434,14 @@ cosas lo esconden:
   y no se renueva mientras lo que se ve sigue siendo la foto vieja.
   Si el refresco falla y hay foto, se queda la foto (no la pantalla de
   error).
+- **Arranque en paralelo y condicional**: `babies.startEarlyBootstrap()`
+  lanza `/bootstrap` a la vez que `/babies`, con el bebé de la foto
+  guardada o el último activo (`getStoredActiveBabyId()`); `fetchBootstrap(early)`
+  usa esa respuesta solo si el bebé coincide y, si falló o no coincide,
+  vuelve a pedir. No se lanza con registros pendientes sin conexión (esos se
+  envían antes). `requestBootstrap()` envía `If-None-Match` con
+  `bootstrapEtag` (que va en la foto guardada): un `304` significa que la foto
+  ya es lo último y no hay nada que aplicar.
 - **Sondeo condicional**: `fetchTimeline()` envía `If-None-Match` con el
   ETag de la última respuesta (`timelineEtag`, que también llega en
   `timeline_etag` del bootstrap) y trata el `304` como "sin cambios"

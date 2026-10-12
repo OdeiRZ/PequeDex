@@ -403,6 +403,117 @@ describe('useBabiesStore', () => {
     expect(store.timelineEtag).toBe('"boot"')
   })
 
+  describe('conditional and parallel bootstrap', () => {
+    const body = () => ({
+      timeline: { data: [{ type: 'feed', at: '2026-10-12T08:00:00Z', data: { id: 9 } }] },
+      timeline_etag: '"t1"',
+      growth_measurements: { data: [] },
+      milestones: { data: [] },
+      sleep_prediction: { data: {} },
+      feed_prediction: { data: {} },
+      vitamin_d_schedule: { data: null, recent_doses: [] },
+      temperatures: { data: [] },
+      recent_diaper_changes: { data: [] },
+    })
+
+    async function storeWithBaby() {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+      const store = useBabiesStore()
+      await store.create({})
+      vi.mocked(apiClient.get).mockReset()
+      return store
+    }
+
+    it('stores the etag of a fresh bootstrap and sends it next time; a 304 changes nothing', async () => {
+      const store = await storeWithBaby()
+
+      vi.mocked(apiClient.get).mockResolvedValueOnce({
+        status: 200,
+        headers: { etag: '"b1"' },
+        data: body(),
+      })
+      await store.fetchBootstrap()
+      expect(store.bootstrapEtag).toBe('"b1"')
+      expect(vi.mocked(apiClient.get).mock.calls[0]![1]).toMatchObject({ headers: undefined })
+
+      const before = store.timeline
+      store.hydratedFromSnapshot = true
+      vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 304, headers: { etag: '"b1"' } })
+      await store.fetchBootstrap()
+
+      expect(vi.mocked(apiClient.get).mock.calls[1]![1]).toMatchObject({
+        headers: { 'If-None-Match': '"b1"' },
+      })
+      // 304: lo que ya había sigue siendo lo último, y ya no es "solo la foto".
+      expect(store.timeline).toBe(before)
+      expect(store.hydratedFromSnapshot).toBe(false)
+      expect(store.bootstrapEtag).toBe('"b1"')
+    })
+
+    it('keeps the bootstrap etag in the snapshot data', async () => {
+      const store = await storeWithBaby()
+      store.bootstrapEtag = '"guardado"'
+
+      expect(store.snapshotData().bootstrapEtag).toBe('"guardado"')
+    })
+
+    it('starts the dashboard request in parallel and reuses it when the baby matches', async () => {
+      const store = await storeWithBaby()
+      vi.mocked(apiClient.get).mockResolvedValueOnce({
+        status: 200,
+        headers: { etag: '"p1"' },
+        data: body(),
+      })
+
+      const early = store.startEarlyBootstrap()
+      expect(early?.babyId).toBe(baby.id)
+      await store.fetchBootstrap(early)
+
+      // Una sola petición del arranque, no una más tras esperar.
+      expect(apiClient.get).toHaveBeenCalledTimes(1)
+      expect(store.bootstrapEtag).toBe('"p1"')
+      expect(store.timeline).toHaveLength(1)
+    })
+
+    it('ignores a parallel request made for another baby and asks again', async () => {
+      const store = await storeWithBaby()
+      vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 200, data: body() }) // la temprana (otro bebé)
+      vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 200, data: body() })
+
+      const early = store.startEarlyBootstrap()!
+      early.babyId = 999
+      await store.fetchBootstrap(early)
+
+      expect(apiClient.get).toHaveBeenCalledTimes(2)
+      expect(vi.mocked(apiClient.get).mock.calls[1]![0]).toBe(`/babies/${baby.id}/bootstrap`)
+    })
+
+    it('asks again when the parallel request failed', async () => {
+      const store = await storeWithBaby()
+      vi.mocked(apiClient.get).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+      vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 200, data: body() })
+
+      const early = store.startEarlyBootstrap()
+      await store.fetchBootstrap(early)
+
+      expect(apiClient.get).toHaveBeenCalledTimes(2)
+      expect(store.timeline).toHaveLength(1)
+    })
+
+    it('does not start in parallel while offline logs are pending, nor without a known baby', async () => {
+      const store = await storeWithBaby()
+      store.offlineQueue = [
+        { clientUuid: 'x', tempId: -1, babyId: 1, type: 'feed', payload: {}, queuedAt: '' },
+      ]
+      expect(store.startEarlyBootstrap()).toBeNull()
+
+      store.offlineQueue = []
+      store.current = null
+      localStorage.removeItem('pequedex_active_baby')
+      expect(store.startEarlyBootstrap()).toBeNull()
+    })
+  })
+
   it('keeps queued offline entries and deletes when applying the bootstrap', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

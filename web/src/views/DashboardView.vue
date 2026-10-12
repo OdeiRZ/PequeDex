@@ -7,6 +7,7 @@ import {
   useBabiesStore,
   type BabySex,
   type DiaperChange,
+  type EarlyBootstrap,
   type RecentDiaperChange,
   type DiaperResidueColor,
   type DiaperSize,
@@ -116,7 +117,7 @@ const loadError = ref(false)
 // only ever runs once and babies.current turning non-null afterwards
 // doesn't re-trigger it. Found live: looked like nothing had synced,
 // when the join itself had actually worked.
-async function loadBabyData() {
+async function loadBabyData(early: EarlyBootstrap | null = null) {
   // Con la foto guardada ya a la vista no se vuelve a la pantalla de carga.
   if (!babies.hydratedFromSnapshot) loading.value = true
   // A baby switch (or fresh load) always lands back on today's rhythm,
@@ -130,7 +131,7 @@ async function loadBabyData() {
     // Una sola petición con todo lo del Dashboard (ver fetchBootstrap).
     // Las vacunas solo vienen si están activadas para este bebé - si no,
     // se vacía lo del bebé anterior.
-    await babies.fetchBootstrap()
+    await babies.fetchBootstrap(early)
   } finally {
     loading.value = false
   }
@@ -214,6 +215,10 @@ async function initDashboard() {
   loading.value = !babies.hydratedFromSnapshot
   loadError.value = false
 
+  // En paralelo con `/babies`: el bebé ya se sabe (el de la foto guardada, o
+  // el último activo), así que la petición grande no espera a la pequeña.
+  const early = babies.startEarlyBootstrap()
+
   try {
     await babies.fetchCurrent()
   } catch {
@@ -236,7 +241,7 @@ async function initDashboard() {
     // sections instead of the same retry screen as a fetchCurrent()
     // failure above.
     try {
-      await loadBabyData()
+      await loadBabyData(early)
     } catch {
       loadError.value = !babies.hydratedFromSnapshot
     }

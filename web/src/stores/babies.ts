@@ -242,6 +242,15 @@ export interface PredictionRange {
 /** Cuerpo de GET /babies/{id}/bootstrap: cada sección es la respuesta
  * completa de su endpoint individual. `vaccinations`/`checkups` solo
  * vienen si están activadas para el bebé. */
+type BootstrapResult =
+  { status: 'unchanged' } | { status: 'fresh'; body: BootstrapResponse; etag: string | null }
+
+/** Petición del arranque ya lanzada (ver startEarlyBootstrap). */
+export interface EarlyBootstrap {
+  babyId: number
+  result: Promise<{ ok: true; value: BootstrapResult } | { ok: false }>
+}
+
 interface BootstrapResponse {
   timeline: { data: TimelineEntry[] }
   /** Huella de la línea temporal, para el primer sondeo condicional. */
@@ -410,6 +419,10 @@ interface BabiesState {
   /** ETag de la última línea temporal recibida (sondeo condicional). No
    * se guarda en la foto: con ella a la vista no vale. */
   timelineEtag: string | null
+  /** ETag de la última respuesta del arranque (bootstrap condicional). Sí
+   * se guarda en la foto: si al abrir no ha cambiado nada, el servidor
+   * contesta 304 y la foto ya es lo último. */
+  bootstrapEtag: string | null
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
@@ -503,6 +516,8 @@ export interface BabiesSnapshotData {
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
+  /** Ausente en las fotos guardadas antes de existir el bootstrap condicional. */
+  bootstrapEtag?: string | null
 }
 
 // Lo que ya se sabía la última vez que se usó la app, si hay una foto
@@ -556,6 +571,7 @@ export const useBabiesStore = defineStore('babies', {
     vitaminDAllDoses: [],
     hydratedFromSnapshot: false,
     timelineEtag: null,
+    bootstrapEtag: null,
     ...hydratedState(),
   }),
 
@@ -575,6 +591,7 @@ export const useBabiesStore = defineStore('babies', {
         vaccinations: this.vaccinations,
         vaccinationTemplate: this.vaccinationTemplate,
         checkups: this.checkups,
+        bootstrapEtag: this.bootstrapEtag,
       }
     },
 
@@ -708,32 +725,87 @@ export const useBabiesStore = defineStore('babies', {
       )
     },
 
+    /** La petición del arranque, sin aplicar nada. Condicional: con el ETag de
+     * la última respuesta (también el de la foto guardada), el servidor
+     * contesta 304 si no ha cambiado nada y no se envía ni se recalcula
+     * todo. */
+    async requestBootstrap(babyId: number): Promise<BootstrapResult> {
+      const since = new Date(Date.now() - ALERTS_WINDOW_DAYS * 86_400_000).toISOString()
+      const response = await apiClient.get(`/babies/${babyId}/bootstrap`, {
+        params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone, since },
+        headers: this.bootstrapEtag ? { 'If-None-Match': this.bootstrapEtag } : undefined,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+      })
+
+      if (response.status === 304) return { status: 'unchanged' }
+
+      return { status: 'fresh', body: response.data, etag: response.headers?.etag ?? null }
+    },
+
+    /** Arranque en paralelo: lanza la petición del Dashboard AHORA, con el
+     * bebé que ya se conoce (el de la foto guardada, o el último activo), sin
+     * esperar a que `/babies` diga cuál es el actual. El resultado se recoge
+     * después con fetchBootstrap(early) y solo se usa si el bebé coincide.
+     * No se hace con registros pendientes sin conexión: esos se envían antes
+     * (flushOfflineQueue) y la respuesta ya tendría que incluirlos. */
+    startEarlyBootstrap(): EarlyBootstrap | null {
+      if (this.offlineQueue.length > 0 || this.offlineUpdates.length > 0) return null
+
+      const babyId = this.current?.id ?? getStoredActiveBabyId()
+      if (babyId === null) return null
+
+      return {
+        babyId,
+        // Sin rechazos sin atender: un fallo se recoge en fetchBootstrap.
+        result: this.requestBootstrap(babyId).then(
+          (value) => ({ ok: true as const, value }),
+          () => ({ ok: false as const }),
+        ),
+      }
+    },
+
     /** Todo lo que el Dashboard pide al abrir un bebé, en UNA petición
      * (GET /babies/{id}/bootstrap) en vez de 8-10 en paralelo: en
      * producción cada una pagaba su propia conexión a la base de datos y
      * tardaba 1,6-3 s. Si el backend todavía no tiene el endpoint (404,
      * p.ej. el frontend se despliega antes), se piden por separado. */
-    async fetchBootstrap() {
+    async fetchBootstrap(early: EarlyBootstrap | null = null) {
       if (!this.current) {
         return
       }
 
       const babyId = this.current.id
-      let body: BootstrapResponse
-      try {
-        const since = new Date(Date.now() - ALERTS_WINDOW_DAYS * 86_400_000).toISOString()
-        const { data } = await apiClient.get(`/babies/${babyId}/bootstrap`, {
-          params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone, since },
-        })
-        body = data
-      } catch (error) {
-        if ((error as { response?: { status?: number } }).response?.status !== 404) throw error
-        await this.fetchBootstrapSeparately()
-        return
+      let result: BootstrapResult | null = null
+
+      // El arranque en paralelo (startEarlyBootstrap) ya lo pidió: se espera
+      // a esa respuesta. Si falló, o era para otro bebé, se pide de nuevo.
+      if (early !== null && early.babyId === babyId) {
+        const earlyResult = await early.result
+        if (earlyResult.ok) result = earlyResult.value
       }
+
+      if (result === null) {
+        try {
+          result = await this.requestBootstrap(babyId)
+        } catch (error) {
+          if ((error as { response?: { status?: number } }).response?.status !== 404) throw error
+          await this.fetchBootstrapSeparately()
+          return
+        }
+      }
+
       // Cambió de bebé mientras tanto: esa respuesta ya no vale.
       if (this.current?.id !== babyId) return
 
+      // 304: no ha cambiado nada desde la última vez (la foto guardada, o lo
+      // ya cargado, sigue siendo lo último): no hay nada que aplicar.
+      if (result.status === 'unchanged') {
+        this.hydratedFromSnapshot = false
+        return
+      }
+
+      const body = result.body
+      this.bootstrapEtag = result.etag
       this.applyTimeline(body.timeline.data, babyId)
       this.timelineEtag = body.timeline_etag ?? null
       this.growthMeasurements = body.growth_measurements.data

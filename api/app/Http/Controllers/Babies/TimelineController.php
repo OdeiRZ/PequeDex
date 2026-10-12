@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\Babies;
 
+use App\Http\Controllers\Concerns\HandlesEtags;
 use App\Http\Controllers\Controller;
 use App\Models\Baby;
+use App\Services\Support\BabyActivityVersion;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TimelineController extends Controller
 {
+    use HandlesEtags;
+
     /**
      * Merges feeds/sleeps/diaper_changes/temperatures into one chronological list -
      * lets the dashboard show a single timeline without firing 3
@@ -49,47 +53,33 @@ class TimelineController extends Controller
         // que vio el cliente, se contesta 304 sin leer ni enviar ninguna
         // fila. El Dashboard pregunta cada 15 s y casi siempre es igual.
         $etag = $this->etag($baby, $request);
-        if ($this->etagMatches($request->header('If-None-Match'), $etag)) {
+        if ($etag !== null && $this->etagMatches($request->header('If-None-Match'), $etag)) {
             return response()->json(status: 304)->header('ETag', $etag);
         }
 
-        return $this->entries($request, $baby)->header('ETag', $etag);
+        $response = $this->entries($request, $baby);
+
+        return $etag === null ? $response : $response->header('ETag', $etag);
     }
 
     /**
      * Huella de lo que alimenta esta lista: número de filas, última
-     * modificación y último id de cada tabla del bebé (cuatro consultas
-     * agregadas diminutas en vez de leer las filas). Cambia al crear,
+     * modificación y último id de cada tabla del bebé (una sola consulta
+     * agregada, ver BabyActivityVersion, en vez de leer las filas). Cambia al crear,
      * editar o borrar cualquier registro; también cambia por registros
      * fuera de las 50 entradas visibles, lo que solo cuesta alguna
      * respuesta completa de más, nunca una de menos.
      */
-    private function etag(Baby $baby, Request $request): string
+    private function etag(Baby $baby, Request $request): ?string
     {
-        $parts = [$request->query('date'), $request->query('limit')];
+        $versions = BabyActivityVersion::for($baby, BabyActivityVersion::TIMELINE);
 
-        foreach ([$baby->feeds(), $baby->sleeps(), $baby->diaperChanges(), $baby->temperatures()] as $relation) {
-            $row = $relation->toBase()->selectRaw('count(*) as c, max(updated_at) as u, max(id) as i')->first();
-            $parts[] = [$row->c, $row->u, $row->i];
+        // Sin huella (no se pudo calcular): respuesta completa y sin ETag.
+        if ($versions === null) {
+            return null;
         }
 
-        return '"'.md5((string) json_encode($parts)).'"';
-    }
-
-    /**
-     * Compara ignorando el prefijo W/ (un proxy puede degradar el ETag a
-     * débil al comprimir la respuesta) y admite varios valores.
-     */
-    private function etagMatches(?string $header, string $etag): bool
-    {
-        if ($header === null || $header === '') {
-            return false;
-        }
-
-        $normalize = fn (string $value) => ltrim(trim($value), 'W/');
-
-        return collect(explode(',', $header))
-            ->contains(fn (string $candidate) => $normalize($candidate) === $normalize($etag));
+        return '"'.md5((string) json_encode([$request->query('date'), $request->query('limit'), $versions])).'"';
     }
 
     private function entries(Request $request, Baby $baby): JsonResponse

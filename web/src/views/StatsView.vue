@@ -480,6 +480,7 @@ const hasAnyStatsData = computed(
 // pediatra, que se rellena aquí mismo.
 const exportSheetOpen = ref(false)
 const exportQuestions = ref('')
+const exportQuestionsOpen = ref(false)
 
 function openExportSheet() {
   feedback.tap()
@@ -1303,22 +1304,40 @@ async function onExportPdf(mode: StatsExportMode) {
     <!-- Elegir qué PDF descargar -->
     <BottomSheet v-model:open="exportSheetOpen">
       <h3 class="mb-4 font-display text-base font-bold">{{ t('stats.exportSheet.title') }}</h3>
-      <div class="flex flex-col gap-4">
-        <button
-          type="button"
-          class="card-interactive flex flex-col gap-0.5 rounded-xl bg-surface-sunken p-3 text-left"
-          @click="onExportPdf('full')"
-        >
-          <span class="text-sm font-semibold">{{ t('stats.exportSheet.fullTitle') }}</span>
-          <span class="text-xs text-text-muted">{{ t('stats.exportSheet.fullBody') }}</span>
-        </button>
-
-        <div class="flex flex-col gap-3 rounded-xl border border-border p-3">
+      <!-- Dos filas con la misma forma: para quién es, qué lleva y su propio
+           botón. Lo único opcional (las preguntas) va plegado en la segunda. -->
+      <div class="flex flex-col gap-3">
+        <section class="flex flex-col gap-3 rounded-xl bg-surface-sunken p-3">
           <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-text-muted">
+              {{ t('stats.exportSheet.forYou') }}
+            </div>
+            <div class="text-sm font-semibold">{{ t('stats.exportSheet.fullTitle') }}</div>
+            <div class="text-xs text-text-muted">{{ t('stats.exportSheet.fullBody') }}</div>
+          </div>
+          <button v-press type="button" class="btn-primary" @click="onExportPdf('full')">
+            {{ t('stats.exportSheet.download') }}
+          </button>
+        </section>
+
+        <section class="flex flex-col gap-3 rounded-xl bg-surface-sunken p-3">
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-text-muted">
+              {{ t('stats.exportSheet.forPaediatrician') }}
+            </div>
             <div class="text-sm font-semibold">{{ t('stats.exportSheet.summaryTitle') }}</div>
             <div class="text-xs text-text-muted">{{ t('stats.exportSheet.summaryBody') }}</div>
           </div>
-          <div>
+          <button
+            v-if="!exportQuestionsOpen && !exportQuestions"
+            type="button"
+            class="self-start text-xs font-semibold text-brand"
+            aria-expanded="false"
+            @click="exportQuestionsOpen = true"
+          >
+            + {{ t('stats.exportSheet.addQuestions') }}
+          </button>
+          <div v-else>
             <label for="export-questions" class="field-label">{{
               t('stats.exportSheet.questions')
             }}</label>
@@ -1332,9 +1351,9 @@ async function onExportPdf(mode: StatsExportMode) {
             ></textarea>
           </div>
           <button v-press type="button" class="btn-primary" @click="onExportPdf('summary')">
-            {{ t('stats.exportSheet.summaryAction') }}
+            {{ t('stats.exportSheet.download') }}
           </button>
-        </div>
+        </section>
       </div>
     </BottomSheet>
   </main>

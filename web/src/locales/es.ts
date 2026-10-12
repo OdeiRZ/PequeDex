@@ -250,14 +250,16 @@ export default {
     exportError: 'No se ha podido generar el PDF. Inténtalo de nuevo.',
     exportSheet: {
       title: 'Descargar PDF',
-      fullTitle: 'Completo',
-      fullBody: 'Todas las estadísticas del periodo elegido, con gráficas y tendencias.',
-      summaryTitle: 'Resumen para la consulta',
-      summaryBody:
-        'Una página con los últimos 14 días, pensada para enseñar al pediatra en la revisión.',
-      questions: 'Preguntas para la consulta (opcional)',
+      forYou: 'Para ti',
+      forPaediatrician: 'Para el pediatra',
+      fullTitle: 'Estadísticas completas',
+      fullBody: 'Todo el periodo elegido, con gráficas y tendencias.',
+      summaryTitle: 'Resumen de una página',
+      summaryBody: 'Los últimos 14 días, para enseñar en la revisión.',
+      addQuestions: 'Añadir preguntas para la consulta',
+      questions: 'Preguntas para la consulta',
       questionsPlaceholder: 'Por ejemplo: ¿es normal que lleve 3 días sin caca?',
-      summaryAction: 'Descargar resumen',
+      download: 'Descargar',
     },
     hourBucket: {
       dawn: 'Madrugada',

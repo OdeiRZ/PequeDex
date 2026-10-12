@@ -12,7 +12,7 @@ class Vaccination extends Model
     /** @use HasFactory<VaccinationFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'code', 'name', 'age_label', 'due_date', 'given_at', 'optional', 'notes'];
+    protected $fillable = ['baby_id', 'user_id', 'code', 'name', 'age_label', 'due_date', 'given_at', 'optional', 'notes', 'edited', 'due_date_edited'];
 
     /**
      * @return array<string, string>
@@ -23,6 +23,8 @@ class Vaccination extends Model
             'due_date' => 'date:Y-m-d',
             'given_at' => 'date:Y-m-d',
             'optional' => 'boolean',
+            'edited' => 'boolean',
+            'due_date_edited' => 'boolean',
         ];
     }
 

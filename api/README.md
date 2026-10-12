@@ -146,8 +146,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   Melilla) y `babies.vaccinations_enabled` se cambian con `PUT
   /babies/{baby}/vaccinations/settings`, que genera la lista al
   activar (sin duplicar si ya existe) y, al cambiar de comunidad,
-  rehace las de plantilla todavía sin poner (conserva las puestas y
-  las añadidas a mano). Desactivar no borra nada. CRUD en
+  rehace las de plantilla todavía sin poner (conserva las puestas, las
+  añadidas a mano y las editadas: `vaccinations.edited`, que se marca al
+  cambiar nombre, fecha prevista o notas, no al marcarla como puesta).
+  Al cambiar `birth_date` (`PUT /babies/{baby}`),
+  `VaccinationTemplates::recalculateDueDates()` rehace la fecha prevista
+  de las de plantilla sin poner, salvo las de `due_date_edited`.
+  Desactivar no borra nada. CRUD en
   `/vaccinations` (marcar como puesta: `given_at`, no futura ni antes
   del nacimiento) y `/checkups` (revisiones a mano, pueden estar en el
   futuro). El export de estadísticas acepta un bloque `vaccinations`

@@ -65,7 +65,16 @@ class VaccinationController extends Controller
     public function update(SaveVaccinationRequest $request, Baby $baby, int $vaccination): JsonResponse
     {
         $model = $baby->vaccinations()->findOrFail($vaccination);
-        $model->update([...$request->validated(), 'user_id' => $request->user()->id]);
+        $model->fill([...$request->validated(), 'user_id' => $request->user()->id]);
+
+        // Marcar como puesta no cuenta como "editada": solo lo que la
+        // plantilla nueva o una fecha de nacimiento nueva pisarían.
+        if ($model->code !== null) {
+            $dueDateChanged = $model->isDirty('due_date');
+            $model->edited = $model->edited || $dueDateChanged || $model->isDirty(['name', 'notes']);
+            $model->due_date_edited = $model->due_date_edited || $dueDateChanged;
+        }
+        $model->save();
 
         return response()->json(['data' => $model]);
     }

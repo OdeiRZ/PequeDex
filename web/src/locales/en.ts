@@ -458,7 +458,7 @@ export default {
         region: 'Region (Spain)',
         regionNone: 'Not specified (common schedule)',
         regionHint:
-          'Sets the vaccine schedule. Regions without their own template use the common one, and everything can be edited.',
+          'Sets the vaccine schedule. Regions without their own template use the common one, and everything can be edited. Changing it rebuilds the pending ones; given and edited vaccines are kept.',
       },
       vitaminD: {
         title: 'Vitamin D reminder',

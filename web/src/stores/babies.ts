@@ -64,6 +64,10 @@ export interface Vaccination {
   given_at: string | null
   optional: boolean
   notes: string | null
+  /** De plantilla y cambiada a mano: se conserva al cambiar de comunidad. */
+  edited: boolean
+  /** Fecha prevista puesta a mano: no se recalcula con la de nacimiento. */
+  due_date_edited: boolean
 }
 
 export interface VaccinationTemplateInfo {
@@ -497,9 +501,15 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async updateBaby(payload: UpdateBabyPayload) {
+      const previousBirthDate = this.current!.birth_date
       const { data } = await apiClient.put(`/babies/${this.current!.id}`, payload)
       this.current = data.data
       this.babies = this.babies.map((baby) => (baby.id === data.data.id ? data.data : baby))
+      // El servidor recalcula las fechas previstas de las vacunas
+      // pendientes al cambiar la fecha de nacimiento: se recargan.
+      if (data.data.birth_date !== previousBirthDate && data.data.vaccinations_enabled) {
+        await this.fetchVaccinations()
+      }
     },
 
     /** Unlinks the current user from the baby - the reverse of join(). The

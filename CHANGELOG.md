@@ -9,6 +9,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Vacunas: fechas al cambiar la fecha de nacimiento** - si se corrige
+  la fecha de nacimiento del bebé, las fechas previstas de las vacunas
+  de calendario todavía pendientes se recalculan solas. No se tocan las
+  ya puestas ni las que tienen la fecha cambiada a mano.
+- **Vacunas: las editadas se conservan al cambiar de comunidad** -
+  antes, al cambiar de comunidad se rehacían todas las vacunas de
+  calendario pendientes y se perdían los cambios hechos a mano (nombre,
+  fecha, notas). Ahora solo se rehacen las que nadie ha tocado. Marcar
+  una vacuna como puesta no cuenta como editarla.
+
 - **Referencias de sueño por edad** - Estadísticas compara el sueño
   total al día con lo recomendado para su edad (14-17 h hasta 3 meses,
   National Sleep Foundation; 12-16 h de 4 a 12 meses y 11-14 h de 1 a 2

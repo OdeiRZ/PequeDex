@@ -27,6 +27,8 @@ function vaccination(overrides: Partial<Vaccination>): Vaccination {
     given_at: null,
     optional: false,
     notes: null,
+    edited: false,
+    due_date_edited: false,
     ...overrides,
   }
 }

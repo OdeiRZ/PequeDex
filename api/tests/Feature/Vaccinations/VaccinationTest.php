@@ -75,6 +75,63 @@ it('rebuilds pending template vaccines on a region change, keeping given and cus
         ->and($baby->vaccinations()->where('code', 'hexa_2m')->count())->toBe(1);
 });
 
+it('keeps edited pending template vaccines on a region change', function () {
+    $user = actingAsUser();
+    $baby = babyForVaccinationTest($user);
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/settings", ['vaccinations_enabled' => true, 'region' => 'madrid']);
+    $men = $baby->vaccinations()->where('code', 'men_4m')->first();
+
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/{$men->id}", [
+        'name' => $men->name,
+        'due_date' => $men->due_date->toDateString(),
+        'notes' => 'Pedir cita en el centro de salud',
+    ])->assertOk()->assertJsonPath('data.edited', true)->assertJsonPath('data.due_date_edited', false);
+
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/settings", ['vaccinations_enabled' => true, 'region' => 'cantabria'])->assertOk();
+
+    expect($baby->vaccinations()->whereKey($men->id)->value('notes'))->toBe('Pedir cita en el centro de salud')
+        ->and($baby->vaccinations()->where('code', 'men_4m')->count())->toBe(1)
+        // Las no editadas sí se rehacen con la plantilla nueva.
+        ->and($baby->vaccinations()->where('code', 'men_12m')->value('name'))->toBe('Meningococo ACWY');
+});
+
+it('does not count marking a vaccine as given as an edit', function () {
+    $user = actingAsUser();
+    $baby = babyForVaccinationTest($user);
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/settings", ['vaccinations_enabled' => true, 'region' => 'madrid']);
+    $hexa = $baby->vaccinations()->where('code', 'hexa_2m')->first();
+
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/{$hexa->id}", [
+        'name' => $hexa->name,
+        'due_date' => $hexa->due_date->toDateString(),
+        'given_at' => '2026-10-02',
+        'notes' => null,
+    ])->assertOk()->assertJsonPath('data.edited', false)->assertJsonPath('data.due_date_edited', false);
+});
+
+it('recalculates pending due dates when the birth date changes, except hand-set ones', function () {
+    $user = actingAsUser();
+    $baby = babyForVaccinationTest($user);
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/settings", ['vaccinations_enabled' => true, 'region' => 'madrid']);
+
+    $baby->vaccinations()->where('code', 'hexa_2m')->update(['given_at' => '2026-10-02']);
+    $men = $baby->vaccinations()->where('code', 'men_4m')->first();
+    $this->putJson("/api/babies/{$baby->id}/vaccinations/{$men->id}", [
+        'name' => $men->name,
+        'due_date' => '2026-12-15',
+        'notes' => null,
+    ])->assertOk()->assertJsonPath('data.due_date_edited', true);
+
+    $this->putJson("/api/babies/{$baby->id}", ['birth_date' => '2026-08-11'])->assertOk();
+
+    $dates = $baby->vaccinations()->whereNotNull('code')->pluck('due_date', 'code')->map->toDateString();
+    expect($dates['hexa_4m'])->toBe('2026-12-11')
+        // Puesta: su fecha prevista ya no importa y no se toca.
+        ->and($dates['hexa_2m'])->toBe('2026-10-01')
+        // Fecha puesta a mano: se respeta.
+        ->and($dates['men_4m'])->toBe('2026-12-15');
+});
+
 it('keeps everything when disabled', function () {
     $user = actingAsUser();
     $baby = babyForVaccinationTest($user);

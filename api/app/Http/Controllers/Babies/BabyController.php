@@ -7,6 +7,7 @@ use App\Http\Requests\Babies\JoinBabyRequest;
 use App\Http\Requests\Babies\StoreBabyRequest;
 use App\Http\Requests\Babies\UpdateBabyRequest;
 use App\Models\Baby;
+use App\Services\Vaccinations\VaccinationTemplates;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,15 @@ class BabyController extends Controller
     {
         $this->authorize('update', $baby);
 
-        $baby->update($request->validated());
+        $baby->fill($request->validated());
+        $birthDateChanged = $baby->isDirty('birth_date');
+        $baby->save();
+
+        // Las fechas previstas de las vacunas salen de la fecha de
+        // nacimiento: si cambia, se recalculan (salvo las puestas a mano).
+        if ($birthDateChanged) {
+            VaccinationTemplates::recalculateDueDates($baby);
+        }
 
         return response()->json(['data' => $baby]);
     }

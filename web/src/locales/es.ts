@@ -462,7 +462,7 @@ export default {
         region: 'Comunidad autónoma',
         regionNone: 'Sin indicar (calendario común)',
         regionHint:
-          'Decide el calendario de vacunas. Si tu comunidad no tiene plantilla propia se usa el común, y todo se puede editar.',
+          'Decide el calendario de vacunas. Si tu comunidad no tiene plantilla propia se usa el común, y todo se puede editar. Al cambiarla se rehacen las pendientes; las puestas y las que hayas editado se conservan.',
       },
       vitaminD: {
         title: 'Recordatorio de vitamina D',

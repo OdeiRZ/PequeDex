@@ -80,13 +80,45 @@ class VaccinationTemplates
 
     /**
      * Al cambiar de comunidad: las vacunas de plantilla todavía sin poner
-     * se rehacen con la plantilla nueva; las puestas y las añadidas a
-     * mano se conservan.
+     * y sin editar se rehacen con la plantilla nueva; las puestas, las
+     * editadas y las añadidas a mano se conservan.
      */
     public static function regenerateFor(Baby $baby): void
     {
-        $baby->vaccinations()->whereNotNull('code')->whereNull('given_at')->delete();
+        $baby->vaccinations()
+            ->whereNotNull('code')
+            ->whereNull('given_at')
+            ->where('edited', false)
+            ->delete();
         self::generateFor($baby);
+    }
+
+    /**
+     * Al cambiar la fecha de nacimiento: rehace la fecha prevista de las
+     * vacunas de plantilla todavía sin poner, salvo las que tienen la
+     * fecha puesta a mano. Sin fecha de nacimiento, quedan sin fecha.
+     */
+    public static function recalculateDueDates(Baby $baby): void
+    {
+        $months = collect(self::forRegion($baby->region)['items'])->pluck('months', 'code');
+        $birth = $baby->birth_date !== null ? CarbonImmutable::parse($baby->birth_date) : null;
+
+        $pending = $baby->vaccinations()
+            ->whereNotNull('code')
+            ->whereNull('given_at')
+            ->where('due_date_edited', false)
+            ->get();
+
+        foreach ($pending as $vaccination) {
+            // Una vacuna editada que ya no está en la plantilla de su
+            // comunidad (cambio de comunidad) no tiene edad de referencia.
+            if (! $months->has($vaccination->code)) {
+                continue;
+            }
+            $vaccination->update([
+                'due_date' => $birth?->addMonthsNoOverflow($months[$vaccination->code])->toDateString(),
+            ]);
+        }
     }
 
     private static function path(string $name): string

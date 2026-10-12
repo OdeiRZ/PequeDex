@@ -155,6 +155,7 @@ export default {
   offline: {
     queued: 'Offline: saved on this phone, it will be sent when you are back online.',
     banner: 'Offline.',
+    stale: 'Showing what was last saved; updating…',
     pending: '{count} log waiting to be sent. | {count} logs waiting to be sent.',
     pendingBadge: 'Pending',
     pendingNoEdit: 'Not sent yet. You can edit it once you are back online.',

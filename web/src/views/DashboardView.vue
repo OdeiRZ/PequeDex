@@ -102,7 +102,10 @@ const dateLocale = computed(() => (locale.value === 'es' ? 'es-ES' : 'en-GB'))
 const minDate = computed(() => babies.current?.birth_date ?? undefined)
 const minDateTime = computed(() => (minDate.value ? `${minDate.value}T00:00` : undefined))
 
-const loading = ref(true)
+// Con una foto guardada de la última vez (lib/snapshot.ts) se pinta al
+// instante y se refresca por detrás, en vez de esperar al servidor -que si
+// estaba dormido tarda ~12 s- con la pantalla en "cargando".
+const loading = ref(!babies.hydratedFromSnapshot)
 const loadError = ref(false)
 
 // Shared by the initial mount and by create/join below - without this,
@@ -113,7 +116,8 @@ const loadError = ref(false)
 // doesn't re-trigger it. Found live: looked like nothing had synced,
 // when the join itself had actually worked.
 async function loadBabyData() {
-  loading.value = true
+  // Con la foto guardada ya a la vista no se vuelve a la pantalla de carga.
+  if (!babies.hydratedFromSnapshot) loading.value = true
   // A baby switch (or fresh load) always lands back on today's rhythm,
   // not wherever the previous baby's navigation happened to be left.
   rhythmDate.value = todayDateOnlyString()
@@ -206,13 +210,15 @@ async function onRhythmNextDay() {
 // user was stuck on the loading screen with no error and no way out
 // but a manual page reload.
 async function initDashboard() {
-  loading.value = true
+  loading.value = !babies.hydratedFromSnapshot
   loadError.value = false
 
   try {
     await babies.fetchCurrent()
   } catch {
-    loadError.value = true
+    // Sin servidor pero con la foto guardada a la vista: se queda eso (y
+    // el aviso de datos guardados), no la pantalla de error.
+    loadError.value = !babies.hydratedFromSnapshot
     loading.value = false
 
     return
@@ -231,7 +237,7 @@ async function initDashboard() {
     try {
       await loadBabyData()
     } catch {
-      loadError.value = true
+      loadError.value = !babies.hydratedFromSnapshot
     }
   } else {
     loading.value = false
@@ -2151,7 +2157,7 @@ const sleepPredictionDue = computed(() => {
             <!-- Sin conexión o con registros en cola: un aviso discreto en
                  vez de errores rojos al guardar. -->
             <div
-              v-if="!isOnline || pendingCount > 0"
+              v-if="!isOnline || pendingCount > 0 || babies.hydratedFromSnapshot"
               class="flex items-center gap-2 rounded-2xl border border-border bg-surface-sunken px-3 py-2 text-xs text-text-muted"
               role="status"
             >
@@ -2170,6 +2176,7 @@ const sleepPredictionDue = computed(() => {
               </svg>
               <span>
                 {{ isOnline ? '' : t('offline.banner') }}
+                {{ babies.hydratedFromSnapshot ? t('offline.stale') : '' }}
                 {{
                   pendingCount > 0
                     ? t('offline.pending', { count: pendingCount }, pendingCount)

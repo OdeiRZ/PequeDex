@@ -156,6 +156,7 @@ export default {
   offline: {
     queued: 'Sin conexión: guardado en el móvil, se enviará al volver.',
     banner: 'Sin conexión.',
+    stale: 'Mostrando lo último guardado; actualizando…',
     pending: '{count} registro pendiente de enviar. | {count} registros pendientes de enviar.',
     pendingBadge: 'Pendiente',
     pendingNoEdit: 'Todavía no se ha enviado. Podrás editarlo cuando haya conexión.',

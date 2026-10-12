@@ -8,6 +8,7 @@ import router from './router'
 import { i18n } from './i18n'
 import { applyTheme, getStoredTheme } from './theme'
 import { vPress } from './directives/press'
+import { startSnapshotSync } from './lib/snapshotSync'
 
 // Applied before mount, not inside a component's onMounted, so the correct
 // theme is already on <html> for the very first paint - otherwise a stored
@@ -16,10 +17,14 @@ applyTheme(getStoredTheme())
 
 const app = createApp(App)
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 app.use(i18n)
 app.directive('press', vPress)
+
+// La foto del Dashboard para pintarlo al instante la próxima vez que se abra.
+startSnapshotSync(pinia)
 
 app.mount('#app')
 

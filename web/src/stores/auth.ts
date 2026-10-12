@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiClient, clearStoredToken, getStoredToken, storeToken } from '@/lib/api'
 import type { Category } from '@/lib/category'
+import { clearSnapshot, loadSnapshot } from '@/lib/snapshot'
 import type { DiaperSize, TemperatureMethod } from './babies'
 import { useBabiesStore } from './babies'
 
@@ -75,7 +76,10 @@ interface AuthState {
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
-    user: null,
+    // El usuario de la última foto guardada (lib/snapshot.ts), si es de
+    // esta sesión: la cabecera y los ajustes se pintan al instante y
+    // fetchCurrentUser() lo refresca por detrás.
+    user: loadSnapshot(getStoredToken())?.user ?? null,
     token: getStoredToken(),
   }),
 
@@ -239,7 +243,11 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await apiClient.get('/user')
         this.user = data
       } catch {
-        this.clearSession()
+        // Un 401 (token caducado o revocado) ya lo gestiona el interceptor
+        // de lib/api.ts, que cierra la sesión. Cualquier otro fallo - sin
+        // conexión, el API despertando, un 500 - NO debe cerrarla: antes,
+        // abrir la app sin red desconectaba al usuario. Se queda con el
+        // usuario que hubiera (el de la foto guardada) hasta el próximo intento.
       }
     },
 
@@ -257,6 +265,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.token = null
       clearStoredToken()
+      clearSnapshot()
       useBabiesStore().$reset()
     },
   },

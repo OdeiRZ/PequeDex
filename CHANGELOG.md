@@ -9,6 +9,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Rendimiento: el Dashboard carga con una sola petición** - al abrir
+  un bebé se pedían 8-10 cosas a la vez (línea temporal, predicciones,
+  hitos, medidas...) y en producción cada una tardaba 1,6-3 s (cada una
+  pagaba su propia conexión a la base de datos y su autenticación), así
+  que todo estaba listo ~4 s después. Ahora `GET /babies/{id}/bootstrap`
+  devuelve todo junto (con los mismos controladores, así que cada
+  sección es idéntica a la de su endpoint). Si el backend aún no lo
+  tiene, la app pide las cosas por separado como antes.
+
+- **Arranque instantáneo con la última foto guardada** - la app guarda
+  en el móvil una foto del Dashboard (línea temporal, predicciones,
+  hitos...) y al abrir la pinta al momento, refrescando por detrás con un
+  aviso discreto ("Mostrando lo último guardado; actualizando…"). Antes,
+  abrirla tras un rato sin usar esperaba al servidor de Render
+  despertando (~12 s medidos) con la pantalla en "cargando". La foto va
+  ligada a la sesión (otra cuenta en el mismo navegador no la ve), caduca
+  a los 7 días y se borra al cerrar sesión.
+
 - **Rendimiento: el avatar ya no viaja en cada petición** - la foto de
   perfil (un PNG de 320 px en base64, ~80 KB) vivía en una columna de
   `users`, y Sanctum carga esa fila entera en todas las peticiones
@@ -101,6 +119,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
       2026 legible.
     - Ceuta y Melilla: falta además la hepatitis A, que sí incluyen en
       su calendario infantil, por no tener las edades verificadas.
+
+### Corregido
+
+- **Abrir la app sin conexión cerraba la sesión** - al cargar, la app
+  pide el usuario y, ante cualquier fallo (sin red, el servidor
+  despertando, un 500), borraba la sesión y te mandaba al inicio. Ahora
+  solo se cierra con un 401 (token caducado o revocado), que ya lo
+  gestionaba el interceptor; con cualquier otro fallo se queda como
+  estaba.
 
 ### Cambiado
 

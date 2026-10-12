@@ -150,15 +150,18 @@ describe('useAuthStore', () => {
     expect(store.user).toEqual(user)
   })
 
-  it('clears the session when fetching the current user fails', async () => {
+  it('keeps the session when fetching the current user fails without a response', async () => {
+    // Sin conexión, el API despertando o un 500 no deben cerrar la sesión:
+    // antes, abrir la app sin red desconectaba al usuario. Un 401 sí cierra
+    // la sesión, pero eso lo hace el interceptor de lib/api.ts.
     localStorage.setItem('pequedex_token', 'abc123')
-    vi.mocked(apiClient.get).mockRejectedValue(new Error('unauthenticated'))
+    vi.mocked(apiClient.get).mockRejectedValue({ isAxiosError: true, code: 'ERR_NETWORK' })
     const store = useAuthStore()
 
     await store.fetchCurrentUser()
 
-    expect(store.user).toBeNull()
-    expect(store.token).toBeNull()
+    expect(store.token).toBe('abc123')
+    expect(store.isAuthenticated).toBe(true)
   })
 
   it('updates the profile, replacing the stored user', async () => {

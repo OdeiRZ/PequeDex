@@ -1381,6 +1381,35 @@ o 24 meses (total).
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
   muestra "Sin conexión" y cuántos registros quedan por enviar.
 
+## Arranque rápido: una petición y la última foto guardada
+
+Medido en producción (Render + Neon, planes gratuitos): el API
+dormido tarda ~12 s en contestar la primera petición, y cada petición
+normal costaba 1,6-3 s por su propia conexión a la base de datos. Dos
+cosas lo esconden:
+
+- **`babies.fetchBootstrap()`** → `GET /babies/{id}/bootstrap`: una sola
+  petición con todo lo del Dashboard (línea temporal, predicciones,
+  hitos, medidas, temperaturas, pañales recientes, vitamina D y, si
+  están activadas, vacunas). Cada sección es el cuerpo de su endpoint
+  individual, así que se aplica con la misma lógica que las `fetchX()`
+  de siempre (incluidos los pendientes sin conexión). Si el backend
+  responde 404 (el frontend se despliega antes), cae a
+  `fetchBootstrapSeparately()`.
+- **Foto guardada** (`lib/snapshot.ts` + `lib/snapshotSync.ts`): el
+  estado del bebé actual y el usuario se guardan en `localStorage`
+  (`pequedex.snapshot`, con debounce de 1,5 s) y se aplican al crear los
+  stores (`hydratedFromSnapshot: true`), así que el Dashboard se pinta al
+  instante con un aviso "Mostrando lo último guardado; actualizando…" y
+  se refresca por detrás. Va ligada al final del token de la sesión, es
+  de una versión (`v`), caduca a los 7 días, se borra en `clearSession()`
+  y no se renueva mientras lo que se ve sigue siendo la foto vieja.
+  Si el refresco falla y hay foto, se queda la foto (no la pantalla de
+  error).
+- `auth.fetchCurrentUser()` ya no cierra la sesión ante un fallo de red
+  o un 500 (solo un 401, vía el interceptor): antes, abrir la app sin
+  conexión desconectaba al usuario.
+
 ## Pantallas que no cargan
 
 Todas las rutas salvo el Dashboard se cargan bajo demanda

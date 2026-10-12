@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import { apiClient } from '@/lib/api'
+import { apiClient, getStoredToken } from '@/lib/api'
 import { getStoredActiveBabyId, storeActiveBabyId } from '@/lib/activeBaby'
 import type { StatsExportPayload } from '@/lib/stats'
 import type { GrowthReferenceCurves } from '@/lib/growthReference'
 import { ALERTS_WINDOW_DAYS } from '@/lib/dailyAlerts'
+import { loadSnapshot } from '@/lib/snapshot'
 import {
   endpointFor,
   isNetworkError,
@@ -397,6 +398,9 @@ interface BabiesState {
   /** Cambios sobre registros ya guardados (finalizar sin conexión). */
   offlineUpdates: QueuedUpdate[]
   flushingQueue: boolean
+  /** true mientras lo que se ve viene de la foto guardada (lib/snapshot.ts)
+   * y todavía no ha llegado la respuesta real del servidor. */
+  hydratedFromSnapshot: boolean
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
@@ -475,6 +479,45 @@ function sortVaccinations(list: Vaccination[]): Vaccination[] {
   })
 }
 
+/** Lo del bebé actual que se guarda en la foto del Dashboard
+ * (lib/snapshot.ts) para pintarlo al abrir sin esperar al servidor. */
+export interface BabiesSnapshotData {
+  timeline: TimelineEntry[]
+  growthMeasurements: GrowthMeasurement[]
+  milestones: Milestone[]
+  sleepPrediction: SleepPrediction | null
+  feedPrediction: FeedPrediction | null
+  vitaminDSchedule: VitaminDSchedule | null
+  vitaminDRecentDoses: VitaminDDose[]
+  temperatures: Temperature[]
+  recentDiaperChanges: DiaperChange[]
+  vaccinations: Vaccination[]
+  vaccinationTemplate: VaccinationTemplateInfo | null
+  checkups: Checkup[]
+}
+
+// Lo que ya se sabía la última vez que se usó la app, si hay una foto
+// guardada de esta sesión (lib/snapshot.ts). Se aplica al crear el store;
+// los datos reales llegan después y la sustituyen.
+function hydratedState(): Partial<BabiesState> {
+  const snapshot = loadSnapshot(getStoredToken())
+  if (!snapshot) return {}
+
+  const storedId = getStoredActiveBabyId()
+  const current =
+    snapshot.babies.find((baby) => baby.id === (storedId ?? snapshot.currentId)) ??
+    snapshot.babies.find((baby) => baby.id === snapshot.currentId) ??
+    snapshot.babies[0] ??
+    null
+  // La foto es del bebé que era el actual al guardarla: si ahora es otro,
+  // no se mezcla su historial con el de este.
+  if (current === null || current.id !== snapshot.currentId) {
+    return { babies: snapshot.babies, current }
+  }
+
+  return { ...snapshot.data, babies: snapshot.babies, current, hydratedFromSnapshot: true }
+}
+
 export const useBabiesStore = defineStore('babies', {
   state: (): BabiesState => ({
     current: null,
@@ -502,9 +545,29 @@ export const useBabiesStore = defineStore('babies', {
     vitaminDSchedule: null,
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
+    hydratedFromSnapshot: false,
+    ...hydratedState(),
   }),
 
   actions: {
+    /** Lo que se guarda en la foto del Dashboard (lib/snapshot.ts). */
+    snapshotData(): BabiesSnapshotData {
+      return {
+        timeline: this.timeline,
+        growthMeasurements: this.growthMeasurements,
+        milestones: this.milestones,
+        sleepPrediction: this.sleepPrediction,
+        feedPrediction: this.feedPrediction,
+        vitaminDSchedule: this.vitaminDSchedule,
+        vitaminDRecentDoses: this.vitaminDRecentDoses,
+        temperatures: this.temperatures,
+        recentDiaperChanges: this.recentDiaperChanges,
+        vaccinations: this.vaccinations,
+        vaccinationTemplate: this.vaccinationTemplate,
+        checkups: this.checkups,
+      }
+    },
+
     /** Loads every baby this caregiver has, and picks which one is
      * "current" - the previously-active one if it's still among them
      * (e.g. after a second baby was added elsewhere), otherwise the
@@ -676,6 +739,7 @@ export const useBabiesStore = defineStore('babies', {
         this.vaccinations = []
         this.checkups = []
       }
+      this.hydratedFromSnapshot = false
     },
 
     /** Respaldo de fetchBootstrap(): las mismas peticiones, una a una. */
@@ -696,6 +760,7 @@ export const useBabiesStore = defineStore('babies', {
               this.checkups = []
             }),
       ])
+      this.hydratedFromSnapshot = false
     },
 
     // `date` is a plain "YYYY-MM-DD" - the backend returns every entry

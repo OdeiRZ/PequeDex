@@ -14,8 +14,10 @@ const route = useRoute()
 // session happened to pass through a view that fetched it itself, staying
 // blank on a reload/deep link landing anywhere else. Lives here, at the
 // root, so it runs once regardless of which page that turns out to be.
+// Siempre se pide (aunque ya haya un usuario guardado en la foto del
+// Dashboard, lib/snapshot.ts): lo pintado al abrir puede estar desfasado.
 onMounted(() => {
-  if (auth.isAuthenticated && !auth.user) {
+  if (auth.isAuthenticated) {
     auth.fetchCurrentUser()
   }
 })

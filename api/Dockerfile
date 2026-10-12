@@ -23,13 +23,17 @@ FROM php:8.3-cli-alpine AS app
 
 WORKDIR /var/www/html
 
+# exif is for PhotoProcessor (app/Services/Milestones/PhotoProcessor.php):
+# a phone photo stores its rotation as an EXIF tag, which has to be applied
+# when shrinking it or the re-encoded photo would come out sideways.
+#
 # gd is for AvatarProcessor (app/Services/Users/AvatarProcessor.php) -
 # accepts jpeg/png/webp uploads (UpdateAvatarRequest), so gd needs the
 # jpeg and webp dev libs at configure time, not just gd's PNG-only
 # default build.
 RUN apk add --no-cache postgresql-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd exif
 
 # PHP's compiled-in defaults (upload_max_filesize=2M, post_max_size=8M)
 # are smaller than what this app already validates against (milestone

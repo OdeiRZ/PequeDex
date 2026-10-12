@@ -165,6 +165,7 @@ function onTouchEnd(event: TouchEvent) {
           v-if="milestone.photo_url"
           :src="milestone.photo_url"
           :alt="milestone.title"
+          decoding="async"
           class="h-full w-full object-contain"
         />
         <div

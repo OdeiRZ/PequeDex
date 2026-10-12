@@ -79,6 +79,24 @@ it('creates a milestone with a photo, stored on the public disk', function () {
     expect($response->json('data.photo_url'))->toContain($path);
 });
 
+it('stores a shrunken WebP copy of a big photo instead of the original', function () {
+    $user = actingAsUser();
+    $baby = babyForMilestoneTest($user);
+
+    $response = $this->postJson("/api/babies/{$baby->id}/milestones", [
+        'achieved_at' => '2026-08-30',
+        'title' => 'Foto grande',
+        'photo' => UploadedFile::fake()->image('grande.jpg', 3200, 2400),
+    ]);
+
+    $response->assertCreated();
+    $path = Milestone::findOrFail($response->json('data.id'))->photo_path;
+    expect($path)->toEndWith('.webp');
+
+    $size = getimagesizefromstring(Storage::disk('public')->get($path));
+    expect([$size[0], $size[1]])->toBe([1600, 1200]);
+});
+
 it('creates a milestone with a category', function () {
     $user = actingAsUser();
     $baby = babyForMilestoneTest($user);

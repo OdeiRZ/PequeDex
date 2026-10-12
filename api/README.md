@@ -321,6 +321,15 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   de acciones sobre un hito: reaccionar es una interacción ligera que
   cualquiera con acceso de lectura al bebé debería poder hacer, no una
   edición del contenido.
+- `app/Services/Milestones/PhotoProcessor.php` — la foto de un hito se
+  reduce al subirla a WebP de 1600 px como máximo (~150-400 KB en vez de
+  los megas de una foto de móvil), con GD puro. Aplica la orientación
+  EXIF antes de recodificar (el Dockerfile instala la extensión `exif`):
+  el móvil guarda la foto "tumbada" con una etiqueta de giro y, sin
+  aplicarla, saldría de lado. Devuelve `null` si no puede o no conviene
+  procesarla (ilegible, más de 50 Mpx, sin memoria suficiente) y
+  `MilestoneController::storePhoto()` guarda entonces el original. Las
+  fotos ya subidas no se migran.
 - `docker/uploads.ini` — subir un hito con foto desde el móvil se
   quedaba colgado en producción sin ningún error: la imagen Docker no
   llevaba ningún `php.ini` propio, así que PHP usaba sus valores por

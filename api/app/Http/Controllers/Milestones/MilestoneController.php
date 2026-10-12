@@ -7,10 +7,13 @@ use App\Http\Requests\Milestones\StoreMilestoneRequest;
 use App\Http\Requests\Milestones\UpdateMilestoneRequest;
 use App\Models\Baby;
 use App\Models\Milestone;
+use App\Services\Milestones\PhotoProcessor;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MilestoneController extends Controller
 {
@@ -28,7 +31,7 @@ class MilestoneController extends Controller
     // unlike an explicit $this->authorize() here would be (see that
     // trait's own docblock for why the difference matters for this
     // baby's data).
-    public function store(StoreMilestoneRequest $request, Baby $baby): JsonResponse
+    public function store(StoreMilestoneRequest $request, Baby $baby, PhotoProcessor $processor): JsonResponse
     {
         $milestone = $baby->milestones()->create([
             'achieved_at' => $request->validated('achieved_at'),
@@ -37,14 +40,14 @@ class MilestoneController extends Controller
             'description' => $request->validated('description'),
             'user_id' => $request->user()->id,
             'photo_path' => $request->hasFile('photo')
-                ? $request->file('photo')->store("milestones/{$baby->id}", config('filesystems.milestones_disk'))
+                ? $this->storePhoto($request->file('photo'), $baby, $processor)
                 : null,
         ]);
 
         return response()->json(['data' => $milestone->load('likedBy.avatarRecord')], 201);
     }
 
-    public function update(UpdateMilestoneRequest $request, Baby $baby, int $milestone): JsonResponse
+    public function update(UpdateMilestoneRequest $request, Baby $baby, int $milestone, PhotoProcessor $processor): JsonResponse
     {
         $milestoneModel = $baby->milestones()->findOrFail($milestone);
 
@@ -57,7 +60,7 @@ class MilestoneController extends Controller
 
         if ($request->hasFile('photo')) {
             $this->deleteExistingPhoto($milestoneModel);
-            $attributes['photo_path'] = $request->file('photo')->store("milestones/{$baby->id}", config('filesystems.milestones_disk'));
+            $attributes['photo_path'] = $this->storePhoto($request->file('photo'), $baby, $processor);
         } elseif ($request->boolean('remove_photo')) {
             $this->deleteExistingPhoto($milestoneModel);
             $attributes['photo_path'] = null;
@@ -109,6 +112,26 @@ class MilestoneController extends Controller
         }
 
         return response()->json(['data' => $milestoneModel->load('likedBy.avatarRecord')]);
+    }
+
+    /**
+     * Guarda la foto reducida (PhotoProcessor: WebP de 1600 px como
+     * máximo, ~150-400 KB en vez de los megas de una foto de móvil). Si
+     * no se pudo procesar, se guarda el original como antes.
+     */
+    private function storePhoto(UploadedFile $photo, Baby $baby, PhotoProcessor $processor): string
+    {
+        $disk = config('filesystems.milestones_disk');
+        $webp = $processor->process($photo);
+
+        if ($webp === null) {
+            return (string) $photo->store("milestones/{$baby->id}", $disk);
+        }
+
+        $path = "milestones/{$baby->id}/".Str::uuid().'.webp';
+        Storage::disk($disk)->put($path, $webp);
+
+        return $path;
     }
 
     private function deleteExistingPhoto(Milestone $milestone): void

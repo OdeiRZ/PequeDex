@@ -44,6 +44,8 @@ const { t } = useI18n()
               v-if="milestone.photo_url"
               :src="milestone.photo_url"
               :alt="milestone.title"
+              loading="lazy"
+              decoding="async"
               class="h-full w-full object-cover"
             />
             <span v-else class="text-xl">{{

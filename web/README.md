@@ -1341,8 +1341,8 @@ o 24 meses (total).
 
 ## Registro sin conexión
 
-`lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Solo
-**crear** tomas, sueños, pañales y temperaturas:
+`lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Sirve para
+**crear** tomas, sueños, pañales y temperaturas, y para "Finalizar":
 
 - Cada creación lleva un `client_uuid` generado en el móvil. Si el
   `POST` falla **sin respuesta** (`isNetworkError()`: sin red, caída,
@@ -1362,6 +1362,15 @@ o 24 meses (total).
 - Pendientes: borrar los quita de la cola; "Finalizar" (sueño en curso,
   toma de pecho) cambia el registro en la cola (`updateQueued()`);
   abrirlos para editar avisa de que hay que esperar al envío.
+- "Finalizar" sobre un registro **ya guardado** (sueño en curso, toma de
+  pecho) sí se encola: `babies.updateOrQueue()` guarda el `PUT` completo
+  en `babies.offlineUpdates` (`pequedex.offlineUpdates`, un cambio por
+  registro), lo aplica a la línea temporal (`withPendingUpdates()`, que
+  también usan `fetchTimeline()` y `fetchDayTimeline()` para que el
+  sondeo no lo deshaga) y `flushOfflineQueue()` lo envía después de las
+  altas. Es idempotente (un `PUT`); si el servidor lo rechaza se
+  descarta y se avisa. Solo lo piden esos dos botones
+  (`queueIfOffline`); el formulario de edición no.
 - Editar o borrar registros ya guardados sigue necesitando conexión
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
   muestra "Sin conexión" y cuántos registros quedan por enviar.

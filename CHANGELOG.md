@@ -95,9 +95,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   temporal marcado como "Pendiente" y se envía solo al volver la
   conexión (o en el siguiente refresco). Un aviso indica cuántos quedan
   por enviar. Los pendientes se pueden borrar y "Finalizar" (sueño o
-  toma en curso), pero no editar hasta que se envíen; editar o borrar
-  registros ya guardados sigue necesitando conexión, con un mensaje
-  claro. Cada registro lleva un identificador generado en el móvil, así
+  toma en curso), pero no editar hasta que se envíen. "Finalizar"
+  también funciona sin conexión sobre un sueño o una toma ya guardados
+  (el cambio queda en cola y se envía al volver la red); editar o
+  borrar registros ya guardados sigue necesitando conexión, con un
+  mensaje claro. Cada registro lleva un identificador generado en el móvil, así
   que un reintento tras un corte nunca lo duplica. Sin servicios
   externos: todo con lo que ya había.
 

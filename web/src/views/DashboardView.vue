@@ -350,12 +350,12 @@ onMounted(() => {
 // --- Registro sin conexión (lib/offlineQueue.ts) ---
 
 const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
-const pendingCount = computed(() => babies.offlineQueue.length)
+const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineUpdates.length)
 
 // Envía lo que haya en cola; avisa si el servidor rechazó alguno (p.ej.
 // una fecha que ya no es válida) - se descarta, no se reintenta.
 async function flushQueue() {
-  if (babies.offlineQueue.length === 0) return
+  if (pendingCount.value === 0) return
   const { sent, rejected } = await babies.flushOfflineQueue()
   if (sent > 0) toast.show(t('offline.sent', { count: sent }, sent))
   if (rejected > 0) toast.show(t('offline.rejected', { count: rejected }, rejected), 'error')
@@ -752,14 +752,22 @@ async function onFinishFeed(feed: Feed) {
   const endedAtMs = Math.min(startedAtMs + roundedMinutes * 60_000, Date.now())
 
   try {
-    await babies.updateFeed(feed.id, {
-      type: feed.type,
-      side: feed.side ?? undefined,
-      milk_type: feed.milk_type ?? undefined,
-      amount_ml: feed.amount_ml ?? undefined,
-      started_at: feed.started_at,
-      ended_at: new Date(endedAtMs).toISOString(),
-    })
+    const result = await babies.updateFeed(
+      feed.id,
+      {
+        type: feed.type,
+        side: feed.side ?? undefined,
+        milk_type: feed.milk_type ?? undefined,
+        amount_ml: feed.amount_ml ?? undefined,
+        started_at: feed.started_at,
+        ended_at: new Date(endedAtMs).toISOString(),
+      },
+      true,
+    )
+    if (result === 'queued') {
+      toast.show(t('offline.queued'))
+      return
+    }
     toast.show(t('dashboard.feedForm.toastUpdated'))
     void babies.fetchFeedPrediction().catch(() => {})
   } catch (error) {
@@ -811,10 +819,15 @@ async function onFinishSleep(sleep: Sleep) {
   }
 
   try {
-    await babies.updateSleep(sleep.id, {
-      started_at: sleep.started_at,
-      ended_at: new Date().toISOString(),
-    })
+    const result = await babies.updateSleep(
+      sleep.id,
+      { started_at: sleep.started_at, ended_at: new Date().toISOString() },
+      true,
+    )
+    if (result === 'queued') {
+      toast.show(t('offline.queued'))
+      return
+    }
     toast.show(t('dashboard.sleepForm.toastUpdated'))
     void babies.fetchSleepPrediction().catch(() => {})
   } catch (error) {

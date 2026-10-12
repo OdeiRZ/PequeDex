@@ -6,8 +6,9 @@ import type { TimelineEntry } from '@/stores/babies'
 // se envía solo al volver la conexión. Cada uno lleva un `client_uuid`
 // generado aquí: si un envío llega al servidor pero la respuesta se
 // pierde, el reintento no lo duplica (ver CreatesIdempotently en la API).
-// Solo crear: editar o borrar registros ya guardados sigue necesitando
-// conexión.
+// Además de crear, se puede "Finalizar" sin conexión un sueño o una toma
+// ya guardados (QueuedUpdate): se reenvía como PUT al volver la red.
+// Editar o borrar en general sigue necesitando conexión.
 
 export type QueuedLogType = 'feed' | 'sleep' | 'diaper_change' | 'temperature'
 
@@ -22,6 +23,17 @@ export interface QueuedLog {
 }
 
 export const OFFLINE_QUEUE_KEY = 'pequedex.offlineQueue'
+export const OFFLINE_UPDATES_KEY = 'pequedex.offlineUpdates'
+
+/** Cambio pendiente sobre un registro ya guardado en el servidor
+ * (p.ej. finalizar un sueño en curso): el PUT completo, listo para enviar. */
+export interface QueuedUpdate {
+  babyId: number
+  type: 'feed' | 'sleep'
+  targetId: number
+  payload: Record<string, unknown>
+  queuedAt: string
+}
 
 const ENDPOINTS: Record<QueuedLogType, string> = {
   feed: 'feeds',
@@ -32,6 +44,10 @@ const ENDPOINTS: Record<QueuedLogType, string> = {
 
 export function endpointFor(log: Pick<QueuedLog, 'babyId' | 'type'>): string {
   return `/babies/${log.babyId}/${ENDPOINTS[log.type]}`
+}
+
+export function updateEndpoint(update: Pick<QueuedUpdate, 'babyId' | 'type' | 'targetId'>): string {
+  return `/babies/${update.babyId}/${ENDPOINTS[update.type]}/${update.targetId}`
 }
 
 type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>
@@ -51,6 +67,44 @@ export function loadQueue(storage: KeyValueStorage | null = defaultStorage()): Q
   } catch {
     return []
   }
+}
+
+export function loadUpdates(storage: KeyValueStorage | null = defaultStorage()): QueuedUpdate[] {
+  try {
+    const parsed = JSON.parse(storage?.getItem(OFFLINE_UPDATES_KEY) ?? '[]')
+    return Array.isArray(parsed) ? (parsed as QueuedUpdate[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveUpdates(
+  updates: QueuedUpdate[],
+  storage: KeyValueStorage | null = defaultStorage(),
+) {
+  try {
+    storage?.setItem(OFFLINE_UPDATES_KEY, JSON.stringify(updates))
+  } catch {
+    // Sin almacenamiento la cola vive solo hasta recargar.
+  }
+}
+
+/** Aplica a una lista de la línea temporal los cambios pendientes de ese
+ * bebé (p.ej. un sueño ya finalizado sin conexión), para que el sondeo
+ * no los deshaga antes de enviarse. */
+export function withPendingUpdates(
+  timeline: TimelineEntry[],
+  updates: QueuedUpdate[],
+  babyId: number,
+): TimelineEntry[] {
+  const mine = updates.filter((u) => u.babyId === babyId)
+  if (mine.length === 0) return timeline
+  return timeline.map((entry) => {
+    if (entry.type !== 'feed' && entry.type !== 'sleep') return entry
+    const update = mine.find((u) => u.type === entry.type && u.targetId === entry.data.id)
+    if (!update) return entry
+    return { ...entry, data: { ...entry.data, ...update.payload } } as TimelineEntry
+  })
 }
 
 export function saveQueue(queue: QueuedLog[], storage: KeyValueStorage | null = defaultStorage()) {

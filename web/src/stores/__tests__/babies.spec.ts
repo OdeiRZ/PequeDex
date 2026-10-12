@@ -268,6 +268,44 @@ describe('useBabiesStore', () => {
     expect(store.timeline).toEqual([])
   })
 
+  it('queues finishing an already-saved sleep offline, shows it, and sends the PUT later', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineUpdates = []
+    const ongoing = { id: 9, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+    store.timeline = [{ type: 'sleep', at: ongoing.started_at, data: ongoing as never }]
+
+    vi.mocked(apiClient.put).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    const payload = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
+    expect(await store.updateSleep(9, payload, true)).toBe('queued')
+    expect(store.offlineUpdates).toHaveLength(1)
+    expect((store.timeline[0]!.data as { ended_at: string }).ended_at).toBe(payload.ended_at)
+
+    // Sin red otra vez: sigue en cola.
+    vi.mocked(apiClient.put).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 0, rejected: 0 })
+    expect(store.offlineUpdates).toHaveLength(1)
+
+    vi.mocked(apiClient.put).mockResolvedValueOnce({ data: { data: { ...ongoing, ...payload } } })
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
+    expect(apiClient.put).toHaveBeenLastCalledWith('/babies/1/sleeps/9', payload)
+    expect(store.offlineUpdates).toEqual([])
+  })
+
+  it('does not queue an update unless asked, and rethrows a network error', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineUpdates = []
+
+    vi.mocked(apiClient.put).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    await expect(
+      store.updateSleep(9, { started_at: '2026-10-12T08:00:00Z', ended_at: null }),
+    ).rejects.toBeTruthy()
+    expect(store.offlineUpdates).toEqual([])
+  })
+
   it('still throws a validation error instead of queueing', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

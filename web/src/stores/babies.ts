@@ -8,12 +8,17 @@ import {
   endpointFor,
   isNetworkError,
   loadQueue,
+  loadUpdates,
   newClientUuid,
   pendingEntry,
   saveQueue,
+  saveUpdates,
+  updateEndpoint,
   withPendingEntries,
+  withPendingUpdates,
   type QueuedLog,
   type QueuedLogType,
+  type QueuedUpdate,
 } from '@/lib/offlineQueue'
 
 export type BabySex = 'nino' | 'nina'
@@ -356,6 +361,8 @@ interface BabiesState {
   /** Registros creados sin conexión, pendientes de enviar
    * (lib/offlineQueue.ts). Persistidos en el propio móvil. */
   offlineQueue: QueuedLog[]
+  /** Cambios sobre registros ya guardados (finalizar sin conexión). */
+  offlineUpdates: QueuedUpdate[]
   flushingQueue: boolean
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
@@ -454,6 +461,7 @@ export const useBabiesStore = defineStore('babies', {
     temperatures: [],
     recentDiaperChanges: [],
     offlineQueue: loadQueue(),
+    offlineUpdates: loadUpdates(),
     flushingQueue: false,
     vaccinations: [],
     vaccinationTemplate: null,
@@ -571,7 +579,11 @@ export const useBabiesStore = defineStore('babies', {
       const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`)
       // Lo que sigue en la cola sin conexión no viene del servidor:
       // se vuelve a añadir para que no desaparezca en cada sondeo.
-      this.timeline = withPendingEntries(data.data, this.offlineQueue, this.current.id)
+      this.timeline = withPendingUpdates(
+        withPendingEntries(data.data, this.offlineQueue, this.current.id),
+        this.offlineUpdates,
+        this.current.id,
+      )
     },
 
     // `date` is a plain "YYYY-MM-DD" - the backend returns every entry
@@ -585,7 +597,7 @@ export const useBabiesStore = defineStore('babies', {
       const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`, {
         params: { date },
       })
-      this.dayTimeline = data.data
+      this.dayTimeline = withPendingUpdates(data.data, this.offlineUpdates, this.current.id)
     },
 
     // The POST/PUT response is already the full created/updated record -
@@ -658,11 +670,16 @@ export const useBabiesStore = defineStore('babies', {
      * registro rechazado por el servidor (p.ej. validación) se descarta
      * y cuenta en `rejected`, para que la vista lo avise. */
     async flushOfflineQueue(): Promise<{ sent: number; rejected: number }> {
-      if (this.flushingQueue || this.offlineQueue.length === 0) return { sent: 0, rejected: 0 }
+      if (
+        this.flushingQueue ||
+        (this.offlineQueue.length === 0 && this.offlineUpdates.length === 0)
+      )
+        return { sent: 0, rejected: 0 }
       this.flushingQueue = true
       let sent = 0
       let rejected = 0
       try {
+        let offline = false
         for (const log of [...this.offlineQueue]) {
           try {
             const { data } = await apiClient.post(endpointFor(log), {
@@ -673,8 +690,24 @@ export const useBabiesStore = defineStore('babies', {
             if (this.current?.id === log.babyId) this.applyCreatedLog(log.type, data.data)
             sent++
           } catch (error) {
-            if (isNetworkError(error)) break
+            if (isNetworkError(error)) {
+              offline = true
+              break
+            }
             this.removeQueued(log.clientUuid)
+            rejected++
+          }
+        }
+        // Después de las altas, los cambios sobre registros ya guardados.
+        for (const update of offline ? [] : [...this.offlineUpdates]) {
+          try {
+            const { data } = await apiClient.put(updateEndpoint(update), update.payload)
+            this.removeQueuedUpdate(update)
+            if (this.current?.id === update.babyId) this.applySavedUpdate(update.type, data.data)
+            sent++
+          } catch (error) {
+            if (isNetworkError(error)) break
+            this.removeQueuedUpdate(update)
             rejected++
           }
         }
@@ -682,6 +715,52 @@ export const useBabiesStore = defineStore('babies', {
         this.flushingQueue = false
       }
       return { sent, rejected }
+    },
+
+    removeQueuedUpdate(update: QueuedUpdate) {
+      this.offlineUpdates = this.offlineUpdates.filter(
+        (u) => !(u.type === update.type && u.targetId === update.targetId),
+      )
+      saveUpdates(this.offlineUpdates)
+    },
+
+    applySavedUpdate(type: 'feed' | 'sleep', data: Feed | Sleep) {
+      const entry = { type, at: data.started_at, data } as TimelineEntry
+      this.timeline = upsertTimelineEntry(this.timeline, entry)
+      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+    },
+
+    /** Guarda un cambio sobre un registro ya existente; si no hay red y
+     * `queueIfOffline`, lo deja en cola (y ya visible en la línea
+     * temporal) en vez de fallar. Un error con respuesta se relanza. */
+    async updateOrQueue(
+      type: 'feed' | 'sleep',
+      targetId: number,
+      payload: Record<string, unknown>,
+      queueIfOffline: boolean,
+    ): Promise<'saved' | 'queued'> {
+      const update: QueuedUpdate = {
+        babyId: this.current!.id,
+        type,
+        targetId,
+        payload,
+        queuedAt: new Date().toISOString(),
+      }
+      try {
+        const { data } = await apiClient.put(updateEndpoint(update), payload)
+        this.applySavedUpdate(type, data.data)
+        return 'saved'
+      } catch (error) {
+        if (!queueIfOffline || !isNetworkError(error)) throw error
+        this.offlineUpdates = [
+          ...this.offlineUpdates.filter((u) => !(u.type === type && u.targetId === targetId)),
+          update,
+        ]
+        saveUpdates(this.offlineUpdates)
+        this.timeline = withPendingUpdates(this.timeline, [update], update.babyId)
+        this.dayTimeline = withPendingUpdates(this.dayTimeline, [update], update.babyId)
+        return 'queued'
+      }
     },
 
     removeQueued(clientUuid: string) {
@@ -710,22 +789,16 @@ export const useBabiesStore = defineStore('babies', {
       return this.createLog('feed', { ...payload })
     },
 
-    async updateFeed(id: number, payload: CreateFeedPayload) {
-      const { data } = await apiClient.put(`/babies/${this.current!.id}/feeds/${id}`, payload)
-      const entry: TimelineEntry = { type: 'feed', at: data.data.started_at, data: data.data }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+    async updateFeed(id: number, payload: CreateFeedPayload, queueIfOffline = false) {
+      return this.updateOrQueue('feed', id, { ...payload }, queueIfOffline)
     },
 
     async createSleep(payload: CreateSleepPayload) {
       return this.createLog('sleep', { ...payload })
     },
 
-    async updateSleep(id: number, payload: CreateSleepPayload) {
-      const { data } = await apiClient.put(`/babies/${this.current!.id}/sleeps/${id}`, payload)
-      const entry: TimelineEntry = { type: 'sleep', at: data.data.started_at, data: data.data }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+    async updateSleep(id: number, payload: CreateSleepPayload, queueIfOffline = false) {
+      return this.updateOrQueue('sleep', id, { ...payload }, queueIfOffline)
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {

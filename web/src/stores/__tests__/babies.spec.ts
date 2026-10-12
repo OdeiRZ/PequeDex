@@ -531,7 +531,9 @@ describe('useBabiesStore', () => {
     await store.fetchSleepPrediction()
 
     expect(store.sleepPrediction?.has_enough_data).toBe(false)
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/sleep-prediction')
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/sleep-prediction', {
+      params: { tz: expect.any(String) },
+    })
   })
 
   it('fetches the feed prediction for the current baby', async () => {

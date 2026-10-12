@@ -1789,6 +1789,24 @@ const sleepWakeHint = computed(() => {
 const sleepPredictionLabel = computed(() => {
   const prediction = babies.sleepPrediction
 
+  // El servidor ya predice con pocos datos si sabe la edad
+  // (based_on: age_reference) - se muestra antes que el aviso de
+  // "faltan siestas".
+  if (prediction?.prediction) {
+    const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
+    if (prediction.prediction.type === 'wake_up') {
+      return t('dashboard.sleepPrediction.wakeUp', { at })
+    }
+    const label = t('dashboard.sleepPrediction.nextSleep', { at })
+    if (prediction.prediction.based_on === 'age_reference') {
+      return `${label} ${t('dashboard.sleepPrediction.basedOnAge')}`
+    }
+    if (prediction.prediction.based_on === 'wake_window_by_number' && prediction.window_number) {
+      return `${label} ${t('dashboard.sleepPrediction.basedOnNumber', { n: prediction.window_number })}`
+    }
+    return label
+  }
+
   if (!prediction || !prediction.has_enough_data) {
     // Sin historial suficiente para predecir: una franja orientativa
     // por edad, si está despierto y hay referencia.
@@ -1809,15 +1827,7 @@ const sleepPredictionLabel = computed(() => {
     })
   }
 
-  if (!prediction.prediction) {
-    return t('dashboard.sleepPrediction.noPattern')
-  }
-
-  const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
-
-  return prediction.prediction.type === 'wake_up'
-    ? t('dashboard.sleepPrediction.wakeUp', { at })
-    : t('dashboard.sleepPrediction.nextSleep', { at })
+  return t('dashboard.sleepPrediction.noPattern')
 })
 
 // --- Predicción de patrones de toma ---

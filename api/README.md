@@ -334,12 +334,31 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   El dashboard sondea este endpoint cada 15 segundos mientras está
   abierto, así que sin este límite por subconsulta el coste crecía con
   el histórico completo del bebé en vez de con lo que se muestra.
-- `app/Services/Sleep/SleepPatternPredictor.php` — predicción de patrones
-  de sueño deliberadamente honesta: una media móvil sobre el propio
-  historial de siestas del bebé (ventana de vigilia media, duración
-  media), no un modelo entrenado ni una tabla de edades. Por debajo de 3
-  siestas completas en el historial, devuelve `has_enough_data: false`
-  en vez de una predicción inventada con tan pocos datos.
+- `app/Services/Sleep/SleepPatternPredictor.php` — predicción de sueño
+  explicable, sin aprendizaje automático, sobre los 14 días anteriores
+  al último sueño registrado (`GET /babies/{baby}/sleep-prediction?tz=`,
+  con la zona horaria del móvil; desconocida o ausente = UTC):
+  1. **Ventana por número del día**: un sueño que empieza a partir de
+     las 19:00 o antes de las 6:00 (hora local) es de noche; la primera
+     ventana tras la noche es la 1, luego 2, 3... Se predice con la media
+     de esa misma ventana en días anteriores (`based_on:
+     wake_window_by_number`, `window_number`), o con la media de todas si
+     no hay bastantes (`average_wake_window`). Los despertares entre dos
+     tramos de noche no cuentan como ventana.
+  2. **Recencia**: media ponderada, cada día de antigüedad pesa un 15 %
+     menos (0,85^días).
+  3. **Referencia por edad** (`WakeWindowReference`, misma tabla que
+     `web/src/lib/sleepReference.ts`): su punto medio pesa como una
+     observación más, así que domina con pocos datos y casi no cuenta
+     con muchos. Sin datos propios la predicción sale solo de ella
+     (`based_on: age_reference`), aunque `has_enough_data` sea false.
+
+  Con un sueño en curso predice el despertar con la duración media de
+  los sueños del mismo tipo (noche o siesta). **Pendiente, posible
+  mejora:** acortar la ventana tras una siesta corta (p.ej. de menos de
+  30 min). Se dejó fuera porque sus umbrales no tienen referencia
+  publicada y aprenderlos por bebé necesita muchos datos; retomarlo solo
+  si las predicciones tras siestas cortas fallan claramente.
 - `app/Services/Feeds/FeedPatternPredictor.php` — misma idea que el de
   sueño, aplicada a tomas: media móvil del hueco entre tomas del propio
   bebé. Más simple que el de sueño porque una toma es un instante

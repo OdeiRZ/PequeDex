@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Predicción de sueño más precisa** - la siguiente siesta se calcula
+  con la ventana de esa misma siesta del día en días anteriores (la
+  primera tras despertar por la mañana no dura lo mismo que la de antes
+  de dormir por la noche), dando más peso a los últimos días, y
+  partiendo de la ventana orientativa por edad cuando aún hay pocos
+  datos (desde el primer sueño registrado ya hay predicción, marcada
+  como "orientativo por su edad"). La app envía su zona horaria para
+  distinguir los sueños de noche. **Pendiente, posible mejora:** acortar
+  la ventana tras una siesta corta; aparcado hasta ver cómo funciona lo
+  anterior con datos reales.
+
 - **Vacunas: calendario de cada comunidad autónoma** - además del
   común y Cantabria, ya hay plantilla para las 17 comunidades y Ceuta y
   Melilla, con sus diferencias (p.ej. MenACWY en vez de MenC a los 4 y

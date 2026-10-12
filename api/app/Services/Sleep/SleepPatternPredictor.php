@@ -3,96 +3,269 @@
 namespace App\Services\Sleep;
 
 use App\Models\Baby;
+use App\Models\Sleep;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 
 /**
- * A deliberately simple, honest estimate - not machine learning. It looks
- * at the baby's own recent completed sleeps and predicts the next sleep
- * (or wake-up) as a rolling average of that baby's own history, the same
- * idea behind Huckleberry's "SweetSpot" but without any age-based model or
- * external dataset: below the minimum sample size it says so instead of
- * guessing.
+ * Estimación sencilla y explicable, sin aprendizaje automático: parte de
+ * los sueños recientes del propio bebé, con tres refinamientos que usan
+ * apps como Napper o Huckleberry:
+ *
+ * 1. Ventana por número de siesta del día: la primera tras despertar
+ *    por la mañana no dura lo mismo que la de antes de dormir por la
+ *    noche, así que se promedian por separado (con la hora local del
+ *    móvil, `$timezone`). Las tomas de madrugada entre dos tramos de
+ *    noche no cuentan como ventana.
+ * 2. Media ponderada por recencia: cada día anterior pesa un 15 % menos
+ *    (el bebé cambia de una semana a otra).
+ * 3. Referencia por edad (WakeWindowReference) como punto de partida:
+ *    pesa como una observación más, así que con pocos datos manda y con
+ *    muchos apenas cuenta. Sin datos propios, la predicción sale solo
+ *    de ella (`based_on: age_reference`).
+ *
+ * Posible mejora pendiente (documentada en api/README.md): acortar la
+ * ventana tras una siesta corta. Se dejó fuera porque sus umbrales no
+ * tienen referencia publicada.
  */
 class SleepPatternPredictor
 {
     private const MIN_SAMPLE_SIZE = 3;
 
-    private const MAX_LOOKBACK = 20;
+    /** Días de historial considerados (con muchos sueños al día, bastan). */
+    private const LOOKBACK_DAYS = 14;
 
-    /** Gaps longer than this are treated as an overnight stretch, not a nap-to-nap wake window. */
+    private const MAX_SLEEPS = 120;
+
+    /** Más largo que esto no es una ventana entre sueños, sino un hueco en el registro. */
     private const MAX_WAKE_WINDOW_HOURS = 6;
+
+    /** Peso que pierde cada día de antigüedad (0,85^días). */
+    private const RECENCY_DECAY = 0.85;
+
+    /** Cuántas observaciones "vale" la referencia por edad. */
+    private const AGE_PRIOR_WEIGHT = 1.0;
+
+    /** Mínimo de peso acumulado para usar la media de un número de siesta concreto. */
+    private const MIN_ORDINAL_WEIGHT = 1.5;
+
+    /** Un sueño que empieza a partir de esta hora local, o antes de NIGHT_END_HOUR, es de noche. */
+    private const NIGHT_START_HOUR = 19;
+
+    private const NIGHT_END_HOUR = 6;
 
     /**
      * @return array<string, mixed>
      */
-    public static function predict(Baby $baby): array
+    public static function predict(Baby $baby, string $timezone = 'UTC', ?CarbonImmutable $now = null): array
     {
-        $sleeps = $baby->sleeps()
+        $now ??= CarbonImmutable::now();
+
+        // Los 14 días anteriores al último sueño registrado (no a hoy:
+        // unos días sin registrar no deben dejarlo sin historial).
+        /** @var Collection<int, Sleep> $recent */
+        $recent = $baby->sleeps()
             ->orderByDesc('started_at')
-            ->limit(self::MAX_LOOKBACK)
-            ->get()
+            ->limit(self::MAX_SLEEPS)
+            ->get();
+        $newestStart = $recent->first() !== null ? CarbonImmutable::parse($recent->first()->started_at) : null;
+        $sleeps = $recent
+            ->filter(fn (Sleep $s) => $newestStart === null
+                || CarbonImmutable::parse($s->started_at)->greaterThanOrEqualTo($newestStart->subDays(self::LOOKBACK_DAYS)))
             ->sortBy('started_at')
             ->values();
 
-        $completed = $sleeps->filter(fn ($sleep) => $sleep->ended_at !== null)->values();
+        $completed = $sleeps->filter(fn (Sleep $sleep) => $sleep->ended_at !== null)->values();
+        $ageReference = WakeWindowReference::forBaby($baby, $now);
+        $windows = self::wakeWindows($completed, $timezone);
 
-        if ($completed->count() < self::MIN_SAMPLE_SIZE) {
-            return [
-                'has_enough_data' => false,
-                'sample_size' => $completed->count(),
-                'minimum_sample_size' => self::MIN_SAMPLE_SIZE,
-                'average_sleep_duration_minutes' => null,
-                'average_wake_window_minutes' => null,
-                'prediction' => null,
-            ];
-        }
-
-        $durations = $completed->map(
-            fn ($sleep) => CarbonImmutable::parse($sleep->started_at)->diffInMinutes(CarbonImmutable::parse($sleep->ended_at))
-        );
-        $averageDurationMinutes = (int) round($durations->avg());
-
-        $wakeWindows = [];
-        for ($i = 1; $i < $completed->count(); $i++) {
-            $previousEnd = CarbonImmutable::parse($completed[$i - 1]->ended_at);
-            $nextStart = CarbonImmutable::parse($completed[$i]->started_at);
-            $gapMinutes = $previousEnd->diffInMinutes($nextStart, absolute: false);
-
-            if ($gapMinutes > 0 && $gapMinutes <= self::MAX_WAKE_WINDOW_HOURS * 60) {
-                $wakeWindows[] = $gapMinutes;
-            }
-        }
-
-        $averageWakeWindowMinutes = count($wakeWindows) > 0
-            ? (int) round(array_sum($wakeWindows) / count($wakeWindows))
-            : null;
-
-        $latestSleep = $sleeps->last();
-        $isOngoing = $latestSleep->ended_at === null;
-
-        if ($isOngoing) {
-            $prediction = [
-                'type' => 'wake_up',
-                'at' => CarbonImmutable::parse($latestSleep->started_at)->addMinutes($averageDurationMinutes)->toIso8601String(),
-                'based_on' => 'average_sleep_duration',
-            ];
-        } elseif ($averageWakeWindowMinutes !== null) {
-            $prediction = [
-                'type' => 'next_sleep',
-                'at' => CarbonImmutable::parse($latestSleep->ended_at)->addMinutes($averageWakeWindowMinutes)->toIso8601String(),
-                'based_on' => 'average_wake_window',
-            ];
-        } else {
-            $prediction = null;
-        }
-
-        return [
-            'has_enough_data' => true,
+        $base = [
+            'has_enough_data' => $completed->count() >= self::MIN_SAMPLE_SIZE,
             'sample_size' => $completed->count(),
             'minimum_sample_size' => self::MIN_SAMPLE_SIZE,
-            'average_sleep_duration_minutes' => $averageDurationMinutes,
-            'average_wake_window_minutes' => $averageWakeWindowMinutes,
-            'prediction' => $prediction,
+            'average_sleep_duration_minutes' => null,
+            'average_wake_window_minutes' => null,
+            'window_number' => null,
+            'age_reference' => $ageReference,
+            'prediction' => null,
         ];
+
+        $latest = $sleeps->last();
+        if ($latest === null) {
+            return $base;
+        }
+
+        if ($base['has_enough_data']) {
+            $base['average_sleep_duration_minutes'] = (int) round(self::weightedAverage(
+                $completed->map(fn (Sleep $s) => [
+                    'minutes' => self::minutesBetween($s->started_at, $s->ended_at),
+                    'at' => CarbonImmutable::parse($s->ended_at),
+                ]),
+                CarbonImmutable::parse($completed->last()->ended_at),
+            )['value']);
+        }
+
+        // Dormido ahora mismo: cuánto suele durar un sueño de ese tipo
+        // (noche o siesta), ponderado por recencia.
+        if ($latest->ended_at === null) {
+            if (! $base['has_enough_data']) {
+                return $base;
+            }
+            $isNight = self::isNight($latest, $timezone);
+            $sameKind = $completed->filter(fn (Sleep $s) => self::isNight($s, $timezone) === $isNight);
+            $pool = $sameKind->count() >= 2 ? $sameKind : $completed;
+            $duration = self::weightedAverage($pool->map(fn (Sleep $s) => [
+                'minutes' => self::minutesBetween($s->started_at, $s->ended_at),
+                'at' => CarbonImmutable::parse($s->ended_at),
+            ]), CarbonImmutable::parse($latest->started_at));
+
+            return [
+                ...$base,
+                'average_sleep_duration_minutes' => (int) round($duration['value']),
+                'prediction' => [
+                    'type' => 'wake_up',
+                    'at' => CarbonImmutable::parse($latest->started_at)->addMinutes((int) round($duration['value']))->toIso8601String(),
+                    'based_on' => 'average_sleep_duration',
+                ],
+            ];
+        }
+
+        // Despierto: qué número de ventana del día viene ahora.
+        $lastEnd = CarbonImmutable::parse($latest->ended_at);
+        $nextNumber = self::isNight($latest, $timezone)
+            ? 1
+            : (($windows->last()['to_sleep_id'] ?? null) === $latest->id && $windows->last()['number'] !== null
+                ? $windows->last()['number'] + 1
+                : null);
+
+        $sameNumber = $nextNumber !== null ? $windows->where('number', $nextNumber) : collect();
+        $useNumber = $sameNumber->isNotEmpty() && self::totalWeight($sameNumber, $lastEnd) >= self::MIN_ORDINAL_WEIGHT;
+        $pool = $useNumber ? $sameNumber : $windows;
+
+        $own = $pool->isNotEmpty() ? self::weightedAverage($pool, $lastEnd) : null;
+        $prior = $ageReference !== null ? ($ageReference['min'] + $ageReference['max']) / 2 : null;
+
+        if ($own === null && $prior === null) {
+            return $base;
+        }
+
+        $minutes = match (true) {
+            $own === null => $prior,
+            $prior === null => $own['value'],
+            default => ($own['value'] * $own['weight'] + $prior * self::AGE_PRIOR_WEIGHT) / ($own['weight'] + self::AGE_PRIOR_WEIGHT),
+        };
+        $basedOn = match (true) {
+            $own === null => 'age_reference',
+            $useNumber => 'wake_window_by_number',
+            default => 'average_wake_window',
+        };
+
+        return [
+            ...$base,
+            'average_wake_window_minutes' => (int) round($minutes),
+            'window_number' => $useNumber ? $nextNumber : null,
+            'prediction' => [
+                'type' => 'next_sleep',
+                'at' => $lastEnd->addMinutes((int) round($minutes))->toIso8601String(),
+                'based_on' => $basedOn,
+            ],
+        ];
+    }
+
+    /**
+     * Las ventanas (tiempo despierto entre dos sueños seguidos), con su
+     * número dentro del día: 1 = la primera tras la noche. Null si no se
+     * sabe (no hay noche registrada antes en ese tramo).
+     *
+     * @param  Collection<int, Sleep>  $completed
+     * @return Collection<int, array{minutes: int, at: CarbonImmutable, number: int|null, to_sleep_id: int}>
+     */
+    private static function wakeWindows(Collection $completed, string $timezone): Collection
+    {
+        $windows = collect();
+        $number = null;
+
+        for ($i = 1; $i < $completed->count(); $i++) {
+            $previous = $completed[$i - 1];
+            $next = $completed[$i];
+            $previousNight = self::isNight($previous, $timezone);
+            $gap = self::minutesBetween($previous->ended_at, $next->started_at);
+
+            $number = $previousNight ? 1 : ($number !== null ? $number + 1 : null);
+
+            // Despertar de madrugada entre dos tramos de noche: no es
+            // una ventana de siesta.
+            if ($previousNight && self::isNight($next, $timezone)) {
+                $number = null;
+
+                continue;
+            }
+            if ($gap <= 0 || $gap > self::MAX_WAKE_WINDOW_HOURS * 60) {
+                $number = null;
+
+                continue;
+            }
+
+            $windows->push([
+                'minutes' => $gap,
+                'at' => CarbonImmutable::parse($next->started_at),
+                'number' => $number,
+                'to_sleep_id' => $next->id,
+            ]);
+        }
+
+        return $windows;
+    }
+
+    private static function isNight(Sleep $sleep, string $timezone): bool
+    {
+        $hour = CarbonImmutable::parse($sleep->started_at)->setTimezone($timezone)->hour;
+
+        return $hour >= self::NIGHT_START_HOUR || $hour < self::NIGHT_END_HOUR;
+    }
+
+    private static function minutesBetween(mixed $from, mixed $to): int
+    {
+        return (int) CarbonImmutable::parse($from)->diffInMinutes(CarbonImmutable::parse($to), absolute: false);
+    }
+
+    /**
+     * Media ponderada por recencia respecto a `$reference` (lo más
+     * reciente pesa 1, cada día antes un 15 % menos).
+     *
+     * @param  iterable<array{minutes: int, at: CarbonImmutable}>  $items
+     * @return array{value: float, weight: float}
+     */
+    private static function weightedAverage(iterable $items, CarbonImmutable $reference): array
+    {
+        $sum = 0.0;
+        $weights = 0.0;
+        foreach ($items as $item) {
+            $weight = self::weight($item['at'], $reference);
+            $sum += $item['minutes'] * $weight;
+            $weights += $weight;
+        }
+
+        return ['value' => $sum / $weights, 'weight' => $weights];
+    }
+
+    /**
+     * @param  iterable<array{minutes: int, at: CarbonImmutable}>  $items
+     */
+    private static function totalWeight(iterable $items, CarbonImmutable $reference): float
+    {
+        $total = 0.0;
+        foreach ($items as $item) {
+            $total += self::weight($item['at'], $reference);
+        }
+
+        return $total;
+    }
+
+    private static function weight(CarbonImmutable $at, CarbonImmutable $reference): float
+    {
+        $days = max(0.0, $at->diffInMinutes($reference, absolute: false) / 1440);
+
+        return self::RECENCY_DECAY ** $days;
     }
 }

@@ -670,6 +670,8 @@ export default {
       nextSleep: 'Estimación de la siguiente siesta: {at}',
       awakeHint: 'Despierto desde hace {awake} · a su edad suele aguantar {range} (orientativo).',
       ageBased: 'Orientativo para su edad: siguiente sueño entre las {from} y las {to}.',
+      basedOnAge: '(orientativo por su edad)',
+      basedOnNumber: '(según su {n}.ª ventana del día)',
     },
     feedPrediction: {
       title: 'Toma: predicción',

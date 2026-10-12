@@ -665,6 +665,8 @@ export default {
       nextSleep: 'Estimated next nap: {at}',
       awakeHint: 'Awake for {awake} · at this age usually manages {range} (guideline).',
       ageBased: 'Guideline for this age: next sleep between {from} and {to}.',
+      basedOnAge: '(guideline for this age)',
+      basedOnNumber: '(based on wake window no. {n} of the day)',
     },
     feedPrediction: {
       title: 'Feed: prediction',

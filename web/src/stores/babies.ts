@@ -207,6 +207,13 @@ export interface SleepPrediction {
   minimum_sample_size: number
   average_sleep_duration_minutes: number | null
   average_wake_window_minutes: number | null
+  /** Número de ventana del día usado (1 = la primera tras la noche), o
+   * null si se usó la media de todas. */
+  window_number: number | null
+  /** Ventana orientativa por edad (min/max en minutos), o null. */
+  age_reference: { min: number; max: number } | null
+  /** `based_on`: wake_window_by_number | average_wake_window |
+   * age_reference (sin datos propios) | average_sleep_duration. */
   prediction: { type: 'wake_up' | 'next_sleep'; at: string; based_on: string } | null
 }
 
@@ -1126,7 +1133,11 @@ export const useBabiesStore = defineStore('babies', {
         return
       }
 
-      const { data } = await apiClient.get(`/babies/${this.current.id}/sleep-prediction`)
+      // La zona horaria del móvil: el servidor la necesita para saber
+      // qué sueños son de noche (trabaja en UTC).
+      const { data } = await apiClient.get(`/babies/${this.current.id}/sleep-prediction`, {
+        params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      })
       this.sleepPrediction = data.data
     },
 

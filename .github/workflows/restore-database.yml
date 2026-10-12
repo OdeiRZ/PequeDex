@@ -1,0 +1,118 @@
+name: Restaurar una copia en una base de datos nueva
+
+# Restaura una copia cifrada (la que genera backup.yml) en OTRA base de datos
+# de PostgreSQL, dentro de GitHub: sin instalar pg_restore en ningún
+# ordenador y sin que la contraseña ni los datos pasen por una máquina
+# personal. Pensado para MUDAR la base de datos (p.ej. a otra región de Neon)
+# o recuperarse de un desastre.
+#
+# Se lanza a mano (Actions > "Restaurar una copia en una base de datos
+# nueva" > Run workflow) e indica el número de la ejecución del backup cuya
+# copia se quiere restaurar (el de la URL .../actions/runs/<número>).
+#
+# Secretos del repositorio:
+#   RESTORE_TARGET_DATABASE_URL  cadena de conexión DIRECTA (sin -pooler) de
+#                                la base de datos de DESTINO. Distinta de
+#                                NEON_DATABASE_URL (la de origen de las copias).
+#   BACKUP_PASSPHRASE            la misma contraseña con la que se cifró la copia.
+#
+# Salvaguarda: se niega a restaurar si el destino ya tiene tablas, para no
+# pisar una base de datos con datos por un secreto mal puesto. Solo se puede
+# forzar marcando "allow_non_empty" a conciencia.
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: "Número de la ejecución del backup (la copia a restaurar)"
+        required: true
+        type: string
+      allow_non_empty:
+        description: "Restaurar aunque el destino ya tenga tablas (¡sobrescribe!)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  restore:
+    name: Restaurar la copia en el destino
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Comprobar que los secretos existen
+        env:
+          TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
+          SOURCE: ${{ secrets.NEON_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$TARGET" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Faltan los secretos RESTORE_TARGET_DATABASE_URL y/o BACKUP_PASSPHRASE (ver la cabecera de este workflow)."
+            exit 1
+          fi
+          case "$TARGET" in
+            *-pooler*) echo "::error::La cadena de destino es la 'pooled' (-pooler); hace falta la directa."; exit 1 ;;
+          esac
+          if [ "$TARGET" = "$SOURCE" ]; then
+            echo "::error::El destino es la MISMA base de datos de origen de las copias (NEON_DATABASE_URL). No se restaura sobre el origen."
+            exit 1
+          fi
+
+      - name: Descargar la copia cifrada
+        uses: actions/download-artifact@v8
+        with:
+          name: pequedex-backup-${{ inputs.backup_run_id }}
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ github.token }}
+          path: restore
+
+      - name: Descifrar la copia
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+            --passphrase-fd 0 --decrypt \
+            --output restore/pequedex.dump restore/pequedex.dump.gpg
+          ls -l restore
+
+      - name: Comprobar que el destino está vacío
+        env:
+          TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
+        run: |
+          TABLES=$(docker run --rm -e TARGET postgres:18 sh -c 'psql "$TARGET" -At -c "select count(*) from information_schema.tables where table_schema = '"'"'public'"'"'"')
+          echo "Tablas ya existentes en el destino: $TABLES"
+          if [ "$TABLES" -gt 0 ] && [ "${{ inputs.allow_non_empty }}" != "true" ]; then
+            echo "::error::El destino ya tiene $TABLES tablas. No se restaura para no pisar datos (marca allow_non_empty solo si es lo que quieres)."
+            exit 1
+          fi
+
+      # Sin --exit-on-error: un volcado de Neon puede traer objetos propios
+      # (extensiones, esquemas) que el destino rechace sin que eso impida
+      # restaurar los datos; lo que decide si la copia sirve es el recuento
+      # de filas del paso siguiente.
+      - name: Restaurar
+        env:
+          TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
+        run: |
+          docker run --rm -e TARGET -v "$PWD/restore:/restore" postgres:18 \
+            sh -c 'pg_restore -d "$TARGET" --no-owner --no-privileges /restore/pequedex.dump' \
+            2> restore/errors.log || true
+          echo "Líneas de aviso/error de pg_restore: $(wc -l < restore/errors.log)"
+          # Solo los avisos (nombres de objetos, nunca datos), por si algo falla.
+          grep -E "^pg_restore: (error|warning)" restore/errors.log | head -15 || true
+
+      - name: Comprobar el contenido restaurado
+        env:
+          TARGET: ${{ secrets.RESTORE_TARGET_DATABASE_URL }}
+        run: |
+          COUNTS=$(docker run --rm -e TARGET postgres:18 sh -c 'psql "$TARGET" -At -F " " -c "select (select count(*) from babies), (select count(*) from sleeps), (select count(*) from feeds), (select count(*) from diaper_changes), (select count(*) from users), (select count(*) from milestones)"')
+          echo "Filas restauradas (bebés, sueños, tomas, pañales, usuarios, hitos): $COUNTS"
+          set -- $COUNTS
+          if [ "${1:-0}" -lt 1 ] || [ "${2:-0}" -lt 1 ] || [ "${3:-0}" -lt 1 ] || [ "${5:-0}" -lt 1 ]; then
+            echo "::error::La copia se restauró pero le faltan datos (bebés, sueños, tomas o usuarios a cero)."
+            exit 1
+          fi
+          echo "Restauración correcta. Compara estos recuentos con los de la base de datos de origen."

@@ -170,6 +170,17 @@ gpg --decrypt pequedex.dump.gpg > pequedex.dump
 pg_restore --no-owner --no-privileges --clean --if-exists -d "<cadena-destino>" pequedex.dump
 ```
 
+**Mudar de base de datos** (p.ej. a otra región de Neon) o recuperarse de un
+desastre, sin instalar nada: `.github/workflows/restore-database.yml`
+descifra una copia y la restaura en OTRA base de datos dentro de GitHub.
+Pasos: crear la base de datos de destino vacía; guardar su cadena directa
+como secreto `RESTORE_TARGET_DATABASE_URL`; lanzar el workflow con el número
+de la ejecución del backup (`gh workflow run restore-database.yml -f
+backup_run_id=<id>`); comparar los recuentos que imprime con los del origen;
+cambiar las variables `DB_*` de Render a la nueva base de datos y actualizar
+el secreto `NEON_DATABASE_URL` de las copias. Se niega a restaurar sobre una
+base de datos con tablas o sobre el propio origen de las copias.
+
 Al restaurar hay que volver a iniciar sesión (los tokens no se copian).
 Una copia que nunca se ha restaurado no es una copia: conviene probar la
 restauración una vez en un proyecto de pruebas.

@@ -122,24 +122,10 @@ async function loadBabyData() {
     // Lo que quedó en cola de la última vez sin conexión, antes de pedir
     // la línea temporal (así ya viene incluido).
     await flushQueue().catch(() => {})
-    await Promise.all([
-      babies.fetchTimeline(),
-      babies.fetchGrowthMeasurements(),
-      babies.fetchMilestones(),
-      babies.fetchSleepPrediction(),
-      babies.fetchFeedPrediction(),
-      babies.fetchVitaminDSchedule(),
-      babies.fetchTemperatures(),
-      babies.fetchRecentDiaperChanges(),
-      // Solo si están activadas para este bebé - si no, vaciar lo del
-      // bebé anterior.
-      babies.current?.vaccinations_enabled
-        ? babies.fetchVaccinations()
-        : Promise.resolve().then(() => {
-            babies.vaccinations = []
-            babies.checkups = []
-          }),
-    ])
+    // Una sola petición con todo lo del Dashboard (ver fetchBootstrap).
+    // Las vacunas solo vienen si están activadas para este bebé - si no,
+    // se vacía lo del bebé anterior.
+    await babies.fetchBootstrap()
   } finally {
     loading.value = false
   }

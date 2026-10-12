@@ -293,6 +293,106 @@ describe('useBabiesStore', () => {
     expect(store.offlineUpdates).toEqual([])
   })
 
+  it('loads the whole dashboard with a single bootstrap request', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    vi.mocked(apiClient.get).mockClear()
+
+    const feed = { id: 3, started_at: '2026-10-12T08:00:00Z' }
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        timeline: { data: [{ type: 'feed', at: feed.started_at, data: feed }] },
+        growth_measurements: { data: [{ id: 1 }] },
+        milestones: { data: [{ id: 2 }] },
+        sleep_prediction: { data: { has_enough_data: false } },
+        feed_prediction: { data: { has_enough_data: true } },
+        vitamin_d_schedule: { data: { id: 4 }, recent_doses: [{ id: 5 }] },
+        temperatures: { data: [{ id: 6 }] },
+        recent_diaper_changes: { data: [{ id: 7 }] },
+      },
+    })
+
+    await store.fetchBootstrap()
+
+    expect(apiClient.get).toHaveBeenCalledTimes(1)
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/babies/1/bootstrap',
+      expect.objectContaining({ params: expect.objectContaining({ tz: expect.any(String) }) }),
+    )
+    expect(store.timeline).toEqual([{ type: 'feed', at: feed.started_at, data: feed }])
+    expect(store.growthMeasurements).toEqual([{ id: 1 }])
+    expect(store.milestones).toEqual([{ id: 2 }])
+    expect(store.feedPrediction?.has_enough_data).toBe(true)
+    expect(store.vitaminDSchedule).toEqual({ id: 4 })
+    expect(store.vitaminDRecentDoses).toEqual([{ id: 5 }])
+    expect(store.temperatures).toEqual([{ id: 6 }])
+    expect(store.recentDiaperChanges).toEqual([{ id: 7 }])
+    // Sin vacunas activadas en la respuesta: se vacían las del bebé anterior.
+    expect(store.vaccinations).toEqual([])
+    expect(store.checkups).toEqual([])
+  })
+
+  it('keeps queued offline entries and deletes when applying the bootstrap', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineQueue = []
+    store.offlineUpdates = []
+    store.queueDelete('temperature', 6)
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        timeline: { data: [] },
+        growth_measurements: { data: [] },
+        milestones: { data: [] },
+        sleep_prediction: { data: {} },
+        feed_prediction: { data: {} },
+        vitamin_d_schedule: { data: null, recent_doses: [] },
+        temperatures: { data: [{ id: 6, measured_at: '2026-10-12T08:00:00Z' }] },
+        recent_diaper_changes: { data: [] },
+      },
+    })
+
+    await store.fetchBootstrap()
+
+    // La temperatura 6 está borrada sin conexión: no reaparece.
+    expect(store.temperatures).toEqual([])
+  })
+
+  it('falls back to the separate requests when the backend has no bootstrap yet', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    vi.mocked(apiClient.get).mockClear()
+
+    vi.mocked(apiClient.get).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 404 },
+    })
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } })
+
+    await store.fetchBootstrap()
+
+    const urls = vi.mocked(apiClient.get).mock.calls.map((call) => call[0])
+    expect(urls).toContain('/babies/1/timeline')
+    expect(urls).toContain('/babies/1/milestones')
+    expect(urls).toContain('/babies/1/feed-prediction')
+  })
+
+  it('rethrows a real error from the bootstrap instead of falling back', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    vi.mocked(apiClient.get).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 500 },
+    })
+
+    await expect(store.fetchBootstrap()).rejects.toBeTruthy()
+  })
+
   it('queues deleting a saved log offline, keeps it hidden on refetch, and sends the DELETE later', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

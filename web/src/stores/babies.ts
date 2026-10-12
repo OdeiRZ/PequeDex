@@ -234,6 +234,22 @@ export interface PredictionRange {
   to: string
 }
 
+/** Cuerpo de GET /babies/{id}/bootstrap: cada sección es la respuesta
+ * completa de su endpoint individual. `vaccinations`/`checkups` solo
+ * vienen si están activadas para el bebé. */
+interface BootstrapResponse {
+  timeline: { data: TimelineEntry[] }
+  growth_measurements: { data: GrowthMeasurement[] }
+  milestones: { data: Milestone[] }
+  sleep_prediction: { data: SleepPrediction }
+  feed_prediction: { data: FeedPrediction }
+  vitamin_d_schedule: { data: VitaminDSchedule | null; recent_doses: VitaminDDose[] }
+  temperatures: { data: Temperature[] }
+  recent_diaper_changes: { data: DiaperChange[] }
+  vaccinations?: { data: Vaccination[]; template: VaccinationTemplateInfo | null }
+  checkups?: { data: Checkup[] }
+}
+
 export interface FeedPrediction {
   has_enough_data: boolean
   sample_size: number
@@ -594,13 +610,92 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`)
-      // Lo que sigue en la cola sin conexión no viene del servidor:
-      // se vuelve a añadir para que no desaparezca en cada sondeo.
+      this.applyTimeline(data.data, this.current.id)
+    },
+
+    // Lo que sigue en la cola sin conexión no viene del servidor:
+    // se vuelve a añadir para que no desaparezca en cada sondeo.
+    applyTimeline(entries: TimelineEntry[], babyId: number) {
       this.timeline = withPendingUpdates(
-        withPendingEntries(data.data, this.offlineQueue, this.current.id),
+        withPendingEntries(entries, this.offlineQueue, babyId),
         this.offlineUpdates,
-        this.current.id,
+        babyId,
       )
+    },
+
+    /** Todo lo que el Dashboard pide al abrir un bebé, en UNA petición
+     * (GET /babies/{id}/bootstrap) en vez de 8-10 en paralelo: en
+     * producción cada una pagaba su propia conexión a la base de datos y
+     * tardaba 1,6-3 s. Si el backend todavía no tiene el endpoint (404,
+     * p.ej. el frontend se despliega antes), se piden por separado. */
+    async fetchBootstrap() {
+      if (!this.current) {
+        return
+      }
+
+      const babyId = this.current.id
+      let body: BootstrapResponse
+      try {
+        const since = new Date(Date.now() - ALERTS_WINDOW_DAYS * 86_400_000).toISOString()
+        const { data } = await apiClient.get(`/babies/${babyId}/bootstrap`, {
+          params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone, since },
+        })
+        body = data
+      } catch (error) {
+        if ((error as { response?: { status?: number } }).response?.status !== 404) throw error
+        await this.fetchBootstrapSeparately()
+        return
+      }
+      // Cambió de bebé mientras tanto: esa respuesta ya no vale.
+      if (this.current?.id !== babyId) return
+
+      this.applyTimeline(body.timeline.data, babyId)
+      this.growthMeasurements = body.growth_measurements.data
+      this.milestones = body.milestones.data
+      this.sleepPrediction = body.sleep_prediction.data
+      this.feedPrediction = body.feed_prediction.data
+      this.vitaminDSchedule = body.vitamin_d_schedule.data
+      this.vitaminDRecentDoses = body.vitamin_d_schedule.recent_doses
+      this.temperatures = withoutPendingDeletes(
+        body.temperatures.data,
+        this.offlineUpdates,
+        babyId,
+        'temperature',
+      )
+      this.recentDiaperChanges = withoutPendingDeletes(
+        body.recent_diaper_changes.data,
+        this.offlineUpdates,
+        babyId,
+        'diaper_change',
+      )
+      if (body.vaccinations && body.checkups) {
+        this.vaccinations = body.vaccinations.data
+        this.vaccinationTemplate = body.vaccinations.template
+        this.checkups = body.checkups.data
+      } else {
+        this.vaccinations = []
+        this.checkups = []
+      }
+    },
+
+    /** Respaldo de fetchBootstrap(): las mismas peticiones, una a una. */
+    async fetchBootstrapSeparately() {
+      await Promise.all([
+        this.fetchTimeline(),
+        this.fetchGrowthMeasurements(),
+        this.fetchMilestones(),
+        this.fetchSleepPrediction(),
+        this.fetchFeedPrediction(),
+        this.fetchVitaminDSchedule(),
+        this.fetchTemperatures(),
+        this.fetchRecentDiaperChanges(),
+        this.current?.vaccinations_enabled
+          ? this.fetchVaccinations()
+          : Promise.resolve().then(() => {
+              this.vaccinations = []
+              this.checkups = []
+            }),
+      ])
     },
 
     // `date` is a plain "YYYY-MM-DD" - the backend returns every entry

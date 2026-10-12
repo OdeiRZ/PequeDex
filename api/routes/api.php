@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Babies\BabyController;
+use App\Http\Controllers\Babies\BootstrapController;
 use App\Http\Controllers\Babies\TimelineController;
 use App\Http\Controllers\Contractions\ContractionController;
 use App\Http\Controllers\Contractions\ContractionsExportController;
@@ -63,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/babies/{baby}', [BabyController::class, 'destroy']);
     Route::post('/babies/{baby}/invite-code', [BabyController::class, 'regenerateInviteCode']);
     Route::get('/babies/{baby}/timeline', [TimelineController::class, 'index']);
+    Route::get('/babies/{baby}/bootstrap', [BootstrapController::class, 'show']);
 
     Route::get('/babies/{baby}/feeds', [FeedController::class, 'index']);
     Route::post('/babies/{baby}/feeds', [FeedController::class, 'store']);

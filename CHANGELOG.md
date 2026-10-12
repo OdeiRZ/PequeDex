@@ -21,6 +21,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   vacunas avisa de que los calendarios se recopilaron en 2026 y pueden
   cambiar en años posteriores.
 
+  Fuente de cada comunidad:
+  - Calendario oficial completo: Andalucía (enero 2026), Illes Balears
+    (marzo 2026), Canarias (Orden 22/06/2026), Cantabria (23/01/2026),
+    Castilla-La Mancha (2026), Castilla y León (Orden SAN/209/2026),
+    Cataluña (calendario 2025, vigente en 2026), Comunitat Valenciana
+    (DOGV 24/03/2026), Extremadura (DOE 28/01/2026), Galicia (junio
+    2026), Comunidad de Madrid (2026), País Vasco (2026) y La Rioja
+    (instrucción de 2024, vigente).
+  - **Pendientes de revisar** (solo el cambio de meningococo,
+    contrastado con el CAV-AEP):
+    - Aragón y Asturias: sin calendario oficial de 2026 legible.
+    - Región de Murcia: hay calendario nuevo (Orden de 21/09/2026, BORM
+      29/09/2026) pero no se pudo consultar.
+    - Navarra: MenACWY solo a los 12 meses; sin calendario oficial de
+      2026 legible.
+    - Ceuta y Melilla: falta además la hepatitis A, que sí incluyen en
+      su calendario infantil, por no tener las edades verificadas.
+
 ### Cambiado
 
 - **Menos consumo de la base de datos** - el Dashboard sincroniza la

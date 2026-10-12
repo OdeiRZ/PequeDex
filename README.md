@@ -134,9 +134,13 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     pediatra, desactivables.
 19. ✅ Vacunas y revisiones: cartilla digital por bebé con el calendario
     común del Consejo Interterritorial 2026 o el de su comunidad
-    (de momento, Cantabria), editable, y revisiones con el pediatra.
-    Las plantillas son ficheros de datos: añadir otra comunidad es
-    añadir un fichero.
+    (las 17 comunidades + Ceuta y Melilla, recopilados en 2026),
+    editable, y revisiones con el pediatra. Las plantillas son
+    ficheros de datos: actualizar una comunidad es editar su fichero.
+    **Pendiente de revisar:** Aragón, Asturias, Región de Murcia,
+    Navarra, Ceuta y Melilla solo aplican el cambio de meningococo
+    (MenACWY); no se encontró su calendario oficial de 2026 legible
+    (en Ceuta y Melilla falta además la hepatitis A, que sí vacunan).
 20. ✅ Resumen para la consulta: un PDF de una página con los últimos
     14 días y un recuadro de preguntas para el pediatra.
 

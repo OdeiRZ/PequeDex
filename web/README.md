@@ -1413,10 +1413,13 @@ principal → ajustes, debajo de la vitamina D) junto con la **comunidad
 autónoma**, que decide la plantilla de vacunas.
 
 - **Plantillas en el backend** (ver `api/README.md`): el calendario
-  común del Consejo Interterritorial 2026 como base y, de momento,
-  Cantabria (MenACWY en lugar de MenC a los 4 y 12 meses desde el
-  1/2/2026). Cualquier otra comunidad usa el común, y la pantalla lo
-  dice ("tu comunidad puede añadir alguna vacuna"). Al activar se
+  común del Consejo Interterritorial 2026 como base y un fichero por
+  comunidad (las 17 + Ceuta y Melilla) con sus diferencias, cada uno
+  con su fuente. Sin comunidad indicada se usa el común, y la pantalla
+  invita a elegirla. Siempre se muestra que los calendarios se
+  recopilaron en 2026 y pueden cambiar (`vaccinations.compiledNote`).
+  Pendientes de revisar: Aragón, Asturias, Murcia, Navarra, Ceuta y
+  Melilla, que solo aplican el cambio de meningococo. Al activar se
   genera la lista con las fechas previstas desde la fecha de
   nacimiento; al cambiar de comunidad se rehacen las de plantilla
   todavía sin poner.

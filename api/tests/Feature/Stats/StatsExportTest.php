@@ -245,6 +245,36 @@ it('rejects more than 5 upcoming vaccines in the export', function () {
         ->assertJsonValidationErrors(['vaccinations.upcoming_list']);
 });
 
+it('draws the temperature chart for the period, coloured by level', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['temperature'] = [
+        'count' => 2, 'high_count' => 1,
+        'max' => ['celsius' => 38.6, 'at' => now()->subDays(2)->toIso8601String()],
+        'latest' => ['celsius' => 36.8, 'at' => now()->subDay()->toIso8601String()],
+        'readings' => [
+            ['celsius' => 38.6, 'at' => now()->subDays(2)->toIso8601String()],
+            ['celsius' => 36.8, 'at' => now()->subDay()->toIso8601String()],
+        ],
+        'from' => now()->subDays(6)->startOfDay()->toIso8601String(),
+    ];
+
+    $chart = app(StatsExportController::class)->buildViewData($baby, $payload)['temperatureChart'];
+    $svg = base64_decode(substr($chart, strlen('data:image/svg+xml;base64,')));
+
+    expect($svg)->toContain('#cc4b3c')->toContain('#4f9a62')->toContain('stroke-dasharray');
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+});
+
+it('has no temperature chart without readings', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    expect(app(StatsExportController::class)->buildViewData($baby, validStatsPayload())['temperatureChart'])->toBeNull();
+});
+
 it('rejects a temperature max missing its date', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

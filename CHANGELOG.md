@@ -7,7 +7,22 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- **Gráfica de temperatura del periodo** - el bloque Temperatura de
+  Estadísticas (y del PDF) añade una gráfica con todas las mediciones
+  del periodo elegido, cada punto en el color de su nivel (azul baja,
+  verde normal, ámbar algo alta, rojo alta, como en la línea temporal)
+  y la línea de 38 °C. Responde a "¿cuántos episodios ha tenido y
+  cuánto duraron?"; la tarjeta de 48 h del Dashboard sigue siendo la
+  del episodio en curso.
+
 ### Corregido
+
+- **Test frágil según la hora** - dos tests (crecimiento e hitos)
+  fallaban en el CI si se ejecutaban en el último minuto del día (UTC):
+  "mañana 00:00" caía dentro del margen de "ahora + 1 minuto" que
+  admite la validación. Ahora usan "pasado mañana".
 
 - **Enlaces que "no hacían nada" hasta recargar** - al abrir una
   pantalla secundaria (Vacunas, Estadísticas, Sonidos...) por primera

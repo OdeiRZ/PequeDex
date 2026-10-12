@@ -337,6 +337,19 @@
                     ['label' => 'Máxima', 'value' => $temperature['max'] !== null ? $fmtCelsius($temperature['max']['celsius']) : null, 'note' => $temperature['max'] !== null ? $fmtWhen($temperature['max']['at']) : null, 'color' => '#c0603f'],
                     ['label' => 'Última', 'value' => $temperature['latest'] !== null ? $fmtCelsius($temperature['latest']['celsius']) : null, 'note' => $temperature['latest'] !== null ? $fmtWhen($temperature['latest']['at']) : null],
                 ]])
+                @if ($temperatureChart !== null)
+                    <p class="sub-label">Mediciones del periodo</p>
+                    <div class="pad">
+                        <img src="{{ $temperatureChart }}" alt="" style="width: 100%; height: auto;" />
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0; font-size: 8px; color: #a3968a;">{{ \Carbon\CarbonImmutable::parse($temperature['from'] ?? $temperature['readings'][0]['at'])->translatedFormat('j M') }}</td>
+                                <td style="padding: 0; font-size: 8px; color: #a3968a; text-align: center;">- - 38 °C · azul baja, verde normal, ámbar algo alta, rojo alta</td>
+                                <td style="padding: 0; font-size: 8px; color: #a3968a; text-align: right;">ahora</td>
+                            </tr>
+                        </table>
+                    </div>
+                @endif
             @endif
         </div>
     @endif

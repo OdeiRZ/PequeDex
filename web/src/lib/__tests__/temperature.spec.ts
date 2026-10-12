@@ -67,6 +67,11 @@ describe('summarizeTemperatureStats', () => {
       highCount: 2,
       max: { celsius: 38.6, at: '2026-10-10T22:00:00Z' },
       latest: { celsius: 38.0, at: '2026-10-11T06:00:00Z' },
+      readings: [
+        { celsius: 37.2, at: '2026-10-10T08:00:00Z' },
+        { celsius: 38.6, at: '2026-10-10T22:00:00Z' },
+        { celsius: 38.0, at: '2026-10-11T06:00:00Z' },
+      ],
     })
   })
 
@@ -76,6 +81,7 @@ describe('summarizeTemperatureStats', () => {
       highCount: 0,
       max: null,
       latest: null,
+      readings: [],
     })
   })
 })

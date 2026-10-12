@@ -149,6 +149,11 @@ class ExportStatsRequest extends FormRequest
             'temperature.latest' => ['nullable', 'array'],
             'temperature.latest.celsius' => ['required_with:temperature.latest', 'numeric'],
             'temperature.latest.at' => ['required_with:temperature.latest', 'date'],
+            // Para la gráfica del periodo (como mucho 200 mediciones).
+            'temperature.readings' => ['sometimes', 'array', 'max:200'],
+            'temperature.readings.*.celsius' => ['required', 'numeric'],
+            'temperature.readings.*.at' => ['required', 'date'],
+            'temperature.from' => ['nullable', 'date'],
 
             // `null` si "Vacunas y revisiones" no está activado para el bebé.
             'vaccinations' => ['nullable', 'array'],

@@ -593,7 +593,13 @@ export interface TemperatureStats {
   /** Mediciones de 38 °C o más (`FEVER_THRESHOLD_CELSIUS`). */
   highCount: number
   latest: { celsius: number; at: string } | null
+  /** Las mediciones del periodo, de la más antigua a la más reciente,
+   * para la gráfica de Estadísticas y del PDF - como mucho las
+   * `MAX_TEMPERATURE_READINGS` más recientes. */
+  readings: { celsius: number; at: string }[]
 }
+
+export const MAX_TEMPERATURE_READINGS = 200
 
 export function summarizeTemperatureStats(
   temperatures: Temperature[],
@@ -608,7 +614,11 @@ export function summarizeTemperatureStats(
       latest = { celsius: t.celsius, at: t.measured_at }
     if (t.celsius >= feverThreshold) highCount++
   }
-  return { count: temperatures.length, max, highCount, latest }
+  const readings = temperatures
+    .map((t) => ({ celsius: t.celsius, at: t.measured_at }))
+    .sort((a, b) => a.at.localeCompare(b.at))
+    .slice(-MAX_TEMPERATURE_READINGS)
+  return { count: temperatures.length, max, highCount, latest, readings }
 }
 
 // --- Vacunas y revisiones ---
@@ -1043,6 +1053,10 @@ export interface StatsExportPayload {
     max: { celsius: number; at: string } | null
     high_count: number
     latest: { celsius: number; at: string } | null
+    readings: { celsius: number; at: string }[]
+    /** Inicio del eje X de la gráfica: el del periodo, o la primera
+     * medición con "Todo". */
+    from: string | null
   } | null
   /** `null` si "Vacunas y revisiones" no está activado para el bebé. */
   vaccinations: {
@@ -1201,6 +1215,8 @@ export function buildStatsExportPayload(
           max: temperature.max,
           high_count: temperature.highCount,
           latest: temperature.latest,
+          readings: temperature.readings,
+          from: periodStart(period)?.toISOString() ?? temperature.readings[0]?.at ?? null,
         }
       : null,
     vaccinations: vaccinations

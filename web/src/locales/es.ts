@@ -346,6 +346,8 @@ export default {
       maxLabel: 'Máxima',
       latestLabel: 'Última',
       noneInPeriod: 'Sin mediciones en este periodo.',
+      chartTitle: 'Mediciones del periodo',
+      chartLabel: '{count} mediciones de temperatura en el periodo',
     },
     vitaminD: {
       title: 'Vitamina D',

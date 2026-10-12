@@ -13,6 +13,7 @@ import ActivityHeatmap from '@/components/ActivityHeatmap.vue'
 import WeeklySleep from '@/components/WeeklySleep.vue'
 import SegmentedControl from '@/components/SegmentedControl.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
+import TemperaturePeriodChart from '@/components/TemperaturePeriodChart.vue'
 import {
   summarizeSleepStats,
   summarizeFeedStats,
@@ -29,6 +30,7 @@ import {
   summarizePeriodDeltas,
   summarizeTemperatureStats,
   summarizeVaccinationStats,
+  periodStart,
   type StatsPeriod,
   type StatsExportMode,
   SUMMARY_PERIOD,
@@ -112,6 +114,15 @@ const temperatureStats = computed(() =>
   summarizeTemperatureStats(
     filterByPeriod(babies.statsTemperatures, (t) => t.measured_at, period.value),
   ),
+)
+
+// Inicio del eje X de la gráfica: el del periodo, o la primera medición
+// con "Todo".
+const temperatureChartFrom = computed(
+  () =>
+    periodStart(period.value)?.toISOString() ??
+    temperatureStats.value.readings[0]?.at ??
+    new Date().toISOString(),
 )
 
 function formatTemperatureDate(at: string): string {
@@ -974,6 +985,14 @@ async function onExportPdf(mode: StatsExportMode) {
         <p v-else class="py-2 text-center text-sm text-text-muted">
           {{ t('stats.temperature.noneInPeriod') }}
         </p>
+        <div v-if="temperatureStats.count > 0">
+          <div class="mb-1 text-xs text-text-muted">{{ t('stats.temperature.chartTitle') }}</div>
+          <TemperaturePeriodChart
+            :readings="temperatureStats.readings"
+            :from="temperatureChartFrom"
+            :date-locale="dateLocale"
+          />
+        </div>
       </section>
 
       <!-- Vacunas y revisiones -->

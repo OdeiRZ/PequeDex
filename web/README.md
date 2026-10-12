@@ -1466,7 +1466,13 @@ rejilla de 6 columnas con el texto algo más pequeño.
   pediatra o urgencias, la indicación estándar a esa edad.
 - **Estadísticas**: bloque "Temperatura" (mediciones, de 38 °C o más,
   máxima y última, sobre el periodo elegido) solo si el bebé tiene
-  alguna medición; también en el PDF.
+  alguna medición; también en el PDF. Debajo, `TemperaturePeriodChart.vue`
+  dibuja todas las mediciones del periodo (eje X desde el inicio del
+  periodo, o la primera medición con "Todo", hasta ahora), cada punto
+  en el color de su nivel (`TEMPERATURE_LEVELS`) y la línea de 38 °C.
+  Viajan al PDF como `temperature.readings` (como mucho las 200 más
+  recientes, `MAX_TEMPERATURE_READINGS`) y `temperature.from`; el PDF
+  las dibuja como SVG (`StatsExportController::temperatureChartDataUri()`).
 
 ## Recordatorio de vitamina D
 

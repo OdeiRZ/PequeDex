@@ -93,6 +93,7 @@ class StatsExportController extends Controller
             'heatmapSummary' => $this->heatmapSummary($this->heatmapGrid($data['activity_heatmap'])),
             'vitaminD' => $data['vitamin_d'],
             'temperature' => $data['temperature'] ?? null,
+            'temperatureChart' => $this->temperatureChartDataUri($data['temperature'] ?? null),
             'vaccinations' => $data['vaccinations'] ?? null,
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
             'growthMetrics' => [
@@ -448,6 +449,58 @@ class StatsExportController extends Controller
         $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$width}\" height=\"{$height}\" viewBox=\"0 0 {$width} {$height}\">"
             .$svgBody
             .'</svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
+    }
+
+    /**
+     * Misma gráfica que TemperaturePeriodChart.vue: eje X del inicio del
+     * periodo (`from`) a ahora, eje Y de 35,5 a 40 °C como mínimo, la
+     * línea de 38 °C discontinua y cada punto en el color de su nivel
+     * (`temperatureLevel()` en web/src/lib/timelineEntry.ts). Null sin
+     * mediciones.
+     *
+     * @param  array<string, mixed>|null  $temperature
+     */
+    private function temperatureChartDataUri(?array $temperature): ?string
+    {
+        /** @var array<int, array{celsius: float|int, at: string}> $readings */
+        $readings = $temperature['readings'] ?? [];
+        if ($readings === []) {
+            return null;
+        }
+
+        $width = 600;
+        $height = 170;
+        $padX = 10;
+        $padY = 14;
+        $times = array_map(fn ($r) => CarbonImmutable::parse($r['at'])->getTimestamp(), $readings);
+        $start = isset($temperature['from']) ? CarbonImmutable::parse($temperature['from'])->getTimestamp() : min($times);
+        $end = max(CarbonImmutable::now()->getTimestamp(), $start + 3600);
+        $values = array_map(fn ($r) => (float) $r['celsius'], $readings);
+        $minV = min(35.5, ...$values);
+        $maxV = max(40.0, ...$values);
+
+        $x = fn (int $t) => round($padX + max(0, min(1, ($t - $start) / ($end - $start))) * ($width - 2 * $padX), 1);
+        $y = fn (float $v) => round($padY + (1 - ($v - $minV) / ($maxV - $minV)) * ($height - 2 * $padY), 1);
+        $color = fn (float $v) => match (true) {
+            $v < 36 => '#4a8fc4',
+            $v < 37.5 => '#4f9a62',
+            $v < 38 => '#d79a2b',
+            default => '#cc4b3c',
+        };
+
+        $threshold = $y(38.0);
+        $svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{$width}\" height=\"{$height}\" viewBox=\"0 0 {$width} {$height}\">"
+            ."<line x1=\"{$padX}\" x2=\"".($width - $padX)."\" y1=\"{$threshold}\" y2=\"{$threshold}\" stroke=\"#c0603f\" stroke-opacity=\"0.5\" stroke-width=\"1.5\" stroke-dasharray=\"6 6\"/>";
+        if (count($readings) > 1) {
+            $line = implode(' ', array_map(fn ($i) => $x($times[$i]).','.$y($values[$i]), array_keys($readings)));
+            $svg .= "<polyline points=\"{$line}\" fill=\"none\" stroke=\"#c0603f\" stroke-opacity=\"0.35\" stroke-width=\"2\"/>";
+        }
+        foreach ($readings as $i => $reading) {
+            $svg .= "<circle cx=\"{$x($times[$i])}\" cy=\"{$y($values[$i])}\" r=\"5.5\" fill=\"{$color($values[$i])}\"/>";
+        }
+        $svg .= '</svg>';
 
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }

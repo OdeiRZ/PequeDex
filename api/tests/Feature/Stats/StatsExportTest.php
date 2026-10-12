@@ -229,6 +229,17 @@ it('renders the vaccinations section when the payload carries one', function () 
     $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
 });
 
+it('accepts an explicit null vaccinations, which is what the app sends with the feature off', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['vaccinations'] = null;
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+    $this->postJson("/api/babies/{$baby->id}/stats/export", [...$payload, 'mode' => 'summary'])->assertOk();
+});
+
 it('rejects more than 5 upcoming vaccines in the export', function () {
     $user = actingAsUser();
     $baby = babyForStatsExportTest($user);

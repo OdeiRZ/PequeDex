@@ -160,10 +160,13 @@ class ExportStatsRequest extends FormRequest
             'vaccinations.given' => ['required_with:vaccinations', 'integer', 'min:0'],
             'vaccinations.total' => ['required_with:vaccinations', 'integer', 'min:0'],
             'vaccinations.overdue' => ['required_with:vaccinations', 'integer', 'min:0'],
-            'vaccinations.given_list' => ['present_with:vaccinations', 'array'],
+            // `present_with` mira si la CLAVE existe, y la pantalla manda
+            // `vaccinations: null` con la función desactivada: las listas
+            // solo son obligatorias cuando hay un objeto de verdad.
+            'vaccinations.given_list' => [Rule::when(is_array($this->input('vaccinations')), ['present', 'array'])],
             'vaccinations.given_list.*.name' => ['required', 'string', 'max:255'],
             'vaccinations.given_list.*.date' => ['required', 'date'],
-            'vaccinations.upcoming_list' => ['present_with:vaccinations', 'array', 'max:5'],
+            'vaccinations.upcoming_list' => [Rule::when(is_array($this->input('vaccinations')), ['present', 'array', 'max:5'])],
             'vaccinations.upcoming_list.*.name' => ['required', 'string', 'max:255'],
             'vaccinations.upcoming_list.*.date' => ['nullable', 'date'],
             'vaccinations.next_checkup' => ['nullable', 'array'],

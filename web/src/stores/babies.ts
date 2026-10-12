@@ -16,6 +16,7 @@ import {
   updateEndpoint,
   withPendingEntries,
   withPendingUpdates,
+  withoutPendingDeletes,
   type QueuedLog,
   type QueuedLogType,
   type QueuedUpdate,
@@ -701,20 +702,56 @@ export const useBabiesStore = defineStore('babies', {
         // Después de las altas, los cambios sobre registros ya guardados.
         for (const update of offline ? [] : [...this.offlineUpdates]) {
           try {
-            const { data } = await apiClient.put(updateEndpoint(update), update.payload)
-            this.removeQueuedUpdate(update)
-            if (this.current?.id === update.babyId) this.applySavedUpdate(update.type, data.data)
+            if (update.action === 'delete') {
+              await apiClient.delete(updateEndpoint(update))
+              this.removeQueuedUpdate(update)
+            } else {
+              const { data } = await apiClient.put(updateEndpoint(update), update.payload)
+              this.removeQueuedUpdate(update)
+              if (
+                this.current?.id === update.babyId &&
+                (update.type === 'feed' || update.type === 'sleep')
+              )
+                this.applySavedUpdate(update.type, data.data)
+            }
             sent++
           } catch (error) {
             if (isNetworkError(error)) break
             this.removeQueuedUpdate(update)
-            rejected++
+            // Borrar algo que ya no existe (404) es el resultado buscado.
+            if (
+              update.action === 'delete' &&
+              (error as { response?: { status?: number } }).response?.status === 404
+            ) {
+              sent++
+            } else {
+              rejected++
+            }
           }
         }
       } finally {
         this.flushingQueue = false
       }
       return { sent, rejected }
+    },
+
+    /** Sin red al borrar algo ya guardado: el borrado queda en cola (la
+     * entrada ya se quitó de la vista) y sustituye cualquier cambio
+     * pendiente de ese registro. */
+    queueDelete(type: QueuedLogType, targetId: number) {
+      const update: QueuedUpdate = {
+        babyId: this.current!.id,
+        type,
+        targetId,
+        action: 'delete',
+        payload: {},
+        queuedAt: new Date().toISOString(),
+      }
+      this.offlineUpdates = [
+        ...this.offlineUpdates.filter((u) => !(u.type === type && u.targetId === targetId)),
+        update,
+      ]
+      saveUpdates(this.offlineUpdates)
     },
 
     removeQueuedUpdate(update: QueuedUpdate) {
@@ -833,7 +870,12 @@ export const useBabiesStore = defineStore('babies', {
       const { data } = await apiClient.get(`/babies/${this.current.id}/diaper-changes`, {
         params: { since },
       })
-      this.recentDiaperChanges = data.data
+      this.recentDiaperChanges = withoutPendingDeletes(
+        data.data,
+        this.offlineUpdates,
+        this.current.id,
+        'diaper_change',
+      )
     },
 
     // --- Vacunas y revisiones ---
@@ -918,7 +960,12 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/temperatures`)
-      this.temperatures = data.data
+      this.temperatures = withoutPendingDeletes(
+        data.data,
+        this.offlineUpdates,
+        this.current.id,
+        'temperature',
+      )
     },
 
     async createTemperature(payload: CreateTemperaturePayload) {
@@ -953,6 +1000,7 @@ export const useBabiesStore = defineStore('babies', {
       try {
         await apiClient.delete(`/babies/${this.current!.id}/temperatures/${id}`)
       } catch (error) {
+        if (isNetworkError(error)) return this.queueDelete('temperature', id)
         this.timeline = previous
         this.dayTimeline = previousDay
         this.temperatures = previousTemperatures
@@ -983,6 +1031,7 @@ export const useBabiesStore = defineStore('babies', {
       try {
         await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`)
       } catch (error) {
+        if (isNetworkError(error)) return this.queueDelete('feed', id)
         this.timeline = previous
         this.dayTimeline = previousDay
         throw error
@@ -1002,6 +1051,7 @@ export const useBabiesStore = defineStore('babies', {
       try {
         await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
       } catch (error) {
+        if (isNetworkError(error)) return this.queueDelete('sleep', id)
         this.timeline = previous
         this.dayTimeline = previousDay
         throw error
@@ -1023,6 +1073,7 @@ export const useBabiesStore = defineStore('babies', {
       try {
         await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
       } catch (error) {
+        if (isNetworkError(error)) return this.queueDelete('diaper_change', id)
         this.timeline = previous
         this.dayTimeline = previousDay
         this.recentDiaperChanges = previousRecent

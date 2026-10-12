@@ -1371,7 +1371,13 @@ o 24 meses (total).
   altas. Es idempotente (un `PUT`); si el servidor lo rechaza se
   descarta y se avisa. Solo lo piden esos dos botones
   (`queueIfOffline`); el formulario de edición no.
-- Editar o borrar registros ya guardados sigue necesitando conexión
+- Borrar un registro **ya guardado** (toma, sueño, pañal, temperatura):
+  `deleteFeed()` & co. mantienen el borrado optimista y, si el `DELETE`
+  falla sin respuesta, `queueDelete()` lo deja en `offlineUpdates` con
+  `action: 'delete'` (sustituye cualquier cambio pendiente de ese
+  registro). `withPendingUpdates()` y `withoutPendingDeletes()` impiden
+  que el sondeo lo resucite; al enviarlo, un 404 cuenta como hecho.
+- Editar registros ya guardados sigue necesitando conexión
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
   muestra "Sin conexión" y cuántos registros quedan por enviar.
 

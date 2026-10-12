@@ -293,6 +293,47 @@ describe('useBabiesStore', () => {
     expect(store.offlineUpdates).toEqual([])
   })
 
+  it('queues deleting a saved log offline, keeps it hidden on refetch, and sends the DELETE later', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineUpdates = []
+    const row = { id: 5, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+    store.timeline = [{ type: 'feed', at: row.started_at, data: row as never }]
+
+    vi.mocked(apiClient.delete).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    await store.deleteFeed(5)
+    expect(store.timeline).toEqual([])
+    expect(store.offlineUpdates).toMatchObject([{ type: 'feed', targetId: 5, action: 'delete' }])
+
+    // El sondeo sigue trayendo el registro: no reaparece.
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { data: [{ type: 'feed', at: row.started_at, data: row }] },
+    })
+    await store.fetchTimeline()
+    expect(store.timeline).toEqual([])
+
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({})
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
+    expect(apiClient.delete).toHaveBeenLastCalledWith('/babies/1/feeds/5')
+    expect(store.offlineUpdates).toEqual([])
+  })
+
+  it('counts a 404 on a queued delete as done', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineUpdates = []
+    store.queueDelete('sleep', 8)
+
+    vi.mocked(apiClient.delete).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 404 },
+    })
+    expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
+    expect(store.offlineUpdates).toEqual([])
+  })
+
   it('does not queue an update unless asked, and rethrows a network error', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

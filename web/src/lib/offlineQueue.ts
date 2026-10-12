@@ -25,14 +25,28 @@ export interface QueuedLog {
 export const OFFLINE_QUEUE_KEY = 'pequedex.offlineQueue'
 export const OFFLINE_UPDATES_KEY = 'pequedex.offlineUpdates'
 
-/** Cambio pendiente sobre un registro ya guardado en el servidor
- * (p.ej. finalizar un sueño en curso): el PUT completo, listo para enviar. */
+/** Cambio pendiente sobre un registro ya guardado en el servidor:
+ * `put` (p.ej. finalizar un sueño en curso, con el PUT completo listo
+ * para enviar) o `delete`. Uno por registro: el último gana. */
 export interface QueuedUpdate {
   babyId: number
-  type: 'feed' | 'sleep'
+  type: QueuedLogType
   targetId: number
+  /** Ausente en lo guardado antes de existir los borrados: es un put. */
+  action?: 'put' | 'delete'
   payload: Record<string, unknown>
   queuedAt: string
+}
+
+export function isPendingDelete(
+  updates: QueuedUpdate[],
+  babyId: number,
+  type: QueuedLogType,
+  id: number,
+): boolean {
+  return updates.some(
+    (u) => u.action === 'delete' && u.babyId === babyId && u.type === type && u.targetId === id,
+  )
 }
 
 const ENDPOINTS: Record<QueuedLogType, string> = {
@@ -99,12 +113,23 @@ export function withPendingUpdates(
 ): TimelineEntry[] {
   const mine = updates.filter((u) => u.babyId === babyId)
   if (mine.length === 0) return timeline
-  return timeline.map((entry) => {
-    if (entry.type !== 'feed' && entry.type !== 'sleep') return entry
+  return timeline.flatMap((entry) => {
     const update = mine.find((u) => u.type === entry.type && u.targetId === entry.data.id)
-    if (!update) return entry
-    return { ...entry, data: { ...entry.data, ...update.payload } } as TimelineEntry
+    if (!update) return [entry]
+    if (update.action === 'delete') return []
+    return [{ ...entry, data: { ...entry.data, ...update.payload } } as TimelineEntry]
   })
+}
+
+/** Quita de una lista plana (pañales, temperaturas) lo ya borrado sin
+ * conexión y todavía por enviar. */
+export function withoutPendingDeletes<T extends { id: number }>(
+  items: T[],
+  updates: QueuedUpdate[],
+  babyId: number,
+  type: QueuedLogType,
+): T[] {
+  return items.filter((item) => !isPendingDelete(updates, babyId, type, item.id))
 }
 
 export function saveQueue(queue: QueuedLog[], storage: KeyValueStorage | null = defaultStorage()) {

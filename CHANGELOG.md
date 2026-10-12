@@ -7,6 +7,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambiado
+
+- **Menos consumo de la base de datos** - el Dashboard sincroniza la
+  línea temporal cada 15 s en vez de cada 5 s, y deja de hacerlo
+  mientras la app está en segundo plano (pestaña oculta, móvil
+  bloqueado); al volver a ella se refresca en el momento. El sondeo
+  constante estaba agotando la transferencia mensual del plan gratuito
+  de Neon (5 GB) y no dejaba dormir nunca a la base de datos.
+
 ### Añadido
 
 - **Vacunas: fechas al cambiar la fecha de nacimiento** - si se corrige

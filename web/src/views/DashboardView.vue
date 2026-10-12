@@ -311,22 +311,38 @@ async function onSwitchBaby(id: number) {
 // websockets ni infraestructura nueva. ---
 let pollTimer: ReturnType<typeof setInterval> | undefined
 
-onMounted(() => {
-  pollTimer = setInterval(async () => {
-    now.value = new Date()
-    if (!babies.current) return
+// Cada sondeo es una petición a la API y varias consultas a la base de
+// datos (Neon, con 5 GB/mes de transferencia en el plan gratuito): cada
+// 15 s en vez de 5 s, y nada mientras la app no se ve (pestaña de fondo,
+// móvil bloqueado) - al volver a ella se refresca en el momento.
+const POLL_INTERVAL_MS = 15_000
 
-    // Best-effort background sync - a failed poll (offline, API asleep)
-    // isn't worth interrupting the user over, the next tick 5s later
-    // just tries again. Without this catch, a rejected fetchTimeline()
-    // here was an unhandled promise rejection.
-    try {
-      await flushQueue()
-      await babies.fetchTimeline()
-    } catch {
-      // ignored, see comment above
-    }
-  }, 5000)
+async function syncTimeline() {
+  now.value = new Date()
+  if (!babies.current) return
+
+  // Best-effort background sync - a failed poll (offline, API asleep)
+  // isn't worth interrupting the user over, the next tick just tries
+  // again. Without this catch, a rejected fetchTimeline() here was an
+  // unhandled promise rejection.
+  try {
+    await flushQueue()
+    await babies.fetchTimeline()
+  } catch {
+    // ignored, see comment above
+  }
+}
+
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') syncTimeline()
+}
+
+onMounted(() => {
+  pollTimer = setInterval(() => {
+    if (document.visibilityState === 'hidden') return
+    syncTimeline()
+  }, POLL_INTERVAL_MS)
+  document.addEventListener('visibilitychange', onVisibilityChange)
   window.addEventListener('online', onOnline)
   window.addEventListener('offline', onOffline)
 })
@@ -370,6 +386,7 @@ function saveErrorMessage(error: unknown): string {
 
 onUnmounted(() => {
   clearInterval(pollTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
   window.removeEventListener('online', onOnline)
   window.removeEventListener('offline', onOffline)
 })

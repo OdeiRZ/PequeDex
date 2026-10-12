@@ -105,7 +105,7 @@ porque la verificación local solo cubría los otros tres.
   dos casos — antes solo se llamaba al montar el componente, así que
   unirse a un bebé con historial real (justo el caso de uso de unirse,
   a diferencia de crear uno) se quedaba sin cargarlo hasta recargar la
-  página a mano. Sondea `/timeline` cada 5 segundos
+  página a mano. Sondea `/timeline` cada 15 segundos (pausado con la app en segundo plano)
   mientras la vista está montada — mismo patrón que el import de BGG en
   LudoDex, sin websockets ni infraestructura nueva — para que lo que
   registre un cuidador aparezca en la pantalla del otro sin recargar
@@ -924,7 +924,7 @@ verse bien en una captura:
   props en vez de calcular siempre "hoy" internamente, y
   `DashboardView.vue` guarda el día mostrado en `rhythmDate`
   (reseteado a hoy en cada `loadBabyData()`). Mientras se ve "hoy"
-  sigue leyendo de `babies.timeline` (el sondeo de 5s, sin tocarlo); al
+  sigue leyendo de `babies.timeline` (el sondeo de 15 s, sin tocarlo); al
   navegar a otro día pasa a `babies.dayTimeline`, pedido aparte vía
   `fetchDayTimeline(date)` contra el nuevo parámetro `?date=` de
   `TimelineController@index` (ver `api/README.md`), que devuelve todo
@@ -1352,7 +1352,7 @@ o 24 meses (total).
   negativo), con la etiqueta "Pendiente" en `EntryCard`. La vista
   avisa "guardado en el móvil" en vez de "guardado".
 - `fetchTimeline()` vuelve a añadir los pendientes del bebé actual
-  (`withPendingEntries()`) para que el sondeo de 5 s no los borre.
+  (`withPendingEntries()`) para que el sondeo de 15 s no los borre.
 - La cola se envía en orden en cada sondeo, al volver la conexión
   (evento `online`) y al cargar el Dashboard. Se para en el primer
   fallo de red; un registro que el servidor rechaza (validación) se
@@ -1460,7 +1460,7 @@ umbrales conservadores:
 Los datos salen de `babies.recentDiaperChanges` (`GET
 /diaper-changes?since=`, los últimos 7 días; `timeline` solo trae las
 50 entradas más recientes) mezclado con los pañales de `timeline`, que
-son los más frescos gracias al sondeo de 5 s. Cada aviso se puede
+son los más frescos gracias al sondeo de 15 s. Cada aviso se puede
 **ocultar hasta el día siguiente** (localStorage, por bebé y día; si
 no hay almacenamiento, solo hasta recargar), y todos se apagan con el
 interruptor "Avisos" de "Tu cuenta" (`alerts_enabled`, activado por

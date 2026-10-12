@@ -324,7 +324,7 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
 - `app/Http/Controllers/Babies/TimelineController.php` — cada una de
   las tres subconsultas (tomas/sueño/pañales) se limita a `$limit`
   filas por su cuenta antes de fusionar, no solo el resultado final.
-  El dashboard sondea este endpoint cada 5 segundos mientras está
+  El dashboard sondea este endpoint cada 15 segundos mientras está
   abierto, así que sin este límite por subconsulta el coste crecía con
   el histórico completo del bebé en vez de con lo que se muestra.
 - `app/Services/Sleep/SleepPatternPredictor.php` — predicción de patrones
@@ -656,7 +656,7 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
 - `TimelineController@index` gana un parámetro `date` (YYYY-MM-DD)
   opcional que cambia el modo de consulta por completo: en vez de "las
   `$limit` más recientes por tipo" (el modo que usa el sondeo del
-  dashboard cada 5s), devuelve todo lo que se solape con ese día
+  dashboard cada 15 s), devuelve todo lo que se solape con ese día
   concreto, sin límite — un solo día nunca acumula demasiadas filas. El
   rango empieza un día antes del solicitado para no cortar un sueño que
   empezó la noche anterior; el recorte exacto a `[00:00, 24:00)` ya lo

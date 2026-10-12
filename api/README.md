@@ -330,6 +330,14 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   procesarla (ilegible, más de 50 Mpx, sin memoria suficiente) y
   `MilestoneController::storePhoto()` guarda entonces el original. Las
   fotos ya subidas no se migran.
+- `docker/opcache.ini` + `docker/entrypoint.sh` (`php artisan optimize`) —
+  sin OPcache en modo CLI y sin cachés de configuración, rutas, eventos y
+  vistas, cada petición recompilaba todo Laravel. Medido en local:
+  220 ms → 40 ms con OPcache → 31 ms con las cachés. `validate_timestamps=0`
+  porque dentro de la imagen los ficheros no cambian. Las cachés se
+  generan al arrancar (no al construir la imagen) porque la configuración
+  lee las variables de entorno de Render. El código no usa `env()` fuera
+  de `config/` (si lo hiciera, con la caché devolvería `null`).
 - `docker/uploads.ini` — subir un hito con foto desde el móvil se
   quedaba colgado en producción sin ningún error: la imagen Docker no
   llevaba ningún `php.ini` propio, así que PHP usaba sus valores por

@@ -33,12 +33,15 @@ WORKDIR /var/www/html
 # default build.
 RUN apk add --no-cache postgresql-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd exif
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd exif opcache
 
 # PHP's compiled-in defaults (upload_max_filesize=2M, post_max_size=8M)
 # are smaller than what this app already validates against (milestone
 # photos up to 8MB) - see docker/uploads.ini for why this file exists.
 COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
+# OPcache for the CLI server too - see docker/opcache.ini for why it matters.
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 COPY --from=vendor /app/vendor ./vendor
 COPY . .

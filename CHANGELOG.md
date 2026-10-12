@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Rendimiento: OPcache y cachés de Laravel en producción** - medido en
+  vivo tras el despliegue anterior, una petición suelta al API seguía
+  costando ~1 s, y la imagen de Docker no tenía OPcache (en modo CLI,
+  que es el que usa `artisan serve`, viene apagado) ni cachés de
+  configuración y rutas, así que cada petición volvía a leer y compilar
+  todo Laravel en un contenedor con una fracción de CPU. En local, con
+  tus datos: 220 ms por petición sin nada, 40 ms con OPcache y 31 ms con
+  OPcache y `php artisan optimize`. Ahora el Dockerfile instala OPcache
+  (`docker/opcache.ini`) y el entrypoint ejecuta `optimize` al arrancar
+  (si fallara, la app arranca igual sin cachés).
+
 - **Rendimiento: el Dashboard carga con una sola petición** - al abrir
   un bebé se pedían 8-10 cosas a la vez (línea temporal, predicciones,
   hitos, medidas...) y en producción cada una tardaba 1,6-3 s (cada una

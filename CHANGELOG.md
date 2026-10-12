@@ -27,7 +27,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   que todo estaba listo ~4 s después. Ahora `GET /babies/{id}/bootstrap`
   devuelve todo junto (con los mismos controladores, así que cada
   sección es idéntica a la de su endpoint). Si el backend aún no lo
-  tiene, la app pide las cosas por separado como antes.
+  tiene, la app pide las cosas por separado como antes. El permiso del
+  bebé (`BabyPolicy::view`) se recuerda durante la petición: se
+  consultaba una vez por sección (10), y con el API en Fráncfort y la base
+  de datos en Londres cada consulta repetida cuesta ~20 ms. Medido tras
+  desplegar OPcache: `/api/babies` baja de ~1.067 a ~420 ms y los datos
+  completos del Dashboard llegan a los ~2,4 s en vez de a los ~4,3 s
+  originales (y con la foto guardada, lo primero se pinta al instante).
 
 - **Hora de las predicciones sin segundos** - la estimación de la próxima
   toma, siesta o despertar enseñaba "12/10/2026, 15:10:00"; ahora

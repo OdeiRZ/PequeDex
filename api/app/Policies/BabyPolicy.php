@@ -19,7 +19,18 @@ class BabyPolicy
 {
     public function view(User $user, Baby $baby): bool
     {
-        return $baby->users()->whereKey($user->id)->exists();
+        // Una misma petición puede comprobar esto varias veces (el arranque
+        // del Dashboard llama a 10 controladores, cada uno con su
+        // authorize): con la base de datos en otra ciudad cada consulta
+        // repetida cuesta ~20 ms, así que se recuerda durante la petición.
+        $request = request();
+        $key = "baby-view:{$baby->id}:{$user->id}";
+
+        if (! $request->attributes->has($key)) {
+            $request->attributes->set($key, $baby->users()->whereKey($user->id)->exists());
+        }
+
+        return (bool) $request->attributes->get($key);
     }
 
     public function update(User $user, Baby $baby): bool

@@ -338,6 +338,19 @@ const wakeWindowVerdict = computed(() => {
   return compareToRange(wake, wakeWindowRef.value)
 })
 
+// Lo mismo para el PDF: el servidor solo valida y pinta.
+const sleepReferenceExport = computed(() => {
+  if (!totalSleepRef.value && !wakeWindowRef.value) return null
+  return {
+    total: totalSleepRef.value
+      ? { ...totalSleepRef.value, verdict: totalSleepVerdict.value }
+      : null,
+    wake_window: wakeWindowRef.value
+      ? { ...wakeWindowRef.value, verdict: wakeWindowVerdict.value }
+      : null,
+  }
+})
+
 // Traduce la desviación típica en minutos (un número que no dice nada
 // por sí solo) a una lectura cualitativa - "qué tan regular es el
 // horario", la pregunta real detrás del dato. Umbrales orientativos,
@@ -501,6 +514,7 @@ function buildSummaryPayload() {
       vaccinations: babies.current?.vaccinations_enabled ? vaccinationStats.value : null,
       vitaminD: vitaminDStats.value,
       dailySleep: dailySleep.value,
+      sleepReference: sleepReferenceExport.value,
     },
   )
 }
@@ -532,6 +546,7 @@ async function onExportPdf(mode: StatsExportMode) {
               activityHeatmap: activityHeatmap.value,
               vitaminD: vitaminDStats.value,
               dailySleep: dailySleep.value,
+              sleepReference: sleepReferenceExport.value,
             },
           )
     const blob = await babies.exportStatsPdf(payload)

@@ -648,3 +648,40 @@ it('headlines the baby age in weeks once a month has passed', function () {
         'special' => null,
     ]);
 });
+
+it('prints the age-based sleep references sent by the phone', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $payload = validStatsPayload();
+    $payload['sleep_reference'] = [
+        'total' => ['min' => 14, 'max' => 17, 'source' => 'nsf', 'verdict' => 'within'],
+        'wake_window' => ['min' => 60, 'max' => 120, 'verdict' => 'above'],
+    ];
+
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+    $payload['mode'] = 'summary';
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)->assertOk();
+
+    $notes = app(StatsExportController::class)->buildViewData($baby, $payload)['sleepRef'];
+    expect($notes)->toBe([
+        'total' => 'Recomendado para su edad: 14–17 h al día (National Sleep Foundation) · dentro del rango',
+        'total_range' => '14–17 h al día',
+        'total_verdict_short' => 'dentro del rango',
+        'wake_window' => 'Orientativo para su edad: 1h–2h · por encima',
+    ]);
+});
+
+it('works without sleep references and rejects an unknown source', function () {
+    $user = actingAsUser();
+    $baby = babyForStatsExportTest($user);
+
+    $notes = app(StatsExportController::class)->buildViewData($baby, validStatsPayload())['sleepRef'];
+    expect($notes['total'])->toBeNull()->and($notes['wake_window'])->toBeNull();
+
+    $payload = validStatsPayload();
+    $payload['sleep_reference'] = ['total' => ['min' => 14, 'max' => 17, 'source' => 'who'], 'wake_window' => null];
+    $this->postJson("/api/babies/{$baby->id}/stats/export", $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('sleep_reference.total.source');
+});

@@ -159,6 +159,13 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   vez el mismo `client_uuid` - un reintento después de que la respuesta
   se perdiera - en vez de crear un duplicado (201 si es nuevo). Sin
   `client_uuid`, todo igual que antes.
+- Referencias de sueño por edad: el export acepta un `sleep_reference`
+  opcional (`total` con min/max/source `nsf`|`aasm`/verdict, y
+  `wake_window` con min/max/verdict), calculado en el móvil
+  (`web/src/lib/sleepReference.ts`). `sleepReferenceNotes()` lo
+  convierte en las líneas de texto que pintan `pdf/stats` y
+  `pdf/consult-summary`. Sin él (cliente antiguo o sin fecha de
+  nacimiento), no se muestra nada.
 - Resumen para la consulta: `POST /babies/{baby}/stats/export` acepta
   `mode` (`full` por defecto, o `summary`), `questions` (nullable, hasta
   1000 caracteres), `high_temperatures` (hasta 10 `{celsius, at}`) y el

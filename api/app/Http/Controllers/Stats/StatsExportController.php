@@ -96,6 +96,7 @@ class StatsExportController extends Controller
             'temperatureChart' => $this->temperatureChartDataUri($data['temperature'] ?? null),
             'vaccinations' => $data['vaccinations'] ?? null,
             'dailySleepPoints' => $this->dailySleepPoints($data['weekly_sleep_by_day']),
+            'sleepRef' => $this->sleepReferenceNotes($data['sleep_reference'] ?? null),
             'growthMetrics' => [
                 $this->growthMetric($baby, 'weight', 'Peso', 'kg', 1, $data['growth']['weight_kg']),
                 $this->growthMetric($baby, 'height', 'Talla', 'cm', 0, $data['growth']['height_cm']),
@@ -177,6 +178,60 @@ class StatsExportController extends Controller
                 'value' => $day['hours'],
             ])
             ->all();
+    }
+
+    /**
+     * Las referencias de sueño por edad, ya como texto para el PDF
+     * ("Recomendado para su edad: 14–17 h al día (National Sleep
+     * Foundation) · dentro del rango"), mismo texto que en pantalla.
+     *
+     * @param  array<string, mixed>|null  $reference
+     * @return array{total: string|null, total_range: string|null, total_verdict_short: string|null, wake_window: string|null}
+     */
+    private function sleepReferenceNotes(?array $reference): array
+    {
+        $verdicts = ['below' => 'por debajo', 'within' => 'dentro del rango', 'above' => 'por encima'];
+        $sources = ['nsf' => 'National Sleep Foundation', 'aasm' => 'AASM / AAP'];
+        $total = $reference['total'] ?? null;
+        $wake = $reference['wake_window'] ?? null;
+
+        $totalRange = $total !== null ? self::formatHours($total['min']).'–'.self::formatHours($total['max']).' h al día' : null;
+        $totalVerdict = $total !== null && ($total['verdict'] ?? null) !== null ? $verdicts[$total['verdict']] : null;
+
+        $wakeNote = null;
+        if ($wake !== null) {
+            $wakeNote = 'Orientativo para su edad: '.self::formatMinutesShort($wake['min']).'–'.self::formatMinutesShort($wake['max']);
+            if (($wake['verdict'] ?? null) !== null) {
+                $wakeNote .= ' · '.$verdicts[$wake['verdict']];
+            }
+        }
+
+        return [
+            'total' => $total !== null
+                ? 'Recomendado para su edad: '.$totalRange.' ('.$sources[$total['source']].')'.($totalVerdict !== null ? ' · '.$totalVerdict : '')
+                : null,
+            'total_range' => $totalRange,
+            'total_verdict_short' => $totalVerdict,
+            'wake_window' => $wakeNote,
+        ];
+    }
+
+    private static function formatHours(float|int $hours): string
+    {
+        return rtrim(rtrim(number_format((float) $hours, 1, ',', ''), '0'), ',');
+    }
+
+    /** "1h", "1h 15min", "45min" - como formatMinutesShort() del móvil. */
+    private static function formatMinutesShort(float|int $minutes): string
+    {
+        $rounded = (int) round($minutes);
+        $hours = intdiv($rounded, 60);
+        $rest = $rounded % 60;
+        if ($hours === 0) {
+            return $rest.'min';
+        }
+
+        return $rest === 0 ? $hours.'h' : $hours.'h '.$rest.'min';
     }
 
     /**

@@ -105,10 +105,9 @@
                 ['label' => 'Duración media (pecho)', 'value' => $feed['average_pecho_duration_minutes'] !== null ? $fmtMin($feed['average_pecho_duration_minutes']) : null],
             ]],
             ['title' => 'Sueño', 'color' => '#5b5a8c', 'tiles' => [
-                ['label' => 'Total al día', 'value' => $sleep['average_total_sleep_minutes'] !== null ? $fmtMin($sleep['average_total_sleep_minutes']) : null, 'note' => $sleep['average_night_sleep_minutes'] !== null ? 'De noche (20-08h) '.$fmtMin($sleep['average_night_sleep_minutes']) : null],
+                ['label' => 'Total al día', 'value' => $sleep['average_total_sleep_minutes'] !== null ? $fmtMin($sleep['average_total_sleep_minutes']) : null, 'note' => $sleep['average_night_sleep_minutes'] !== null ? 'De noche (20-08h) '.$fmtMin($sleep['average_night_sleep_minutes']) : null, 'note2' => $sleepRef['total_range'] !== null ? 'Recomendado: '.$sleepRef['total_range'].($sleepRef['total_verdict_short'] !== null ? ' · '.$sleepRef['total_verdict_short'] : '') : null],
                 ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null],
-                ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? $fmtNum($sleep['average_sleeps_per_day']) : null],
-            ]],
+                ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? $fmtNum($sleep['average_sleeps_per_day']) : null],            ]],
             ['title' => 'Pañales', 'color' => '#6e9080', 'tiles' => [
                 ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? $fmtNum($diaper['average_pee_per_day']) : null],
                 ['label' => 'Con caca al día', 'value' => $diaper['average_poop_per_day'] !== null ? $fmtNum($diaper['average_poop_per_day']) : null],
@@ -133,6 +132,9 @@
                                     <span class="tile-value">{{ $tile['value'] }}</span>
                                     @if (! empty($tile['note']))
                                         <span class="tile-note">{{ $tile['note'] }}</span>
+                                    @endif
+                                    @if (! empty($tile['note2']))
+                                        <span class="tile-note">{{ $tile['note2'] }}</span>
                                     @endif
                                 </td>
                             @endforeach

@@ -20,6 +20,9 @@
                         @if (! empty($tile['note']))
                             <span class="tile-note">{{ $tile['note'] }}</span>
                         @endif
+                        @if (! empty($tile['note2']))
+                            <span class="tile-note">{{ $tile['note2'] }}</span>
+                        @endif
                     </td>
                 @endforeach
                 @for ($i = count($row); $i < $cols; $i++)

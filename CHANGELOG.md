@@ -18,7 +18,9 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   encima. En el Dashboard, la tarjeta de predicción de sueño añade
   "despierto desde hace X · a su edad suele aguantar Y", y si aún no
   hay historial suficiente para predecir, da una franja orientativa
-  para el siguiente sueño según la edad.
+  para el siguiente sueño según la edad. Las mismas referencias salen
+  en el PDF de estadísticas (bajo el reparto día/noche y el tiempo
+  despierto) y en el resumen para la consulta (bajo el total al día).
 
 - **Registro sin conexión** - si al guardar una toma, un sueño, un
   pañal o una temperatura no hay conexión, ya no sale el error rojo: el

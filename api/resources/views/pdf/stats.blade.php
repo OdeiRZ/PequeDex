@@ -177,7 +177,7 @@
                 ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null, 'note' => $deltaNotes['longest_stretch_minutes']],
                 ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? number_format($sleep['average_sleeps_per_day'], 1) : null],
                 ['label' => 'Duración media', 'value' => $fmtMin($sleep['average_duration_minutes'] ?? 0)],
-                ['label' => 'Tiempo despierto entre sueños', 'value' => $sleep['average_wake_window_minutes'] !== null ? $fmtMin($sleep['average_wake_window_minutes']) : null],
+                ['label' => 'Tiempo despierto entre sueños', 'value' => $sleep['average_wake_window_minutes'] !== null ? $fmtMin($sleep['average_wake_window_minutes']) : null, 'note' => $sleepRef['wake_window']],
             ]])
 
             {{-- Reparto día/noche: la misma barra partida que en pantalla. --}}
@@ -213,6 +213,9 @@
                                 </tr>
                             </table>
                             <span style="display: block; font-size: 8px; color: #7a6f66; margin-top: 3px;">Noche: de 20:00 a 08:00</span>
+                            @if ($sleepRef['total'] !== null)
+                                <span style="display: block; font-size: 9px; color: #7a6f66; margin-top: 1px;">{{ $sleepRef['total'] }}</span>
+                            @endif
                             @if ($deltaNotes['total_sleep_minutes'] !== null)
                                 <span style="display: block; font-size: 9px; color: #7a6f66; margin-top: 1px;">Total al día: {{ $deltaNotes['total_sleep_minutes'] }}</span>
                             @endif

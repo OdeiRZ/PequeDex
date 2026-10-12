@@ -192,6 +192,20 @@ class ExportStatsRequest extends FormRequest
             'weekly_sleep_by_day' => ['present', 'array'],
             'weekly_sleep_by_day.*.date' => ['required', 'date'],
             'weekly_sleep_by_day.*.hours' => ['required', 'numeric', 'min:0'],
+
+            // Referencias de sueño por edad (web/src/lib/sleepReference.ts),
+            // calculadas en el móvil como el resto. Opcional: un cliente
+            // anterior no la manda, y sin fecha de nacimiento va a null.
+            'sleep_reference' => ['nullable', 'array'],
+            'sleep_reference.total' => ['nullable', 'array'],
+            'sleep_reference.total.min' => ['required_with:sleep_reference.total', 'numeric', 'min:0'],
+            'sleep_reference.total.max' => ['required_with:sleep_reference.total', 'numeric', 'min:0'],
+            'sleep_reference.total.source' => ['required_with:sleep_reference.total', Rule::in(['nsf', 'aasm'])],
+            'sleep_reference.total.verdict' => ['nullable', Rule::in(['below', 'within', 'above'])],
+            'sleep_reference.wake_window' => ['nullable', 'array'],
+            'sleep_reference.wake_window.min' => ['required_with:sleep_reference.wake_window', 'numeric', 'min:0'],
+            'sleep_reference.wake_window.max' => ['required_with:sleep_reference.wake_window', 'numeric', 'min:0'],
+            'sleep_reference.wake_window.verdict' => ['nullable', Rule::in(['below', 'within', 'above'])],
         ];
     }
 

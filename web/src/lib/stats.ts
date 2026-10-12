@@ -1,3 +1,4 @@
+import type { RangeComparison } from '@/lib/sleepReference'
 import type {
   DiaperChange,
   DiaperResidueColor,
@@ -1070,6 +1071,17 @@ export interface StatsExportPayload {
   activity_heatmap: { day_of_week: number; hour: number; count: number }[]
   vitamin_d: { has_schedule: boolean; given: number; total_days: number }
   weekly_sleep_by_day: { date: string; hours: number }[]
+  /** Referencias por edad (lib/sleepReference.ts); null sin fecha de
+   * nacimiento o fuera de rango de edad. */
+  sleep_reference: {
+    total: {
+      min: number
+      max: number
+      source: 'nsf' | 'aasm'
+      verdict: RangeComparison | null
+    } | null
+    wake_window: { min: number; max: number; verdict: RangeComparison | null } | null
+  } | null
 }
 
 interface GrowthMetricExportStat {
@@ -1115,6 +1127,7 @@ export interface StatsExportOptions {
   activityHeatmap?: HeatmapCell[]
   vitaminD?: VitaminDStats
   dailySleep?: DaySleepTotal[]
+  sleepReference?: StatsExportPayload['sleep_reference']
 }
 
 export function buildStatsExportPayload(
@@ -1138,6 +1151,7 @@ export function buildStatsExportPayload(
     activityHeatmap = [],
     vitaminD = { hasSchedule: false, given: 0, totalDays: 0 },
     dailySleep = [],
+    sleepReference = null,
   } = options
 
   return {
@@ -1240,5 +1254,6 @@ export function buildStatsExportPayload(
       total_days: vitaminD.totalDays,
     },
     weekly_sleep_by_day: dailySleep.map((d) => ({ date: d.date, hours: d.hours })),
+    sleep_reference: sleepReference,
   }
 }

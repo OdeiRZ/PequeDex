@@ -144,6 +144,36 @@ Repo único con dos aplicaciones independientes, cada una con su propio
 20. ✅ Resumen para la consulta: un PDF de una página con los últimos
     14 días y un recuadro de preguntas para el pediatra.
 
+## Copias de seguridad
+
+Neon gratuito solo conserva 6 horas de historial, así que
+`.github/workflows/backup.yml` hace cada domingo (y a mano) un volcado de
+la base de datos, lo **cifra** (el repositorio es público y sus artefactos
+los puede descargar cualquiera con sesión de GitHub) y lo guarda 90 días
+como artefacto. No lleva sesiones, tokens de acceso ni cachés. Sin coste:
+Actions es gratuito en repositorios públicos y el volcado son pocos MB.
+
+**Puesta en marcha** (una vez; los valores los pones tú):
+
+```
+gh secret set NEON_DATABASE_URL   # cadena de conexión DIRECTA de Neon (no la "pooled")
+gh secret set BACKUP_PASSPHRASE   # contraseña de cifrado; guárdala aparte
+gh workflow run backup.yml        # primera copia, para comprobar que funciona
+```
+
+**Restaurar** (en un proyecto o rama nueva de Neon, nunca sobre producción
+sin mirar antes):
+
+```
+gh run download <id-de-la-ejecución> -n pequedex-backup-<id>
+gpg --decrypt pequedex.dump.gpg > pequedex.dump
+pg_restore --no-owner --no-privileges --clean --if-exists -d "<cadena-destino>" pequedex.dump
+```
+
+Al restaurar hay que volver a iniciar sesión (los tokens no se copian).
+Una copia que nunca se ha restaurado no es una copia: conviene probar la
+restauración una vez en un proyecto de pruebas.
+
 ## Licencia
 
 [AGPLv3](LICENSE).

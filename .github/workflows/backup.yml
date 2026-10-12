@@ -1,0 +1,101 @@
+name: Backup de la base de datos
+
+# Neon gratuito solo conserva 6 horas de historial: un borrado accidental o
+# un fallo se llevaría los datos reales sin vuelta atrás. Una vez por semana
+# (y a mano desde la pestaña Actions) se vuelca la base de datos, se CIFRA y
+# se guarda como artefacto privado de ejecución, 90 días.
+#
+# El repositorio es PÚBLICO y los artefactos de un repositorio público los
+# puede descargar cualquiera con sesión de GitHub: por eso el volcado nunca
+# se sube sin cifrar. Cómo restaurarlo: ver "Copias de seguridad" en el
+# README principal.
+#
+# Secretos del repositorio (Settings > Secrets and variables > Actions):
+#   NEON_DATABASE_URL  cadena de conexión de PequeDex en Neon
+#                      (postgresql://...?sslmode=require). La DIRECTA, no la
+#                      "pooled" (host con -pooler): pg_dump no funciona bien
+#                      a través del pooler.
+#   BACKUP_PASSPHRASE  contraseña con la que se cifra el volcado (guárdala
+#                      aparte: sin ella la copia no se puede abrir)
+
+on:
+  schedule:
+    # Domingos a las 03:17 UTC (hora valle y no en punto, que es cuando
+    # GitHub va más cargado).
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Volcado cifrado de Neon
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Comprobar que los secretos existen
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Faltan los secretos NEON_DATABASE_URL y/o BACKUP_PASSPHRASE (ver la cabecera de este workflow)."
+            exit 1
+          fi
+
+      # La imagen oficial de PostgreSQL trae un pg_dump de la misma versión
+      # mayor que Neon (18); el de los repositorios de Ubuntu es más viejo y
+      # se niega a volcar una base de datos más nueva que él.
+      - name: Volcar la base de datos
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          mkdir -p backup
+          # Sin los datos de sesiones, tokens de acceso, cachés y colas: no
+          # hacen falta para restaurar los datos del bebé (al restaurar hay
+          # que volver a iniciar sesión) y son lo más sensible que hay.
+          docker run --rm -e NEON_DATABASE_URL -v "$PWD/backup:/backup" postgres:18 \
+            sh -c 'pg_dump "$NEON_DATABASE_URL" \
+              --format=custom --no-owner --no-privileges \
+              --exclude-table-data=personal_access_tokens \
+              --exclude-table-data=sessions \
+              --exclude-table-data=password_reset_tokens \
+              --exclude-table-data=cache \
+              --exclude-table-data=cache_locks \
+              --exclude-table-data=jobs \
+              --exclude-table-data=job_batches \
+              --exclude-table-data=failed_jobs \
+              --file=/backup/pequedex.dump'
+
+      - name: Comprobar que el volcado es válido
+        run: |
+          SIZE=$(stat -c%s backup/pequedex.dump)
+          echo "Tamaño del volcado: $SIZE bytes"
+          # Una base de datos vacía o un volcado truncado pesan muy poco.
+          if [ "$SIZE" -lt 20000 ]; then
+            echo "::error::El volcado es sospechosamente pequeño ($SIZE bytes)."
+            exit 1
+          fi
+          docker run --rm -v "$PWD/backup:/backup" postgres:18 \
+            sh -c 'pg_restore --list /backup/pequedex.dump | grep -q "TABLE DATA public babies" && pg_restore --list /backup/pequedex.dump | grep -q "TABLE DATA public sleeps"' \
+            || { echo "::error::El volcado no contiene las tablas esperadas (babies, sleeps)."; exit 1; }
+
+      - name: Cifrar el volcado
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+            --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 \
+            --output backup/pequedex.dump.gpg backup/pequedex.dump
+          rm backup/pequedex.dump
+          ls -l backup
+
+      - name: Guardar la copia cifrada
+        uses: actions/upload-artifact@v4
+        with:
+          name: pequedex-backup-${{ github.run_id }}
+          path: backup/pequedex.dump.gpg
+          retention-days: 90
+          if-no-files-found: error

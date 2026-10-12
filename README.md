@@ -92,7 +92,8 @@ Repo único con dos aplicaciones independientes, cada una con su propio
    acciones y hojas inferiores), pensada para registrar con una mano de
    madrugada, no para una captura de pantalla.
 9. ✅ Despliegue real: API en [Render](https://render.com) (Docker,
-   Frankfurt) + Postgres en [Neon](https://neon.tech) (Londres) + fotos de
+   Frankfurt) + Postgres en [Neon](https://neon.tech) (Fráncfort, movido
+   desde Londres el 2026-10-12 para estar junto a la API) + fotos de
    hitos en [Cloudflare R2](https://developers.cloudflare.com/r2/) +
    frontend en GitHub Pages (antes en Cloudflare Pages, ver nota arriba).
    Verificado de punta a punta contra los servicios reales (registro,

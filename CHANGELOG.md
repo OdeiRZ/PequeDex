@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **Base de datos movida de Londres a Fráncfort** (2026-10-12): junto a la
+  API en Render, en un proyecto nuevo de Neon. Se hizo con las copias
+  cifradas y el workflow `restore-database.yml` (que ahora también sincroniza
+  sobre un destino con tablas, con `--clean --if-exists`, y falla si algo
+  "ya existe"). Medido en vivo: el bootstrap completo pasó de ~1,1 s a
+  ~0,6 s y el 304 a ~0,4 s. Hubo que volver a iniciar sesión (los tokens no
+  se copian). El proyecto antiguo se conserva una semana como marcha atrás.
 - **Rendimiento: el arranque del Dashboard, más barato por dentro** - tras
   medir en vivo, lo que quedaba no era la red sino la CPU del contenedor
   gratuito (el API en Fráncfort y la base de datos en Londres, con una

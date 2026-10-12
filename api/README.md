@@ -356,6 +356,12 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
      sale solo de ella (`based_on: age_reference`), aunque
      `has_enough_data` sea false.
 
+  Las tres predicciones (siguiente siesta, despertar y siguiente toma)
+  devuelven además `prediction.range: {from, to}`: el rango habitual
+  (percentil 20 a 80 de las últimas 20 ventanas, duraciones o huecos,
+  `Services/Support/Quantiles`), siempre con `prediction.at` dentro, o
+  `null` con menos de 8 observaciones.
+
   Validado con un backtest sobre un mes de datos reales de un bebé
   (2026-10-12, ver CHANGELOG): con la media, la referencia por edad sola
   acertaba más que el predictor; con la mediana ponderada y peso 2 sube

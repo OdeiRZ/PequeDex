@@ -3,6 +3,7 @@
 use App\Models\Baby;
 use App\Models\Feed;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 
 function babyForFeedPredictionTest(User $user): Baby
 {
@@ -78,6 +79,35 @@ it('uses the median gap, so one long gap does not drag the prediction', function
     $this->getJson("/api/babies/{$baby->id}/feed-prediction")
         ->assertOk()
         ->assertJsonPath('data.average_gap_minutes', 60);
+});
+
+it('gives a usual range only with enough gaps, and always around the predicted time', function () {
+    $user = actingAsUser();
+    $baby = babyForFeedPredictionTest($user);
+
+    // Pocos huecos: sin rango.
+    foreach (['08:00', '09:00', '10:00', '11:00'] as $time) {
+        Feed::factory()->for($baby)->for($user, 'loggedBy')->create(['started_at' => "2026-08-30 {$time}:00"]);
+    }
+    $this->getJson("/api/babies/{$baby->id}/feed-prediction")
+        ->assertOk()
+        ->assertJsonPath('data.prediction.range', null);
+
+    // Once huecos con variedad: ya hay rango, más ancho que un punto.
+    $at = CarbonImmutable::parse('2026-08-30 11:00:00');
+    foreach ([30, 90, 60, 120, 45, 150, 60, 75] as $gap) {
+        $at = $at->addMinutes($gap);
+        Feed::factory()->for($baby)->for($user, 'loggedBy')->create(['started_at' => $at]);
+    }
+
+    $response = $this->getJson("/api/babies/{$baby->id}/feed-prediction")->assertOk();
+    $predicted = CarbonImmutable::parse($response->json('data.prediction.at'));
+    $from = CarbonImmutable::parse($response->json('data.prediction.range.from'));
+    $to = CarbonImmutable::parse($response->json('data.prediction.range.to'));
+
+    expect($from->lessThanOrEqualTo($predicted))->toBeTrue()
+        ->and($to->greaterThanOrEqualTo($predicted))->toBeTrue()
+        ->and($to->greaterThan($from))->toBeTrue();
 });
 
 it('rejects the feed prediction for a baby the user is not linked to', function () {

@@ -96,6 +96,45 @@ it('predicts the wake-up with the median duration, not dragged by one long sleep
     expect($response->json('data.prediction.at'))->toContain('2026-08-31T11:00:00');
 });
 
+it('gives a usual range for the next sleep once there are enough windows', function () {
+    $user = actingAsUser();
+    $baby = babyForSleepPredictionTest($user);
+
+    // Pocos datos (3 siestas, 2 ventanas): sin rango.
+    foreach ([['08:00', '09:00'], ['11:00', '12:00'], ['14:00', '15:00']] as [$start, $end]) {
+        Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+            'started_at' => "2026-08-30 {$start}:00",
+            'ended_at' => "2026-08-30 {$end}:00",
+        ]);
+    }
+    $this->getJson("/api/babies/{$baby->id}/sleep-prediction")
+        ->assertOk()
+        ->assertJsonPath('data.prediction.range', null);
+
+    // Cinco días más con tres siestas (ventanas variadas, todo de día): ya
+    // hay 10+ ventanas, así que hay rango, y contiene la hora predicha.
+    foreach ([[60, 90], [120, 75], [100, 60], [150, 90], [80, 110]] as $i => $windows) {
+        $at = CarbonImmutable::parse('2026-08-31 08:00:00')->addDays($i);
+        foreach ([0, ...$windows] as $window) {
+            $at = $at->addMinutes($window);
+            Sleep::factory()->for($baby)->for($user, 'loggedBy')->create([
+                'started_at' => $at,
+                'ended_at' => $at->addMinutes(45),
+            ]);
+            $at = $at->addMinutes(45);
+        }
+    }
+
+    $response = $this->getJson("/api/babies/{$baby->id}/sleep-prediction")->assertOk();
+    $predicted = CarbonImmutable::parse($response->json('data.prediction.at'));
+    $from = CarbonImmutable::parse($response->json('data.prediction.range.from'));
+    $to = CarbonImmutable::parse($response->json('data.prediction.range.to'));
+
+    expect($from->lessThanOrEqualTo($predicted))->toBeTrue()
+        ->and($to->greaterThanOrEqualTo($predicted))->toBeTrue()
+        ->and($to->greaterThan($from))->toBeTrue();
+});
+
 /** Un sueño en hora local de Madrid (la API guarda UTC). */
 function madridSleep(Baby $baby, User $user, string $start, ?string $end): void
 {

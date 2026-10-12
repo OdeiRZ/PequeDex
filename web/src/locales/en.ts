@@ -667,12 +667,14 @@ export default {
       ageBased: 'Guideline for this age: next sleep between {from} and {to}.',
       basedOnAge: '(guideline for this age)',
       basedOnNumber: '(based on wake window no. {n} of the day)',
+      usualRange: 'Usually between {from} and {to}.',
     },
     feedPrediction: {
       title: 'Feed: prediction',
       insufficientData: 'Not enough feeds logged yet ({sample}/{minimum}) to estimate a pattern.',
       noPattern: 'Not enough regularity in the schedule to estimate the next feed.',
       nextFeed: 'Estimated next feed: {at}',
+      usualRange: 'Usually between {from} and {to}.',
     },
     growth: {
       title: 'Growth',

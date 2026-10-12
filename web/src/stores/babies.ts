@@ -220,7 +220,18 @@ export interface SleepPrediction {
   age_reference: { min: number; max: number } | null
   /** `based_on`: wake_window_by_number | average_wake_window |
    * age_reference (sin datos propios) | average_sleep_duration. */
-  prediction: { type: 'wake_up' | 'next_sleep'; at: string; based_on: string } | null
+  prediction: {
+    type: 'wake_up' | 'next_sleep'
+    at: string
+    /** Rango habitual (percentil 20-80 de lo reciente); null con pocos datos. */
+    range?: PredictionRange | null
+    based_on: string
+  } | null
+}
+
+export interface PredictionRange {
+  from: string
+  to: string
 }
 
 export interface FeedPrediction {
@@ -228,7 +239,12 @@ export interface FeedPrediction {
   sample_size: number
   minimum_sample_size: number
   average_gap_minutes: number | null
-  prediction: { type: 'next_feed'; at: string; based_on: string } | null
+  prediction: {
+    type: 'next_feed'
+    at: string
+    range?: PredictionRange | null
+    based_on: string
+  } | null
 }
 
 export interface Contraction {

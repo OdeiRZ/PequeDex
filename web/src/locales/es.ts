@@ -672,6 +672,7 @@ export default {
       ageBased: 'Orientativo para su edad: siguiente sueño entre las {from} y las {to}.',
       basedOnAge: '(orientativo por su edad)',
       basedOnNumber: '(según su {n}.ª ventana del día)',
+      usualRange: 'Suele ser entre las {from} y las {to}.',
     },
     feedPrediction: {
       title: 'Toma: predicción',
@@ -679,6 +680,7 @@ export default {
         'Todavía no hay suficientes tomas registradas ({sample}/{minimum}) para estimar un patrón.',
       noPattern: 'No hay suficiente regularidad en los horarios para estimar la siguiente toma.',
       nextFeed: 'Estimación de la siguiente toma: {at}',
+      usualRange: 'Suele ser entre las {from} y las {to}.',
     },
     growth: {
       title: 'Crecimiento',

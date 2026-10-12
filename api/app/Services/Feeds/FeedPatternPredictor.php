@@ -3,6 +3,7 @@
 namespace App\Services\Feeds;
 
 use App\Models\Baby;
+use App\Services\Support\Quantiles;
 use Carbon\CarbonImmutable;
 
 /**
@@ -83,6 +84,11 @@ class FeedPatternPredictor
         );
         $latestFeed = $feeds->last();
 
+        // Rango habitual (percentil 20 a 80 de esos huecos), con la hora
+        // predicha siempre dentro; null con pocos huecos.
+        $range = Quantiles::usualRange($gaps);
+        $latestStart = CarbonImmutable::parse($latestFeed->started_at);
+
         return [
             'has_enough_data' => true,
             'sample_size' => $feeds->count(),
@@ -90,7 +96,11 @@ class FeedPatternPredictor
             'average_gap_minutes' => $averageGapMinutes,
             'prediction' => [
                 'type' => 'next_feed',
-                'at' => CarbonImmutable::parse($latestFeed->started_at)->addMinutes($averageGapMinutes)->toIso8601String(),
+                'at' => $latestStart->addMinutes($averageGapMinutes)->toIso8601String(),
+                'range' => $range === null ? null : [
+                    'from' => $latestStart->addMinutes((int) round(min($range['low'], $averageGapMinutes)))->toIso8601String(),
+                    'to' => $latestStart->addMinutes((int) round(max($range['high'], $averageGapMinutes)))->toIso8601String(),
+                ],
                 'based_on' => 'average_gap',
             ],
         ];

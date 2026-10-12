@@ -26,6 +26,28 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   son muy irregulares (mitad entre 63 y 155 min) y ningún método simple
   acierta mucho.
 
+- **Predicciones con rango habitual** - además de la hora estimada, las
+  tarjetas de predicción de sueño (siguiente siesta y despertar) y de
+  toma muestran "Suele ser entre las 14:10 y las 15:20", calculado con
+  los percentiles 20 y 80 de los últimos huecos o duraciones (la hora
+  predicha siempre queda dentro; sin rango con menos de 8 observaciones).
+  Una hora puntual aparenta más precisión de la que hay: en el backtest,
+  un margen de ±30 min acierta ~60 % en siestas y ~35 % en tomas, y el
+  rango cubre ~50 % de los casos. Es una forma honesta de mostrar la
+  incertidumbre, no una mejora del modelo.
+
+- **Probado y descartado** (backtest con un mes de datos reales de un
+  bebé, 2026-10-12): ninguna de estas ideas mejoró la línea base
+  de forma fiable, así que no se han implementado: condicionar la ventana
+  por la duración de la siesta anterior, la hora del día o una regresión
+  lineal sobre ellas; vecinos más cercanos (kNN) sobre esas variables;
+  separar día y noche en las tomas; mezclar el hueco anterior (persistencia);
+  y corregir el sesgo con el error reciente (empeoraba el acierto: 60 % a
+  47 % a ±30 min en siestas). El kNN solo mejoró algo el despertar en
+  curso (+2-3 puntos a ±30 min, dentro del ruido). Con más meses de datos
+  o más bebés merece repetirse; los scripts de backtest están en la
+  carpeta de pruebas del autor, no en el repositorio.
+
 ### Añadido
 
 - **Predicción de sueño más precisa** - la siguiente siesta se calcula

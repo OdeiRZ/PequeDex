@@ -4,6 +4,7 @@ namespace App\Services\Sleep;
 
 use App\Models\Baby;
 use App\Models\Sleep;
+use App\Services\Support\Quantiles;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
@@ -40,6 +41,9 @@ class SleepPatternPredictor
 
     /** Más largo que esto no es una ventana entre sueños, sino un hueco en el registro. */
     private const MAX_WAKE_WINDOW_HOURS = 6;
+
+    /** Observaciones recientes con las que se calcula el rango habitual. */
+    private const RANGE_SAMPLE = 20;
 
     /** Peso que pierde cada día de antigüedad (0,85^días). */
     private const RECENCY_DECAY = 0.85;
@@ -134,6 +138,11 @@ class SleepPatternPredictor
                 'prediction' => [
                     'type' => 'wake_up',
                     'at' => CarbonImmutable::parse($latest->started_at)->addMinutes((int) round($duration['value']))->toIso8601String(),
+                    'range' => self::usualRange(
+                        $pool->slice(-self::RANGE_SAMPLE)->map(fn (Sleep $s) => self::minutesBetween($s->started_at, $s->ended_at))->values()->all(),
+                        CarbonImmutable::parse($latest->started_at),
+                        (int) round($duration['value']),
+                    ),
                     'based_on' => 'average_sleep_duration',
                 ],
             ];
@@ -172,8 +181,36 @@ class SleepPatternPredictor
             'prediction' => [
                 'type' => 'next_sleep',
                 'at' => $lastEnd->addMinutes((int) round($minutes))->toIso8601String(),
+                'range' => self::usualRange(
+                    $windows->slice(-self::RANGE_SAMPLE)->pluck('minutes')->values()->all(),
+                    $lastEnd,
+                    (int) round($minutes),
+                ),
                 'based_on' => $basedOn,
             ],
+        ];
+    }
+
+    /**
+     * Rango habitual (percentil 20 a 80 de lo observado recientemente),
+     * siempre con la hora predicha dentro. Null con pocos datos. Es una
+     * forma honesta de mostrar la incertidumbre: en un backtest con datos
+     * reales de un recién nacido, la mitad de las veces el resultado cae
+     * fuera de cualquier margen estrecho alrededor de la hora puntual.
+     *
+     * @param  list<int>  $minutes
+     * @return array{from: string, to: string}|null
+     */
+    private static function usualRange(array $minutes, CarbonImmutable $origin, int $pointMinutes): ?array
+    {
+        $range = Quantiles::usualRange($minutes);
+        if ($range === null) {
+            return null;
+        }
+
+        return [
+            'from' => $origin->addMinutes((int) round(min($range['low'], $pointMinutes)))->toIso8601String(),
+            'to' => $origin->addMinutes((int) round(max($range['high'], $pointMinutes)))->toIso8601String(),
         ];
     }
 

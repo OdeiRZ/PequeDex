@@ -51,6 +51,7 @@ import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import { isNetworkError } from '@/lib/offlineQueue'
+import { formatPredictionRange } from '@/lib/predictionRange'
 import {
   ageInMonths,
   awakeSince,
@@ -1799,6 +1800,18 @@ const sleepWakeHint = computed(() => {
   })
 })
 
+// "Suele ser entre las 14:10 y las 15:20." - el rango habitual del
+// servidor (percentil 20-80 de lo reciente), o '' si hay pocos datos. Una
+// hora puntual aparenta más precisión de la que hay: en un backtest con
+// datos reales, la mitad de las veces el resultado cae fuera de ±30 min.
+function usualRangeText(
+  range: { from: string; to: string } | null | undefined,
+  key: 'dashboard.sleepPrediction.usualRange' | 'dashboard.feedPrediction.usualRange',
+): string {
+  const times = formatPredictionRange(range, dateLocale.value)
+  return times ? ` ${t(key, times)}` : ''
+}
+
 const sleepPredictionLabel = computed(() => {
   const prediction = babies.sleepPrediction
 
@@ -1807,17 +1820,21 @@ const sleepPredictionLabel = computed(() => {
   // "faltan siestas".
   if (prediction?.prediction) {
     const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
+    const range = usualRangeText(
+      prediction.prediction.range,
+      'dashboard.sleepPrediction.usualRange',
+    )
     if (prediction.prediction.type === 'wake_up') {
-      return t('dashboard.sleepPrediction.wakeUp', { at })
+      return t('dashboard.sleepPrediction.wakeUp', { at }) + range
     }
     const label = t('dashboard.sleepPrediction.nextSleep', { at })
     if (prediction.prediction.based_on === 'age_reference') {
       return `${label} ${t('dashboard.sleepPrediction.basedOnAge')}`
     }
     if (prediction.prediction.based_on === 'wake_window_by_number' && prediction.window_number) {
-      return `${label} ${t('dashboard.sleepPrediction.basedOnNumber', { n: prediction.window_number })}`
+      return `${label} ${t('dashboard.sleepPrediction.basedOnNumber', { n: prediction.window_number })}${range}`
     }
-    return label
+    return label + range
   }
 
   if (!prediction || !prediction.has_enough_data) {
@@ -1861,7 +1878,10 @@ const feedPredictionLabel = computed(() => {
 
   const at = new Date(prediction.prediction.at).toLocaleString(dateLocale.value)
 
-  return t('dashboard.feedPrediction.nextFeed', { at })
+  return (
+    t('dashboard.feedPrediction.nextFeed', { at }) +
+    usualRangeText(prediction.prediction.range, 'dashboard.feedPrediction.usualRange')
+  )
 })
 
 // A predicted time that's already arrived (or passed) reads the same as

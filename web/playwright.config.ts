@@ -49,6 +49,12 @@ export default defineConfig({
     // El Chrome ya instalado (en local y en los runners de GitHub), sin
     // descargar un navegador aparte.
     channel: 'chrome',
+    // La app registra un service worker vacío (public/sw.js) para poder
+    // instalarse. Tras la primera visita las peticiones del API pasan por él y
+    // `page.route` ya no las ve: el test de "API caído" pasaba o fallaba según
+    // el momento en que terminara de registrarse (falló en CI, pasaba en
+    // local). Sin service worker, el resultado no depende de eso.
+    serviceWorkers: 'block',
     trace: 'retain-on-failure',
     locale: 'es-ES',
   },

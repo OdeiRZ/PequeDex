@@ -9,15 +9,26 @@
            en 3, sin gráficas) y solo lo que suele preguntarse en una
            revisión. Los datos son los mismos del export de estadísticas,
            calculados en el frontend sobre los últimos 14 días. */
-        @page { margin: 34px 34px 40px; }
+        @page { margin: 28px 34px 38px; }
         body { font-family: sans-serif; font-size: 11px; color: #2b2420; }
-        .head { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .head td { padding: 0; vertical-align: bottom; }
-        .title { font-size: 19px; font-weight: bold; }
-        .baby { font-size: 12px; color: #7a6f66; margin-top: 2px; }
+        /* Ficha del bebé: lo primero que se mira, así que grande. */
+        .hero { background: #f7efe7; border: 1px solid #efe6dc; border-radius: 14px; padding: 12px 16px 6px; margin: 0 0 8px; }
+        .hero-head { width: 100%; border-collapse: collapse; }
+        .hero-head td { padding: 0; vertical-align: top; }
+        .eyebrow { font-size: 9px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #a65a6b; }
+        .name { font-size: 30px; font-weight: bold; margin: 2px 0 0; }
+        .age { font-size: 15px; color: #5c5149; margin-top: 1px; }
         .meta { text-align: right; font-size: 9px; color: #7a6f66; }
+        table.hero-tiles { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px -6px 4px; }
+        table.hero-tiles td { background: #ffffff; border: 1px solid #efe6dc; border-radius: 10px; padding: 6px 9px; vertical-align: top; }
+        .hero-label { display: block; font-size: 8.5px; color: #7a6f66; margin-bottom: 1px; }
+        .hero-value { display: block; font-size: 14px; font-weight: bold; }
+        .pill { display: inline-block; background: #f3ece4; border-radius: 12px; padding: 3px 9px; margin: 0 5px 4px 0; font-size: 10px; font-weight: bold; }
+        .pill .muted-text { color: #7a6f66; font-weight: normal; }
+        .pill .dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; margin-right: 3px; }
+        .sub-label { font-size: 9px; color: #7a6f66; margin: 6px 6px 3px; }
 
-        .card { border: 1px solid #efe6dc; border-radius: 12px; padding: 7px 6px 4px; margin: 0 0 8px; }
+        .card { border: 1px solid #efe6dc; border-radius: 12px; padding: 6px 6px 3px; margin: 0 0 6px; }
         .card-title { font-size: 12px; font-weight: bold; margin: 1px 6px 5px; }
         .card-title .bar { display: inline-block; width: 4px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 
@@ -33,8 +44,7 @@
         .rows td.right { text-align: right; color: #7a6f66; white-space: nowrap; }
         .muted { color: #7a6f66; font-size: 10px; margin: 0 6px 4px; }
 
-        .questions { border: 1px dashed #c7bcae; border-radius: 10px; padding: 8px 10px; min-height: 70px; font-size: 11px; white-space: pre-line; }
-        .line { border-bottom: 1px solid #e8ddd0; height: 18px; }
+        .questions { font-size: 11px; line-height: 1.35; white-space: pre-line; padding: 0 0 2px; }
 
         .footer { position: fixed; bottom: -26px; left: 0; right: 0; text-align: center; font-size: 8px; color: #a3968a; }
         .footer img { vertical-align: middle; margin-right: 4px; width: 10px; height: 12px; }
@@ -64,55 +74,66 @@
         ])->all();
     @endphp
 
-    <table class="head">
-        <tr>
-            <td>
-                <div class="title">Resumen para la consulta</div>
-                <div class="baby">
-                    {{ $baby->name ?: 'Bebé' }} · {{ $babyAge['value'] }} {{ $babyAge['unit'] }}@if ($sexLabel) · {{ $sexLabel }}@endif
-                    @if ($baby->birth_date) · nació el {{ $fmtDay($baby->birth_date) }}@endif
-                </div>
-            </td>
-            <td class="meta">
-                Del {{ $since->format('d/m/Y') }} al {{ $generatedAt->format('d/m/Y') }}<br>
-                Generado el {{ $generatedAt->format('d/m/Y H:i') }}
-            </td>
-        </tr>
-    </table>
-
-    {{-- Preguntas: arriba, es lo primero que se quiere tener a mano en
-         la consulta. Sin preguntas escritas, líneas en blanco para
-         apuntarlas a mano. --}}
-    <div class="card">
-        <div class="card-title"><span class="bar" style="background: #a65a6b;"></span>Preguntas para la consulta</div>
-        <div style="margin: 0 6px 4px;">
-            @if ($questions)
-                <div class="questions">{{ $questions }}</div>
-            @else
-                <div class="line"></div><div class="line"></div><div class="line"></div>
-            @endif
-        </div>
+    @php
+        $heroTiles = array_values(array_filter([
+            ['label' => 'Edad', 'value' => $babyAge['value'] !== null ? $babyAge['value'].' '.$babyAge['unit'] : null],
+            ['label' => 'Sexo', 'value' => $sexLabel],
+            ['label' => 'Nació el', 'value' => $baby->birth_date ? $fmtDay($baby->birth_date) : null],
+            ['label' => 'Periodo', 'value' => $since->format('d/m').' – '.$generatedAt->format('d/m/Y')],
+        ], fn ($t) => $t['value'] !== null));
+    @endphp
+    <div class="hero">
+        <table class="hero-head">
+            <tr>
+                <td>
+                    <div class="eyebrow">Resumen para la consulta</div>
+                    <div class="name">{{ $baby->name ?: 'Bebé' }}</div>
+                    @if ($babyAge['value'] !== null)
+                        <div class="age">{{ $babyAge['value'] }} {{ $babyAge['unit'] }}@if ($sexLabel) · {{ $sexLabel }}@endif</div>
+                    @endif
+                </td>
+                <td class="meta">
+                    Generado el {{ $generatedAt->format('d/m/Y H:i') }}<br>
+                    Datos de los últimos 14 días
+                </td>
+            </tr>
+        </table>
+        <table class="hero-tiles">
+            <tr>
+                @foreach ($heroTiles as $tile)
+                    <td style="width: {{ round(100 / count($heroTiles), 2) }}%;">
+                        <span class="hero-label">{{ $tile['label'] }}</span>
+                        <span class="hero-value">{{ $tile['value'] }}</span>
+                    </td>
+                @endforeach
+            </tr>
+        </table>
     </div>
 
     @php
         $sections = [
             ['title' => 'Crecimiento (última medida)', 'color' => '#a65a6b', 'tiles' => $growthTiles],
             ['title' => 'Alimentación', 'color' => '#c98a3e', 'tiles' => [
+                ['label' => 'Tomas registradas', 'value' => $feed['total'] > 0 ? $feed['total'] : null, 'note' => 'En los últimos 14 días'],
                 ['label' => 'Tomas al día', 'value' => $feed['average_per_day'] !== null ? $fmtNum($feed['average_per_day']) : null],
                 ['label' => 'Cada cuánto come', 'value' => $feed['average_gap_minutes'] !== null ? $fmtMin($feed['average_gap_minutes']) : null],
-                ['label' => 'Al pecho / biberón', 'value' => $feed['total'] > 0 ? round($feed['by_type']['pecho'] / $feed['total'] * 100).'% / '.round($feed['by_type']['biberon'] / $feed['total'] * 100).'%' : null],
+                ['label' => 'Al pecho / biberón', 'value' => $feed['total'] > 0 ? round($feed['by_type']['pecho'] / $feed['total'] * 100).'% / '.round($feed['by_type']['biberon'] / $feed['total'] * 100).'%' : null, 'note' => $feed['by_type']['pecho'] > 0 ? 'Pecho: izq. '.$feed['pecho_side_counts']['izquierdo'].' · der. '.$feed['pecho_side_counts']['derecho'].' · ambos '.$feed['pecho_side_counts']['ambos'] : null],
                 ['label' => 'Cantidad media (biberón)', 'value' => $feed['average_bottle_amount_ml'] !== null ? round($feed['average_bottle_amount_ml']).' ml' : null],
                 ['label' => 'Duración media (pecho)', 'value' => $feed['average_pecho_duration_minutes'] !== null ? $fmtMin($feed['average_pecho_duration_minutes']) : null],
             ]],
             ['title' => 'Sueño', 'color' => '#5b5a8c', 'tiles' => [
                 ['label' => 'Total al día', 'value' => $sleep['average_total_sleep_minutes'] !== null ? $fmtMin($sleep['average_total_sleep_minutes']) : null, 'note' => $sleep['average_night_sleep_minutes'] !== null ? 'De noche (20-08h) '.$fmtMin($sleep['average_night_sleep_minutes']) : null, 'note2' => $sleepRef['total_range'] !== null ? 'Recomendado: '.$sleepRef['total_range'].($sleepRef['total_verdict_short'] !== null ? ' · '.$sleepRef['total_verdict_short'] : '') : null],
                 ['label' => 'Tramo más largo (media)', 'value' => $sleep['average_longest_stretch_minutes'] !== null ? $fmtMin($sleep['average_longest_stretch_minutes']) : null],
-                ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? $fmtNum($sleep['average_sleeps_per_day']) : null],            ]],
+                ['label' => 'Sueños al día', 'value' => $sleep['average_sleeps_per_day'] !== null ? $fmtNum($sleep['average_sleeps_per_day']) : null],
+                ['label' => 'Duración media de cada sueño', 'value' => $sleep['average_duration_minutes'] !== null ? $fmtMin($sleep['average_duration_minutes']) : null],
+                ['label' => 'Despierto entre sueños', 'value' => $sleep['average_wake_window_minutes'] !== null ? $fmtMin($sleep['average_wake_window_minutes']) : null, 'note' => $sleepRef['wake_window'] ?? null],
+                ['label' => 'Sueño de día', 'value' => $sleep['average_day_sleep_minutes'] !== null ? $fmtMin($sleep['average_day_sleep_minutes']) : null],
+            ], 'extra' => 'sleepChart'],
             ['title' => 'Pañales', 'color' => '#6e9080', 'tiles' => [
-                ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? $fmtNum($diaper['average_pee_per_day']) : null],
+                ['label' => 'Con pis al día', 'value' => $diaper['average_pee_per_day'] !== null ? $fmtNum($diaper['average_pee_per_day']) : null, 'note' => $diaper['total'].' cambios en total'],
                 ['label' => 'Con caca al día', 'value' => $diaper['average_poop_per_day'] !== null ? $fmtNum($diaper['average_poop_per_day']) : null],
                 ['label' => 'Última caca', 'value' => $lastPoopSince],
-            ]],
+            ], 'extra' => 'poopColors'],
         ];
     @endphp
 
@@ -144,6 +165,28 @@
                         </tr>
                     @endforeach
                 </table>
+            @endif
+
+            {{-- Extras de cada sección: los mismos datos que ya recibe el PDF
+                 completo, aquí en pequeño. --}}
+            @if (($section['extra'] ?? null) === 'sleepChart')
+                <p class="sub-label">Horas de sueño, últimos 7 días</p>
+                <div style="margin: 0 4px;">
+                    @include('pdf.partials.vertical-bars', [
+                        'points' => $dailySleepPoints,
+                        'color' => $section['color'],
+                        'format' => fn ($value) => number_format($value, 1, ',', '').' h',
+                        'highlightLast' => true,
+                        'height' => 36,
+                    ])
+                </div>
+            @elseif (($section['extra'] ?? null) === 'poopColors' && count($poopColorRows) > 0)
+                <p class="sub-label">Color de las cacas</p>
+                <div style="margin: 0 6px 2px;">
+                    @foreach ($poopColorRows as $row)
+                        <span class="pill">@if ($row['hex'])<span class="dot" style="background: {{ $row['hex'] }};"></span>@endif{{ $row['label'] }} <span class="muted-text">· {{ $row['count'] }}</span></span>
+                    @endforeach
+                </div>
             @endif
         </div>
     @endforeach
@@ -201,15 +244,33 @@
                         <td class="right">{{ \Carbon\CarbonImmutable::parse($vaccinations['next_checkup']['at'])->format('d/m/Y H:i') }}</td>
                     </tr>
                 @endif
+                @if ($vitaminD['has_schedule'])
+                    <tr>
+                        <td>Vitamina D: dosis dadas</td>
+                        <td class="right">{{ $vitaminD['given'] }} de {{ $vitaminD['total_days'] }} días de la pauta</td>
+                    </tr>
+                @endif
             </table>
         </div>
     @endif
 
-    {{-- Vitamina D: solo si hay (o hubo) una pauta. --}}
-    @if ($vitaminD['has_schedule'])
+    {{-- Vitamina D: solo si hay (o hubo) una pauta. Con las vacunas
+         activadas va como una fila de su tarjeta, para no gastar otra. --}}
+    @if ($vitaminD['has_schedule'] && $vaccinations === null)
         <div class="card">
             <div class="card-title"><span class="bar" style="background: #b8742e;"></span>Vitamina D</div>
             <p class="muted">Dosis dadas: {{ $vitaminD['given'] }} de {{ $vitaminD['total_days'] }} días de la pauta.</p>
+        </div>
+    @endif
+
+    {{-- Preguntas: al final y solo si se han escrito; sin ellas no hay
+         bloque ni líneas en blanco. --}}
+    @if (filled($questions))
+        <div class="card" style="page-break-inside: avoid;">
+            <div class="card-title"><span class="bar" style="background: #a65a6b;"></span>Preguntas para la consulta</div>
+            <div style="margin: 0 6px 4px;">
+                <div class="questions">{{ $questions }}</div>
+            </div>
         </div>
     @endif
 

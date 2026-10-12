@@ -696,3 +696,42 @@ it('works without sleep references and rejects an unknown source', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('sleep_reference.total.source');
 });
+
+// El HTML del resumen para la consulta con los datos de un payload ya válido.
+function renderedConsultSummary(Baby $baby, array $overrides = []): string
+{
+    $payload = [...validStatsPayload(), 'mode' => 'summary', 'period' => '14d', 'period_deltas' => null, ...$overrides];
+
+    return view('pdf.consult-summary', app(StatsExportController::class)->buildViewData($baby, $payload))->render();
+}
+
+it('leaves the questions block out of the check-up summary when none were written', function () {
+    $baby = babyForStatsExportTest(actingAsUser());
+
+    expect(renderedConsultSummary($baby))->not->toContain('Preguntas para la consulta')
+        ->and(renderedConsultSummary($baby, ['questions' => null]))->not->toContain('Preguntas para la consulta')
+        ->and(renderedConsultSummary($baby, ['questions' => '   ']))->not->toContain('Preguntas para la consulta');
+});
+
+it('prints the questions at the very end of the check-up summary, after every section', function () {
+    $baby = babyForStatsExportTest(actingAsUser());
+
+    $html = renderedConsultSummary($baby, ['questions' => '¿Cuándo empezamos con la fruta?']);
+
+    expect($html)->toContain('¿Cuándo empezamos con la fruta?');
+    foreach (['Crecimiento', 'Alimentación', 'Sueño', 'Pañales'] as $section) {
+        expect(strpos($html, 'Preguntas para la consulta'))->toBeGreaterThan(strpos($html, $section));
+    }
+});
+
+it('shows the baby name big and the extra sections in the check-up summary', function () {
+    $baby = babyForStatsExportTest(actingAsUser());
+    $baby->update(['name' => 'Violeta']);
+
+    $html = renderedConsultSummary($baby->fresh());
+
+    expect($html)->toContain('class="name">Violeta')
+        ->and($html)->toContain('Horas de sueño, últimos 7 días')
+        ->and($html)->toContain('Color de las cacas')
+        ->and($html)->toContain('Duración media de cada sueño');
+});

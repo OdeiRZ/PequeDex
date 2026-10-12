@@ -13,7 +13,7 @@ class Temperature extends Model
     /** @use HasFactory<TemperatureFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'measured_at', 'celsius', 'method', 'notes'];
+    protected $fillable = ['client_uuid', 'baby_id', 'user_id', 'measured_at', 'celsius', 'method', 'notes'];
 
     /**
      * @return array<string, string>

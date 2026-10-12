@@ -23,6 +23,9 @@ class StoreDiaperChangeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Identificador generado en el móvil para el registro sin
+            // conexión (ver App\Http\Controllers\Concerns\CreatesIdempotently).
+            'client_uuid' => ['nullable', 'uuid'],
             'changed_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'type' => ['required', Rule::enum(DiaperType::class)],
             // Optional even for a dirty change - not every caregiver

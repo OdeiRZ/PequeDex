@@ -15,7 +15,7 @@ class DiaperChange extends Model
     /** @use HasFactory<DiaperChangeFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'changed_at', 'type', 'residue_color', 'size', 'notes'];
+    protected $fillable = ['client_uuid', 'baby_id', 'user_id', 'changed_at', 'type', 'residue_color', 'size', 'notes'];
 
     /**
      * @return array<string, string>

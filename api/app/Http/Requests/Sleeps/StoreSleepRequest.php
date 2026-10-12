@@ -19,6 +19,9 @@ class StoreSleepRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Identificador generado en el móvil para el registro sin
+            // conexión (ver App\Http\Controllers\Concerns\CreatesIdempotently).
+            'client_uuid' => ['nullable', 'uuid'],
             'started_at' => ['required', 'date', 'before_or_equal:'.now()->addMinute()->toDateTimeString(), ...$this->notBeforeBirthRule()],
             'ended_at' => ['nullable', 'date', 'after:started_at', 'before_or_equal:'.now()->addMinute()->toDateTimeString()],
             'notes' => ['nullable', 'string'],

@@ -12,7 +12,7 @@ class Sleep extends Model
     /** @use HasFactory<SleepFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'started_at', 'ended_at', 'notes'];
+    protected $fillable = ['client_uuid', 'baby_id', 'user_id', 'started_at', 'ended_at', 'notes'];
 
     /**
      * @return array<string, string>

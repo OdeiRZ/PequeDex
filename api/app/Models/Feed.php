@@ -15,7 +15,7 @@ class Feed extends Model
     /** @use HasFactory<FeedFactory> */
     use HasFactory;
 
-    protected $fillable = ['baby_id', 'user_id', 'type', 'side', 'milk_type', 'amount_ml', 'started_at', 'ended_at', 'notes'];
+    protected $fillable = ['client_uuid', 'baby_id', 'user_id', 'type', 'side', 'milk_type', 'amount_ml', 'started_at', 'ended_at', 'notes'];
 
     /**
      * @return array<string, string>

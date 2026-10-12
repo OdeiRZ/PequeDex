@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Temperatures;
 
+use App\Http\Controllers\Concerns\CreatesIdempotently;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Temperatures\StoreTemperatureRequest;
 use App\Http\Requests\Temperatures\UpdateTemperatureRequest;
@@ -10,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 class TemperatureController extends Controller
 {
+    use CreatesIdempotently;
+
     public function index(Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
@@ -21,12 +24,10 @@ class TemperatureController extends Controller
     // AuthorizesBabyAccess), same as the diaper change controller.
     public function store(StoreTemperatureRequest $request, Baby $baby): JsonResponse
     {
-        $temperature = $baby->temperatures()->create([
+        return $this->createOnce($baby->temperatures(), [
             ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);
-
-        return response()->json(['data' => $temperature], 201);
     }
 
     public function update(UpdateTemperatureRequest $request, Baby $baby, int $temperature): JsonResponse

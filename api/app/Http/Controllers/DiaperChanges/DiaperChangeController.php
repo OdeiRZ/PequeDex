@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\DiaperChanges;
 
+use App\Http\Controllers\Concerns\CreatesIdempotently;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DiaperChanges\StoreDiaperChangeRequest;
 use App\Http\Requests\DiaperChanges\UpdateDiaperChangeRequest;
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
 
 class DiaperChangeController extends Controller
 {
+    use CreatesIdempotently;
+
     public function index(Request $request, Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
@@ -35,12 +38,10 @@ class DiaperChangeController extends Controller
     // baby's data).
     public function store(StoreDiaperChangeRequest $request, Baby $baby): JsonResponse
     {
-        $diaperChange = $baby->diaperChanges()->create([
+        return $this->createOnce($baby->diaperChanges(), [
             ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);
-
-        return response()->json(['data' => $diaperChange], 201);
     }
 
     public function update(UpdateDiaperChangeRequest $request, Baby $baby, int $diaperChange): JsonResponse

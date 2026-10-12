@@ -20,7 +20,12 @@ class StoreTemperatureRequest extends FormRequest
      */
     public function rules(): array
     {
-        return self::temperatureRules($this->notBeforeBirthRule());
+        return [
+            ...self::temperatureRules($this->notBeforeBirthRule()),
+            // Identificador generado en el móvil para el registro sin
+            // conexión (ver App\Http\Controllers\Concerns\CreatesIdempotently).
+            'client_uuid' => ['nullable', 'uuid'],
+        ];
     }
 
     /**

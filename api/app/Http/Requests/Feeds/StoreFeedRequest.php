@@ -23,6 +23,9 @@ class StoreFeedRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Identificador generado en el móvil para el registro sin
+            // conexión (ver App\Http\Controllers\Concerns\CreatesIdempotently).
+            'client_uuid' => ['nullable', 'uuid'],
             'type' => ['required', Rule::enum(FeedType::class)],
             // side/amount_ml are each required for exactly one FeedType
             // and prohibited for every other one - a bottle feed has no

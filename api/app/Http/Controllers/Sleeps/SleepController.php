@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sleeps;
 
+use App\Http\Controllers\Concerns\CreatesIdempotently;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sleeps\StoreSleepRequest;
 use App\Http\Requests\Sleeps\UpdateSleepRequest;
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
 
 class SleepController extends Controller
 {
+    use CreatesIdempotently;
+
     public function index(Request $request, Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
@@ -42,12 +45,10 @@ class SleepController extends Controller
     // docblock for why the difference matters for this baby's data).
     public function store(StoreSleepRequest $request, Baby $baby): JsonResponse
     {
-        $sleep = $baby->sleeps()->create([
+        return $this->createOnce($baby->sleeps(), [
             ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);
-
-        return response()->json(['data' => $sleep], 201);
     }
 
     public function update(UpdateSleepRequest $request, Baby $baby, int $sleep): JsonResponse

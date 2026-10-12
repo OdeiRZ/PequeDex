@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Feeds;
 
+use App\Http\Controllers\Concerns\CreatesIdempotently;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Feeds\StoreFeedRequest;
 use App\Http\Requests\Feeds\UpdateFeedRequest;
@@ -10,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 class FeedController extends Controller
 {
+    use CreatesIdempotently;
+
     public function index(Baby $baby): JsonResponse
     {
         $this->authorize('view', $baby);
@@ -23,12 +26,10 @@ class FeedController extends Controller
     // docblock for why the difference matters for this baby's data).
     public function store(StoreFeedRequest $request, Baby $baby): JsonResponse
     {
-        $feed = $baby->feeds()->create([
+        return $this->createOnce($baby->feeds(), [
             ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);
-
-        return response()->json(['data' => $feed], 201);
     }
 
     public function update(UpdateFeedRequest $request, Baby $baby, int $feed): JsonResponse

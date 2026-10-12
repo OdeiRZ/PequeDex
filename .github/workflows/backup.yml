@@ -99,3 +99,67 @@ jobs:
           path: backup/pequedex.dump.gpg
           retention-days: 90
           if-no-files-found: error
+
+  # Una copia que nunca se ha restaurado no es una copia: este trabajo descarga
+  # la copia que acaba de guardar el anterior, la descifra con el secreto y la
+  # restaura en un PostgreSQL desechable del propio runner (nada sale de
+  # GitHub), y comprueba que las tablas principales tienen filas. Solo se
+  # imprimen recuentos, nunca datos.
+  verify-restore:
+    name: Comprobar que la copia se puede restaurar
+    needs: backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: restore-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Descargar la copia cifrada
+        uses: actions/download-artifact@v4
+        with:
+          name: pequedex-backup-${{ github.run_id }}
+          path: restore
+
+      - name: Descifrar la copia
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+            --passphrase-fd 0 --decrypt \
+            --output restore/pequedex.dump restore/pequedex.dump.gpg
+          ls -l restore
+
+      # Sin --exit-on-error: un volcado de Neon puede traer objetos propios de
+      # Neon (extensiones, esquemas) que un PostgreSQL normal no acepta; eso no
+      # impide restaurar los datos. Lo que decide si la copia sirve es el
+      # recuento de filas del paso siguiente.
+      - name: Restaurar en una base de datos vacía
+        run: |
+          docker run --rm --network host -v "$PWD/restore:/restore" -e PGPASSWORD=restore-test postgres:18 \
+            sh -c 'createdb -h 127.0.0.1 -U postgres restored && pg_restore -h 127.0.0.1 -U postgres -d restored --no-owner --no-privileges /restore/pequedex.dump' \
+            2> restore/errors.log || true
+          echo "Líneas de aviso/error de pg_restore: $(wc -l < restore/errors.log)"
+          # Solo los avisos (nombres de objetos, nunca datos), por si algo falla.
+          grep -E "^pg_restore: (error|warning)" restore/errors.log | head -10 || true
+
+      - name: Comprobar el contenido restaurado
+        run: |
+          COUNTS=$(docker run --rm --network host -e PGPASSWORD=restore-test postgres:18 \
+            psql -h 127.0.0.1 -U postgres -d restored -At -F ' ' -c \
+            "select (select count(*) from babies), (select count(*) from sleeps), (select count(*) from feeds), (select count(*) from diaper_changes), (select count(*) from users)")
+          echo "Filas restauradas (bebés, sueños, tomas, pañales, usuarios): $COUNTS"
+          set -- $COUNTS
+          if [ "${1:-0}" -lt 1 ] || [ "${2:-0}" -lt 1 ] || [ "${3:-0}" -lt 1 ] || [ "${5:-0}" -lt 1 ]; then
+            echo "::error::La copia se restauró pero le faltan datos (bebés, sueños, tomas o usuarios a cero)."
+            exit 1
+          fi
+          echo "La copia se restaura correctamente."

@@ -9,6 +9,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Referencias de sueño por edad** - Estadísticas compara el sueño
+  total al día con lo recomendado para su edad (14-17 h hasta 3 meses,
+  National Sleep Foundation; 12-16 h de 4 a 12 meses y 11-14 h de 1 a 2
+  años, consenso AASM avalado por la AAP) y el tiempo despierto entre
+  sueños con la ventana de sueño orientativa (Cleveland Clinic; no
+  existe tabla oficial), indicando si está por debajo, dentro o por
+  encima. En el Dashboard, la tarjeta de predicción de sueño añade
+  "despierto desde hace X · a su edad suele aguantar Y", y si aún no
+  hay historial suficiente para predecir, da una franja orientativa
+  para el siguiente sueño según la edad.
+
 - **Registro sin conexión** - si al guardar una toma, un sueño, un
   pañal o una temperatura no hay conexión, ya no sale el error rojo: el
   registro se guarda en el propio móvil, aparece al momento en la línea

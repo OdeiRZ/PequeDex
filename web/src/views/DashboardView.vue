@@ -51,6 +51,13 @@ import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import { isNetworkError } from '@/lib/offlineQueue'
+import {
+  ageInMonths,
+  awakeSince,
+  formatMinutesShort,
+  formatWakeRange,
+  wakeWindowReference,
+} from '@/lib/sleepReference'
 import { REGIONS, nextUpcoming } from '@/lib/vaccinations'
 import {
   addDays,
@@ -1745,10 +1752,40 @@ async function onSubmitMilestone() {
 
 // --- Predicción de patrones de sueño ---
 
+// Ventana de sueño orientativa para la edad (lib/sleepReference.ts) -
+// complementa la predicción, que sale del propio historial del bebé.
+const ageMonths = computed(() => ageInMonths(babies.current?.birth_date, predictionNow.value))
+const wakeWindowRef = computed(() => wakeWindowReference(ageMonths.value))
+const awakeFrom = computed(() => awakeSince(babies.timeline))
+
+// "Despierto desde hace 1h 05min · a su edad suele aguantar 1h–2h".
+const sleepWakeHint = computed(() => {
+  if (!wakeWindowRef.value || !awakeFrom.value) return null
+  const awakeMinutes = (predictionNow.value.getTime() - awakeFrom.value.getTime()) / 60_000
+  if (awakeMinutes < 0) return null
+  return t('dashboard.sleepPrediction.awakeHint', {
+    awake: formatMinutesShort(awakeMinutes),
+    range: formatWakeRange(wakeWindowRef.value),
+  })
+})
+
 const sleepPredictionLabel = computed(() => {
   const prediction = babies.sleepPrediction
 
   if (!prediction || !prediction.has_enough_data) {
+    // Sin historial suficiente para predecir: una franja orientativa
+    // por edad, si está despierto y hay referencia.
+    if (wakeWindowRef.value && awakeFrom.value) {
+      const time = (offsetMin: number) =>
+        new Date(awakeFrom.value!.getTime() + offsetMin * 60_000).toLocaleTimeString(
+          dateLocale.value,
+          { hour: '2-digit', minute: '2-digit' },
+        )
+      return t('dashboard.sleepPrediction.ageBased', {
+        from: time(wakeWindowRef.value.min),
+        to: time(wakeWindowRef.value.max),
+      })
+    }
     return t('dashboard.sleepPrediction.insufficientData', {
       sample: prediction?.sample_size ?? 0,
       minimum: prediction?.minimum_sample_size ?? 3,
@@ -2181,6 +2218,7 @@ const sleepPredictionDue = computed(() => {
                 category="sleep"
                 :title="t('dashboard.sleepPrediction.title')"
                 :meta="sleepPredictionLabel"
+                :description="sleepWakeHint"
                 :interactive="false"
                 :pulsing="sleepPredictionDue"
               />

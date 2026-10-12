@@ -40,6 +40,13 @@ import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { FEVER_THRESHOLD_CELSIUS, formatCelsius } from '@/lib/timelineEntry'
 import { parseDateOnly } from '@/lib/localDate'
+import {
+  ageInMonths,
+  compareToRange,
+  formatWakeRange,
+  totalSleepReference,
+  wakeWindowReference,
+} from '@/lib/sleepReference'
 import type { DiaperResidueColor, DiaperSize } from '@/stores/babies'
 
 const { t, locale } = useI18n()
@@ -310,6 +317,25 @@ const nightSleepSharePercent = computed(() => {
   const night = sleepStats.value.averageNightSleepMinutes ?? 0
   const total = sleepStats.value.averageTotalSleepMinutes ?? 0
   return total > 0 ? Math.round((night / total) * 100) : 100
+})
+
+// Referencias por edad (lib/sleepReference.ts): horas totales al día
+// (NSF/AASM) y ventana de sueño orientativa, comparadas con la media
+// del periodo. Edad a hoy - el periodo como mucho cubre unas semanas.
+const sleepAgeMonths = computed(() => ageInMonths(babies.current?.birth_date))
+const totalSleepRef = computed(() => totalSleepReference(sleepAgeMonths.value))
+const wakeWindowRef = computed(() => wakeWindowReference(sleepAgeMonths.value))
+
+const totalSleepVerdict = computed(() => {
+  const total = sleepStats.value.averageTotalSleepMinutes
+  if (total === null || !totalSleepRef.value) return null
+  return compareToRange(total / 60, totalSleepRef.value)
+})
+
+const wakeWindowVerdict = computed(() => {
+  const wake = sleepStats.value.averageWakeWindowMinutes
+  if (wake === null || !wakeWindowRef.value) return null
+  return compareToRange(wake, wakeWindowRef.value)
 })
 
 // Traduce la desviación típica en minutos (un número que no dice nada
@@ -744,6 +770,12 @@ async function onExportPdf(mode: StatsExportMode) {
               <div class="text-lg font-bold tabular-nums">
                 {{ formatMinutes(sleepStats.averageWakeWindowMinutes) }}
               </div>
+              <div v-if="wakeWindowRef" class="mt-0.5 text-[0.68rem] text-text-muted">
+                {{ t('stats.sleep.wakeWindowRef', { range: formatWakeRange(wakeWindowRef) }) }}
+                <span v-if="wakeWindowVerdict" class="font-semibold">
+                  · {{ t(`stats.sleep.verdict.${wakeWindowVerdict}`) }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -782,6 +814,18 @@ async function onExportPdf(mode: StatsExportMode) {
               >
             </div>
             <p class="mt-1 text-[0.68rem] text-text-muted">{{ t('stats.sleep.nightRangeHint') }}</p>
+            <p v-if="totalSleepRef" class="mt-1 text-[0.68rem] text-text-muted">
+              {{
+                t('stats.sleep.totalRef', {
+                  min: totalSleepRef.min,
+                  max: totalSleepRef.max,
+                  source: t(`stats.sleep.refSource.${totalSleepRef.source}`),
+                })
+              }}
+              <span v-if="totalSleepVerdict" class="font-semibold">
+                · {{ t(`stats.sleep.verdict.${totalSleepVerdict}`) }}
+              </span>
+            </p>
             <p
               v-if="periodDeltas?.totalSleepMinutes != null"
               class="text-[0.68rem] tabular-nums text-text-muted"

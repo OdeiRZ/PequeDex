@@ -1327,6 +1327,18 @@ con foto se quedaba así de "colgado" en el móvil - ver `api/README.md`
 sobre `docker/uploads.ini`). Ahora cada uno muestra
 `t('dashboard.saveError')` por toast si falla.
 
+## Referencias de sueño por edad
+
+`lib/sleepReference.ts`: horas totales al día recomendadas
+(`totalSleepReference()`, NSF 2015 / AASM 2016) y ventana de sueño
+orientativa (`wakeWindowReference()`, Cleveland Clinic - no hay tabla
+oficial), por edad en meses (`ageInMonths()`, mes medio de 30,4375
+días). Estadísticas compara las medias del periodo (`compareToRange()`)
+y el Dashboard usa `awakeSince()` para "despierto desde hace X" y, sin
+historial suficiente para la predicción propia, una franja orientativa
+para el siguiente sueño. Sin referencia a partir de 12 meses (ventana)
+o 24 meses (total).
+
 ## Registro sin conexión
 
 `lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Solo

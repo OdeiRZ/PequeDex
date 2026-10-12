@@ -1406,6 +1406,13 @@ cosas lo esconden:
   y no se renueva mientras lo que se ve sigue siendo la foto vieja.
   Si el refresco falla y hay foto, se queda la foto (no la pantalla de
   error).
+- **Sondeo condicional**: `fetchTimeline()` envía `If-None-Match` con el
+  ETag de la última respuesta (`timelineEtag`, que también llega en
+  `timeline_etag` del bootstrap) y trata el `304` como "sin cambios"
+  (no reasigna la lista). `syncTimeline()` fuerza la lista completa cada
+  `FULL_REFRESH_EVERY` = 10 sondeos y `onOnline()` siempre. El API
+  expone `ETag` en CORS (`config/cors.php`); si no llegara, simplemente
+  no hay condicional.
 - `auth.fetchCurrentUser()` ya no cierra la sesión ante un fallo de red
   o un 500 (solo un 401, vía el interceptor): antes, abrir la app sin
   conexión desconectaba al usuario.

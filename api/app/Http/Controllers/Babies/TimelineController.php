@@ -45,6 +45,55 @@ class TimelineController extends Controller
     {
         $this->authorize('view', $baby);
 
+        // Sondeo condicional: si nada ha cambiado desde la última respuesta
+        // que vio el cliente, se contesta 304 sin leer ni enviar ninguna
+        // fila. El Dashboard pregunta cada 15 s y casi siempre es igual.
+        $etag = $this->etag($baby, $request);
+        if ($this->etagMatches($request->header('If-None-Match'), $etag)) {
+            return response()->json(status: 304)->header('ETag', $etag);
+        }
+
+        return $this->entries($request, $baby)->header('ETag', $etag);
+    }
+
+    /**
+     * Huella de lo que alimenta esta lista: número de filas, última
+     * modificación y último id de cada tabla del bebé (cuatro consultas
+     * agregadas diminutas en vez de leer las filas). Cambia al crear,
+     * editar o borrar cualquier registro; también cambia por registros
+     * fuera de las 50 entradas visibles, lo que solo cuesta alguna
+     * respuesta completa de más, nunca una de menos.
+     */
+    private function etag(Baby $baby, Request $request): string
+    {
+        $parts = [$request->query('date'), $request->query('limit')];
+
+        foreach ([$baby->feeds(), $baby->sleeps(), $baby->diaperChanges(), $baby->temperatures()] as $relation) {
+            $row = $relation->toBase()->selectRaw('count(*) as c, max(updated_at) as u, max(id) as i')->first();
+            $parts[] = [$row->c, $row->u, $row->i];
+        }
+
+        return '"'.md5((string) json_encode($parts)).'"';
+    }
+
+    /**
+     * Compara ignorando el prefijo W/ (un proxy puede degradar el ETag a
+     * débil al comprimir la respuesta) y admite varios valores.
+     */
+    private function etagMatches(?string $header, string $etag): bool
+    {
+        if ($header === null || $header === '') {
+            return false;
+        }
+
+        $normalize = fn (string $value) => ltrim(trim($value), 'W/');
+
+        return collect(explode(',', $header))
+            ->contains(fn (string $candidate) => $normalize($candidate) === $normalize($etag));
+    }
+
+    private function entries(Request $request, Baby $baby): JsonResponse
+    {
         $date = $request->query('date');
 
         if ($date) {

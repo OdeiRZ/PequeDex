@@ -124,7 +124,7 @@ describe('useBabiesStore', () => {
     await store.fetchTimeline()
 
     expect(store.timeline).toHaveLength(1)
-    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline')
+    expect(apiClient.get).toHaveBeenCalledWith('/babies/1/timeline', expect.anything())
   })
 
   it('fetches the full sleep/feed/diaper/temperature history in parallel for the stats page', async () => {
@@ -331,6 +331,76 @@ describe('useBabiesStore', () => {
     // Sin vacunas activadas en la respuesta: se vacían las del bebé anterior.
     expect(store.vaccinations).toEqual([])
     expect(store.checkups).toEqual([])
+  })
+
+  it('polls the timeline conditionally and leaves it alone on a 304', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    vi.mocked(apiClient.get).mockClear()
+
+    const entries = [{ type: 'feed', at: '2026-10-12T08:00:00Z', data: { id: 3 } }]
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      status: 200,
+      headers: { etag: '"v1"' },
+      data: { data: entries },
+    })
+    await store.fetchTimeline()
+    expect(store.timeline).toEqual(entries)
+    // La primera vez no hay huella que enviar.
+    expect(vi.mocked(apiClient.get).mock.calls[0]![1]).toMatchObject({ headers: undefined })
+
+    // Sin cambios: 304, la lista no se toca (ni se vuelve a asignar).
+    const before = store.timeline
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 304, headers: { etag: '"v1"' } })
+    await store.fetchTimeline()
+    expect(vi.mocked(apiClient.get).mock.calls[1]![1]).toMatchObject({
+      headers: { 'If-None-Match': '"v1"' },
+    })
+    expect(store.timeline).toBe(before)
+
+    // Con cambios: lista nueva y huella nueva.
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      status: 200,
+      headers: { etag: '"v2"' },
+      data: { data: [] },
+    })
+    await store.fetchTimeline()
+    expect(store.timeline).toEqual([])
+    expect(store.timelineEtag).toBe('"v2"')
+
+    // `force` salta el condicional.
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      status: 200,
+      headers: { etag: '"v2"' },
+      data: { data: entries },
+    })
+    await store.fetchTimeline(true)
+    expect(vi.mocked(apiClient.get).mock.calls[3]![1]).toMatchObject({ headers: undefined })
+    expect(store.timeline).toEqual(entries)
+  })
+
+  it('takes the first conditional token from the bootstrap', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        timeline: { data: [] },
+        timeline_etag: '"boot"',
+        growth_measurements: { data: [] },
+        milestones: { data: [] },
+        sleep_prediction: { data: {} },
+        feed_prediction: { data: {} },
+        vitamin_d_schedule: { data: null, recent_doses: [] },
+        temperatures: { data: [] },
+        recent_diaper_changes: { data: [] },
+      },
+    })
+    await store.fetchBootstrap()
+
+    expect(store.timelineEtag).toBe('"boot"')
   })
 
   it('keeps queued offline entries and deletes when applying the bootstrap', async () => {

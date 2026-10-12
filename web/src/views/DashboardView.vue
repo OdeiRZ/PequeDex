@@ -310,6 +310,13 @@ let pollTimer: ReturnType<typeof setInterval> | undefined
 // móvil bloqueado) - al volver a ella se refresca en el momento.
 const POLL_INTERVAL_MS = 15_000
 
+// El sondeo es condicional (ETag, ver fetchTimeline): casi siempre el
+// servidor contesta 304 sin cuerpo. Cada FULL_REFRESH_EVERY sondeos se pide
+// la lista completa igualmente, por si alguna vez la huella no notara un
+// cambio.
+const FULL_REFRESH_EVERY = 10
+let pollCount = 0
+
 async function syncTimeline() {
   now.value = new Date()
   if (!babies.current) return
@@ -320,7 +327,8 @@ async function syncTimeline() {
   // unhandled promise rejection.
   try {
     await flushQueue()
-    await babies.fetchTimeline()
+    pollCount += 1
+    await babies.fetchTimeline(pollCount % FULL_REFRESH_EVERY === 0)
   } catch {
     // ignored, see comment above
   }
@@ -358,7 +366,8 @@ async function onOnline() {
   isOnline.value = true
   try {
     await flushQueue()
-    await babies.fetchTimeline()
+    // Al volver la conexión: la lista completa, sin condicional.
+    await babies.fetchTimeline(true)
   } catch {
     // el sondeo lo reintenta
   }

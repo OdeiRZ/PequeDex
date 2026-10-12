@@ -240,6 +240,8 @@ export interface PredictionRange {
  * vienen si están activadas para el bebé. */
 interface BootstrapResponse {
   timeline: { data: TimelineEntry[] }
+  /** Huella de la línea temporal, para el primer sondeo condicional. */
+  timeline_etag?: string | null
   growth_measurements: { data: GrowthMeasurement[] }
   milestones: { data: Milestone[] }
   sleep_prediction: { data: SleepPrediction }
@@ -401,6 +403,9 @@ interface BabiesState {
   /** true mientras lo que se ve viene de la foto guardada (lib/snapshot.ts)
    * y todavía no ha llegado la respuesta real del servidor. */
   hydratedFromSnapshot: boolean
+  /** ETag de la última línea temporal recibida (sondeo condicional). No
+   * se guarda en la foto: con ella a la vista no vale. */
+  timelineEtag: string | null
   vaccinations: Vaccination[]
   vaccinationTemplate: VaccinationTemplateInfo | null
   checkups: Checkup[]
@@ -546,6 +551,7 @@ export const useBabiesStore = defineStore('babies', {
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
     hydratedFromSnapshot: false,
+    timelineEtag: null,
     ...hydratedState(),
   }),
 
@@ -667,13 +673,25 @@ export const useBabiesStore = defineStore('babies', {
       this.babies = this.babies.map((baby) => (baby.id === data.data.id ? data.data : baby))
     },
 
-    async fetchTimeline() {
+    async fetchTimeline(force = false) {
       if (!this.current) {
         return
       }
 
-      const { data } = await apiClient.get(`/babies/${this.current.id}/timeline`)
-      this.applyTimeline(data.data, this.current.id)
+      // Sondeo condicional: con la huella (ETag) de la última respuesta, el
+      // servidor contesta 304 sin cuerpo si nada ha cambiado - casi siempre
+      // - y no hay que volver a pintar la lista. `force` pide la completa
+      // (red de seguridad contra una huella que no detecte un cambio).
+      const headers =
+        this.timelineEtag && !force ? { 'If-None-Match': this.timelineEtag } : undefined
+      const response = await apiClient.get(`/babies/${this.current.id}/timeline`, {
+        headers,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+      })
+      if (response.status === 304) return
+
+      this.timelineEtag = response.headers?.etag ?? null
+      this.applyTimeline(response.data.data, this.current.id)
     },
 
     // Lo que sigue en la cola sin conexión no viene del servidor:
@@ -713,6 +731,7 @@ export const useBabiesStore = defineStore('babies', {
       if (this.current?.id !== babyId) return
 
       this.applyTimeline(body.timeline.data, babyId)
+      this.timelineEtag = body.timeline_etag ?? null
       this.growthMeasurements = body.growth_measurements.data
       this.milestones = body.milestones.data
       this.sleepPrediction = body.sleep_prediction.data

@@ -266,7 +266,16 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
 - `TimelineController` — mezcla tomas/sueño/pañales en una sola lista
   ordenada en PHP, no con un `UNION` SQL entre tres tablas de forma
   distinta: el registro de una familia no alcanza un volumen (ni tras
-  años de uso diario) donde eso importe.
+  años de uso diario) donde eso importe. Responde con `ETag` y admite
+  `If-None-Match`: la huella (filas, última modificación y último id de
+  las cuatro tablas, con `date`/`limit`) cuesta cuatro agregados
+  diminutos y, si coincide, se contesta `304` sin leer filas - el
+  Dashboard sondea cada 15 s y casi siempre no hay nada nuevo.
+- `BootstrapController` — `GET /babies/{baby}/bootstrap`: todo lo del
+  Dashboard en una petición (llama a los mismos controladores que los
+  endpoints individuales, así que cada sección es idéntica; incluye
+  `timeline_etag`). Acepta `tz` y `since` como ellos. Vacunas y revisiones
+  solo si están activadas para el bebé.
 - `app/Services/Growth/WhoGrowthStandards.php` — tablas L/M/S reales de la
   OMS (Child Growth Standards, 0–24 meses, peso/talla/perímetro craneal
   por sexo) embebidas como constantes PHP, descargadas de `cdn.who.int` y

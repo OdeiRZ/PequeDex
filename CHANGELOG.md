@@ -18,6 +18,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   sección es idéntica a la de su endpoint). Si el backend aún no lo
   tiene, la app pide las cosas por separado como antes.
 
+- **Sondeo condicional (ETag)** - el Dashboard pregunta cada 15 s si hay
+  algo nuevo y casi siempre no lo hay, pero cada vez se leía y enviaba la
+  línea temporal entera. Ahora el servidor calcula una huella con cuatro
+  consultas agregadas diminutas (filas, última modificación y último id
+  de cada tabla) y, si coincide con la que envía el móvil, contesta
+  `304` sin leer ni mandar ninguna fila; el móvil deja la lista como
+  está (ni siquiera se vuelve a pintar). Cada 10 sondeos, y al volver la
+  conexión, se pide la lista completa igualmente como red de seguridad.
+  Con el avatar fuera de cada petición, esto completa la bajada del
+  consumo de transferencia de Neon.
+
 - **Arranque instantáneo con la última foto guardada** - la app guarda
   en el móvil una foto del Dashboard (línea temporal, predicciones,
   hitos...) y al abrir la pinta al momento, refrescando por detrás con un

@@ -55,6 +55,10 @@ it('returns every dashboard section exactly as its own endpoint does', function 
         expect($bootstrap->json($section))->toBe($this->getJson($uri)->assertOk()->json(), "sección {$section}");
     }
 
+    // La huella de la línea temporal para que el primer sondeo sea condicional.
+    expect($bootstrap->json('timeline_etag'))
+        ->toBe($this->getJson("/api/babies/{$baby->id}/timeline")->headers->get('ETag'));
+
     // No incluye vacunas si no están activadas para el bebé.
     expect($bootstrap->json())->not->toHaveKeys(['vaccinations', 'checkups']);
 });

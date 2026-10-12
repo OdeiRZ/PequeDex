@@ -58,7 +58,18 @@ class BootstrapController extends Controller
 
         $body = [];
         foreach ($sections as $name => $section) {
-            $body[$name] = $section($request->duplicate($query))->getData(true);
+            $sub = $request->duplicate($query);
+            // La línea temporal contesta 304 a una petición condicional; aquí
+            // hace falta siempre el cuerpo completo.
+            $sub->headers->remove('If-None-Match');
+            $response = $section($sub);
+            $body[$name] = $response->getData(true);
+
+            // La huella de la línea temporal, para que el primer sondeo ya
+            // pueda ser condicional.
+            if ($name === 'timeline') {
+                $body['timeline_etag'] = $response->headers->get('ETag');
+            }
         }
 
         return response()->json($body);

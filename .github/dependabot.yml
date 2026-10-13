@@ -2,6 +2,11 @@
 # Las de seguridad llegan aparte y al momento, esté o no esto activado en
 # Settings > Code security. La CI de cada PR (backend, front, e2e) dice si
 # la actualización rompe algo antes de fusionarla.
+#
+# Solo versiones menores y parches: los saltos mayores (TypeScript 7, vitest 5,
+# laravel/tinker 3...) piden una migración propia y al activar Dependabot por
+# primera vez abrieron una avalancha de PR que fallaban. Se hacen a mano,
+# cuando toque. Las alertas de seguridad no se ven afectadas por esto.
 version: 2
 updates:
   - package-ecosystem: composer
@@ -9,7 +14,10 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       composer-minor-patch:
         update-types: [minor, patch]
@@ -19,7 +27,10 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
@@ -29,4 +40,4 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2

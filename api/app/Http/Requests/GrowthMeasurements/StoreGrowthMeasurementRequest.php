@@ -41,9 +41,9 @@ class StoreGrowthMeasurementRequest extends FormRequest
             'weight_grams.required_without_all' => $needOne,
             'height_cm.required_without_all' => $needOne,
             'head_circumference_cm.required_without_all' => $needOne,
-            'weight_grams.min' => 'El peso debe ser mayor que 0.',
-            'height_cm.min' => 'La altura debe ser mayor que 0.',
-            'head_circumference_cm.min' => 'El perímetro craneal debe ser mayor que 0.',
+            'weight_grams.min' => __('El peso debe ser mayor que 0.'),
+            'height_cm.min' => __('La altura debe ser mayor que 0.'),
+            'head_circumference_cm.min' => __('El perímetro craneal debe ser mayor que 0.'),
         ];
     }
 }

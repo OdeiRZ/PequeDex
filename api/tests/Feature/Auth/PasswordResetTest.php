@@ -162,11 +162,9 @@ it('sends the reset email branded as PequeDex, in Spanish', function () {
 it('builds the reset email branded as PequeDex, in English, when the app locale is English', function () {
     Notification::fake();
 
-    app()->setLocale('en');
-
     $user = User::factory()->create(['email' => 'odei@example.com']);
 
-    $this->postJson('/api/forgot-password', ['email' => 'odei@example.com']);
+    $this->withHeader('Accept-Language', 'en')->postJson('/api/forgot-password', ['email' => 'odei@example.com']);
 
     Notification::assertSentTo(
         $user,

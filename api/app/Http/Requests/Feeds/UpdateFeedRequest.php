@@ -49,19 +49,19 @@ class UpdateFeedRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.required' => 'Selecciona el tipo de toma.',
-            'side.required_if' => 'Selecciona el lado.',
-            'side.prohibited_unless' => 'El lado solo aplica a las tomas de pecho.',
-            'milk_type.required_if' => 'Selecciona si es calostro o leche.',
-            'milk_type.prohibited_unless' => 'El tipo de leche solo aplica a las tomas de pecho.',
-            'amount_ml.required_if' => 'Indica la cantidad en ml.',
-            'amount_ml.prohibited_unless' => 'La cantidad en ml solo aplica a las tomas de biberón.',
-            'amount_ml.min' => 'La cantidad debe ser de al menos 1 ml.',
+            'type.required' => __('Selecciona el tipo de toma.'),
+            'side.required_if' => __('Selecciona el lado.'),
+            'side.prohibited_unless' => __('El lado solo aplica a las tomas de pecho.'),
+            'milk_type.required_if' => __('Selecciona si es calostro o leche.'),
+            'milk_type.prohibited_unless' => __('El tipo de leche solo aplica a las tomas de pecho.'),
+            'amount_ml.required_if' => __('Indica la cantidad en ml.'),
+            'amount_ml.prohibited_unless' => __('La cantidad en ml solo aplica a las tomas de biberón.'),
+            'amount_ml.min' => __('La cantidad debe ser de al menos 1 ml.'),
             ...$this->dateFieldMessages('started_at', 'la hora de inicio'),
-            'ended_at.date' => 'La hora de fin no es una fecha válida.',
-            'ended_at.prohibited_unless' => 'La duración solo aplica a las tomas de pecho.',
-            'ended_at.after' => 'La hora de fin debe ser posterior a la hora de inicio.',
-            'ended_at.before_or_equal' => 'La hora de fin no puede ser posterior al momento actual.',
+            'ended_at.date' => __('La hora de fin no es una fecha válida.'),
+            'ended_at.prohibited_unless' => __('La duración solo aplica a las tomas de pecho.'),
+            'ended_at.after' => __('La hora de fin debe ser posterior a la hora de inicio.'),
+            'ended_at.before_or_equal' => __('La hora de fin no puede ser posterior al momento actual.'),
         ];
     }
 }

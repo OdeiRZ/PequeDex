@@ -28,8 +28,8 @@ class UpdateTemperatureRequest extends FormRequest
     {
         return [
             ...$this->dateFieldMessages('measured_at', 'la hora de la medición'),
-            'celsius.required' => 'Indica la temperatura.',
-            'celsius.between' => 'La temperatura debe estar entre 34 y 43 °C.',
+            'celsius.required' => __('Indica la temperatura.'),
+            'celsius.between' => __('La temperatura debe estar entre 34 y 43 °C.'),
         ];
     }
 }

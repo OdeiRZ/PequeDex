@@ -32,8 +32,8 @@ class StoreContractionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'started_at.date' => 'La hora de inicio no es una fecha válida.',
-            'started_at.before_or_equal' => 'La hora de inicio no puede ser posterior al momento actual.',
+            'started_at.date' => __('La hora de inicio no es una fecha válida.'),
+            'started_at.before_or_equal' => __('La hora de inicio no puede ser posterior al momento actual.'),
         ];
     }
 }

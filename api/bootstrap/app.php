@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ResolveClientIp;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocaleFromRequest;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // La IP real del cliente tiene que estar resuelta antes que cualquier
         // límite de peticiones; ver el docblock de la clase.
         $middleware->prepend(ResolveClientIp::class);
+        $middleware->append(SetLocaleFromRequest::class);
         $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

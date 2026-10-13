@@ -37,7 +37,7 @@ class SaveVaccinationRequest extends FormRequest
     {
         return [
             ...$this->dateFieldMessages('given_at', 'la fecha en que se puso'),
-            'name.required' => 'Indica el nombre de la vacuna.',
+            'name.required' => __('Indica el nombre de la vacuna.'),
         ];
     }
 }

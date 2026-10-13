@@ -38,8 +38,8 @@ class UpdateDiaperChangeRequest extends FormRequest
     {
         return [
             ...$this->dateFieldMessages('changed_at', 'la hora del cambio'),
-            'type.required' => 'Selecciona el tipo de pañal.',
-            'residue_color.prohibited_if' => 'El color solo aplica a un pañal sucio.',
+            'type.required' => __('Selecciona el tipo de pañal.'),
+            'residue_color.prohibited_if' => __('El color solo aplica a un pañal sucio.'),
         ];
     }
 }

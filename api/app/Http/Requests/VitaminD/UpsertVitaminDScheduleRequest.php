@@ -32,11 +32,11 @@ class UpsertVitaminDScheduleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'start_date.required' => 'Indica la fecha de inicio.',
-            'start_date.date' => 'La fecha de inicio no es una fecha válida.',
-            'end_date.required' => 'Indica la fecha de fin.',
-            'end_date.date' => 'La fecha de fin no es una fecha válida.',
-            'end_date.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.',
+            'start_date.required' => __('Indica la fecha de inicio.'),
+            'start_date.date' => __('La fecha de inicio no es una fecha válida.'),
+            'end_date.required' => __('Indica la fecha de fin.'),
+            'end_date.date' => __('La fecha de fin no es una fecha válida.'),
+            'end_date.after_or_equal' => __('La fecha de fin no puede ser anterior a la de inicio.'),
         ];
     }
 }

@@ -30,8 +30,8 @@ class DeleteAccountRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'current_password.required' => 'Escribe tu contraseña para confirmar.',
-            'current_password.current_password' => 'La contraseña no es correcta.',
+            'current_password.required' => __('Escribe tu contraseña para confirmar.'),
+            'current_password.current_password' => __('La contraseña no es correcta.'),
         ];
     }
 }

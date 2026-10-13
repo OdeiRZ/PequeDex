@@ -135,7 +135,7 @@ class BabyController extends Controller
 
             if ($baby->users()->count() <= 1) {
                 return response()->json([
-                    'message' => 'Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.',
+                    'message' => __('Eres el único cuidador de este bebé. Invita a alguien más antes de dejar de cuidarlo.'),
                 ], 422);
             }
 
@@ -164,7 +164,7 @@ class BabyController extends Controller
 
             if ($baby->users()->count() > 1) {
                 return response()->json([
-                    'message' => 'Este bebé tiene más de un cuidador. Solo se puede eliminar cuando eres el único cuidador - si no, usa "Dejar de cuidar al bebé".',
+                    'message' => __('Este bebé tiene más de un cuidador. Solo se puede eliminar cuando eres el único cuidador - si no, usa "Dejar de cuidar al bebé".'),
                 ], 422);
             }
 

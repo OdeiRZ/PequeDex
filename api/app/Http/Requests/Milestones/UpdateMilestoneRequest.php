@@ -40,10 +40,10 @@ class UpdateMilestoneRequest extends FormRequest
     {
         return [
             ...$this->dateFieldMessages('achieved_at', 'la fecha del hito'),
-            'title.required' => 'Indica un título para el hito.',
-            'title.max' => 'El título es demasiado largo (máximo 255 caracteres).',
-            'photo.image' => 'El archivo debe ser una imagen.',
-            'photo.max' => 'La foto no puede superar los 8 MB.',
+            'title.required' => __('Indica un título para el hito.'),
+            'title.max' => __('El título es demasiado largo (máximo 255 caracteres).'),
+            'photo.image' => __('El archivo debe ser una imagen.'),
+            'photo.max' => __('La foto no puede superar los 8 MB.'),
         ];
     }
 }

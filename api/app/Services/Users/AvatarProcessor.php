@@ -45,7 +45,7 @@ class AvatarProcessor
         $dimensions = getimagesize($file->getRealPath());
 
         if ($dimensions === false) {
-            throw new RuntimeException('No se ha podido leer la imagen.');
+            throw new RuntimeException(__('No se ha podido leer la imagen.'));
         }
 
         return $this->shrink($file->get(), $dimensions[0], $dimensions[1]);
@@ -81,13 +81,13 @@ class AvatarProcessor
     private function shrink(string $binary, int $sourceWidth, int $sourceHeight): string
     {
         if ($sourceWidth > self::MAX_SOURCE_DIMENSION || $sourceHeight > self::MAX_SOURCE_DIMENSION) {
-            throw new RuntimeException('La imagen es demasiado grande.');
+            throw new RuntimeException(__('La imagen es demasiado grande.'));
         }
 
         $source = imagecreatefromstring($binary);
 
         if ($source === false) {
-            throw new RuntimeException('No se ha podido leer la imagen.');
+            throw new RuntimeException(__('No se ha podido leer la imagen.'));
         }
 
         $scale = min(1, self::MAX_DIMENSION / max($sourceWidth, $sourceHeight));

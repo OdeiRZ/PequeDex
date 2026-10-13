@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { i18n } from '@/i18n'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -47,6 +48,11 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // El idioma de la app, para que los errores del API (validación, etc.)
+  // salgan en él y no siempre en español. `Accept-Language` es una cabecera
+  // "segura" para CORS: no añade ninguna petición previa.
+  config.headers['Accept-Language'] = i18n.global.locale.value
 
   return config
 })

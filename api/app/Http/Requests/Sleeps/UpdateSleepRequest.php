@@ -32,9 +32,9 @@ class UpdateSleepRequest extends FormRequest
     {
         return [
             ...$this->dateFieldMessages('started_at', 'la hora de inicio'),
-            'ended_at.date' => 'La hora de fin no es una fecha válida.',
-            'ended_at.after' => 'La hora de fin debe ser posterior a la hora de inicio.',
-            'ended_at.before_or_equal' => 'La hora de fin no puede ser posterior al momento actual.',
+            'ended_at.date' => __('La hora de fin no es una fecha válida.'),
+            'ended_at.after' => __('La hora de fin debe ser posterior a la hora de inicio.'),
+            'ended_at.before_or_equal' => __('La hora de fin no puede ser posterior al momento actual.'),
         ];
     }
 }

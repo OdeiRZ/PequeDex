@@ -17,7 +17,8 @@ export function getStoredLocale(): Locale {
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored === 'en' || stored === 'es') return stored
 
-  return navigator.language.toLowerCase().startsWith('en') ? 'en' : 'es'
+  // `?? ''`: hay entornos (y tests que sustituyen `navigator`) sin `language`.
+  return (navigator.language ?? '').toLowerCase().startsWith('en') ? 'en' : 'es'
 }
 
 export function storeLocale(locale: Locale): void {

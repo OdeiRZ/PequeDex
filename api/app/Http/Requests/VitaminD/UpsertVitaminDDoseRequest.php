@@ -43,7 +43,7 @@ class UpsertVitaminDDoseRequest extends FormRequest
             $schedule = $this->route('baby')->vitaminDSchedule;
 
             if ($schedule === null) {
-                $validator->errors()->add('date', 'Todavía no hay una pauta de vitamina D activada para este bebé.');
+                $validator->errors()->add('date', __('Todavía no hay una pauta de vitamina D activada para este bebé.'));
 
                 return;
             }
@@ -51,7 +51,7 @@ class UpsertVitaminDDoseRequest extends FormRequest
             $date = $this->input('date');
 
             if (is_string($date) && $date < $schedule->start_date->toDateString()) {
-                $validator->errors()->add('date', 'No puedes marcar un día anterior al inicio de la pauta.');
+                $validator->errors()->add('date', __('No puedes marcar un día anterior al inicio de la pauta.'));
             }
         });
     }
@@ -62,10 +62,10 @@ class UpsertVitaminDDoseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'date.required' => 'Indica la fecha.',
-            'date.date' => 'La fecha no es válida.',
-            'date.before_or_equal' => 'No puedes marcar un día futuro.',
-            'given.required' => 'Indica si se le dio la dosis.',
+            'date.required' => __('Indica la fecha.'),
+            'date.date' => __('La fecha no es válida.'),
+            'date.before_or_equal' => __('No puedes marcar un día futuro.'),
+            'given.required' => __('Indica si se le dio la dosis.'),
         ];
     }
 }

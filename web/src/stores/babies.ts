@@ -23,6 +23,16 @@ import {
   type QueuedUpdate,
 } from '@/lib/offlineQueue'
 
+// Cuánto espera un guardado que PUEDE ir a la cola sin conexión (altas,
+// ediciones y borrados de tomas, sueños, pañales y temperaturas) antes de
+// darlo por "sin respuesta" y dejarlo pendiente de enviar. Con el tiempo por
+// defecto (45 s), tras un rato sin usar la app el botón se quedaba esperando
+// hasta ~30 s a que Render despertara la API (arranque en frío). Ahora el
+// registro aparece enseguida como "pendiente" y se envía en cuanto la API
+// responde. Es seguro reintentar: las altas llevan `client_uuid` (el servidor
+// no duplica), las ediciones son PUT y borrar algo ya borrado cuenta como éxito.
+const QUEUED_WRITE_TIMEOUT_MS = 7_000
+
 export type BabySex = 'nino' | 'nina'
 
 export interface Baby {
@@ -896,10 +906,11 @@ export const useBabiesStore = defineStore('babies', {
         queuedAt: new Date().toISOString(),
       }
       try {
-        const { data } = await apiClient.post(endpointFor(log), {
-          ...payload,
-          client_uuid: log.clientUuid,
-        })
+        const { data } = await apiClient.post(
+          endpointFor(log),
+          { ...payload, client_uuid: log.clientUuid },
+          { timeout: QUEUED_WRITE_TIMEOUT_MS },
+        )
         this.applyCreatedLog(type, data.data)
         return 'saved'
       } catch (error) {
@@ -1055,7 +1066,9 @@ export const useBabiesStore = defineStore('babies', {
         queuedAt: new Date().toISOString(),
       }
       try {
-        const { data } = await apiClient.put(updateEndpoint(update), payload)
+        const { data } = await apiClient.put(updateEndpoint(update), payload, {
+          timeout: QUEUED_WRITE_TIMEOUT_MS,
+        })
         this.applySavedUpdate(type, data.data)
         return 'saved'
       } catch (error) {
@@ -1269,7 +1282,9 @@ export const useBabiesStore = defineStore('babies', {
       this.temperatures = this.temperatures.filter((t) => t.id !== id)
 
       try {
-        await apiClient.delete(`/babies/${this.current!.id}/temperatures/${id}`)
+        await apiClient.delete(`/babies/${this.current!.id}/temperatures/${id}`, {
+          timeout: QUEUED_WRITE_TIMEOUT_MS,
+        })
       } catch (error) {
         if (isNetworkError(error)) return this.queueDelete('temperature', id)
         this.timeline = previous
@@ -1300,7 +1315,9 @@ export const useBabiesStore = defineStore('babies', {
       )
 
       try {
-        await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`)
+        await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`, {
+          timeout: QUEUED_WRITE_TIMEOUT_MS,
+        })
       } catch (error) {
         if (isNetworkError(error)) return this.queueDelete('feed', id)
         this.timeline = previous
@@ -1320,7 +1337,9 @@ export const useBabiesStore = defineStore('babies', {
       )
 
       try {
-        await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`)
+        await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`, {
+          timeout: QUEUED_WRITE_TIMEOUT_MS,
+        })
       } catch (error) {
         if (isNetworkError(error)) return this.queueDelete('sleep', id)
         this.timeline = previous
@@ -1342,7 +1361,9 @@ export const useBabiesStore = defineStore('babies', {
       this.recentDiaperChanges = this.recentDiaperChanges.filter((c) => c.id !== id)
 
       try {
-        await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`)
+        await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`, {
+          timeout: QUEUED_WRITE_TIMEOUT_MS,
+        })
       } catch (error) {
         if (isNetworkError(error)) return this.queueDelete('diaper_change', id)
         this.timeline = previous

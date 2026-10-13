@@ -37,6 +37,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   historial compartido). La descarga es un JSON sin contraseña, tokens ni los
   emails de otros cuidadores.
 
+### Corregido (arranque en frío)
+
+- **Tras un rato sin usar la app, pulsar un botón tardaba 20-30 s**: era el
+  arranque en frío de Render gratuito (la API se duerme tras ~15 min) y el
+  guardado esperaba hasta 45 s. Ahora las altas, ediciones y borrados de tomas,
+  sueños, pañales y temperaturas esperan 7 s; si la API no ha contestado, el
+  registro aparece como "pendiente de enviar" (la misma cola de la
+  desconexión) y se envía en cuanto la API despierta. Es seguro reintentar: las
+  altas llevan `client_uuid` y el servidor no duplica. Al volver a la app el
+  Dashboard ya despertaba la API con su sondeo; lo que cambia es que el botón
+  no se queda esperando.
+
 ### Corregido (auditoría)
 
 - **Una vista antigua se quedaba viva en cada cambio de ruta** (comprobado en

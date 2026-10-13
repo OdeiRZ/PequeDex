@@ -190,12 +190,18 @@ describe('useBabiesStore', () => {
 
     await store.createFeed({ type: 'biberon', amount_ml: 120, started_at: '2026-08-30T10:00' })
 
-    expect(apiClient.post).toHaveBeenCalledWith('/babies/1/feeds', {
-      type: 'biberon',
-      amount_ml: 120,
-      started_at: '2026-08-30T10:00',
-      client_uuid: expect.any(String),
-    })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/babies/1/feeds',
+      {
+        type: 'biberon',
+        amount_ml: 120,
+        started_at: '2026-08-30T10:00',
+        client_uuid: expect.any(String),
+      },
+      // Tiempo corto: si la API tarda (arranque en frío de Render), el registro
+      // pasa a la cola en vez de dejar el botón esperando ~30 s.
+      { timeout: 7000 },
+    )
     expect(apiClient.get).not.toHaveBeenCalled()
     expect(store.timeline).toEqual([
       {
@@ -664,8 +670,27 @@ describe('useBabiesStore', () => {
 
     await pending
 
-    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5')
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5', { timeout: 7000 })
     expect(apiClient.get).not.toHaveBeenCalled()
+  })
+
+  it('queues a feed as pending when the API does not answer in time (cold start)', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    // Lo que axios lanza al agotarse el tiempo: error sin respuesta.
+    vi.mocked(apiClient.post).mockRejectedValueOnce(
+      Object.assign(new Error('timeout of 7000ms exceeded'), {
+        isAxiosError: true,
+        code: 'ECONNABORTED',
+      }),
+    )
+
+    const result = await store.createFeed({ type: 'pecho', started_at: '2026-08-30T10:00' })
+
+    expect(result).toBe('queued')
+    expect(store.offlineQueue).toHaveLength(1)
+    expect(store.timeline[0]?.pending).toBe(store.offlineQueue[0]?.clientUuid)
   })
 
   it('folds an updated feed into dayTimeline too, not just timeline', async () => {

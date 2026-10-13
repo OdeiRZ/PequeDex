@@ -1344,6 +1344,14 @@ o 24 meses (total).
 `lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Sirve para
 **crear** tomas, sueños, pañales y temperaturas, y para "Finalizar":
 
+> **Tiempo de espera corto en estos guardados** (`QUEUED_WRITE_TIMEOUT_MS`, 7 s,
+> en `stores/babies.ts`): como "tiempo agotado" cuenta como sin respuesta, si
+> Render está despertando la API (arranque en frío, 20-50 s tras ~15 min de
+> inactividad) el registro pasa a la cola y aparece como "pendiente de enviar"
+> en lugar de dejar el botón esperando. Reintentar es seguro por el
+> `client_uuid`; las ediciones son `PUT` y borrar algo ya borrado cuenta como
+> éxito. El resto de peticiones conserva los 45 s de `lib/api.ts`.
+
 - Cada creación lleva un `client_uuid` generado en el móvil. Si el
   `POST` falla **sin respuesta** (`isNetworkError()`: sin red, caída,
   tiempo agotado - no un 422), el registro va a `babies.offlineQueue`

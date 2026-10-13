@@ -1926,25 +1926,12 @@ const sleepPredictionDue = computed(() => {
   root DOM node, regardless of which branch below is active. Without it,
   the "baby exists" branch renders <main> + <ActionBar> + every
   <BottomSheet> + <MilestoneStoryViewer> as top-level siblings (a
-  Fragment) - fine for a plain mount, but App.vue's route
-  <Transition mode="out-in"> requires a single element root to animate a
-  leave, and a Fragment root there gets the leave stuck instead of ever
-  resolving - the next route's own enter (out-in mode) then never fires,
-  leaving the app blank but for the header. Reported live: creating a new
-  baby, then navigating straight to Contracciones without a full reload
-  in between.
+  Fragment).
 
-  `flex flex-1 flex-col` (not `display: contents`, tried first) - the
-  route transition's own `.route-leave-active` opacity/transform CSS
-  applies to this element directly (App.vue's <Transition> wraps
-  whatever DashboardView's root is), and `display: contents` drops this
-  element's own paintable box entirely, so that transition's
-  `transitionend` never fires - `mode="out-in"` waits on exactly that
-  event before mounting the next route, so it hung forever instead of
-  just failing to warn. `flex flex-1 flex-col` keeps this a real,
-  animatable box while still passing the outer app shell's own
-  `flex flex-1` sizing through to whichever single child branch below is
-  actually rendered (each already carries its own `flex-1 flex-col`). -->
+  `flex flex-1 flex-col` (not `display: contents`) keeps a real box that
+  passes the outer app shell's own `flex flex-1` sizing through to
+  whichever single child branch below is actually rendered (each already
+  carries its own `flex-1 flex-col`). -->
   <div class="flex flex-1 flex-col">
     <div
       v-if="loading"
@@ -1997,6 +1984,10 @@ const sleepPredictionDue = computed(() => {
 
       <template v-else>
         <main class="flex flex-1 flex-col gap-6 px-4 py-5 pb-28">
+          <!-- Encabezado de página solo para lectores de pantalla: el resto de
+               títulos de esta pantalla son secundarios y sin un h1 no hay
+               una cabecera principal que anunciar. -->
+          <h1 class="sr-only">{{ t('dashboard.pageTitle') }}</h1>
           <div
             v-if="babies.babies.length > 1"
             class="dash-enter -mb-3 flex gap-2 overflow-x-auto pb-1"

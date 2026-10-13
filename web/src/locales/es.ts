@@ -112,6 +112,7 @@ export default {
     hospitalBody:
       'Tu bolsa de aguas se rompió. Ve al hospital cuando tu matrona o médico te lo indique.',
     breakInfoTitle: 'Rotura de bolsa de aguas',
+    breakButton: 'Rotura de bolsa de aguas',
     breakInfoLabel: 'Fecha y hora',
     breakReset: 'Falsa alarma',
     toastUpdated: 'Guardado.',
@@ -377,6 +378,7 @@ export default {
     },
   },
   dashboard: {
+    pageTitle: 'Resumen del día',
     onboarding: {
       name: 'Nombre (opcional)',
       createError: 'No se ha podido guardar. Inténtalo de nuevo.',

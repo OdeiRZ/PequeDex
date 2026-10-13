@@ -153,6 +153,30 @@ function selectIndex(index: number) {
   if (item.value !== props.modelValue) emit('update:modelValue', item.value)
 }
 
+// Teclado: la rueda es un listbox, así que se enfoca con Tab y se maneja con
+// las flechas (una fila), Re Pág/Av Pág (cinco) e Inicio/Fin. Sin esto solo
+// se podía mover con ratón o dedo, y una persona que usa teclado o lector de
+// pantalla no podía elegir una fecha ni una hora.
+const PAGE_STEP = 5
+
+function onKeydown(event: KeyboardEvent) {
+  const current = indexOfValue(props.modelValue)
+  const last = props.items.length - 1
+  const targets: Record<string, number> = {
+    ArrowUp: current - 1,
+    ArrowDown: current + 1,
+    PageUp: current - PAGE_STEP,
+    PageDown: current + PAGE_STEP,
+    Home: 0,
+    End: last,
+  }
+  const target = targets[event.key]
+  if (target === undefined) return
+
+  event.preventDefault()
+  selectIndex(Math.min(last, Math.max(0, target)))
+}
+
 function onScroll() {
   if (programmaticScroll) return
 
@@ -181,9 +205,11 @@ function onScroll() {
     ref="scroller"
     class="wheel-column"
     role="listbox"
+    tabindex="0"
     :aria-label="ariaLabel"
     :style="{ height: `${ITEM_HEIGHT * VISIBLE_ROWS}px` }"
     @scroll="onScroll"
+    @keydown="onKeydown"
   >
     <div class="wheel-pad" :style="{ height: `${ITEM_HEIGHT * PAD_ROWS}px` }" />
     <div
@@ -215,6 +241,12 @@ function onScroll() {
 
 .wheel-column::-webkit-scrollbar {
   display: none;
+}
+
+/* Foco de teclado visible (la rueda ahora se enfoca con Tab). */
+.wheel-column:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .wheel-item {

@@ -23,6 +23,19 @@ describe('BottomSheet', () => {
     wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
   })
 
+  it('is inert while closed, so it cannot be tabbed into or read as a dialog', async () => {
+    const wrapper = mountSheet(false)
+    const backdrop = () => document.body.querySelector<HTMLElement>('[role="dialog"]')!.parentElement!
+
+    expect(backdrop().hasAttribute('inert')).toBe(true)
+
+    await wrapper.setProps({ open: true })
+    expect(backdrop().hasAttribute('inert')).toBe(false)
+
+    await wrapper.setProps({ open: false })
+    expect(backdrop().hasAttribute('inert')).toBe(true)
+  })
+
   it('locks body scroll while open and restores it on close', async () => {
     const wrapper = mountSheet(false)
 

@@ -111,6 +111,7 @@ export default {
     hospitalBody:
       'Your water broke. Head to the hospital when your midwife or doctor tells you to.',
     breakInfoTitle: 'Water breaking',
+    breakButton: 'Water breaking',
     breakInfoLabel: 'Date and time',
     breakReset: 'False alarm',
     toastUpdated: 'Saved.',
@@ -376,6 +377,7 @@ export default {
     },
   },
   dashboard: {
+    pageTitle: 'Daily overview',
     onboarding: {
       name: 'Name (optional)',
       createError: 'Could not save. Please try again.',

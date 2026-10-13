@@ -115,7 +115,9 @@ watch(
       previouslyFocusedElement?.focus()
     }
   },
-  { immediate: true },
+  // `post`: el foco se mueve cuando el DOM ya se ha actualizado, es decir,
+  // cuando la hoja ya no es `inert` (una hoja cerrada no se puede enfocar).
+  { immediate: true, flush: 'post' },
 )
 
 onUnmounted(() => {
@@ -179,6 +181,7 @@ function onGrabPointerUp(event: PointerEvent) {
     <div
       class="fixed inset-0 z-40 bg-black/40 transition-opacity duration-200"
       :class="open ? 'opacity-100' : 'pointer-events-none opacity-0'"
+      :inert="open ? undefined : true"
       @click.self="close"
     >
       <div

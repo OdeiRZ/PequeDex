@@ -28,6 +28,13 @@ const items = [
 
 const wrappers: VueWrapper[] = []
 
+// El último valor que la rueda ha emitido (`Array.prototype.at` no está en la
+// librería de TypeScript de este proyecto).
+function lastEmitted(wrapper: VueWrapper): unknown[] | undefined {
+  const emitted = wrapper.emitted('update:modelValue')
+  return emitted?.[emitted.length - 1]
+}
+
 function mountWheel(modelValue: number) {
   const wrapper = mount(WheelColumn, {
     props: { items, modelValue, ariaLabel: 'Ejemplo' },
@@ -49,6 +56,42 @@ describe('WheelColumn', () => {
   afterEach(() => {
     wrappers.splice(0).forEach((wrapper) => wrapper.unmount())
     vi.useRealTimers()
+  })
+
+  it('can be focused with the keyboard and moved with the arrow keys', async () => {
+    const wrapper = mountWheel(2)
+    const listbox = wrapper.get('[role="listbox"]')
+
+    expect(listbox.attributes('tabindex')).toBe('0')
+
+    await listbox.trigger('keydown', { key: 'ArrowDown' })
+    expect(lastEmitted(wrapper)).toEqual([3])
+
+    await listbox.trigger('keydown', { key: 'ArrowUp' })
+    expect(lastEmitted(wrapper)).toEqual([1])
+  })
+
+  it('jumps to the first and last values with Home and End and never goes past them', async () => {
+    const wrapper = mountWheel(2)
+    const listbox = wrapper.get('[role="listbox"]')
+
+    await listbox.trigger('keydown', { key: 'Home' })
+    expect(lastEmitted(wrapper)).toEqual([1])
+
+    await listbox.trigger('keydown', { key: 'End' })
+    expect(lastEmitted(wrapper)).toEqual([3])
+
+    // Av Pág desde el penúltimo valor se queda en el último, no se sale.
+    await listbox.trigger('keydown', { key: 'PageDown' })
+    expect(lastEmitted(wrapper)).toEqual([3])
+  })
+
+  it('ignores other keys so Tab and typing keep working', async () => {
+    const wrapper = mountWheel(2)
+
+    await wrapper.get('[role="listbox"]').trigger('keydown', { key: 'Tab' })
+
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
   it('scrolls to the initial modelValue on mount', () => {

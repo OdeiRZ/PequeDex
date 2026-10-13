@@ -1466,31 +1466,22 @@ destino y minuto (marca en `sessionStorage`) para no entrar en bucle.
 
 ## Transiciones entre rutas
 
-`App.vue` envuelve `<RouterView>` en un único `<Transition name="route">`
-global — deliberadamente **sin** `mode="out-in"`. Lo tuvo en su día (para
-evitar que `DashboardView`/`ContractionsView` montaran dos veces sus
-propios intervalos de sondeo en un cambio de ruta), pero `out-in` resultó
-ser poco fiable en este Vue/navegador: una transición se queda colgada
-para siempre bajo ciertas condiciones — el router ya tiene la ruta y el
-componente resueltos, pero el DOM no pinta nada más, ni la página vieja
-ni la nueva. Se encontró primero en transiciones que tocaban `welcome`
-(arreglado en su momento con un bypass acotado solo a esa ruta) y
-después, por separado, en Dashboard ↔ Contracciones — sin `welcome` de
-por medio, confirmando que nunca fue un problema específico de una ruta
-concreta. **No reintroducir `mode="out-in"` aquí** sin volver a probar a
-fondo cada pareja de rutas del router con clicks reales (no solo con
-`history.pushState`/eventos sintéticos en consola, que no siempre
-reproducen el mismo fallo).
+`App.vue` **no** envuelve `<RouterView>` en un `<Transition>`, a propósito.
+Antes había uno global (primero con `mode="out-in"`, que llegó a dejar la
+pantalla en blanco, y después sin él), y se comprobó en producción que la
+vista antigua **nunca se desmontaba**: tras seis navegaciones había cuatro
+`<main>` en el DOM, con los temporizadores de sondeo de Dashboard y
+Contracciones siguiendo vivos y un segundo `<main>` que un lector de
+pantalla anuncia como otra página. Sin el `<Transition>`, Vue desmonta la
+vista anterior en el acto (una sola `<main>` tras cualquier número de
+cambios de ruta).
 
-Viejo y nuevo se montan en su lugar en simultáneo (el modo por defecto
-de Vue): `.route-leave-active` saca la página saliente del flujo
-(`position: absolute`) y la hace desaparecer al instante, sin
-transición, en cuanto deja de ser la ruta activa — evita la alternativa
-peor de un fundido de salida que se solape visualmente con el fundido
-de entrada de la página nueva (probado y descartado: se ve como un
-parpadeo del contenido viejo). Cada intervalo de sondeo en
-Dashboard/Contracciones ya tiene su propio `onUnmounted`, así que el
-breve solape de montaje es inofensivo.
+El fundido de entrada sigue existiendo, pero es una animación CSS
+(`route-enter`, en `assets/base.css`) sobre `main`, la raíz visible de todas
+las vistas: no depende de gestionar la salida de nada y se desactiva con
+`prefers-reduced-motion`. **No reintroducir un `<Transition>` en el
+`<RouterView>`** sin comprobar, con navegaciones reales del router, que el
+número de `<main>` en el DOM no crece.
 
 ## Vacunas y revisiones (`/vacunas`)
 

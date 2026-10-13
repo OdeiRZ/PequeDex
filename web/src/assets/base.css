@@ -566,45 +566,25 @@ body {
   }
 }
 
-/* Route changes (Dashboard <-> Contracciones, etc.) fading the new view
-   in with a small lift instead of hard-cutting from one view to the
-   next - global because App.vue's <RouterView> renders the target view
-   through a dynamic <component :is>, not a tag this file could
-   otherwise scope normal CSS to.
-   Deliberately NOT mode="out-in" (App.vue doesn't set one) - that mode
-   waits for the leaving view to fully finish before mounting the next
-   one, and was found, live, to get permanently stuck on more than one
-   route pair (see App.vue's comment) - the route and resolved component
-   were correct, yet nothing ever painted again, neither the old page
-   nor the new one. Old and new mount simultaneously instead (Vue's
-   default), so a faded-but-still-overlapping leave would read as a
-   flicker of the old page's content - confirmed live it stayed fully
-   opaque for the first part of its own fade out, overlapping the
-   entering page's own still-mostly-transparent fade in. This variant
-   drops the leave transition entirely instead: the old page is taken
-   out of flow and simply vanishes the instant it stops being the active
-   route, so there's no window where both are visibly blended. */
-.route-enter-active {
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
+/* Entrada de cada pantalla: un fundido con un pequeño empuje hacia arriba en
+   lugar de un corte seco. Es una animación CSS sobre `main` (la raíz visible
+   de todas las vistas) y no un <Transition> de Vue: ese dejaba la vista
+   anterior montada para siempre (ver el comentario de App.vue). Así Vue
+   desmonta la antigua en el acto y esta solo anima la que entra. */
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.route-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
+main {
+  animation: route-enter 0.18s ease;
 }
-
-.route-leave-active {
-  position: absolute;
-  width: 100%;
-  transition: none;
-}
-
-.route-leave-to {
-  opacity: 0;
-}
-
 /* Dashboard's own top-level blocks (baby switcher, baby card,
    TodaySummary, predictions, milestones, DailyRhythm, WeeklySleep,
    línea temporal) fading/sliding up one after another instead of
@@ -665,7 +645,7 @@ body {
   .confirm-warn-leave-active,
   .baby-pill-active,
   .dash-enter,
-  .route-enter-active,
+  main,
   .wizard-step {
     transition: none !important;
     animation: none !important;
@@ -681,17 +661,8 @@ body {
   .entry-list-enter-from,
   .entry-list-leave-to,
   .confirm-warn-leave-to,
-  .dash-enter,
-  .route-enter-from {
+  .dash-enter {
     transform: none !important;
     opacity: 1 !important;
   }
-
-  /* .route-leave-active/.route-leave-to are deliberately left out above -
-     unlike every other pair here, "from"/"to" aren't opposite ends of the
-     same skipped animation: the leaving page must still end at opacity:0
-     (it's how the old page disappears instantly, not just a motion
-     nicety - see the .route-leave-active comment) regardless of reduced
-     motion, or it would sit fully opaque, permanently overlapping the
-     entering page underneath it. */
 }

@@ -536,6 +536,7 @@ async function onExportPdf() {
         <div class="flex items-center gap-2.5">
           <button
             type="button"
+            :aria-label="t('contractions.breakButton')"
             class="flex shrink-0 flex-col items-center gap-0.5 rounded-full border-2 px-4 py-2.5 shadow-sm transition-colors"
             :class="
               babies.current?.water_broke_at

@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { serviceWorker } from './vite.sw'
 import tailwindcss from '@tailwindcss/vite'
 
 // Política de seguridad de contenido (CSP) puesta como <meta> en el HTML del
@@ -82,6 +83,8 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       // Mismo valor por defecto que `lib/api.ts`.
       contentSecurityPolicy(env.VITE_API_URL ?? 'http://localhost:8000/api', env.VITE_SENTRY_DSN),
+      // Genera sw.js (service worker) con la lista de ficheros de la app.
+      serviceWorker(),
     ],
     resolve: {
       alias: {

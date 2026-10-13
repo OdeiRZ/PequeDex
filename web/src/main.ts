@@ -10,6 +10,7 @@ import { applyTheme, getStoredTheme } from './theme'
 import { vPress } from './directives/press'
 import { startSnapshotSync } from './lib/snapshotSync'
 import { initErrorReporting } from './lib/errorReporting'
+import { registerServiceWorker } from './lib/serviceWorker'
 
 // Applied before mount, not inside a component's onMounted, so the correct
 // theme is already on <html> for the very first paint - otherwise a stored
@@ -33,12 +34,6 @@ app.mount('#app')
 // carga después de montar para no pesar en el arranque.
 void initErrorReporting(app)
 
-// Registra un service worker vacío (ver public/sw.js) - no da soporte
-// offline, solo existe porque algunos navegadores (Chrome en Android) solo
-// ofrecen "Instalar app"/"Añadir a pantalla de inicio" para una página
-// controlada por un service worker con un fetch handler, haga lo que haga.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {})
-  })
-}
+// Service worker (sw/sw.template.js): guarda la app para abrirla sin conexion y avisa
+// cuando hay una version nueva. Solo en el build de produccion.
+registerServiceWorker()

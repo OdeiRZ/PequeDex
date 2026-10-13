@@ -15,7 +15,9 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  // `sw/` es la plantilla del service worker, con marcadores que el build sustituye
+  // (no es JavaScript válido hasta entonces); la comprueban sus pruebas.
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'sw/**']),
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,

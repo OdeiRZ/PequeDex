@@ -1491,6 +1491,48 @@ las vistas: no depende de gestionar la salida de nada y se desactiva con
 `<RouterView>`** sin comprobar, con navegaciones reales del router, que el
 número de `<main>` en el DOM no crece.
 
+## Service worker: abrir la app sin conexión
+
+`sw/sw.template.js` es la plantilla del service worker; el plugin
+`vite.sw.ts` la convierte en `dist/sw.js` en cada build, inyectándole la lista
+de ficheros de la app (index, JS/CSS con hash, iconos, manifiesto; unos 35
+ficheros, ~0,75 MB) y una **versión derivada del contenido de todos ellos**:
+cambia exactamente cuando cambia algo de la app. Solo se registra en el build de
+producción (`lib/serviceWorker.ts`); en desarrollo no, para no pelearse con la
+caché.
+
+Qué hace y, sobre todo, qué **no** hace:
+
+- Al instalarse guarda la app (con `cache: 'reload'`, que salta la caché HTTP de
+  10 minutos de GitHub Pages: un `index.html` viejo apuntaría a ficheros ya
+  borrados). Todo o nada: si falla un solo fichero, la instalación falla y se
+  queda la versión anterior.
+- Cualquier pantalla de la app se abre con el `index.html` guardado (las
+  navegaciones sin extensión; un enlace directo a un `.js` no devuelve el
+  index). Los datos siguen su camino de siempre: sin conexión los cubren la
+  foto guardada y la cola de registros.
+- **No toca el API, las escrituras, los audios ni las peticiones por rangos**;
+  las fuentes de Google se guardan al vuelo.
+- **Las versiones nuevas no se activan solas.** Quedan esperando y la app
+  muestra "Hay una versión nueva — Actualizar" (`UpdateBanner.vue`); al pulsar,
+  el service worker nuevo toma el control y la página se recarga. Así nunca se
+  mezclan ficheros de dos versiones, ni se recarga la app mientras alguien
+  registra algo. Al volver a la app se pregunta por versiones nuevas (como mucho
+  cada 30 min).
+- La coincidencia con la caché **ignora `Vary`** (`ignoreVary`): un servidor que
+  responde `Vary: Origin` (como `vite preview`) hacía que un mismo JS se
+  encontrase o no según la petición llevase `Origin`; lo cazó el e2e, que fallaba
+  en 2 de cada 12 ejecuciones.
+
+Pruebas: `src/lib/__tests__/serviceWorkerScript.spec.ts` carga la plantilla real
+en un entorno simulado; `e2e/offline-shell.spec.ts` visita la app con el
+service worker permitido, pone el navegador **sin conexión**, recarga y abre un
+enlace directo (el resto de e2e lo bloquean, ver `playwright.config.ts`).
+
+**Quitarlo de golpe**, si algún día hiciera falta: desplegar un `sw.js` que haga
+`self.registration.unregister()` y borre las cachés `pequedex-*`; los navegadores
+lo cogen en su siguiente comprobación.
+
 ## Seguridad, accesibilidad y datos de la cuenta
 
 - **Content-Security-Policy**: GitHub Pages no deja fijar cabeceras HTTP, así

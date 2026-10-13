@@ -734,6 +734,10 @@ export default {
     es: 'Español',
     en: 'English',
   },
+  update: {
+    banner: 'Hay una versión nueva de PequeDex.',
+    apply: 'Actualizar',
+  },
   emailVerification: {
     banner:
       'Confirma tu email ({email}) con el enlace que te hemos enviado para seguir usando PequeDex.',

@@ -92,6 +92,22 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Exigir el email confirmado
+    |--------------------------------------------------------------------------
+    |
+    | Con `true`, una cuenta sin confirmar su email no puede usar el API (solo
+    | confirmarlo, reenviar el correo, cerrar sesión o borrar la cuenta). Apagado
+    | por defecto: el remitente actual (sandbox de Resend, sin dominio propio)
+    | solo entrega correo al dueño de la cuenta de Resend, así que exigirlo hoy
+    | dejaría fuera a todos los demás. Encender (REQUIRE_EMAIL_VERIFICATION=true)
+    | cuando haya un dominio verificado. Ver EnsureEmailIsVerifiedWhenRequired.
+    |
+    */
+
+    'require_email_verification' => (bool) env('REQUIRE_EMAIL_VERIFICATION', false),
+
     'passwords' => [
         'users' => [
             'provider' => 'users',

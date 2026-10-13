@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AccountExportController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Babies\BabyController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Vaccinations\CheckupController;
 use App\Http\Controllers\Vaccinations\VaccinationController;
 use App\Http\Controllers\VitaminD\VitaminDDoseController;
 use App\Http\Controllers\VitaminD\VitaminDScheduleController;
+use App\Http\Middleware\EnsureEmailIsVerifiedWhenRequired;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,10 +32,19 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:6,1');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
+// Confirmar el email desde el enlace del correo: sin sesión (puede abrirse en otro
+// dispositivo); la protege la firma, relativa por si el host público difiere del
+// que ve el servidor detrás de Render.
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed:relative', 'throttle:6,1'])
+    ->name('verification.verify');
 
 // Techo general por usuario, muy por encima del uso normal (el sondeo del
-// Dashboard, la cola sin conexión al reconectar...): solo frena abusos.
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+// Dashboard, la cola sin conexión al reconectar...): solo frena abusos. Además,
+// exige el email confirmado si REQUIRE_EMAIL_VERIFICATION está activo (apagado
+// por defecto, ver config/auth.php).
+Route::middleware(['auth:sanctum', 'throttle:api', EnsureEmailIsVerifiedWhenRequired::class])->group(function () {
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])->middleware('throttle:6,1');
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', fn (Request $request) => $request->user());
     Route::put('/user', [ProfileController::class, 'update']);

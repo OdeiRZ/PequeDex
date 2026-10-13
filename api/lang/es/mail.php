@@ -6,6 +6,16 @@ return [
     // notifications, not just password reset, so it lives at the top level.
     'trouble' => 'Si el botón no funciona, copia y pega esta URL en tu navegador:',
 
+    'verify_email' => [
+        'subject' => 'Confirma tu email de PequeDex',
+        'greeting' => '¡Hola!',
+        'intro' => 'Pulsa el botón para confirmar tu dirección de email y terminar de crear tu cuenta de PequeDex.',
+        'action' => 'Confirmar email',
+        'expire' => 'Este enlace caduca dentro de :count minutos.',
+        'outro' => 'Si no has creado una cuenta en PequeDex, no tienes que hacer nada más.',
+        'salutation' => "Un saludo,\nEl equipo de PequeDex",
+    ],
+
     'reset_password' => [
         'subject' => 'Restablece tu contraseña de PequeDex',
         'greeting' => '¡Hola!',

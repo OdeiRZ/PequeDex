@@ -55,6 +55,12 @@
     "Este bebé tiene más de un cuidador. Solo se puede eliminar cuando eres el único cuidador - si no, usa \"Dejar de cuidar al bebé\".": "This baby has more than one caregiver. It can only be deleted when you are the only caregiver - otherwise use \"Stop caring for this baby\".",
     "Todavía no hay una pauta de vitamina D activada para este bebé.": "There is no vitamin D schedule turned on for this baby yet.",
     "No puedes marcar un día anterior al inicio de la pauta.": "You cannot mark a day before the start of the schedule.",
+    "El enlace de confirmación no es válido.": "The confirmation link is not valid.",
+    "Tu email está confirmado.": "Your email is confirmed.",
+    "Tu email ya estaba confirmado.": "Your email was already confirmed.",
+    "No se ha podido enviar el correo. Inténtalo más tarde.": "The email could not be sent. Please try again later.",
+    "Te hemos enviado un correo de confirmación.": "We have sent you a confirmation email.",
+    "Confirma tu email para seguir usando PequeDex.": "Confirm your email to keep using PequeDex.",
     "La imagen es demasiado grande.": "The image is too large.",
     "No se ha podido leer la imagen.": "The image could not be read."
 }

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\DiaperSize;
 use App\Enums\TemperatureMethod;
 use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -15,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -61,7 +62,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $appends = ['avatar'];
+    protected $appends = ['avatar', 'email_verification_required'];
 
     /**
      * Get the attributes that should be cast.
@@ -131,5 +132,21 @@ class User extends Authenticatable
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /** Our own branded, translated confirmation email (see VerifyEmailNotification). */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
+
+    /**
+     * Si el API exige el email confirmado (`REQUIRE_EMAIL_VERIFICATION`). El
+     * frontend lo usa para decidir si avisa a quien aún no lo ha confirmado: con
+     * la verificación apagada no se le pide nada.
+     */
+    protected function emailVerificationRequired(): Attribute
+    {
+        return Attribute::make(get: fn () => (bool) config('auth.require_email_verification'));
     }
 }

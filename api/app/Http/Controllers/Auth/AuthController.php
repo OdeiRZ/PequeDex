@@ -11,7 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -41,6 +43,18 @@ class AuthController extends Controller
 
             return [$user, $user->createToken('PequeDex')->plainTextToken];
         });
+
+        // Solo si la verificación está encendida (config/auth.php): apagada, el
+        // correo no serviría de nada. A mejor esfuerzo: si el envío falla (p. ej.
+        // el remitente de pruebas de Resend solo entrega al dueño de la cuenta),
+        // el registro NO se rompe; la persona puede pedir el reenvío después.
+        if (config('auth.require_email_verification')) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                Log::warning('No se pudo enviar el correo de confirmación al registrarse: '.$e->getMessage());
+            }
+        }
 
         return response()->json([
             'user' => $user,

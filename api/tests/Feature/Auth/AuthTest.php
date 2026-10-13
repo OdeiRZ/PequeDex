@@ -70,12 +70,12 @@ it('registers without joining any baby when invite_code is omitted', function ()
     expect($user->babies()->count())->toBe(0);
 });
 
-it('accepts a 6-character password but rejects a 5-character one', function () {
+it('accepts an 8-character password but rejects a 7-character one', function () {
     $short = $this->postJson('/api/register', [
         'name' => 'Odei',
         'email' => 'odei@example.com',
-        'password' => 'abcde',
-        'password_confirmation' => 'abcde',
+        'password' => 'abcdefg',
+        'password_confirmation' => 'abcdefg',
     ]);
 
     $short->assertUnprocessable()->assertJsonValidationErrors('password');
@@ -83,11 +83,17 @@ it('accepts a 6-character password but rejects a 5-character one', function () {
     $minimum = $this->postJson('/api/register', [
         'name' => 'Odei',
         'email' => 'odei@example.com',
-        'password' => 'abcdef',
-        'password_confirmation' => 'abcdef',
+        'password' => 'abcdefgh',
+        'password_confirmation' => 'abcdefgh',
     ]);
 
     $minimum->assertCreated();
+});
+
+it('lets an existing user with an older 6-character password keep logging in', function () {
+    User::factory()->create(['email' => 'vieja@example.com', 'password' => Hash::make('abcdef')]);
+
+    $this->postJson('/api/login', ['email' => 'vieja@example.com', 'password' => 'abcdef'])->assertOk();
 });
 
 it('rejects registration with a mismatched password confirmation', function () {

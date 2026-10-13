@@ -6,6 +6,16 @@ return [
     // notifications, not just password reset, so it lives at the top level.
     'trouble' => "If the button doesn't work, copy and paste this URL into your browser:",
 
+    'verify_email' => [
+        'subject' => 'Confirm your PequeDex email',
+        'greeting' => 'Hello!',
+        'intro' => 'Press the button to confirm your email address and finish creating your PequeDex account.',
+        'action' => 'Confirm email',
+        'expire' => 'This link will expire in :count minutes.',
+        'outro' => "If you didn't create a PequeDex account, no further action is required.",
+        'salutation' => "Best,\nThe PequeDex team",
+    ],
+
     'reset_password' => [
         'subject' => 'Reset your PequeDex password',
         'greeting' => 'Hello!',

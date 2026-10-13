@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\UpdateActionBarCategoriesRequest;
 use App\Http\Requests\Auth\UpdateAlertsEnabledRequest;
 use App\Http\Requests\Auth\UpdateAvatarRequest;
@@ -19,6 +20,7 @@ use App\Http\Requests\Auth\UpdateStatsEnabledRequest;
 use App\Http\Requests\Auth\UpdateSwipeToDeleteEnabledRequest;
 use App\Http\Requests\Auth\UpdateTodaySummaryEnabledRequest;
 use App\Models\User;
+use App\Services\Users\AccountDeleter;
 use App\Services\Users\AvatarProcessor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -161,6 +163,19 @@ class ProfileController extends Controller
         $user->update(['milestones_enabled' => $request->validated('milestones_enabled')]);
 
         return response()->json($user);
+    }
+
+    /**
+     * Borra la cuenta (pide la contraseña). Los bebés que solo cuidaba esta
+     * persona se borran con su historial; los compartidos se quedan para el
+     * otro cuidador. Ver `AccountDeleter`.
+     */
+    public function destroy(DeleteAccountRequest $request, AccountDeleter $deleter): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json($deleter->delete($user));
     }
 
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { DiaperSize, TemperatureMethod } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
@@ -28,6 +29,7 @@ import { storeLocale } from '@/i18n'
 // the link went dead on /contracciones). Living here instead, next to
 // AppHeader, it works from every route.
 const auth = useAuthStore()
+const router = useRouter()
 const toast = useToastStore()
 const ui = useUiStore()
 const feedback = useFeedback()
@@ -120,6 +122,53 @@ async function onSubmitPassword() {
     toast.show(t('profile.passwordError'), 'error')
   } finally {
     savingPassword.value = false
+  }
+}
+
+// "Tus datos": descargar todo lo que hay de esta cuenta y borrarla. Lo
+// segundo pide la contraseña y se explica antes de pedirla.
+const exportingData = ref(false)
+const deleteOpen = ref(false)
+const deletePassword = ref('')
+const deletingAccount = ref(false)
+
+async function onExportData() {
+  exportingData.value = true
+
+  try {
+    const blob = await auth.exportData()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'pequedex-datos.json'
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    toast.show(t('profile.yourData.exportError'), 'error')
+  } finally {
+    exportingData.value = false
+  }
+}
+
+function onCancelDelete() {
+  deleteOpen.value = false
+  deletePassword.value = ''
+}
+
+async function onDeleteAccount() {
+  deletingAccount.value = true
+
+  try {
+    await auth.deleteAccount(deletePassword.value)
+    deletePassword.value = ''
+    deleteOpen.value = false
+    ui.closeAccountSheet()
+    toast.show(t('profile.yourData.deleted'))
+    await router.push({ name: 'welcome' })
+  } catch {
+    toast.show(t('profile.yourData.deleteError'), 'error')
+  } finally {
+    deletingAccount.value = false
   }
 }
 
@@ -1057,6 +1106,67 @@ watch(
         </svg>
       </button>
     </form>
+
+    <section class="mt-6 flex flex-col gap-4 border-t border-border pt-5">
+      <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.yourData.title') }}</h4>
+
+      <div class="flex items-center justify-between gap-3 rounded-xl bg-surface-sunken p-3">
+        <div>
+          <div class="text-sm font-semibold">{{ t('profile.yourData.exportTitle') }}</div>
+          <div class="text-xs text-text-muted">{{ t('profile.yourData.exportBody') }}</div>
+        </div>
+        <button
+          v-press
+          type="button"
+          class="btn-ghost shrink-0"
+          :disabled="exportingData"
+          @click="onExportData"
+        >
+          {{ t('profile.yourData.exportAction') }}
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-xl border border-danger/40 p-3">
+        <div class="text-sm font-semibold text-danger">{{ t('profile.yourData.deleteTitle') }}</div>
+        <p class="text-xs text-text-muted">{{ t('profile.yourData.deleteWarning') }}</p>
+
+        <button
+          v-if="!deleteOpen"
+          type="button"
+          class="self-start text-xs font-semibold text-danger"
+          @click="deleteOpen = true"
+        >
+          {{ t('profile.yourData.deleteStart') }}
+        </button>
+
+        <form v-else class="flex flex-col gap-3" @submit.prevent="onDeleteAccount">
+          <div>
+            <label for="delete-account-password" class="field-label">{{
+              t('profile.yourData.deletePassword')
+            }}</label>
+            <PasswordField
+              id="delete-account-password"
+              v-model="deletePassword"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="flex gap-2">
+            <button type="button" class="btn-ghost flex-1" @click="onCancelDelete">
+              {{ t('profile.yourData.deleteCancel') }}
+            </button>
+            <button
+              v-press
+              type="submit"
+              class="btn-danger flex-1"
+              :disabled="deletingAccount || !deletePassword"
+            >
+              {{ t('profile.yourData.deleteConfirm') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
   </BottomSheet>
 </template>
 

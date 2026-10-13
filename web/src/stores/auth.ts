@@ -131,6 +131,21 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // Borra la cuenta en el servidor (pide la contraseña) y, solo si sale
+    // bien, cierra la sesión local. Los bebés que solo cuidaba esta persona
+    // se borran allí con su historial; ver AccountDeleter en el API.
+    async deleteAccount(currentPassword: string) {
+      await apiClient.delete('/user', { data: { current_password: currentPassword } })
+      this.clearSession()
+    },
+
+    // Todos los datos de la cuenta en un JSON (portabilidad). Devuelve el
+    // Blob; quien lo llama dispara la descarga (mismo patrón que los PDF).
+    async exportData(): Promise<Blob> {
+      const { data } = await apiClient.get('/user/export', { responseType: 'blob' })
+      return data
+    },
+
     async updateProfile(payload: UpdateProfilePayload) {
       const { data } = await apiClient.put('/user', payload)
       this.user = data

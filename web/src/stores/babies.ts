@@ -87,7 +87,7 @@ export interface VaccinationTemplateInfo {
 export interface Checkup {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   scheduled_at: string
   reason: string | null
   notes: string | null
@@ -116,7 +116,7 @@ export type DiaperSize = '0' | '1' | '2' | '3' | '4' | '5' | '6+'
 export interface Feed {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   type: FeedType
   side: FeedSide | null
   milk_type: MilkType | null
@@ -129,7 +129,7 @@ export interface Feed {
 export interface Sleep {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   started_at: string
   ended_at: string | null
   notes: string | null
@@ -138,7 +138,7 @@ export interface Sleep {
 export interface DiaperChange {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   changed_at: string
   type: DiaperType
   residue_color: DiaperResidueColor | null
@@ -155,7 +155,7 @@ export type TemperatureMethod = 'axila' | 'recto' | 'oido' | 'frente'
 export interface Temperature {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   measured_at: string
   celsius: number
   method: TemperatureMethod | null
@@ -165,7 +165,7 @@ export interface Temperature {
 export interface GrowthMeasurement {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   measured_at: string
   weight_grams: number | null
   height_cm: number | null
@@ -202,7 +202,7 @@ export interface MilestoneLike {
 export interface Milestone {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   achieved_at: string
   title: string
   category: MilestoneCategory | null
@@ -282,7 +282,7 @@ export interface FeedPrediction {
 export interface Contraction {
   id: number
   baby_id: number
-  user_id: number
+  user_id: number | null
   started_at: string
   ended_at: string | null
   intensity: 0 | 1 | 2

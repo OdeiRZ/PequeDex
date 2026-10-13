@@ -827,6 +827,25 @@ Medidas del API, con el motivo de cada una:
   (`onboarding@resend.dev`) solo entrega al dueño de la cuenta. Las cuentas
   anteriores se marcan como confirmadas por migración, y el registro no falla si
   el correo no sale.
+
+  **Cómo encenderla cuando haya dominio propio** (el código no cambia, todo es
+  configuración):
+  1. En Resend, *Domains → Add domain* (vale un dominio o un subdominio, p. ej.
+     `mail.midominio.com`) y copiar los registros DNS que indica (SPF, DKIM y
+     MX) en el panel DNS del dominio. Esperar a que figure como *Verified*.
+  2. En Render, variables de entorno: `MAIL_MAILER=resend`, `RESEND_API_KEY`,
+     `MAIL_FROM_ADDRESS` con una dirección de ese dominio (p. ej.
+     `PequeDex <no-reply@mail.midominio.com>` se separa en
+     `MAIL_FROM_ADDRESS=no-reply@mail.midominio.com` y
+     `MAIL_FROM_NAME=PequeDex`).
+  3. **Comprobar antes de encender** que llega un correo real a una cuenta
+     distinta de la del dueño de Resend (p. ej. con *Olvidé mi contraseña*).
+  4. Poner `REQUIRE_EMAIL_VERIFICATION=true` en Render y redesplegar. Si se
+     quiere probar antes, se puede encender primero en local con
+     `MAIL_MAILER=log` y leer el enlace en `storage/logs`.
+  Alternativa sin dominio, descartada por ahora: la API de Gmail por HTTPS
+  (la usa LudoDex, `GmailApiTransport`), cuyo token caduca cada 7 días con el
+  consentimiento OAuth en modo *Prueba*.
 - **Dependencias:** Dependabot (`.github/dependabot.yml`, semanal) y sus
   actualizaciones de seguridad activadas; `composer audit` y
   `npm audit --omit=dev` limpios. Quedan avisos en `braces`/`micromatch`

@@ -63,6 +63,15 @@ export default {
       genericError: 'Could not send the link. Please try again.',
       backToLogin: 'Back to login',
     },
+    verifyEmail: {
+      title: 'Confirm email',
+      checking: 'Checking the link…',
+      done: 'Your email is confirmed. Thank you!',
+      invalid:
+        'This link is not valid or has expired. Log in and ask us to send you another confirmation email.',
+      goToApp: 'Go to the app',
+      goToLogin: 'Log in',
+    },
     resetPassword: {
       title: 'New password',
       password: 'New password',
@@ -719,6 +728,12 @@ export default {
     label: 'Language',
     es: 'Español',
     en: 'English',
+  },
+  emailVerification: {
+    banner: 'Confirm your email ({email}) with the link we sent you to keep using PequeDex.',
+    resend: 'Resend the email',
+    sent: 'We have sent it again.',
+    error: 'Could not send it. Please try again later.',
   },
   profile: {
     title: 'Your account',

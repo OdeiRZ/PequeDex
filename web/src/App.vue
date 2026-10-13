@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AccountSheet from '@/components/AccountSheet.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import EmailVerificationBanner from '@/components/EmailVerificationBanner.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 
 const auth = useAuthStore()
@@ -47,6 +48,7 @@ onMounted(() => {
          header's own bg-bg bar would clip that background at the top of
          the screen. -->
     <AppHeader v-if="route.name !== 'welcome'" />
+    <EmailVerificationBanner />
     <RouterView />
     <ToastNotification />
     <!-- Mounted here, not inside any one view, so the "Tu cuenta" link

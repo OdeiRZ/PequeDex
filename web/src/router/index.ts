@@ -48,6 +48,13 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      // El enlace del correo de confirmación: se abre con o sin sesión (a veces
+      // en otro dispositivo), así que sin `requiresAuth` ni `guestOnly`.
+      path: '/verify-email',
+      name: 'verify-email',
+      component: () => import('@/views/VerifyEmailView.vue'),
+    },
+    {
       path: '/contracciones',
       name: 'contractions',
       component: () => import('@/views/ContractionsView.vue'),

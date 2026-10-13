@@ -33,6 +33,19 @@ export interface User {
   /** Avisos suaves del Dashboard (DailyAlertsCard.vue). */
   alerts_enabled: boolean
   milestones_enabled: boolean
+  /** null = el email aún no se ha confirmado. */
+  email_verified_at: string | null
+  /** Si el API exige el email confirmado (REQUIRE_EMAIL_VERIFICATION). Con
+   * `false` no se le pide nada a nadie, aunque no haya confirmado. */
+  email_verification_required: boolean
+}
+
+/** Lo que trae el enlace del correo de confirmación (ver VerifyEmailNotification). */
+export interface EmailVerificationParams {
+  id: string
+  hash: string
+  expires: string
+  signature: string
 }
 
 interface RegisterPayload {
@@ -129,6 +142,20 @@ export const useAuthStore = defineStore('auth', {
             // best-effort - the local session is already gone either way.
           })
       }
+    },
+
+    // Confirma el email con los parámetros firmados del enlace del correo. Si
+    // hay sesión, refresca el usuario para que el aviso de "confirma tu email"
+    // desaparezca.
+    async verifyEmail(params: EmailVerificationParams) {
+      await apiClient.get(`/email/verify/${params.id}/${params.hash}`, {
+        params: { expires: params.expires, signature: params.signature },
+      })
+      if (this.token) await this.fetchCurrentUser()
+    },
+
+    async resendEmailVerification() {
+      await apiClient.post('/email/verification-notification')
     },
 
     // Borra la cuenta en el servidor (pide la contraseña) y, solo si sale

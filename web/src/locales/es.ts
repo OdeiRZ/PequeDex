@@ -64,6 +64,15 @@ export default {
       genericError: 'No se ha podido enviar el enlace. Inténtalo de nuevo.',
       backToLogin: 'Volver a iniciar sesión',
     },
+    verifyEmail: {
+      title: 'Confirmar email',
+      checking: 'Comprobando el enlace…',
+      done: 'Tu email está confirmado. ¡Gracias!',
+      invalid:
+        'Este enlace no es válido o ha caducado. Inicia sesión y pide que te enviemos otro correo de confirmación.',
+      goToApp: 'Ir a la app',
+      goToLogin: 'Iniciar sesión',
+    },
     resetPassword: {
       title: 'Nueva contraseña',
       password: 'Nueva contraseña',
@@ -724,6 +733,13 @@ export default {
     label: 'Idioma',
     es: 'Español',
     en: 'English',
+  },
+  emailVerification: {
+    banner:
+      'Confirma tu email ({email}) con el enlace que te hemos enviado para seguir usando PequeDex.',
+    resend: 'Reenviar el correo',
+    sent: 'Te lo hemos vuelto a enviar.',
+    error: 'No se ha podido enviar. Inténtalo más tarde.',
   },
   profile: {
     title: 'Tu cuenta',

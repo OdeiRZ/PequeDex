@@ -9,6 +9,7 @@ import { i18n } from './i18n'
 import { applyTheme, getStoredTheme } from './theme'
 import { vPress } from './directives/press'
 import { startSnapshotSync } from './lib/snapshotSync'
+import { initErrorReporting } from './lib/errorReporting'
 
 // Applied before mount, not inside a component's onMounted, so the correct
 // theme is already on <html> for the very first paint - otherwise a stored
@@ -27,6 +28,10 @@ app.directive('press', vPress)
 startSnapshotSync(pinia)
 
 app.mount('#app')
+
+// Errores del frontend a Sentry (solo si el build lleva VITE_SENTRY_DSN); se
+// carga después de montar para no pesar en el arranque.
+void initErrorReporting(app)
 
 // Registra un service worker vacío (ver public/sw.js) - no da soporte
 // offline, solo existe porque algunos navegadores (Chrome en Android) solo

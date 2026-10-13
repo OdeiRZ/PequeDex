@@ -22,17 +22,25 @@ import tailwindcss from '@tailwindcss/vite'
 //    el único recurso externo de la app, `@import` en assets/base.css.
 //
 // `frame-ancestors` no se puede fijar desde un <meta> (el navegador lo ignora).
-function contentSecurityPolicy(apiUrl: string): Plugin {
+function contentSecurityPolicy(apiUrl: string, sentryDsn?: string): Plugin {
   return {
     name: 'pequedex-content-security-policy',
     apply: 'build',
     transformIndexHtml: {
       order: 'post',
       handler(html) {
-        const inlineScriptHashes = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(
-          (match) => `'sha256-${createHash('sha256').update(match[1] ?? '').digest('base64')}'`,
+        const inlineScriptHashes = [
+          ...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g),
+        ].map(
+          (match) =>
+            `'sha256-${createHash('sha256')
+              .update(match[1] ?? '')
+              .digest('base64')}'`,
         )
         const apiOrigin = new URL(apiUrl).origin
+        // El DSN de Sentry (`https://clave@oXXX.ingest.sentry.io/id`): solo se
+        // permite conectar con su servidor de ingesta, y solo si el build lo lleva.
+        const sentryOrigin = sentryDsn ? `https://${new URL(sentryDsn).host}` : ''
 
         const policy = [
           "default-src 'self'",
@@ -41,7 +49,7 @@ function contentSecurityPolicy(apiUrl: string): Plugin {
           "img-src 'self' data: blob: https:",
           "media-src 'self' blob:",
           "font-src 'self' data: https://fonts.gstatic.com",
-          `connect-src 'self' ${apiOrigin}`,
+          `connect-src 'self' ${apiOrigin} ${sentryOrigin}`.trim(),
           "worker-src 'self'",
           "manifest-src 'self'",
           "object-src 'none'",
@@ -73,7 +81,7 @@ export default defineConfig(({ mode }) => {
       vueDevTools(),
       tailwindcss(),
       // Mismo valor por defecto que `lib/api.ts`.
-      contentSecurityPolicy(env.VITE_API_URL ?? 'http://localhost:8000/api'),
+      contentSecurityPolicy(env.VITE_API_URL ?? 'http://localhost:8000/api', env.VITE_SENTRY_DSN),
     ],
     resolve: {
       alias: {

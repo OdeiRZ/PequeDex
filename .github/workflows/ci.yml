@@ -150,8 +150,15 @@ jobs:
         # variable de build de Cloudflare Pages, ahora aquí. Sin ella el
         # build cae al default de api.ts (localhost:8000), rompiendo la app
         # en producción contra la API real en Render.
+        #
+        # VITE_SENTRY_DSN (variable del repositorio, no secreto: el DSN es
+        # público por diseño) activa el reporte de errores del frontend; si no
+        # está definida queda vacía y no se reporta nada. VITE_APP_RELEASE
+        # agrupa los errores por despliegue.
         env:
           VITE_API_URL: https://pequedex-0phw.onrender.com/api
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          VITE_APP_RELEASE: ${{ github.sha }}
         run: npm run build
 
       - name: Upload Pages artifact

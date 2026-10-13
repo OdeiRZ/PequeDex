@@ -190,6 +190,29 @@ Al restaurar hay que volver a iniciar sesión (los tokens no se copian).
 Una copia que nunca se ha restaurado no es una copia: conviene probar la
 restauración una vez en un proyecto de pruebas.
 
+## Antes de subir: `scripts/verify.ps1`
+
+Un solo comando que pasa en local todo lo que pasa la CI, y se para en el primer
+fallo diciendo cuál:
+
+```
+./scripts/verify.ps1            # todo, con e2e (unos minutos)
+./scripts/verify.ps1 -SkipE2E   # sin Playwright
+```
+
+Backend: Pint, PHPStan, Pest sobre SQLite y sobre PostgreSQL, `composer audit`.
+Frontend: Prettier, ESLint, tipos, Vitest, build, `npm audit` y e2e.
+
+**PostgreSQL local, recomendado.** La CI también corre las pruebas sobre
+PostgreSQL (job "Backend on PostgreSQL") y una vez falló solo ahí: un error de
+clave única deja abortada la transacción en curso (`SQLSTATE[25P02]`), algo que
+SQLite no hace. Sin Docker, basta un PostgreSQL 18 **portátil** (el zip de
+binarios de EnterpriseDB, sin instalador ni servicio de Windows) descomprimido
+en `~\.claude\tools\postgres18` (o donde indique `PEQUEDEX_PG_DIR`), con un
+clúster creado con `initdb -U postgres` (contraseña `postgres`) y una base
+`pequedex_test`, en el puerto 5433. El script lo arranca si hace falta, lo
+usa y lo para; si no existe, avisa y se salta ese paso.
+
 ## Licencia
 
 [AGPLv3](LICENSE).

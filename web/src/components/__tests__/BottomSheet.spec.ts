@@ -25,7 +25,8 @@ describe('BottomSheet', () => {
 
   it('is inert while closed, so it cannot be tabbed into or read as a dialog', async () => {
     const wrapper = mountSheet(false)
-    const backdrop = () => document.body.querySelector<HTMLElement>('[role="dialog"]')!.parentElement!
+    const backdrop = () =>
+      document.body.querySelector<HTMLElement>('[role="dialog"]')!.parentElement!
 
     expect(backdrop().hasAttribute('inert')).toBe(true)
 

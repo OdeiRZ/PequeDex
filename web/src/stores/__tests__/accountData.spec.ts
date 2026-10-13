@@ -20,7 +20,9 @@ describe('auth store: account data', () => {
   it('deletes the account with the password and only then clears the local session', async () => {
     const auth = useAuthStore()
     auth.token = 'abc'
-    vi.mocked(apiClient.delete).mockResolvedValueOnce({ data: { babies_deleted: 0, babies_left: 1 } })
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({
+      data: { babies_deleted: 0, babies_left: 1 },
+    })
 
     await auth.deleteAccount('mi-contraseña')
 

@@ -7,6 +7,54 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Seguridad y privacidad
+
+- **Auditoría completa (2026-10-13)**: todo lo marcado como alto y dos de los
+  medios, con tests. Detalle técnico en `api/README.md` (Seguridad y
+  privacidad) y `web/README.md`.
+  - **CORS**: el preflight se cachea 2 h (`max_age 7200`); con `0` se repetía
+    antes de cada llamada (125-280 ms).
+  - **IP real**: el límite de intentos de login era un único cubo compartido
+    por todos los usuarios (detrás de Render solo se veía la IP del proxy);
+    ahora se usa `CF-Connecting-IP` en producción y nunca `X-Forwarded-For`.
+  - **Sesiones**: los tokens caducan a los 120 días; cambiar la contraseña
+    cierra las demás sesiones y restablecerla las cierra todas.
+  - **Cabeceras y límites**: cabeceras de seguridad en el API y sin
+    `X-Powered-By`; límite general por usuario y propio para los PDF, con
+    limitadores con nombre (los `throttle:N,1` sin nombre comparten contador y
+    habrían contado doble); listados acotados a 20.000 filas.
+  - **CSP** en el front como `<meta>` del build, con el hash del script en
+    línea, solo el API como destino de conexión y Google Fonts como único
+    recurso externo.
+  - **Dependencias**: `league/commonmark` y `laravel/framework` actualizados
+    (`composer audit` limpio), `npm audit --omit=dev` limpio y Dependabot
+    activado (semanal, más las alertas de seguridad).
+- **Borrar la cuenta y descargar tus datos** (Tu cuenta > Tus datos). Borrar
+  pide la contraseña: los bebés que solo cuidabas tú se borran con su historial
+  y fotos; los compartidos se quedan para el otro cuidador, con lo que anotaste
+  (los registros pierden el autor en vez de borrarse: antes `user_id` era
+  `cascadeOnDelete` y borrar a un cuidador habría borrado la mitad del
+  historial compartido). La descarga es un JSON sin contraseña, tokens ni los
+  emails de otros cuidadores.
+
+### Corregido (auditoría)
+
+- **Una vista antigua se quedaba viva en cada cambio de ruta** (comprobado en
+  producción: de 1 a 4 `<main>` tras seis navegaciones): el `<Transition>` del
+  `RouterView` nunca desmontaba la vista que salía, así que sus temporizadores
+  de sondeo seguían funcionando y un lector de pantalla veía varias páginas.
+  Ahora el fundido de entrada es una animación CSS y Vue desmonta la anterior
+  en el acto. Un test e2e lo vigila.
+- **Accesibilidad** (axe-core, de varias violaciones graves a ninguna en las
+  cinco pantallas): hojas inferiores cerradas ya no son diálogos sin nombre con
+  campos enfocables; la rueda de fecha/hora se maneja con teclado; el botón de
+  rotura de bolsa tiene nombre; el Dashboard tiene `h1` para lectores de
+  pantalla.
+- **Los errores del API salían siempre en español** aunque la app estuviera en
+  inglés: ahora el cliente manda su idioma (`Accept-Language`) y el API
+  contesta en él (76 textos con traducción y un test que impide olvidar
+  alguno). Los PDF siguen solo en español.
+
 ### Cambiado
 
 - **Base de datos movida de Londres a Fráncfort** (2026-10-12): junto a la

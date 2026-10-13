@@ -1483,6 +1483,33 @@ las vistas: no depende de gestionar la salida de nada y se desactiva con
 `<RouterView>`** sin comprobar, con navegaciones reales del router, que el
 número de `<main>` en el DOM no crece.
 
+## Seguridad, accesibilidad y datos de la cuenta
+
+- **Content-Security-Policy**: GitHub Pages no deja fijar cabeceras HTTP, así
+  que la política va como `<meta>` que añade un plugin de Vite **solo al
+  build** (`vite.config.ts`; en desarrollo bloquearía los scripts del HMR).
+  Scripts solo del propio origen más el hash del script en línea de
+  `index.html`; `connect-src` solo al propio origen y al API (el origen de
+  `VITE_API_URL` en el momento del build: sin esa variable el build apunta a
+  `localhost` y bloquearía el API real); imágenes de cualquier `https`
+  (fotos de hitos con URL temporal de R2), `data:` y `blob:`; Google Fonts
+  es el único recurso externo (`@import` en `assets/base.css`). El test
+  e2e de navegación falla ante cualquier violación del CSP.
+- **Idioma de los errores del API**: el cliente (`lib/api.ts`) manda
+  `Accept-Language` con el idioma de la app, así que la validación sale en ese
+  idioma (antes siempre en español). Es una cabecera "segura" de CORS, no
+  añade preflight.
+- **Accesibilidad**: las hojas inferiores cerradas son `inert` (antes seguían
+  montadas como diálogos sin nombre y con campos enfocables con Tab); las
+  columnas de la rueda de fecha/hora (`WheelColumn.vue`) se enfocan con Tab y
+  se manejan con flechas, Re Pág/Av Pág, Inicio y Fin; el botón de rotura de
+  bolsa de Contracciones tiene nombre; el Dashboard tiene un `h1` solo para
+  lectores de pantalla. Comprobado con axe-core (sin violaciones en las cinco
+  pantallas principales).
+- **Tus datos** (Tu cuenta, abajo): "Descargar mis datos" baja un JSON con
+  todo y "Eliminar mi cuenta" pide la contraseña y explica qué se borra y qué
+  no antes de pedirla. Detalle en `api/README.md`.
+
 ## Vacunas y revisiones (`/vacunas`)
 
 Una cartilla digital por bebé: qué vacunas se han puesto y cuándo, y las

@@ -765,6 +765,49 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   más de margen con el que trabajar. Usado por la navegación a días
   anteriores de "Ritmo de hoy" (ver `web/README.md`).
 
+## Seguridad y privacidad
+
+Medidas del API, con el motivo de cada una:
+
+- **CORS con caché de preflight** (`config/cors.php`, `max_age => 7200`): con
+  `0` el navegador repetía la petición OPTIONS antes de **cada** llamada con
+  `Authorization` (125-280 ms medidos en producción).
+- **IP real del cliente** (`App\Http\Middleware\ResolveClientIp`): detrás de
+  Render el servidor solo veía la IP de su proxy, así que el límite de login
+  era un único cubo compartido por todos. En producción se toma de
+  `CF-Connecting-IP` (Cloudflare la pisa, no la puede falsificar el cliente);
+  `X-Forwarded-For` no se usa porque su primer valor lo escribe el cliente.
+  Fuera de producción se ignora.
+- **Sesiones:** los tokens de Sanctum caducan a los 120 días
+  (`SANCTUM_EXPIRATION`, en minutos), cambiar la contraseña cierra las demás
+  sesiones (se conserva la actual) y restablecerla cierra todas.
+- **Límites de peticiones** con limitadores con nombre y clave propia
+  (`AppServiceProvider`): `api` (300/min por usuario, solo frena abusos) y
+  `exports` (10/min, los PDF gastan CPU). Los `throttle:N,1` sin nombre
+  comparten contador entre sí, así que apilar uno general con uno específico
+  contaría cada petición dos veces y recortaría el límite a la mitad; por eso
+  los nuevos van con nombre. Los listados de registros se acotan a 20.000
+  filas (`Controller::INDEX_LIMIT`).
+- **Cabeceras** (`SecurityHeaders`): `X-Content-Type-Options`,
+  `Referrer-Policy`, `X-Frame-Options` y HSTS; `expose_php = Off`
+  (`docker/security.ini`) quita `X-Powered-By: PHP/x.y.z`.
+- **Idioma de los errores** (`SetLocaleFromRequest`): el API contesta en el
+  idioma de la cabecera `Accept-Language` (`es` o `en`; con otro valor o sin
+  ella, `APP_LOCALE`). Los textos en español van envueltos en `__()` y su
+  traducción está en `lang/en.json`; un test falla si algún texto envuelto no
+  tiene traducción. Los PDF siguen solo en español.
+- **Datos de la cuenta (RGPD):** `DELETE /api/user` (pide la contraseña actual)
+  borra la cuenta: los bebés que solo cuidaba esa persona se borran con su
+  historial y sus fotos, y los compartidos se quedan para el otro cuidador,
+  con lo que la persona había anotado (los registros pierden el autor,
+  `user_id` es `nullable` + `nullOnDelete`). `GET /api/user/export` devuelve
+  todo lo de la cuenta en un JSON, sin contraseña, sin tokens, sin los emails
+  de otros cuidadores y sin las fotos (solo si había).
+- **Dependencias:** Dependabot (`.github/dependabot.yml`, semanal) y sus
+  actualizaciones de seguridad activadas; `composer audit` y
+  `npm audit --omit=dev` limpios. Quedan avisos en `braces`/`micromatch`
+  dentro de la configuración de ESLint: solo herramienta de desarrollo.
+
 ## Notas de arquitectura
 
 Sin worker en segundo plano ni cola persistente por ahora — no hay ninguna

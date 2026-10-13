@@ -507,17 +507,24 @@ de 0.13, calculada para igualar su RMS al de las otras categorías, en
 vez de sonar a escala completa.
 Las otras 5 sí reproducen un `<audio loop>` apuntando a
 `public/sounds/<categoría>.mp3`. **Las 6 categorías tienen ya audio
-real** (recortados a ~15 min desde las grabaciones originales de
-~20min-1h que pasó Odei — el `<audio loop>` del navegador repite el
-fichero las veces que haga falta para cubrir la duración elegida en el
-temporizador, así que 15 min de textura continua sin melodía cubre de
-sobra hasta "Sin límite" sin que se note la repetición, a cambio de
-~85 MB en vez de varios cientos en el repo). Preparados con un
-*crossfade* real de unos segundos entre el final y el propio principio
-del clip (filtro `acrossfade` de `ffmpeg`, no un recorte a tijeretazo)
-para que el punto donde empalma el bucle consigo mismo no suene como
-un salto brusco — el tipo de sonido continuo (agua, lluvia, latido,
-grillos, ventilador) lo permite sin que se note. Si en el futuro algún
+real** (bucles de **5 min a 128 kbps**, 4,6 MB cada uno, 23 MB en total;
+salen de un tramo de las grabaciones originales de ~20min-1h que pasó
+Odei. Antes eran de 15 min y ~14 MB cada uno (68 MB), lo que en datos
+móviles podía costar hasta 14 MB por reproducción y subía 70 MB en cada
+despliegue. El `<audio loop>` del navegador repite el fichero las veces
+que haga falta para cubrir la duración elegida en el temporizador).
+**Por qué 5 min a 128 kbps y no menos kbps:** a 64 kbps (estéreo o mono)
+el ruido de lluvia/olas/ventilador suena "acuoso" — el ruido es lo más
+difícil de comprimir —, así que se acortó el bucle en vez de bajar la
+calidad. Cada bucle lleva un *crossfade* de 3 s de potencia constante
+entre su final y su propio principio (filtros `afade` en curva `qsin` +
+`amix` de `ffmpeg`: el final del clip se funde con su comienzo, de modo
+que al dar la vuelta el sonido es continuo, no un recorte a tijeretazo);
+el tipo de sonido continuo (agua, lluvia, latido, ventilador) lo permite
+sin que se note. Se generaron con el `ffmpeg` de JDownloader, a partir de
+un tramo desde el segundo 120 de cada original (`-ss 120 -t 303`).
+Los audios **no** los toca el service worker (se piden por rangos y no se
+cachean): cada reproducción en frío los baja de la red. Si en el futuro algún
 fichero llegase a faltar, el propio evento `error` del `<audio>`
 marca esa categoría como "Audio pendiente" en su tarjeta
 (deshabilitando solo el botón de reproducir, no toda la tarjeta) en

@@ -63,6 +63,16 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   primera ronda abrió 12 a la vez, con saltos mayores que fallaban); las mayores
   se hacen a mano. Las actualizaciones pendientes se aplicaron juntas y verificadas.
 
+### Cambiado (sonidos para dormir)
+
+- **Los cinco audios pasan de 15 min (~14 MB cada uno, 68 MB) a bucles de 5 min
+  (4,6 MB cada uno, 23 MB en total)**, a la misma calidad (128 kbps). En datos
+  móviles una reproducción podía costar hasta 14 MB y cada despliegue subía 70 MB.
+  Se probó recomprimir a 64 kbps (estéreo y mono) y el ruido sonaba "acuoso", así
+  que se acortó el bucle en vez de bajar la calidad. Cada bucle lleva un
+  *crossfade* de 3 s de potencia constante entre su final y su principio para que
+  al dar la vuelta no se note.
+
 ### Añadido (sin conexión)
 
 - **La app se abre sin conexión** (service worker). Hasta ahora la cola de

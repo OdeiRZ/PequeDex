@@ -75,6 +75,39 @@ test('the dashboard loads everything with a single bootstrap request', async ({
   }
 })
 
+test('navigating between pages leaves a single <main> and breaks no CSP rule', async ({
+  page,
+  request,
+}) => {
+  const session = await createSession(request)
+  await signIn(page, session)
+
+  const violations: string[] = []
+  page.on('console', (message) => {
+    if (/content security policy/i.test(message.text())) violations.push(message.text())
+  })
+
+  await page.goto('./')
+  await expect(page.getByText('Bebé E2E').first()).toBeVisible()
+
+  // Navegación del router (sin recargar): antes, cada cambio de ruta dejaba la
+  // vista anterior montada y se acumulaban <main> en el DOM.
+  for (const route of ['/estadisticas', '/sonidos', '/contracciones', '/', '/estadisticas']) {
+    await page.evaluate(
+      (to) =>
+        (
+          document.querySelector('#app') as unknown as {
+            __vue_app__: { config: { globalProperties: { $router: { push(to: string): unknown } } } }
+          }
+        ).__vue_app__.config.globalProperties.$router.push(to),
+      route,
+    )
+    await expect(page.locator('main')).toHaveCount(1)
+  }
+
+  expect(violations).toEqual([])
+})
+
 test('reopening with nothing new asks for the dashboard in parallel and gets a 304', async ({
   page,
   request,
@@ -216,7 +249,12 @@ test('deleting an entry offline is queued and applied when the connection return
   expect(diaper.ok()).toBeTruthy()
 
   await page.goto('./')
-  const deleteButton = page.getByRole('button', { name: /borrar|eliminar/i }).first()
+  // Dentro de <main> (la línea temporal): las hojas inferiores (p. ej. "Eliminar
+  // mi cuenta" en Tu cuenta) viven fuera, en el <body>.
+  const deleteButton = page
+    .locator('main')
+    .getByRole('button', { name: /borrar|eliminar/i })
+    .first()
   await expect(deleteButton).toBeVisible()
 
   await context.setOffline(true)

@@ -1503,6 +1503,21 @@ número de `<main>` en el DOM no crece.
   (fotos de hitos con URL temporal de R2), `data:` y `blob:`; Google Fonts
   es el único recurso externo (`@import` en `assets/base.css`). El test
   e2e de navegación falla ante cualquier violación del CSP.
+- **Errores del frontend a Sentry** (`lib/errorReporting.ts`): se activa solo
+  si el build lleva `VITE_SENTRY_DSN` (variable del repositorio en GitHub, no
+  secreta: el DSN es público por diseño; la CI la pasa al build junto con
+  `VITE_APP_RELEASE`, el commit). El SDK se descarga con `import()` después de
+  montar la app. Privacidad: `dataCollection` desactivado (sin usuario,
+  cookies, cabeceras ni parámetros de URL), sin avisos de clic ni de consola,
+  sin trazas ni sesiones grabadas, y un `beforeSend` que descarta los fallos de
+  red de cada día (sin conexión, tiempo agotado, API dormida). Para activarlo:
+  crear un proyecto de Sentry (tipo Vue), copiar su DSN en la variable
+  `VITE_SENTRY_DSN` del repositorio y desplegar; el CSP añade solo el servidor
+  de ingesta de ese DSN.
+- **Confirmación de email** (`/verify-email`, `EmailVerificationBanner.vue`): la
+  página reenvía al API los parámetros firmados del enlace del correo y funciona
+  con o sin sesión. El aviso de "confirma tu email" solo sale si el API exige la
+  verificación (`email_verification_required`), hoy apagada.
 - **Idioma de los errores del API**: el cliente (`lib/api.ts`) manda
   `Accept-Language` con el idioma de la app, así que la validación sale en ese
   idioma (antes siempre en español). Es una cabecera "segura" de CORS, no

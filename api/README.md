@@ -803,6 +803,21 @@ Medidas del API, con el motivo de cada una:
   `user_id` es `nullable` + `nullOnDelete`). `GET /api/user/export` devuelve
   todo lo de la cuenta en un JSON, sin contraseña, sin tokens, sin los emails
   de otros cuidadores y sin las fotos (solo si había).
+- **Contraseñas y verificación de email:** mínimo de 8 caracteres
+  (`AppServiceProvider`, solo para contraseñas nuevas). La verificación está
+  construida y **apagada** (`REQUIRE_EMAIL_VERIFICATION`, `config/auth.php`):
+  el correo lleva a la página `/verify-email` de la SPA con una firma
+  **relativa** (`signed:relative`, sin host, porque detrás de Render el
+  esquema/host que ve el servidor puede no ser el público); la SPA reenvía los
+  parámetros a `GET /api/email/verify/{id}/{hash}`, que no pide sesión.
+  `POST /api/email/verification-notification` reenvía el correo. Con la
+  variable en `true`, `EnsureEmailIsVerifiedWhenRequired` responde 403
+  `email_unverified` en `api/babies...` a quien no ha confirmado (el perfil,
+  cerrar sesión, descargar los datos y borrar la cuenta siguen disponibles).
+  **No encenderla sin un dominio verificado en Resend**: el sandbox
+  (`onboarding@resend.dev`) solo entrega al dueño de la cuenta. Las cuentas
+  anteriores se marcan como confirmadas por migración, y el registro no falla si
+  el correo no sale.
 - **Dependencias:** Dependabot (`.github/dependabot.yml`, semanal) y sus
   actualizaciones de seguridad activadas; `composer audit` y
   `npm audit --omit=dev` limpios. Quedan avisos en `braces`/`micromatch`

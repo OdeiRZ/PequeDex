@@ -36,6 +36,32 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   `cascadeOnDelete` y borrar a un cuidador habría borrado la mitad del
   historial compartido). La descarga es un JSON sin contraseña, tokens ni los
   emails de otros cuidadores.
+- **Contraseña mínima de 8 caracteres** (antes 6) para las contraseñas nuevas:
+  registro, restablecer y cambiarla. Quien ya tiene una de 6 sigue entrando.
+- **Verificación de email, construida pero apagada**
+  (`REQUIRE_EMAIL_VERIFICATION=false`). Hay correo con enlace firmado a una
+  página de la app (`/verify-email`), reenvío, aviso en la app y un middleware
+  que bloquea los datos del bebé a quien no haya confirmado. Está apagada a
+  propósito: el remitente es el sandbox de Resend (`onboarding@resend.dev`, sin
+  dominio verificado), que solo entrega correo al dueño de la cuenta de Resend,
+  así que exigirla hoy dejaría fuera a todos los demás. Las cuentas existentes
+  se marcan como confirmadas, y el registro nunca falla si el correo no sale.
+  **Se enciende** cuando haya un dominio verificado. Sigue sin resolverse que el
+  registro revele si un email ya existe: es inherente a entrar al instante tras
+  registrarse; solo se evita con registro en dos pasos, que necesita ese mismo
+  correo funcionando.
+- **Sentry también en el frontend**, apagado hasta que el build lleve
+  `VITE_SENTRY_DSN`. Carga con `import()` tras montar la app (no pesa en el
+  arranque), sin datos personales (sin usuario, sin avisos de clic ni de
+  consola, sin parámetros de URL), filtrando los fallos de red de cada día, y
+  el CSP solo permite el servidor de ingesta de su DSN.
+- **CI más segura**: las acciones de GitHub fijadas por SHA (Dependabot las
+  mantiene), `main` sin `force push` ni borrado, y el servidor de pruebas e2e
+  detrás de un supervisor que lo relanza y deja constancia si se cae (una vez
+  murió en CI sin dejar rastro).
+- **Dependabot**: solo versiones menores y parches y máximo 3 PR abiertas (la
+  primera ronda abrió 12 a la vez, con saltos mayores que fallaban); las mayores
+  se hacen a mano. Las actualizaciones pendientes se aplicaron juntas y verificadas.
 
 ### Corregido (arranque en frío)
 

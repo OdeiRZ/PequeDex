@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Concerns;
 use App\Models\Baby;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -34,6 +35,22 @@ trait CreatesIdempotently
             }
         }
 
-        return response()->json(['data' => $relation->create($attributes)], 201);
+        try {
+            return response()->json(['data' => $relation->create($attributes)], 201);
+        } catch (UniqueConstraintViolationException $e) {
+            // Carrera: "mirar si existe" y "crear" no son atómicos, y dos peticiones
+            // con el mismo `client_uuid` pueden llegar a la vez (el móvil agotó el
+            // tiempo de la primera y reenvió la misma alta desde la cola mientras
+            // el servidor aún la estaba procesando). La que pierde choca con la
+            // restricción única; el resultado correcto es el mismo que el del
+            // reintento de arriba: devolver el registro que ya existe.
+            $existing = $clientUuid === null ? null : (clone $relation)->where('client_uuid', $clientUuid)->first();
+
+            if ($existing === null) {
+                throw $e; // otra restricción única, no la del reintento: no se esconde
+            }
+
+            return response()->json(['data' => $existing]);
+        }
     }
 }

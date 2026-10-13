@@ -55,6 +55,35 @@ it('still creates normally without a client_uuid', function (string $endpoint, s
     expect($model::count())->toBe(2);
 })->with('loggable');
 
+// Dos peticiones con el mismo client_uuid a la vez (el móvil agotó el tiempo de la
+// primera y reenvió la alta desde la cola mientras el servidor aún la procesaba):
+// las dos ven "no existe" y las dos intentan crear. La que pierde choca con la
+// restricción única y antes devolvía un 500 ("duplicate key" en Sentry).
+it('answers with the record that won the race instead of failing on the unique key', function (string $endpoint, string $model, array $payload) {
+    $user = actingAsUser();
+    $baby = babyForOfflineTest($user);
+    $uuid = (string) Str::uuid();
+
+    // Justo antes del insert de ESTA petición, "la otra" ya ha creado el registro.
+    $competing = null;
+    $model::creating(function ($record) use (&$competing, $uuid, $baby, $user, $payload, $model) {
+        if ($competing === null) {
+            $competing = $model::withoutEvents(fn () => $model::create([
+                ...$payload,
+                'baby_id' => $baby->id,
+                'user_id' => $user->id,
+                'client_uuid' => $uuid,
+            ]));
+        }
+    });
+
+    $response = $this->postJson("/api/babies/{$baby->id}/{$endpoint}", [...$payload, 'client_uuid' => $uuid]);
+    $model::flushEventListeners();
+
+    $response->assertOk()->assertJsonPath('data.id', $competing->id);
+    expect($model::count())->toBe(1);
+})->with('loggable');
+
 it('rejects a client_uuid that is not a uuid', function () {
     $user = actingAsUser();
     $baby = babyForOfflineTest($user);

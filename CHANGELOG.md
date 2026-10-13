@@ -71,7 +71,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   sueños, pañales y temperaturas esperan 7 s; si la API no ha contestado, el
   registro aparece como "pendiente de enviar" (la misma cola de la
   desconexión) y se envía en cuanto la API despierta. Es seguro reintentar: las
-  altas llevan `client_uuid` y el servidor no duplica. Al volver a la app el
+  altas llevan `client_uuid` y el servidor no duplica. Ese reenvío destapó una
+  carrera: si la primera petición aún se estaba procesando cuando llegaba el
+  reintento, la segunda chocaba con la restricción única y daba un 500
+  ("duplicate key" en Sentry); ahora el servidor devuelve el registro que ganó
+  la carrera. Al volver a la app el
   Dashboard ya despertaba la API con su sondeo; lo que cambia es que el botón
   no se queda esperando.
 

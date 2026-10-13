@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Para los registros que el móvil puede crear sin conexión (tomas,
@@ -36,7 +37,13 @@ trait CreatesIdempotently
         }
 
         try {
-            return response()->json(['data' => $relation->create($attributes)], 201);
+            // En su propia transacción (un punto de guardado si ya hay una abierta):
+            // en PostgreSQL un error de clave única deja abortada la transacción en
+            // curso y la consulta de recuperación de abajo fallaría con "current
+            // transaction is aborted". Así el fallo se deshace solo hasta aquí.
+            $created = DB::transaction(fn () => $relation->create($attributes));
+
+            return response()->json(['data' => $created], 201);
         } catch (UniqueConstraintViolationException $e) {
             // Carrera: "mirar si existe" y "crear" no son atómicos, y dos peticiones
             // con el mismo `client_uuid` pueden llegar a la vez (el móvil agotó el

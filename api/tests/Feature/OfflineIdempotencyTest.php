@@ -6,6 +6,7 @@ use App\Models\Feed;
 use App\Models\Sleep;
 use App\Models\Temperature;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /*
@@ -64,10 +65,15 @@ it('answers with the record that won the race instead of failing on the unique k
     $baby = babyForOfflineTest($user);
     $uuid = (string) Str::uuid();
 
-    // Justo antes del insert de ESTA petición, "la otra" ya ha creado el registro.
+    // Justo DESPUÉS de que esta petición compruebe que no existe y ANTES de que
+    // empiece a crear, "la otra" (otra conexión, ya confirmada) crea el registro.
     $competing = null;
-    $model::creating(function ($record) use (&$competing, $uuid, $baby, $user, $payload, $model) {
-        if ($competing === null) {
+    DB::listen(function ($query) use (&$competing, $uuid, $baby, $user, $payload, $model) {
+        $isLookup = $competing === null
+            && str_starts_with(strtolower($query->sql), 'select')
+            && str_contains($query->sql, 'client_uuid');
+
+        if ($isLookup) {
             $competing = $model::withoutEvents(fn () => $model::create([
                 ...$payload,
                 'baby_id' => $baby->id,
@@ -78,7 +84,6 @@ it('answers with the record that won the race instead of failing on the unique k
     });
 
     $response = $this->postJson("/api/babies/{$baby->id}/{$endpoint}", [...$payload, 'client_uuid' => $uuid]);
-    $model::flushEventListeners();
 
     $response->assertOk()->assertJsonPath('data.id', $competing->id);
     expect($model::count())->toBe(1);

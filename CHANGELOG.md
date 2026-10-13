@@ -63,6 +63,30 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   primera ronda abrió 12 a la vez, con saltos mayores que fallaban); las mayores
   se hacen a mano. Las actualizaciones pendientes se aplicaron juntas y verificadas.
 
+### Añadido (sin conexión)
+
+- **La app se abre sin conexión** (service worker). Hasta ahora la cola de
+  registros solo servía con la app ya abierta; arrancarla sin cobertura fallaba.
+  El service worker guarda la app al instalarse (todo o nada) y sirve cualquier
+  pantalla desde ahí; los datos siguen su camino de siempre (foto guardada y cola
+  de registros). No toca el API ni los audios. Las versiones nuevas **no se
+  activan solas**: se avisa ("Hay una versión nueva — Actualizar") y se aplica al
+  pulsar. Un e2e lo prueba de verdad poniendo el navegador sin conexión, y ese
+  mismo e2e cazó un fallo intermitente real (la coincidencia con la caché debía
+  ignorar `Vary`).
+
+### Corregido (rendimiento)
+
+- **Cada petición autenticada hacía 6 consultas SQL de más** desde que se añadió
+  el límite general por usuario: con la caché en la base de datos, sus contadores
+  se leían y escribían en Neon en cada petición (de 5 a 11 consultas en una alta
+  de toma, y lo mismo en cada sondeo del Dashboard). Los contadores de los límites
+  van ahora a un fichero local (`CACHE_LIMITER_STORE`).
+- **Medición en frío** (tras 17 min sin tráfico): la primera petición tarda ~42 s
+  (arranque de Render y de Neon, inevitable en el plan gratuito); a partir de ahí
+  las altas de toma tardan 0,27-0,40 s y el bootstrap ~0,4 s, sin diferencia con
+  antes de la auditoría.
+
 ### Corregido (arranque en frío)
 
 - **Tras un rato sin usar la app, pulsar un botón tardaba 20-30 s**: era el

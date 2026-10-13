@@ -1,0 +1,32 @@
+# Actualizaciones automáticas de dependencias (una PR por grupo, cada lunes).
+# Las de seguridad llegan aparte y al momento, esté o no esto activado en
+# Settings > Code security. La CI de cada PR (backend, front, e2e) dice si
+# la actualización rompe algo antes de fusionarla.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /api
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      composer-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3

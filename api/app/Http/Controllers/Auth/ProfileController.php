@@ -24,7 +24,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 use RuntimeException;
 
 class ProfileController extends Controller
@@ -173,9 +172,10 @@ class ProfileController extends Controller
 
         // Cambiar la contraseña cierra la sesión en el resto de dispositivos
         // (un móvil perdido o prestado seguía dentro); esta se conserva.
-        $current = $user->currentAccessToken();
+        // `data_get`: con `actingAs()` (tests) el token es transitorio y no tiene id.
+        $currentId = data_get($user->currentAccessToken(), 'id');
         $user->tokens()
-            ->when($current instanceof PersonalAccessToken, fn ($query) => $query->whereKeyNot($current->getKey()))
+            ->when($currentId !== null, fn ($query) => $query->whereKeyNot($currentId))
             ->delete();
 
         return response()->json(status: 204);

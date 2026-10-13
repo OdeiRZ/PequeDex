@@ -30,7 +30,9 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:6,1');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+// Techo general por usuario, muy por encima del uso normal (el sondeo del
+// Dashboard, la cola sin conexión al reconectar...): solo frena abusos.
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', fn (Request $request) => $request->user());
     Route::put('/user', [ProfileController::class, 'update']);
@@ -83,8 +85,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'update']);
     Route::delete('/babies/{baby}/contractions/{contraction}', [ContractionController::class, 'destroy']);
     Route::delete('/babies/{baby}/contractions', [ContractionController::class, 'destroyAll']);
-    Route::get('/babies/{baby}/contractions/export', [ContractionsExportController::class, 'show']);
-    Route::post('/babies/{baby}/stats/export', [StatsExportController::class, 'store']);
+    // Generar un PDF gasta mucha CPU en una instancia pequeña: límite propio.
+    Route::get('/babies/{baby}/contractions/export', [ContractionsExportController::class, 'show'])->middleware('throttle:exports');
+    Route::post('/babies/{baby}/stats/export', [StatsExportController::class, 'store'])->middleware('throttle:exports');
 
     Route::get('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'index']);
     Route::post('/babies/{baby}/diaper-changes', [DiaperChangeController::class, 'store']);

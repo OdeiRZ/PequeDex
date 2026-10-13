@@ -17,7 +17,7 @@ class FeedController extends Controller
     {
         $this->authorize('view', $baby);
 
-        return response()->json(['data' => $baby->feeds()->orderByDesc('started_at')->get()]);
+        return response()->json(['data' => $baby->feeds()->orderByDesc('started_at')->limit(self::INDEX_LIMIT)->get()]);
     }
 
     // StoreFeedRequest/UpdateFeedRequest authorize themselves (via

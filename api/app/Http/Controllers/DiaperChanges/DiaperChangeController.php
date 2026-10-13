@@ -45,7 +45,7 @@ class DiaperChangeController extends Controller
             ])->all()]);
         }
 
-        return response()->json(['data' => $query->get()]);
+        return response()->json(['data' => $query->limit(self::INDEX_LIMIT)->get()]);
     }
 
     // StoreDiaperChangeRequest/UpdateDiaperChangeRequest authorize

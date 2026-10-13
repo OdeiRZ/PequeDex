@@ -36,7 +36,7 @@ class SleepController extends Controller
             });
         }
 
-        return response()->json(['data' => $query->get()]);
+        return response()->json(['data' => $query->limit(self::INDEX_LIMIT)->get()]);
     }
 
     // StoreSleepRequest/UpdateSleepRequest authorize themselves (via

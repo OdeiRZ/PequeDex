@@ -29,7 +29,10 @@ return [
 
     'exposed_headers' => ['ETag'],
 
-    'max_age' => 0,
+    // Cuánto puede recordar el navegador el resultado del preflight (OPTIONS).
+    // Con 0 repetía esa petición antes de CADA llamada con Authorization
+    // (~125-280 ms medidos en producción). Chrome limita esto a 2 h.
+    'max_age' => 7200,
 
     'supports_credentials' => false,
 

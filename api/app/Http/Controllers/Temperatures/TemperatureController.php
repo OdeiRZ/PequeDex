@@ -17,7 +17,7 @@ class TemperatureController extends Controller
     {
         $this->authorize('view', $baby);
 
-        return response()->json(['data' => $baby->temperatures()->orderByDesc('measured_at')->get()]);
+        return response()->json(['data' => $baby->temperatures()->orderByDesc('measured_at')->limit(self::INDEX_LIMIT)->get()]);
     }
 
     // Store/UpdateTemperatureRequest authorize themselves (via

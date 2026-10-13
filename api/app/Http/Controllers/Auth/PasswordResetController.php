@@ -37,6 +37,10 @@ class PasswordResetController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
+
+                // Quien restablece la contraseña lo hace porque la ha perdido
+                // o teme que otro la tenga: ninguna sesión anterior sigue valiendo.
+                $user->tokens()->delete();
             }
         );
 

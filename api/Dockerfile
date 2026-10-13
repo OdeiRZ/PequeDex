@@ -40,6 +40,9 @@ RUN apk add --no-cache postgresql-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
 # photos up to 8MB) - see docker/uploads.ini for why this file exists.
 COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
+# Sin "X-Powered-By: PHP/x.y.z" en las respuestas - see docker/security.ini.
+COPY docker/security.ini /usr/local/etc/php/conf.d/security.ini
+
 # OPcache for the CLI server too - see docker/opcache.ini for why it matters.
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 

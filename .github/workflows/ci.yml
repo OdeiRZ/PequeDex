@@ -212,6 +212,12 @@ jobs:
         working-directory: web
         run: npx playwright test
 
+      # Los 500 del API solo dicen "Server Error" (APP_DEBUG=false): la causa
+      # está en el log de Laravel, que de otro modo se pierde con el runner.
+      - name: Show the API log of a failed run
+        if: failure()
+        run: tail -n 120 api/storage/logs/laravel.log || true
+
       - name: Upload traces of a failed run
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

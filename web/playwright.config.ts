@@ -60,7 +60,9 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `php artisan migrate:fresh --database=sqlite --force && php artisan serve --host=127.0.0.1 --port=${API_PORT} --no-reload`,
+      // Con un supervisor que relanza el servidor si se cae (ver el propio
+      // script): una vez murió en CI entre dos tests sin dejar rastro.
+      command: `node "${path.join(webDir, 'e2e', 'serve-api.mjs')}" ${API_PORT}`,
       cwd: apiDir,
       env: apiEnv,
       url: `http://127.0.0.1:${API_PORT}/up`,

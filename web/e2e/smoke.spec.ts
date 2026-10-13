@@ -97,7 +97,9 @@ test('navigating between pages leaves a single <main> and breaks no CSP rule', a
       (to) =>
         (
           document.querySelector('#app') as unknown as {
-            __vue_app__: { config: { globalProperties: { $router: { push(to: string): unknown } } } }
+            __vue_app__: {
+              config: { globalProperties: { $router: { push(to: string): unknown } } }
+            }
           }
         ).__vue_app__.config.globalProperties.$router.push(to),
       route,

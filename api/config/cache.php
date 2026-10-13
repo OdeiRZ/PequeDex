@@ -19,6 +19,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Almacén de los límites de peticiones (throttle)
+    |--------------------------------------------------------------------------
+    |
+    | Los contadores de `throttle:*` y de los limitadores con nombre (`api`,
+    | `exports`) se leen y escriben en CADA petición. Con el almacén por defecto
+    | (`database`) eso eran 6 consultas SQL extra por petición autenticada (de 5
+    | a 11 en una alta de toma, y lo mismo en cada sondeo del Dashboard), todas
+    | contra la base de datos remota. Un fichero local las evita: sobrevive entre
+    | peticiones, que es lo que importa, y solo se pierde al reiniciar la
+    | instancia (una sola, en el plan gratuito), que para un freno de abusos es
+    | irrelevante. Pruebas y e2e fijan `array` (CACHE_LIMITER_STORE).
+    |
+    */
+
+    'limiter' => env('CACHE_LIMITER_STORE', 'file'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |

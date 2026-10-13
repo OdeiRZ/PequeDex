@@ -788,6 +788,15 @@ Medidas del API, con el motivo de cada una:
   contaría cada petición dos veces y recortaría el límite a la mitad; por eso
   los nuevos van con nombre. Los listados de registros se acotan a 20.000
   filas (`Controller::INDEX_LIMIT`).
+- **Los contadores de los límites van a un fichero, no a la base de datos**
+  (`CACHE_LIMITER_STORE`, `config/cache.php`, por defecto `file`). Medido: con
+  `CACHE_STORE=database`, una petición autenticada pasaba de 5 a 11 consultas
+  SQL (el límite general lee y escribe su contador en cada petición, también en
+  cada sondeo del Dashboard), todas contra Neon. En un fichero sobrevive entre
+  peticiones y solo se pierde al reiniciar la instancia, irrelevante para un
+  freno de abusos. Pruebas y e2e fijan `array`. No sirve `array` en producción:
+  con `php artisan serve` cada petición es un ciclo nuevo y el contador no
+  persistiría.
 - **Cabeceras** (`SecurityHeaders`): `X-Content-Type-Options`,
   `Referrer-Policy`, `X-Frame-Options` y HSTS; `expose_php = Off`
   (`docker/security.ini`) quita `X-Powered-By: PHP/x.y.z`.

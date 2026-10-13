@@ -29,6 +29,9 @@ const apiEnv = {
   APP_ENV: 'local',
   APP_DEBUG: 'false',
   CACHE_STORE: 'array',
+  // Sin límites de peticiones entre ejecuciones: con un almacén de ficheros los
+  // contadores del login (6 por minuto) sobrevivirían entre tests y ejecuciones.
+  CACHE_LIMITER_STORE: 'array',
   SESSION_DRIVER: 'array',
   QUEUE_CONNECTION: 'sync',
   MAIL_MAILER: 'log',

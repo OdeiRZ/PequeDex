@@ -62,7 +62,7 @@ jobs:
           fi
 
       - name: Descargar la copia cifrada
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: pequedex-backup-${{ inputs.backup_run_id }}
           run-id: ${{ inputs.backup_run_id }}

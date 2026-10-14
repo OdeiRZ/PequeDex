@@ -830,6 +830,12 @@ export default {
       description: 'Gentle alerts on the dashboard, such as several days without a dirty diaper.',
       saveError: 'Could not save the change. Please try again.',
     },
+    temperaturePanelEnabled: {
+      title: 'Temperature panel',
+      description:
+        'Shows the panel with the latest temperatures on the dashboard for 48 h after logging one.',
+      saveError: 'Could not save the change. Please try again.',
+    },
     milestonesEnabled: {
       saveError: 'Could not save the change. Please try again.',
     },

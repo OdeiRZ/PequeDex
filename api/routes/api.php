@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'throttle:api', EnsureEmailIsVerifiedWhenRequ
     Route::put('/user/sounds', [ProfileController::class, 'updateSoundsEnabled']);
     Route::put('/user/stats', [ProfileController::class, 'updateStatsEnabled']);
     Route::put('/user/alerts', [ProfileController::class, 'updateAlertsEnabled']);
+    Route::put('/user/temperature-panel', [ProfileController::class, 'updateTemperaturePanelEnabled']);
     Route::put('/user/milestones', [ProfileController::class, 'updateMilestonesEnabled']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:6,1');
     // Borrado de cuenta (pide la contraseña) y exportación de todos los datos.

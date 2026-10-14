@@ -32,6 +32,8 @@ export interface User {
   stats_enabled: boolean
   /** Avisos suaves del Dashboard (DailyAlertsCard.vue). */
   alerts_enabled: boolean
+  /** Panel de temperatura del Dashboard (TemperatureCard.vue), 48 h tras registrar una. */
+  temperature_panel_enabled: boolean
   milestones_enabled: boolean
   /** null = el email aún no se ha confirmado. */
   email_verified_at: string | null
@@ -241,6 +243,13 @@ export const useAuthStore = defineStore('auth', {
 
     async updateAlertsEnabled(enabled: boolean) {
       const { data } = await apiClient.put('/user/alerts', { alerts_enabled: enabled })
+      this.user = data
+    },
+
+    async updateTemperaturePanelEnabled(enabled: boolean) {
+      const { data } = await apiClient.put('/user/temperature-panel', {
+        temperature_panel_enabled: enabled,
+      })
       this.user = data
     },
 

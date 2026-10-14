@@ -85,6 +85,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   mismo e2e cazó un fallo intermitente real (la coincidencia con la caché debía
   ignorar `Vary`).
 
+### Añadido (panel de temperatura opcional)
+
+- Nuevo ajuste **"Panel de temperatura"** en "Tu cuenta" (`users.temperature_panel_enabled`,
+  `PUT /api/user/temperature-panel`). Activado (por defecto) el panel sale en el
+  dashboard durante 48 h tras registrar una temperatura, como hasta ahora; apagado,
+  no sale nunca. El registro de temperaturas y su acceso "+ Temperatura" no cambian.
+
 ### Corregido (modo sin conexión: "Finalizar" tardaba hasta 10 s)
 
 - **Registro local primero.** Con wifi sin internet, datos sin cobertura o la API

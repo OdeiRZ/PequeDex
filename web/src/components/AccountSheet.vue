@@ -524,6 +524,27 @@ async function onToggleStatsEnabled() {
   }
 }
 
+// Panel de temperatura del Dashboard (TemperatureCard.vue) - mismo patrón.
+const temperaturePanelEnabled = ref(true)
+let temperaturePanelSaveToken = 0
+
+async function onToggleTemperaturePanel() {
+  const previous = temperaturePanelEnabled.value
+  const next = !previous
+  temperaturePanelEnabled.value = next
+  feedback.tap()
+
+  const token = ++temperaturePanelSaveToken
+  try {
+    await auth.updateTemperaturePanelEnabled(next)
+  } catch {
+    if (token === temperaturePanelSaveToken) {
+      temperaturePanelEnabled.value = previous
+      toast.show(t('profile.temperaturePanelEnabled.saveError'), 'error')
+    }
+  }
+}
+
 // Avisos suaves del Dashboard (DailyAlertsCard.vue) - mismo patrón.
 const alertsEnabled = ref(true)
 let alertsEnabledSaveToken = 0
@@ -569,6 +590,7 @@ watch(
     soundsEnabled.value = auth.user?.sounds_enabled ?? true
     statsEnabled.value = auth.user?.stats_enabled ?? true
     alertsEnabled.value = auth.user?.alerts_enabled ?? true
+    temperaturePanelEnabled.value = auth.user?.temperature_panel_enabled ?? true
     milestonesEnabled.value = auth.user?.milestones_enabled ?? true
   },
 )
@@ -785,6 +807,29 @@ watch(
         <span
           class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
           :style="{ left: alertsEnabled ? '22px' : '2px' }"
+        ></span>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-start justify-between gap-4">
+      <div>
+        <span class="field-label">{{ t('profile.temperaturePanelEnabled.title') }}</span>
+        <p class="text-xs text-text-muted">
+          {{ t('profile.temperaturePanelEnabled.description') }}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        :aria-checked="temperaturePanelEnabled"
+        :aria-label="t('profile.temperaturePanelEnabled.title')"
+        class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150"
+        :class="temperaturePanelEnabled ? 'bg-brand' : 'bg-surface-sunken'"
+        @click="onToggleTemperaturePanel"
+      >
+        <span
+          class="switch-thumb absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm"
+          :style="{ left: temperaturePanelEnabled ? '22px' : '2px' }"
         ></span>
       </button>
     </div>

@@ -2228,9 +2228,10 @@ const sleepPredictionDue = computed(() => {
               @open-history="openSheet('vitaminDHistory')"
             />
             <!-- Solo mientras haya alguna medición en las últimas 48 h,
-                 aunque el acceso "+ Temperatura" esté desactivado. -->
+                 aunque el acceso "+ Temperatura" esté desactivado, y solo
+                 si el ajuste "Panel de temperatura" no está apagado. -->
             <TemperatureCard
-              v-if="lastTemperatures.length > 0"
+              v-if="auth.user?.temperature_panel_enabled !== false && lastTemperatures.length > 0"
               class="dash-enter"
               :temperatures="lastTemperatures"
               :date-locale="dateLocale"

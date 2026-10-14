@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'sounds_enabled',
         'stats_enabled',
         'alerts_enabled',
+        'temperature_panel_enabled',
         'milestones_enabled',
     ];
 
@@ -85,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'sounds_enabled' => 'boolean',
             'stats_enabled' => 'boolean',
             'alerts_enabled' => 'boolean',
+            'temperature_panel_enabled' => 'boolean',
             'milestones_enabled' => 'boolean',
         ];
     }

@@ -343,6 +343,24 @@ it('turns the daily alerts off and back on, defaulting to enabled', function () 
         ->assertJsonPath('alerts_enabled', true);
 });
 
+it('turns the temperature panel off and back on, defaulting to enabled', function () {
+    $user = actingAsUser();
+
+    expect($user->refresh()->temperature_panel_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/temperature-panel', ['temperature_panel_enabled' => false])
+        ->assertOk()
+        ->assertJsonPath('temperature_panel_enabled', false);
+    expect($user->refresh()->temperature_panel_enabled)->toBeFalse();
+
+    $this->putJson('/api/user/temperature-panel', ['temperature_panel_enabled' => true])
+        ->assertOk()
+        ->assertJsonPath('temperature_panel_enabled', true);
+    expect($user->refresh()->temperature_panel_enabled)->toBeTrue();
+
+    $this->putJson('/api/user/temperature-panel', [])->assertUnprocessable();
+});
+
 it('turns the milestones link off and back on, defaulting to enabled', function () {
     $user = actingAsUser();
 
@@ -373,5 +391,6 @@ it('rejects unauthenticated access to profile endpoints', function () {
     $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 20])->assertUnauthorized();
     $this->putJson('/api/user/sounds', ['sounds_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/stats', ['stats_enabled' => false])->assertUnauthorized();
+    $this->putJson('/api/user/temperature-panel', ['temperature_panel_enabled' => false])->assertUnauthorized();
     $this->putJson('/api/user/milestones', ['milestones_enabled' => false])->assertUnauthorized();
 });

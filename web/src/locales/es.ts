@@ -842,6 +842,12 @@ export default {
         'Avisos suaves en el dashboard, como varios días sin caca o pocos pañales con pis.',
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },
+    temperaturePanelEnabled: {
+      title: 'Panel de temperatura',
+      description:
+        'Muestra el panel con las últimas temperaturas en el dashboard durante 48 h tras registrar una.',
+      saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+    },
     milestonesEnabled: {
       saveError: 'No se ha podido guardar el cambio. Inténtalo de nuevo.',
     },

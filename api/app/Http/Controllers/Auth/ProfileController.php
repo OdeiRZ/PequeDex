@@ -18,6 +18,7 @@ use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Requests\Auth\UpdateSoundsEnabledRequest;
 use App\Http\Requests\Auth\UpdateStatsEnabledRequest;
 use App\Http\Requests\Auth\UpdateSwipeToDeleteEnabledRequest;
+use App\Http\Requests\Auth\UpdateTemperaturePanelEnabledRequest;
 use App\Http\Requests\Auth\UpdateTodaySummaryEnabledRequest;
 use App\Models\User;
 use App\Services\Users\AccountDeleter;
@@ -151,6 +152,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->update(['alerts_enabled' => $request->validated('alerts_enabled')]);
+
+        return response()->json($user);
+    }
+
+    public function updateTemperaturePanelEnabled(UpdateTemperaturePanelEnabledRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->update(['temperature_panel_enabled' => $request->validated('temperature_panel_enabled')]);
 
         return response()->json($user);
     }

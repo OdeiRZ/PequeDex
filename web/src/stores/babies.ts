@@ -23,15 +23,59 @@ import {
   type QueuedUpdate,
 } from '@/lib/offlineQueue'
 
-// Cuánto espera un guardado que PUEDE ir a la cola sin conexión (altas,
-// ediciones y borrados de tomas, sueños, pañales y temperaturas) antes de
-// darlo por "sin respuesta" y dejarlo pendiente de enviar. Con el tiempo por
-// defecto (45 s), tras un rato sin usar la app el botón se quedaba esperando
-// hasta ~30 s a que Render despertara la API (arranque en frío). Ahora el
-// registro aparece enseguida como "pendiente" y se envía en cuanto la API
-// responde. Es seguro reintentar: las altas llevan `client_uuid` (el servidor
-// no duplica), las ediciones son PUT y borrar algo ya borrado cuenta como éxito.
+// Cuánto espera una EDICIÓN desde un formulario (que no va a la cola: sigue
+// necesitando conexión) antes de darla por "sin respuesta". Las altas, los
+// "Finalizar" y los borrados NO esperan a la red: ver SYNC_GRACE_MS.
 const QUEUED_WRITE_TIMEOUT_MS = 7_000
+
+// REGISTRO LOCAL PRIMERO. Altas, "Finalizar" y borrados de tomas, sueños, pañales
+// y temperaturas se guardan en el propio móvil (la cola de lib/offlineQueue.ts) y
+// se ven en la pantalla AL INSTANTE; el envío al servidor va por detrás. Antes se
+// intentaba primero la red (con 7 s de espera): con wifi sin internet, datos sin
+// cobertura o la API de Render despertando, la pantalla se quedaba ~7 s con el
+// botón activo y sin ningún aviso, y solo después pasaba a "pendiente" (medido con
+// un navegador real: 7,4 s). Los tests solo simulaban un corte instantáneo, que
+// era el único caso que iba bien.
+//
+// Se mantiene lo bueno de esperar al servidor: tras guardar en local, se le da
+// este margen para contestar. Si dice que no (p. ej. una hora de fin anterior a la
+// de inicio) el error llega al formulario como siempre; si no ha contestado a
+// tiempo, el registro queda "pendiente de enviar" y sigue enviándose por detrás.
+const SYNC_GRACE_MS = 1_500
+
+// Cuánto espera CADA petición del envío en segundo plano antes de soltarla y
+// reintentar en el siguiente sondeo (15 s). 20 s da margen a que Render despierte
+// la API (arranque en frío) sin dejar el envío colgado indefinidamente si la
+// conexión está muerta. Es seguro reintentar: las altas llevan `client_uuid` (el
+// servidor no duplica), las ediciones son PUT y borrar algo ya borrado cuenta como
+// éxito.
+const FLUSH_REQUEST_TIMEOUT_MS = 20_000
+
+/** Vueltas máximas del envío en un mismo ciclo (entran registros nuevos mientras tanto). */
+const MAX_FLUSH_PASSES = 10
+
+// Estado del envío, fuera del estado reactivo del store: el envío en curso, los
+// registros cuyo guardado está esperando el veredicto del servidor, y los errores
+// que el servidor ha dado a esos registros. Ligado a la instancia del store (no a
+// una variable global del módulo) para que un envío colgado de una no contamine a
+// otra: en los tests, o si la app recrease el store.
+interface FlushState {
+  inFlight: Promise<{ sent: number; rejected: number }> | null
+  awaitingVerdict: Set<string>
+  verdictErrors: Map<string, unknown>
+}
+
+const flushStates = new WeakMap<object, FlushState>()
+
+/** `store` es el propio objeto del store (`this` en las acciones): único por instancia de Pinia. */
+function flushStateOf(store: object): FlushState {
+  let state = flushStates.get(store)
+  if (!state) {
+    state = { inFlight: null, awaitingVerdict: new Set(), verdictErrors: new Map() }
+    flushStates.set(store, state)
+  }
+  return state
+}
 
 export type BabySex = 'nino' | 'nina'
 
@@ -423,6 +467,9 @@ interface BabiesState {
   /** Cambios sobre registros ya guardados (finalizar sin conexión). */
   offlineUpdates: QueuedUpdate[]
   flushingQueue: boolean
+  /** Cuántos registros ha rechazado el servidor en el envío en segundo plano,
+   * cuando ya nadie estaba esperando su respuesta (la vista lo avisa). */
+  rejectedNotice: number
   /** true mientras lo que se ve viene de la foto guardada (lib/snapshot.ts)
    * y todavía no ha llegado la respuesta real del servidor. */
   hydratedFromSnapshot: boolean
@@ -573,6 +620,7 @@ export const useBabiesStore = defineStore('babies', {
     offlineQueue: loadQueue(),
     offlineUpdates: loadUpdates(),
     flushingQueue: false,
+    rejectedNotice: 0,
     vaccinations: [],
     vaccinationTemplate: null,
     checkups: [],
@@ -890,9 +938,11 @@ export const useBabiesStore = defineStore('babies', {
     // instead.
     // --- Registro sin conexión (lib/offlineQueue.ts) ---
 
-    /** Crea un registro; si no hay red, lo deja en la cola y lo muestra
-     * como pendiente. 'queued' para que la vista avise de ello en vez de
-     * "guardado". Un error con respuesta (validación...) se relanza. */
+    /** Crea un registro: se guarda PRIMERO en el móvil (la cola) y se ve al
+     * instante como pendiente; el envío va por detrás. Devuelve 'saved' si el
+     * servidor lo confirmó en el margen SYNC_GRACE_MS, o 'queued' (la vista
+     * avisa de que queda pendiente de enviar) si no ha contestado todavía. Un
+     * error con respuesta del servidor (validación...) se relanza, como siempre. */
     async createLog(
       type: QueuedLogType,
       payload: Record<string, unknown>,
@@ -905,20 +955,44 @@ export const useBabiesStore = defineStore('babies', {
         payload,
         queuedAt: new Date().toISOString(),
       }
+      this.offlineQueue = [...this.offlineQueue, log]
+      saveQueue(this.offlineQueue)
+      this.timeline = upsertTimelineEntry(this.timeline, pendingEntry(log))
+
+      return this.awaitVerdict(`create:${log.clientUuid}`, () =>
+        this.offlineQueue.some((l) => l.clientUuid === log.clientUuid),
+      )
+    },
+
+    /** Arranca el envío (o se une al que ya corre) y espera como mucho
+     * SYNC_GRACE_MS a que el servidor dé su veredicto sobre `key`. Si lo
+     * rechazó, lanza su error; si ya no está en la cola, 'saved'; si sigue
+     * en ella (red muerta o API lenta), 'queued' y el envío continúa solo. */
+    async awaitVerdict(key: string, isStillQueued: () => boolean): Promise<'saved' | 'queued'> {
+      const state = flushStateOf(this)
+      state.awaitingVerdict.add(key)
+      let timer: ReturnType<typeof setTimeout> | undefined
       try {
-        const { data } = await apiClient.post(
-          endpointFor(log),
-          { ...payload, client_uuid: log.clientUuid },
-          { timeout: QUEUED_WRITE_TIMEOUT_MS },
-        )
-        this.applyCreatedLog(type, data.data)
-        return 'saved'
-      } catch (error) {
-        if (!isNetworkError(error)) throw error
-        this.offlineQueue = [...this.offlineQueue, log]
-        saveQueue(this.offlineQueue)
-        this.timeline = upsertTimelineEntry(this.timeline, pendingEntry(log))
-        return 'queued'
+        void this.flushOfflineQueue()
+        const running = state.inFlight
+        if (running) {
+          await Promise.race([
+            running,
+            new Promise<void>((resolve) => {
+              timer = setTimeout(resolve, SYNC_GRACE_MS)
+            }),
+          ])
+        }
+        if (state.verdictErrors.has(key)) {
+          const error = state.verdictErrors.get(key)
+          state.verdictErrors.delete(key)
+          throw error
+        }
+        return isStillQueued() ? 'queued' : 'saved'
+      } finally {
+        clearTimeout(timer)
+        state.awaitingVerdict.delete(key)
+        state.verdictErrors.delete(key)
       }
     },
 
@@ -953,22 +1027,52 @@ export const useBabiesStore = defineStore('babies', {
      * registro rechazado por el servidor (p.ej. validación) se descarta
      * y cuenta en `rejected`, para que la vista lo avise. */
     async flushOfflineQueue(): Promise<{ sent: number; rejected: number }> {
-      if (
-        this.flushingQueue ||
-        (this.offlineQueue.length === 0 && this.offlineUpdates.length === 0)
-      )
+      const state = flushStateOf(this)
+      // Ya hay un envío en curso: él mismo recoge lo que entre (ver runFlush).
+      if (state.inFlight) return { sent: 0, rejected: 0 }
+      if (this.offlineQueue.length === 0 && this.offlineUpdates.length === 0)
         return { sent: 0, rejected: 0 }
+
       this.flushingQueue = true
+      state.inFlight = this.runFlush().finally(() => {
+        state.inFlight = null
+        this.flushingQueue = false
+      })
+      return state.inFlight
+    },
+
+    /** Un ciclo de envío: la cola de altas y después los cambios sobre
+     * registros ya guardados, repetido mientras entren registros nuevos (se
+     * guardan sin esperar a que acabe el envío anterior). Para en el primer
+     * fallo de red. */
+    async runFlush(): Promise<{ sent: number; rejected: number }> {
       let sent = 0
       let rejected = 0
-      try {
-        let offline = false
-        for (const log of [...this.offlineQueue]) {
+
+      // El servidor dijo que no: si alguien espera ese veredicto (un guardado
+      // recién hecho) se lo damos a él; si no, se avisa a la vista aparte.
+      const state = flushStateOf(this)
+      const reject = (key: string, error: unknown) => {
+        rejected++
+        if (state.awaitingVerdict.has(key)) state.verdictErrors.set(key, error)
+        else this.rejectedNotice++
+      }
+
+      let offline = false
+      for (let pass = 0; pass < MAX_FLUSH_PASSES && !offline; pass++) {
+        const logs = [...this.offlineQueue]
+        const updates = [...this.offlineUpdates]
+        if (logs.length === 0 && updates.length === 0) break
+
+        for (const log of logs) {
+          const sentPayload = JSON.stringify(log.payload)
           try {
-            const { data } = await apiClient.post(endpointFor(log), {
-              ...log.payload,
-              client_uuid: log.clientUuid,
-            })
+            const { data } = await apiClient.post(
+              endpointFor(log),
+              { ...log.payload, client_uuid: log.clientUuid },
+              { timeout: FLUSH_REQUEST_TIMEOUT_MS },
+            )
+            this.carryOverEditsMadeWhileSending(log, sentPayload, data.data?.id)
             this.removeQueued(log.clientUuid)
             if (this.current?.id === log.babyId) this.applyCreatedLog(log.type, data.data)
             sent++
@@ -978,17 +1082,22 @@ export const useBabiesStore = defineStore('babies', {
               break
             }
             this.removeQueued(log.clientUuid)
-            rejected++
+            reject(`create:${log.clientUuid}`, error)
           }
         }
+        if (offline) break
+
         // Después de las altas, los cambios sobre registros ya guardados.
-        for (const update of offline ? [] : [...this.offlineUpdates]) {
+        for (const update of updates) {
+          const key = `${update.action === 'delete' ? 'delete' : 'update'}:${update.type}:${update.targetId}`
           try {
             if (update.action === 'delete') {
-              await apiClient.delete(updateEndpoint(update))
+              await apiClient.delete(updateEndpoint(update), { timeout: FLUSH_REQUEST_TIMEOUT_MS })
               this.removeQueuedUpdate(update)
             } else {
-              const { data } = await apiClient.put(updateEndpoint(update), update.payload)
+              const { data } = await apiClient.put(updateEndpoint(update), update.payload, {
+                timeout: FLUSH_REQUEST_TIMEOUT_MS,
+              })
               this.removeQueuedUpdate(update)
               if (
                 this.current?.id === update.babyId &&
@@ -998,7 +1107,10 @@ export const useBabiesStore = defineStore('babies', {
             }
             sent++
           } catch (error) {
-            if (isNetworkError(error)) break
+            if (isNetworkError(error)) {
+              offline = true
+              break
+            }
             this.removeQueuedUpdate(update)
             // Borrar algo que ya no existe (404) es el resultado buscado.
             if (
@@ -1007,14 +1119,38 @@ export const useBabiesStore = defineStore('babies', {
             ) {
               sent++
             } else {
-              rejected++
+              reject(key, error)
             }
           }
         }
-      } finally {
-        this.flushingQueue = false
       }
+
       return { sent, rejected }
+    },
+
+    /** Si mientras se enviaba un alta se le hizo un cambio (p. ej. "Finalizar"
+     * un sueño que aún estaba en la cola), el servidor la recibió SIN ese cambio
+     * y quitar el alta de la cola lo perdería: se convierte en un cambio
+     * pendiente sobre el registro ya creado (se envía en la siguiente vuelta). */
+    carryOverEditsMadeWhileSending(log: QueuedLog, sentPayload: string, newId: unknown) {
+      if (log.type !== 'feed' && log.type !== 'sleep') return
+      if (typeof newId !== 'number') return
+
+      const latest = this.offlineQueue.find((l) => l.clientUuid === log.clientUuid)
+      if (!latest || JSON.stringify(latest.payload) === sentPayload) return
+
+      const update: QueuedUpdate = {
+        babyId: log.babyId,
+        type: log.type,
+        targetId: newId,
+        payload: { ...latest.payload },
+        queuedAt: new Date().toISOString(),
+      }
+      this.offlineUpdates = [
+        ...this.offlineUpdates.filter((u) => !(u.type === update.type && u.targetId === newId)),
+        update,
+      ]
+      saveUpdates(this.offlineUpdates)
     },
 
     /** Sin red al borrar algo ya guardado: el borrado queda en cola (la
@@ -1036,9 +1172,17 @@ export const useBabiesStore = defineStore('babies', {
       saveUpdates(this.offlineUpdates)
     },
 
+    /** Quita de la cola SOLO ese cambio ya enviado: si mientras tanto se
+     * guardó otro más reciente sobre el mismo registro (distinto `queuedAt`),
+     * se conserva para enviarlo después. */
     removeQueuedUpdate(update: QueuedUpdate) {
       this.offlineUpdates = this.offlineUpdates.filter(
-        (u) => !(u.type === update.type && u.targetId === update.targetId),
+        (u) =>
+          !(
+            u.type === update.type &&
+            u.targetId === update.targetId &&
+            u.queuedAt === update.queuedAt
+          ),
       )
       saveUpdates(this.offlineUpdates)
     },
@@ -1065,22 +1209,41 @@ export const useBabiesStore = defineStore('babies', {
         payload,
         queuedAt: new Date().toISOString(),
       }
-      try {
+
+      // Edición desde un formulario (el botón muestra "guardando"): sigue
+      // necesitando conexión y espera a la red, con su tiempo de espera.
+      if (!queueIfOffline) {
         const { data } = await apiClient.put(updateEndpoint(update), payload, {
           timeout: QUEUED_WRITE_TIMEOUT_MS,
         })
         this.applySavedUpdate(type, data.data)
         return 'saved'
+      }
+
+      // "Finalizar" desde la tarjeta: local primero (la entrada pasa a acabada
+      // al instante, sin esperar a la red) y se envía por detrás.
+      this.offlineUpdates = [
+        ...this.offlineUpdates.filter((u) => !(u.type === type && u.targetId === targetId)),
+        update,
+      ]
+      saveUpdates(this.offlineUpdates)
+      this.timeline = withPendingUpdates(this.timeline, [update], update.babyId)
+      this.dayTimeline = withPendingUpdates(this.dayTimeline, [update], update.babyId)
+
+      try {
+        return await this.awaitVerdict(`update:${type}:${targetId}`, () =>
+          this.offlineUpdates.some(
+            (u) =>
+              u.type === type &&
+              u.targetId === targetId &&
+              u.action !== 'delete' &&
+              u.queuedAt === update.queuedAt,
+          ),
+        )
       } catch (error) {
-        if (!queueIfOffline || !isNetworkError(error)) throw error
-        this.offlineUpdates = [
-          ...this.offlineUpdates.filter((u) => !(u.type === type && u.targetId === targetId)),
-          update,
-        ]
-        saveUpdates(this.offlineUpdates)
-        this.timeline = withPendingUpdates(this.timeline, [update], update.babyId)
-        this.dayTimeline = withPendingUpdates(this.dayTimeline, [update], update.babyId)
-        return 'queued'
+        // El servidor lo rechazó: lo que se enseñaba como acabado no es cierto.
+        void this.fetchTimeline(true).catch(() => {})
+        throw error
       }
     },
 
@@ -1281,15 +1444,26 @@ export const useBabiesStore = defineStore('babies', {
       this.dayTimeline = this.dayTimeline.filter(keep)
       this.temperatures = this.temperatures.filter((t) => t.id !== id)
 
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/temperatures/${id}`, {
-          timeout: QUEUED_WRITE_TIMEOUT_MS,
-        })
-      } catch (error) {
-        if (isNetworkError(error)) return this.queueDelete('temperature', id)
+      return this.deleteLocalFirst('temperature', id, () => {
         this.timeline = previous
         this.dayTimeline = previousDay
         this.temperatures = previousTemperatures
+      })
+    },
+
+    /** Borrado "local primero": ya se quitó de la pantalla; se deja el borrado
+     * en la cola, se envía por detrás y solo si el servidor lo rechaza de verdad
+     * se restaura lo que se veía (`restore`) y se relanza el error. */
+    async deleteLocalFirst(type: QueuedLogType, id: number, restore: () => void): Promise<void> {
+      this.queueDelete(type, id)
+      try {
+        await this.awaitVerdict(`delete:${type}:${id}`, () =>
+          this.offlineUpdates.some(
+            (u) => u.action === 'delete' && u.type === type && u.targetId === id,
+          ),
+        )
+      } catch (error) {
+        restore()
         throw error
       }
     },
@@ -1314,16 +1488,10 @@ export const useBabiesStore = defineStore('babies', {
         (entry) => !(entry.type === 'feed' && entry.data.id === id),
       )
 
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/feeds/${id}`, {
-          timeout: QUEUED_WRITE_TIMEOUT_MS,
-        })
-      } catch (error) {
-        if (isNetworkError(error)) return this.queueDelete('feed', id)
+      return this.deleteLocalFirst('feed', id, () => {
         this.timeline = previous
         this.dayTimeline = previousDay
-        throw error
-      }
+      })
     },
 
     async deleteSleep(id: number) {
@@ -1336,16 +1504,10 @@ export const useBabiesStore = defineStore('babies', {
         (entry) => !(entry.type === 'sleep' && entry.data.id === id),
       )
 
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/sleeps/${id}`, {
-          timeout: QUEUED_WRITE_TIMEOUT_MS,
-        })
-      } catch (error) {
-        if (isNetworkError(error)) return this.queueDelete('sleep', id)
+      return this.deleteLocalFirst('sleep', id, () => {
         this.timeline = previous
         this.dayTimeline = previousDay
-        throw error
-      }
+      })
     },
 
     async deleteDiaperChange(id: number) {
@@ -1360,17 +1522,11 @@ export const useBabiesStore = defineStore('babies', {
       )
       this.recentDiaperChanges = this.recentDiaperChanges.filter((c) => c.id !== id)
 
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/diaper-changes/${id}`, {
-          timeout: QUEUED_WRITE_TIMEOUT_MS,
-        })
-      } catch (error) {
-        if (isNetworkError(error)) return this.queueDelete('diaper_change', id)
+      return this.deleteLocalFirst('diaper_change', id, () => {
         this.timeline = previous
         this.dayTimeline = previousDay
         this.recentDiaperChanges = previousRecent
-        throw error
-      }
+      })
     },
 
     async fetchGrowthMeasurements() {

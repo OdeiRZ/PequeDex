@@ -1349,15 +1349,36 @@ o 24 meses (total).
 ## Registro sin conexión
 
 `lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Sirve para
-**crear** tomas, sueños, pañales y temperaturas, y para "Finalizar":
+**crear** tomas, sueños, pañales y temperaturas, para "Finalizar" y para borrar.
 
-> **Tiempo de espera corto en estos guardados** (`QUEUED_WRITE_TIMEOUT_MS`, 7 s,
-> en `stores/babies.ts`): como "tiempo agotado" cuenta como sin respuesta, si
-> Render está despertando la API (arranque en frío, 20-50 s tras ~15 min de
-> inactividad) el registro pasa a la cola y aparece como "pendiente de enviar"
-> en lugar de dejar el botón esperando. Reintentar es seguro por el
+> **Local primero** (desde 2026-10-14). Estos guardados se escriben PRIMERO en el
+> móvil (la cola) y se ven en la pantalla **al instante**; el envío al servidor va
+> por detrás. Antes se intentaba la red primero, con 7 s de espera
+> (`QUEUED_WRITE_TIMEOUT_MS`), y solo se encolaba si esa petición fallaba: con wifi
+> sin internet, datos sin cobertura o Render despertando la API, la pantalla se
+> quedaba ~7,4 s (medido en un navegador real) con el botón activo y sin ningún
+> aviso. Los tests solo simulaban un corte instantáneo
+> (`context.setOffline(true)`), que era el único caso que iba bien; ahora
+> `e2e/offline-slow.spec.ts` prueba la **red colgada** y la **API lenta**.
+>
+> Tras guardar en local, `awaitVerdict()` le da al servidor `SYNC_GRACE_MS` (1,5 s)
+> para contestar: si dice que no (p. ej. una hora de fin anterior a la de inicio)
+> el error llega al formulario como siempre y no se avisa dos veces; si confirma,
+> `'saved'`; si no ha contestado a tiempo, `'queued'` ("guardado en el móvil ·
+> pendiente de enviar") y el envío sigue por detrás. Un rechazo que llegue DESPUÉS
+> (nadie esperaba ya) se avisa desde `babies.rejectedNotice`, que escucha el
+> Dashboard. Cada petición del envío espera hasta `FLUSH_REQUEST_TIMEOUT_MS`
+> (20 s: margen para el arranque en frío de Render; si la conexión está muerta, se
+> suelta y se reintenta en el siguiente sondeo). Reintentar es seguro por el
 > `client_uuid`; las ediciones son `PUT` y borrar algo ya borrado cuenta como
 > éxito. El resto de peticiones conserva los 45 s de `lib/api.ts`.
+>
+> El envío es **un solo ciclo** por instancia del store (`flushStateOf()`): repite
+> mientras entren registros nuevos, y si se hace un cambio sobre un alta que aún se
+> está enviando (p. ej. "Finalizar" un sueño recién creado), el servidor la recibió
+> sin ese cambio, así que `carryOverEditsMadeWhileSending()` lo convierte en un
+> `PUT` sobre el registro ya creado en vez de perderlo; y `removeQueuedUpdate()`
+> solo quita el cambio ya enviado (compara `queuedAt`), no uno más reciente.
 
 - Cada creación lleva un `client_uuid` generado en el móvil. Si el
   `POST` falla **sin respuesta** (`isNetworkError()`: sin red, caída,
@@ -1387,10 +1408,11 @@ o 24 meses (total).
   descarta y se avisa. Solo lo piden esos dos botones
   (`queueIfOffline`); el formulario de edición no.
 - Borrar un registro **ya guardado** (toma, sueño, pañal, temperatura):
-  `deleteFeed()` & co. mantienen el borrado optimista y, si el `DELETE`
-  falla sin respuesta, `queueDelete()` lo deja en `offlineUpdates` con
-  `action: 'delete'` (sustituye cualquier cambio pendiente de ese
-  registro). `withPendingUpdates()` y `withoutPendingDeletes()` impiden
+  `deleteFeed()` & co. mantienen el borrado optimista y lo dejan siempre en
+  `offlineUpdates` con `action: 'delete'` (`queueDelete()`, vía
+  `deleteLocalFirst()`; sustituye cualquier cambio pendiente de ese
+  registro); si el servidor lo rechaza de verdad, se restaura lo que se veía y
+  se relanza el error. `withPendingUpdates()` y `withoutPendingDeletes()` impiden
   que el sondeo lo resucite; al enviarlo, un 404 cuenta como hecho.
 - Editar registros ya guardados sigue necesitando conexión
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
@@ -1412,6 +1434,11 @@ sesión" solo se ven así. `e2e/smoke.spec.ts`:
   guardada** con su aviso, no la pantalla de error;
 - **finalizar un sueño sin conexión** se encola y se envía al volver la red;
 - **borrar una entrada sin conexión** se encola y se aplica al volver.
+
+`e2e/offline-slow.spec.ts` (la red que NO falla al instante): con la conexión
+**colgada**, "Finalizar" hace desaparecer el botón y muestra "pendiente de enviar"
+en menos de 3 s, y se sincroniza al volver; con la **API lenta** (6 s), responde
+igual de rápido y se guarda una sola vez, sin duplicados.
 
 Cada test crea su usuario y bebé por la API e inyecta la sesión en el
 navegador (más rápido y estable que pasar por los formularios).

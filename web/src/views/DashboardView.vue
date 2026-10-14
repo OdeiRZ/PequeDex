@@ -367,10 +367,20 @@ const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineU
 // una fecha que ya no es válida) - se descarta, no se reintenta.
 async function flushQueue() {
   if (pendingCount.value === 0) return
-  const { sent, rejected } = await babies.flushOfflineQueue()
+  const { sent } = await babies.flushOfflineQueue()
   if (sent > 0) toast.show(t('offline.sent', { count: sent }, sent))
-  if (rejected > 0) toast.show(t('offline.rejected', { count: rejected }, rejected), 'error')
 }
+
+// Lo que el servidor rechaza al enviar por detrás (p. ej. una fecha que ya no
+// es válida) se avisa desde el store: puede llegar cuando el guardado que lo
+// originó ya respondió "guardado en el móvil" y nadie esperaba el veredicto.
+watch(
+  () => babies.rejectedNotice,
+  (now, before) => {
+    const count = now - before
+    if (count > 0) toast.show(t('offline.rejected', { count }, count), 'error')
+  },
+)
 
 async function onOnline() {
   isOnline.value = true

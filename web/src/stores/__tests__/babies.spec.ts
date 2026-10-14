@@ -198,9 +198,9 @@ describe('useBabiesStore', () => {
         started_at: '2026-08-30T10:00',
         client_uuid: expect.any(String),
       },
-      // Tiempo corto: si la API tarda (arranque en frío de Render), el registro
-      // pasa a la cola en vez de dejar el botón esperando ~30 s.
-      { timeout: 7000 },
+      // El envío por detrás no espera eternamente: 20 s dan margen a que Render
+      // despierte la API y, si la conexión está muerta, se reintenta en el sondeo.
+      { timeout: 20000 },
     )
     expect(apiClient.get).not.toHaveBeenCalled()
     expect(store.timeline).toEqual([
@@ -243,11 +243,15 @@ describe('useBabiesStore', () => {
     const outcome = await store.flushOfflineQueue()
 
     expect(outcome).toEqual({ sent: 1, rejected: 0 })
-    expect(apiClient.post).toHaveBeenLastCalledWith('/babies/1/diaper-changes', {
-      changed_at: '2026-10-12T08:00:00Z',
-      type: 'mojado',
-      client_uuid: queuedUuid,
-    })
+    expect(apiClient.post).toHaveBeenLastCalledWith(
+      '/babies/1/diaper-changes',
+      {
+        changed_at: '2026-10-12T08:00:00Z',
+        type: 'mojado',
+        client_uuid: queuedUuid,
+      },
+      { timeout: 20000 },
+    )
     expect(store.offlineQueue).toEqual([])
     expect(store.timeline).toEqual([{ type: 'diaper_change', at: saved.changed_at, data: saved }])
   })
@@ -295,7 +299,9 @@ describe('useBabiesStore', () => {
 
     vi.mocked(apiClient.put).mockResolvedValueOnce({ data: { data: { ...ongoing, ...payload } } })
     expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
-    expect(apiClient.put).toHaveBeenLastCalledWith('/babies/1/sleeps/9', payload)
+    expect(apiClient.put).toHaveBeenLastCalledWith('/babies/1/sleeps/9', payload, {
+      timeout: 20000,
+    })
     expect(store.offlineUpdates).toEqual([])
   })
 
@@ -602,7 +608,7 @@ describe('useBabiesStore', () => {
 
     vi.mocked(apiClient.delete).mockResolvedValueOnce({})
     expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
-    expect(apiClient.delete).toHaveBeenLastCalledWith('/babies/1/feeds/5')
+    expect(apiClient.delete).toHaveBeenLastCalledWith('/babies/1/feeds/5', { timeout: 20000 })
     expect(store.offlineUpdates).toEqual([])
   })
 
@@ -670,7 +676,7 @@ describe('useBabiesStore', () => {
 
     await pending
 
-    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5', { timeout: 7000 })
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5', { timeout: 20000 })
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
@@ -1178,5 +1184,303 @@ describe('useBabiesStore', () => {
 
     expect(store.vitaminDAllDoses).toEqual([{ id: 1, baby_id: 1, date: '2026-08-01', given: true }])
     expect(apiClient.get).toHaveBeenCalledWith('/babies/1/vitamin-d-doses')
+  })
+
+  // --- Registro LOCAL PRIMERO: la pantalla responde al instante aunque la red esté
+  // colgada (wifi sin internet, datos sin cobertura, la API de Render despertando).
+  // Antes se esperaba hasta 7 s a la red, con el botón activo y sin aviso. ---
+  describe('local-first saving', () => {
+    function deferred<T = unknown>() {
+      let resolve!: (value: T) => void
+      let reject!: (error: unknown) => void
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res
+        reject = rej
+      })
+      return { promise, resolve, reject }
+    }
+
+    async function storeWithBaby() {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+      const store = useBabiesStore()
+      await store.create({})
+      store.offlineQueue = []
+      store.offlineUpdates = []
+      return store
+    }
+
+    it('shows a new log at once and answers "queued" after the grace when the network hangs', async () => {
+      const store = await storeWithBaby()
+      vi.useFakeTimers()
+      try {
+        const hung = deferred()
+        vi.mocked(apiClient.post).mockReturnValueOnce(hung.promise as never)
+
+        const result = store.createFeed({ type: 'pecho', started_at: '2026-10-12T08:00:00Z' })
+
+        // Antes de que el servidor diga nada, ya está guardado y visible como pendiente.
+        expect(store.offlineQueue).toHaveLength(1)
+        expect(store.timeline[0]).toMatchObject({ type: 'feed', pending: expect.any(String) })
+
+        await vi.advanceTimersByTimeAsync(1_499)
+        let settled = false
+        void result.then(() => (settled = true))
+        await vi.advanceTimersByTimeAsync(0)
+        expect(settled).toBe(false)
+
+        await vi.advanceTimersByTimeAsync(2)
+        expect(await result).toBe('queued')
+        // Respondió en ~1,5 s, no en los 7+ s de antes.
+        expect(store.offlineQueue).toHaveLength(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('keeps sending in the background and swaps the pending entry for the real one', async () => {
+      const store = await storeWithBaby()
+      vi.useFakeTimers()
+      try {
+        const slow = deferred<{ data: { data: unknown } }>()
+        vi.mocked(apiClient.post).mockReturnValueOnce(slow.promise as never)
+
+        const result = store.createFeed({ type: 'pecho', started_at: '2026-10-12T08:00:00Z' })
+        await vi.advanceTimersByTimeAsync(1_600)
+        expect(await result).toBe('queued')
+
+        slow.resolve({ data: { data: { id: 31, started_at: '2026-10-12T08:00:00Z' } } })
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(store.offlineQueue).toEqual([])
+        expect(store.timeline).toEqual([
+          {
+            type: 'feed',
+            at: '2026-10-12T08:00:00Z',
+            data: { id: 31, started_at: '2026-10-12T08:00:00Z' },
+          },
+        ])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('answers "saved" when the server confirms inside the grace', async () => {
+      const store = await storeWithBaby()
+      vi.mocked(apiClient.post).mockResolvedValueOnce({
+        data: { data: { id: 5, started_at: '2026-10-12T08:00:00Z' } },
+      })
+
+      expect(await store.createFeed({ type: 'pecho', started_at: '2026-10-12T08:00:00Z' })).toBe(
+        'saved',
+      )
+      expect(store.offlineQueue).toEqual([])
+    })
+
+    it("still gives the form the server's validation error when it answers inside the grace", async () => {
+      const store = await storeWithBaby()
+      const rejection = { isAxiosError: true, response: { status: 422 } }
+      vi.mocked(apiClient.post).mockRejectedValueOnce(rejection)
+
+      await expect(
+        store.createSleep({ started_at: '2026-10-12T08:00:00Z', ended_at: '2026-10-12T07:00:00Z' }),
+      ).rejects.toBe(rejection)
+
+      expect(store.offlineQueue).toEqual([])
+      expect(store.timeline).toEqual([])
+      expect(store.rejectedNotice).toBe(0) // ya llegó al formulario: no se avisa dos veces
+    })
+
+    it('notices a rejection that arrives after the grace, when nobody is waiting any more', async () => {
+      const store = await storeWithBaby()
+      vi.useFakeTimers()
+      try {
+        const slow = deferred()
+        vi.mocked(apiClient.post).mockReturnValueOnce(slow.promise as never)
+
+        const result = store.createFeed({ type: 'pecho', started_at: '2026-10-12T08:00:00Z' })
+        await vi.advanceTimersByTimeAsync(1_600)
+        expect(await result).toBe('queued')
+
+        slow.reject({ isAxiosError: true, response: { status: 422 } })
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(store.offlineQueue).toEqual([])
+        expect(store.timeline).toEqual([])
+        expect(store.rejectedNotice).toBe(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('finishing a sleep shows it finished at once and queues it while the network hangs', async () => {
+      const store = await storeWithBaby()
+      const ongoing = { id: 9, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+      store.timeline = [{ type: 'sleep', at: ongoing.started_at, data: ongoing as never }]
+      vi.useFakeTimers()
+      try {
+        const hung = deferred()
+        vi.mocked(apiClient.put).mockReturnValueOnce(hung.promise as never)
+        const payload = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
+
+        const result = store.updateSleep(9, payload, true)
+
+        // Sin esperar a nada: la entrada ya consta como acabada (adiós al botón Finalizar).
+        expect((store.timeline[0]!.data as { ended_at: string }).ended_at).toBe(payload.ended_at)
+        expect(store.offlineUpdates).toHaveLength(1)
+
+        await vi.advanceTimersByTimeAsync(1_600)
+        expect(await result).toBe('queued')
+
+        hung.resolve({ data: { data: { ...ongoing, ...payload } } })
+        await vi.advanceTimersByTimeAsync(0)
+        expect(store.offlineUpdates).toEqual([])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('rolls the screen back if the server refuses the finish', async () => {
+      const store = await storeWithBaby()
+      const ongoing = { id: 9, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+      store.timeline = [{ type: 'sleep', at: ongoing.started_at, data: ongoing as never }]
+      const rejection = { isAxiosError: true, response: { status: 422 } }
+      vi.mocked(apiClient.put).mockRejectedValueOnce(rejection)
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { data: [{ type: 'sleep', at: ongoing.started_at, data: ongoing }] },
+      })
+
+      await expect(
+        store.updateSleep(
+          9,
+          { started_at: ongoing.started_at, ended_at: '2026-10-12T07:00:00Z' },
+          true,
+        ),
+      ).rejects.toBe(rejection)
+
+      expect(store.offlineUpdates).toEqual([])
+      // Se vuelve a pedir la línea temporal real: la entrada vuelve a estar en curso.
+      expect(apiClient.get).toHaveBeenCalled()
+    })
+
+    it('does not lose a "Finalizar" made while the create is still being sent', async () => {
+      const store = await storeWithBaby()
+      vi.useFakeTimers()
+      try {
+        const slow = deferred<{ data: { data: unknown } }>()
+        vi.mocked(apiClient.post).mockReturnValueOnce(slow.promise as never)
+
+        const result = store.createSleep({ started_at: '2026-10-12T08:00:00Z', ended_at: null })
+        await vi.advanceTimersByTimeAsync(1_600)
+        expect(await result).toBe('queued')
+
+        // El sueño sigue en la cola (el POST sin contestar) y se pulsa Finalizar.
+        const tempId = store.offlineQueue[0]!.tempId
+        store.updateQueued(tempId, { ended_at: '2026-10-12T09:00:00Z' })
+
+        // El servidor recibió el alta SIN ese cambio...
+        vi.mocked(apiClient.put).mockResolvedValueOnce({
+          data: {
+            data: { id: 77, started_at: '2026-10-12T08:00:00Z', ended_at: '2026-10-12T09:00:00Z' },
+          },
+        })
+        slow.resolve({
+          data: { data: { id: 77, started_at: '2026-10-12T08:00:00Z', ended_at: null } },
+        })
+        await vi.advanceTimersByTimeAsync(0)
+        await vi.advanceTimersByTimeAsync(0)
+
+        // ...y el cambio se envía después como PUT sobre el registro ya creado.
+        expect(apiClient.put).toHaveBeenCalledWith(
+          '/babies/1/sleeps/77',
+          { started_at: '2026-10-12T08:00:00Z', ended_at: '2026-10-12T09:00:00Z' },
+          { timeout: 20000 },
+        )
+        expect(store.offlineQueue).toEqual([])
+        expect(store.offlineUpdates).toEqual([])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('keeps a newer change to the same record that was made while an older one was sending', async () => {
+      const store = await storeWithBaby()
+      const ongoing = { id: 9, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+      store.timeline = [{ type: 'sleep', at: ongoing.started_at, data: ongoing as never }]
+      vi.useFakeTimers()
+      try {
+        const first = deferred<{ data: { data: unknown } }>()
+        vi.mocked(apiClient.put).mockReturnValueOnce(first.promise as never)
+        const older = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
+        const newer = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:30:00Z' }
+
+        const a = store.updateSleep(9, older, true)
+        await vi.advanceTimersByTimeAsync(0)
+        // Mientras el primero sigue enviándose, se cambia otra vez.
+        vi.advanceTimersByTime(1)
+        await new Promise<void>((resolve) => resolve())
+        vi.setSystemTime(Date.now() + 5)
+        vi.mocked(apiClient.put).mockResolvedValueOnce({ data: { data: { ...ongoing, ...newer } } })
+        const b = store.updateSleep(9, newer, true)
+
+        first.resolve({ data: { data: { ...ongoing, ...older } } })
+        await vi.advanceTimersByTimeAsync(1_600)
+        await Promise.all([a, b])
+
+        const sent = vi
+          .mocked(apiClient.put)
+          .mock.calls.map((call) => (call[1] as { ended_at: string }).ended_at)
+        expect(sent).toEqual([older.ended_at, newer.ended_at])
+        expect(store.offlineUpdates).toEqual([])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('deleting is local first too: gone from the screen at once, sent in the background', async () => {
+      const store = await storeWithBaby()
+      const row = { id: 5, baby_id: 1, started_at: '2026-10-12T08:00:00Z', ended_at: null }
+      store.timeline = [{ type: 'feed', at: row.started_at, data: row as never }]
+      vi.useFakeTimers()
+      try {
+        const hung = deferred()
+        vi.mocked(apiClient.delete).mockReturnValueOnce(hung.promise as never)
+
+        const result = store.deleteFeed(5)
+        expect(store.timeline).toEqual([])
+        expect(store.offlineUpdates).toMatchObject([
+          { type: 'feed', targetId: 5, action: 'delete' },
+        ])
+
+        await vi.advanceTimersByTimeAsync(1_600)
+        await result
+
+        hung.resolve({})
+        await vi.advanceTimersByTimeAsync(0)
+        expect(store.offlineUpdates).toEqual([])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('uses a single sending cycle: a second flush while one runs does nothing extra', async () => {
+      const store = await storeWithBaby()
+      vi.useFakeTimers()
+      try {
+        const hung = deferred()
+        vi.mocked(apiClient.post).mockReturnValueOnce(hung.promise as never)
+        void store.createTemperature({ measured_at: '2026-10-12T08:00:00Z', celsius: 37.2 })
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(await store.flushOfflineQueue()).toEqual({ sent: 0, rejected: 0 })
+        expect(vi.mocked(apiClient.post)).toHaveBeenCalledTimes(2) // el bebé + un solo envío
+
+        hung.resolve({
+          data: { data: { id: 1, measured_at: '2026-10-12T08:00:00Z', celsius: 37.2 } },
+        })
+        await vi.advanceTimersByTimeAsync(1_600)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
   })
 })

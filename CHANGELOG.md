@@ -85,6 +85,31 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   mismo e2e cazó un fallo intermitente real (la coincidencia con la caché debía
   ignorar `Vary`).
 
+### Corregido (modo sin conexión: "Finalizar" tardaba hasta 10 s)
+
+- **Registro local primero.** Con wifi sin internet, datos sin cobertura o la API
+  de Render despertando, pulsar "Finalizar" (o crear o borrar un registro) dejaba la
+  pantalla **~7,4 s** con el botón activo y sin ningún aviso (medido con un
+  navegador real), y solo después pasaba a "pendiente de enviar": a veces guardaba,
+  a veces hacía falta recargar, a veces había que esperar minutos. La causa: se
+  intentaba la red PRIMERO (con 7 s de espera) y solo se guardaba en el móvil si esa
+  petición fallaba. Los tests solo simulaban un corte instantáneo, que era el único
+  caso que iba bien. Ahora altas, "Finalizar" y borrados se escriben primero en la
+  cola del móvil y se ven **al instante**; se le da al servidor 1,5 s para
+  confirmar (si rechaza el registro, el error llega al formulario como siempre) y,
+  si no contesta, queda "pendiente de enviar" y se envía por detrás, con 20 s por
+  petición para aguantar el arranque en frío de Render.
+- **Un "Finalizar" ya no se pierde si se pulsa mientras el alta aún se envía**
+  (se convierte en un `PUT` sobre el registro ya creado), y un cambio más reciente
+  no se descarta al confirmarse uno anterior del mismo registro.
+- **Un rechazo del servidor que llega por detrás se avisa** (`rejectedNotice`), no
+  se pierde en silencio.
+- Pruebas nuevas: 11 del store (red colgada, veredicto dentro y fuera del margen,
+  rechazo tardío, cambios durante el envío) y `e2e/offline-slow.spec.ts` (red
+  colgada y API lenta en un navegador real).
+- **Pendiente de decidir:** si ofrecer además un interruptor para desactivar el modo
+  sin conexión desde el menú de usuario.
+
 ### Corregido (predicciones vencidas)
 
 - **Una estimación vencida ya no se enseña como si fuera futura.** A la 01:47 la

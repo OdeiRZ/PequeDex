@@ -678,6 +678,8 @@ export default {
       noPattern: 'Not enough regularity in the schedule to estimate the next nap.',
       wakeUp: 'Estimated wake-up: {at}',
       nextSleep: 'Estimated next nap: {at}',
+      wakeUpOverdue: 'The estimated wake-up ({at}) has already passed.',
+      nextSleepOverdue: 'The estimated next nap ({at}) has already passed.',
       awakeHint: 'Awake for {awake} · at this age usually manages {range} (guideline).',
       ageBased: 'Guideline for this age: next sleep between {from} and {to}.',
       basedOnAge: '(guideline for this age)',
@@ -689,6 +691,7 @@ export default {
       insufficientData: 'Not enough feeds logged yet ({sample}/{minimum}) to estimate a pattern.',
       noPattern: 'Not enough regularity in the schedule to estimate the next feed.',
       nextFeed: 'Estimated next feed: {at}',
+      nextFeedOverdue: 'The estimated next feed ({at}) has already passed.',
       usualRange: 'Usually between {from} and {to}.',
     },
     growth: {

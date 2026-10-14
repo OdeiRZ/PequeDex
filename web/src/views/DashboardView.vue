@@ -53,7 +53,11 @@ import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import { isNetworkError } from '@/lib/offlineQueue'
-import { formatPredictionAt, formatPredictionRange } from '@/lib/predictionRange'
+import {
+  formatPredictionAt,
+  formatPredictionRange,
+  isPredictionOverdue,
+} from '@/lib/predictionRange'
 import {
   ageInMonths,
   awakeSince,
@@ -1827,6 +1831,20 @@ const sleepPredictionLabel = computed(() => {
   // "faltan siestas".
   if (prediction?.prediction) {
     const at = formatPredictionAt(prediction.prediction.at, dateLocale.value)
+
+    // Vencida (la hora y su rango habitual ya pasaron y nada nuevo se ha
+    // registrado): el servidor no la recalcula sola, así que se dice tal cual
+    // en vez de enseñar "13/10, 23:35" a la 01:47 como si aún fuera a llegar.
+    // La pista de "despierto desde hace..." de debajo sigue dando el contexto.
+    if (isPredictionOverdue(prediction.prediction, predictionNow.value)) {
+      return t(
+        prediction.prediction.type === 'wake_up'
+          ? 'dashboard.sleepPrediction.wakeUpOverdue'
+          : 'dashboard.sleepPrediction.nextSleepOverdue',
+        { at },
+      )
+    }
+
     const range = usualRangeText(
       prediction.prediction.range,
       'dashboard.sleepPrediction.usualRange',
@@ -1884,6 +1902,11 @@ const feedPredictionLabel = computed(() => {
   }
 
   const at = formatPredictionAt(prediction.prediction.at, dateLocale.value)
+
+  // Igual que en sueño: una toma estimada que ya venció no se enseña como futura.
+  if (isPredictionOverdue(prediction.prediction, predictionNow.value)) {
+    return t('dashboard.feedPrediction.nextFeedOverdue', { at })
+  }
 
   return (
     t('dashboard.feedPrediction.nextFeed', { at }) +

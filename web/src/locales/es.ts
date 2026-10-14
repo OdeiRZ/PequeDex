@@ -682,6 +682,10 @@ export default {
       noPattern: 'No hay suficiente regularidad en los horarios para estimar la siguiente siesta.',
       wakeUp: 'Estimación de despertar: {at}',
       nextSleep: 'Estimación de la siguiente siesta: {at}',
+      // La hora estimada y su rango habitual ya pasaron sin que se registrara nada
+      // nuevo: se dice tal cual, en vez de enseñar una hora pasada como si fuera futura.
+      wakeUpOverdue: 'La hora estimada de despertar ({at}) ya ha pasado.',
+      nextSleepOverdue: 'La hora estimada de la siguiente siesta ({at}) ya ha pasado.',
       awakeHint: 'Despierto desde hace {awake} · a su edad suele aguantar {range} (orientativo).',
       ageBased: 'Orientativo para su edad: siguiente sueño entre las {from} y las {to}.',
       basedOnAge: '(orientativo por su edad)',
@@ -694,6 +698,7 @@ export default {
         'Todavía no hay suficientes tomas registradas ({sample}/{minimum}) para estimar un patrón.',
       noPattern: 'No hay suficiente regularidad en los horarios para estimar la siguiente toma.',
       nextFeed: 'Estimación de la siguiente toma: {at}',
+      nextFeedOverdue: 'La hora estimada de la siguiente toma ({at}) ya ha pasado.',
       usualRange: 'Suele ser entre las {from} y las {to}.',
     },
     growth: {

@@ -85,6 +85,24 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   mismo e2e cazó un fallo intermitente real (la coincidencia con la caché debía
   ignorar `Vary`).
 
+### Corregido (predicciones vencidas)
+
+- **Una estimación vencida ya no se enseña como si fuera futura.** A la 01:47 la
+  tarjeta de sueño decía "Estimación de la siguiente siesta: 13/10/2026, 23:35 ...
+  Suele ser entre las 23:12 y las 00:23": el bebé se despertó a las 22:50, la
+  estimación era 22:50 + su ventana habitual, no se durmió y, como el servidor
+  parte del último evento registrado, no la recalcula hasta que se registra algo
+  nuevo. Ahora, cuando la hora estimada **y su rango habitual** ya han pasado
+  (`isPredictionOverdue`, en `lib/predictionRange.ts`: el final del rango, o la hora
+  puntual + 30 min si no hay rango), la tarjeta dice "La hora estimada de la
+  siguiente siesta (13/10/2026, 23:35) ya ha pasado." y la pista "Despierto desde
+  hace…" de debajo da el contexto. Lo mismo para el despertar y para la tarjeta
+  de toma. Mientras sigue dentro del rango habitual, el texto no cambia (a las
+  23:40 "23:35, suele ser hasta las 00:23" sigue siendo cierto).
+- **No cambia el modelo.** Sigue pendiente (y sin tocar) que un sueño que empieza
+  después de las 19:00 cuente como "de noche" y por eso se hable de "1.ª ventana
+  del día" tras un despertar de madrugada.
+
 ### Corregido (rendimiento)
 
 - **Cada petición autenticada hacía 6 consultas SQL de más** desde que se añadió

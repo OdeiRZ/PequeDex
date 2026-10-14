@@ -12,6 +12,30 @@ export function formatPredictionAt(iso: string, locale: string): string {
   })
 }
 
+/** Sin rango habitual, cuánto se tolera pasada la hora puntual antes de darla por vencida. */
+export const OVERDUE_GRACE_MS = 30 * 60_000
+
+/**
+ * ¿La estimación ya está vencida? La hora puntual no basta: "Suele ser entre las
+ * 23:12 y las 00:23" sigue siendo cierto a las 23:40 aunque la puntual (23:35) ya
+ * pasara, así que se espera al final del rango habitual. Sin rango, la hora
+ * puntual más OVERDUE_GRACE_MS. Una estimación vencida no se vuelve a calcular
+ * sola (el servidor parte del último evento registrado): si no se avisa, la app
+ * sigue enseñando "13/10, 23:35" a la 01:47 como si aún estuviera por llegar.
+ */
+export function isPredictionOverdue(
+  prediction: { at: string; range?: PredictionRange | null },
+  now: Date,
+): boolean {
+  const atMs = new Date(prediction.at).getTime()
+  if (Number.isNaN(atMs)) return false
+
+  const toMs = prediction.range ? new Date(prediction.range.to).getTime() : Number.NaN
+  const endMs = Number.isNaN(toMs) ? atMs + OVERDUE_GRACE_MS : Math.max(toMs, atMs)
+
+  return now.getTime() > endMs
+}
+
 /** Las horas ("14:10") del rango habitual de una predicción, o null si el
  * servidor no lo da (pocos datos). El orden se garantiza: desde <= hasta. */
 export function formatPredictionRange(

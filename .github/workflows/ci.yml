@@ -254,7 +254,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call Render deploy hook
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        # Render a veces contesta 500 al hook por un fallo suyo, no del código:
+        # se reintenta y, si sigue fallando, se avisa sin poner el CI en rojo
+        # (el código ya pasó todas las pruebas; solo falta desplegar a mano).
+        run: |
+          for attempt in 1 2 3 4; do
+            if curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"; then
+              echo "Render deploy hook OK (intento $attempt)."
+              exit 0
+            fi
+            echo "Intento $attempt fallido; reintentando en $((attempt * 15)) s..."
+            sleep $((attempt * 15))
+          done
+          echo "::warning title=Render no ha desplegado::El deploy hook de Render ha fallado 4 veces. El código está bien; despliega a mano (Manual Deploy > Deploy latest commit)."
+          exit 0
 
   deploy-pages:
     name: Deploy frontend to GitHub Pages

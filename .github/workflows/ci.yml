@@ -186,6 +186,17 @@ jobs:
           php-version: "8.2"
           extensions: sqlite3, mbstring, bcmath, ctype, fileinfo, gd, exif
           coverage: none
+          # El API de pruebas es un proceso PHP que vive toda la ejecución. Con el
+          # opcache/JIT que setup-php activa por defecto, PHP 8.2.34 rompió ese
+          # proceso: Carbon (un trait con `private static function f(self $date)`)
+          # fallaba con "CarbonImmutable given" frente a "CarbonImmutable
+          # expected" en la primera petición, y caían 10 de 12 pruebas. Sin
+          # opcache en CLI el proceso es lento pero correcto; los demás trabajos
+          # (procesos cortos) no lo necesitan.
+          ini-values: opcache.enable_cli=0, opcache.jit=0
+
+      - name: Show PHP settings that matter for the API process
+        run: php -r 'echo PHP_VERSION, " opcache_cli=", ini_get("opcache.enable_cli"), " jit=", ini_get("opcache.jit"), PHP_EOL;'
 
       - name: Install API dependencies
         working-directory: api

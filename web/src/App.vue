@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterView, useRoute } from 'vue-router'
+import { startBackgroundSync, type BackgroundSync } from '@/lib/backgroundSync'
 import { useAuthStore } from '@/stores/auth'
+import { useBabiesStore } from '@/stores/babies'
+import { useToastStore } from '@/stores/toast'
 import AccountSheet from '@/components/AccountSheet.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import EmailVerificationBanner from '@/components/EmailVerificationBanner.vue'
@@ -23,6 +27,45 @@ onMounted(() => {
     auth.fetchCurrentUser()
   }
 })
+
+// Envío de lo pendiente (la cola sin conexión) desde TODA la app, no solo con
+// la pantalla de inicio abierta: reintentos cortos, sonda previa y reintento
+// inmediato al volver la conexión o la app (lib/backgroundSync.ts).
+const babies = useBabiesStore()
+const toast = useToastStore()
+const { t } = useI18n()
+const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineUpdates.length)
+let sync: BackgroundSync | null = null
+
+function stopSync() {
+  sync?.stop()
+  sync = null
+}
+
+watch(
+  () => auth.isAuthenticated,
+  (loggedIn) => {
+    stopSync()
+    if (!loggedIn) return
+    sync = startBackgroundSync({
+      pendingCount: () => pendingCount.value,
+      flush: async () => {
+        await babies.whenFlushIdle()
+        return babies.flushOfflineQueue()
+      },
+      abortStuck: (minAgeMs) => babies.abortStuckFlush(minAgeMs),
+      onSent: (count) => toast.show(t('offline.sent', { count }, count)),
+    })
+  },
+  { immediate: true },
+)
+
+// Algo nuevo en la cola: se asegura un reintento si el primer envío no llega.
+watch(pendingCount, (now, before) => {
+  if (now > before) sync?.notifyPending()
+})
+
+onUnmounted(stopSync)
 
 // Sin <Transition> en el RouterView, a propósito. Antes había una con un
 // fundido de entrada, y se dejó una vista antigua viva cada vez que se

@@ -200,7 +200,7 @@ describe('useBabiesStore', () => {
       },
       // El envío por detrás no espera eternamente: 20 s dan margen a que Render
       // despierte la API y, si la conexión está muerta, se reintenta en el sondeo.
-      { timeout: 20000 },
+      { timeout: 20000, signal: expect.any(AbortSignal) },
     )
     expect(apiClient.get).not.toHaveBeenCalled()
     expect(store.timeline).toEqual([
@@ -250,7 +250,7 @@ describe('useBabiesStore', () => {
         type: 'mojado',
         client_uuid: queuedUuid,
       },
-      { timeout: 20000 },
+      { timeout: 20000, signal: expect.any(AbortSignal) },
     )
     expect(store.offlineQueue).toEqual([])
     expect(store.timeline).toEqual([{ type: 'diaper_change', at: saved.changed_at, data: saved }])
@@ -288,7 +288,7 @@ describe('useBabiesStore', () => {
 
     vi.mocked(apiClient.put).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
     const payload = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
-    expect(await store.updateSleep(9, payload, true)).toBe('queued')
+    expect(await store.updateSleep(9, payload)).toBe('queued')
     expect(store.offlineUpdates).toHaveLength(1)
     expect((store.timeline[0]!.data as { ended_at: string }).ended_at).toBe(payload.ended_at)
 
@@ -301,6 +301,7 @@ describe('useBabiesStore', () => {
     expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
     expect(apiClient.put).toHaveBeenLastCalledWith('/babies/1/sleeps/9', payload, {
       timeout: 20000,
+      signal: expect.any(AbortSignal),
     })
     expect(store.offlineUpdates).toEqual([])
   })
@@ -608,7 +609,10 @@ describe('useBabiesStore', () => {
 
     vi.mocked(apiClient.delete).mockResolvedValueOnce({})
     expect(await store.flushOfflineQueue()).toEqual({ sent: 1, rejected: 0 })
-    expect(apiClient.delete).toHaveBeenLastCalledWith('/babies/1/feeds/5', { timeout: 20000 })
+    expect(apiClient.delete).toHaveBeenLastCalledWith('/babies/1/feeds/5', {
+      timeout: 20000,
+      signal: expect.any(AbortSignal),
+    })
     expect(store.offlineUpdates).toEqual([])
   })
 
@@ -627,17 +631,119 @@ describe('useBabiesStore', () => {
     expect(store.offlineUpdates).toEqual([])
   })
 
-  it('does not queue an update unless asked, and rethrows a network error', async () => {
+  it('queues a form edit when there is no connection instead of failing (local first)', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()
     await store.create({})
     store.offlineUpdates = []
 
-    vi.mocked(apiClient.put).mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
-    await expect(
-      store.updateSleep(9, { started_at: '2026-10-12T08:00:00Z', ended_at: null }),
-    ).rejects.toBeTruthy()
-    expect(store.offlineUpdates).toEqual([])
+    vi.mocked(apiClient.put).mockRejectedValue({ isAxiosError: true, code: 'ERR_NETWORK' })
+    const payload = { started_at: '2026-10-12T08:00:00Z', ended_at: null }
+
+    expect(await store.updateSleep(9, payload)).toBe('queued')
+    expect(store.offlineUpdates).toHaveLength(1)
+    expect(store.offlineUpdates[0]).toMatchObject({ type: 'sleep', targetId: 9, payload })
+  })
+
+  it.each([
+    ['diaper_change', 'diaper-changes', 'updateDiaperChange', 'recentDiaperChanges'],
+    ['temperature', 'temperatures', 'updateTemperature', 'temperatures'],
+  ] as const)(
+    'edits a %s locally first: shows it at once, sends the PUT later',
+    async (type, path, action, listKey) => {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+      const store = useBabiesStore()
+      await store.create({})
+      const original =
+        type === 'diaper_change'
+          ? { id: 4, changed_at: '2026-10-12T08:00:00Z', type: 'mojado' }
+          : { id: 4, measured_at: '2026-10-12T08:00:00Z', celsius: 36.5 }
+      ;(store as unknown as Record<string, unknown[]>)[listKey] = [original]
+      store.offlineUpdates = []
+
+      vi.mocked(apiClient.put).mockRejectedValue({ isAxiosError: true, code: 'ERR_NETWORK' })
+      const edit = type === 'diaper_change' ? { type: 'sucio' } : { celsius: 38.1 }
+      const payload = { ...original, ...edit } as never
+
+      expect(
+        await (store as never as Record<string, (...a: unknown[]) => unknown>)[action]!(4, payload),
+      ).toBe('queued')
+      // Ya se ve editado en la lista plana, sin esperar al servidor...
+      expect((store as unknown as Record<string, unknown[]>)[listKey]![0]).toMatchObject(edit)
+      expect(store.offlineUpdates[0]).toMatchObject({ type, targetId: 4 })
+
+      // ...y al volver la red se envía el PUT y la cola se vacía.
+      vi.mocked(apiClient.put).mockResolvedValue({ data: { data: { ...original, ...edit } } })
+      await store.flushOfflineQueue()
+      expect(apiClient.put).toHaveBeenLastCalledWith(
+        `/babies/1/${path}/4`,
+        payload,
+        expect.objectContaining({ timeout: 20000 }),
+      )
+      expect(store.offlineUpdates).toEqual([])
+    },
+  )
+
+  it('keeps a pending edit in a flat list when the server list is refreshed', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineUpdates = [
+      {
+        babyId: 1,
+        type: 'temperature',
+        targetId: 4,
+        payload: { celsius: 38.1 },
+        queuedAt: '2026-10-12T09:00:00Z',
+      },
+    ]
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { data: [{ id: 4, measured_at: '2026-10-12T08:00:00Z', celsius: 36.5 }] },
+    })
+
+    await store.fetchTemperatures()
+
+    expect(store.temperatures[0]).toMatchObject({ id: 4, celsius: 38.1 })
+  })
+
+  it('aborting a stuck send keeps everything queued and lets the next send deliver it', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.offlineQueue = [
+      {
+        clientUuid: 'u1',
+        tempId: -1,
+        babyId: 1,
+        type: 'diaper_change',
+        payload: { changed_at: '2026-10-12T08:00:00Z', type: 'mojado' },
+        queuedAt: '2026-10-12T08:00:00Z',
+      },
+    ]
+
+    // La primera petición se queda colgada hasta que se corta su señal.
+    vi.mocked(apiClient.post).mockImplementationOnce(
+      (_url, _body, config) =>
+        new Promise((_resolve, reject) => {
+          ;(config?.signal as AbortSignal | undefined)?.addEventListener('abort', () =>
+            reject({ isAxiosError: true, code: 'ERR_CANCELED' }),
+          )
+        }),
+    )
+    const stuck = store.flushOfflineQueue()
+    store.abortStuckFlush()
+    await stuck
+
+    // No se descartó nada: sigue en la cola, no cuenta como rechazado.
+    expect(store.offlineQueue).toHaveLength(1)
+    expect(store.rejectedNotice).toBe(0)
+
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 8, changed_at: '2026-10-12T08:00:00Z', type: 'mojado' } },
+    })
+    const { sent } = await store.flushOfflineQueue()
+    expect(sent).toBe(1)
+    expect(store.offlineQueue).toEqual([])
   })
 
   it('still throws a validation error instead of queueing', async () => {
@@ -676,7 +782,10 @@ describe('useBabiesStore', () => {
 
     await pending
 
-    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5', { timeout: 20000 })
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/feeds/5', {
+      timeout: 20000,
+      signal: expect.any(AbortSignal),
+    })
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
@@ -1322,7 +1431,7 @@ describe('useBabiesStore', () => {
         vi.mocked(apiClient.put).mockReturnValueOnce(hung.promise as never)
         const payload = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
 
-        const result = store.updateSleep(9, payload, true)
+        const result = store.updateSleep(9, payload)
 
         // Sin esperar a nada: la entrada ya consta como acabada (adiós al botón Finalizar).
         expect((store.timeline[0]!.data as { ended_at: string }).ended_at).toBe(payload.ended_at)
@@ -1350,11 +1459,7 @@ describe('useBabiesStore', () => {
       })
 
       await expect(
-        store.updateSleep(
-          9,
-          { started_at: ongoing.started_at, ended_at: '2026-10-12T07:00:00Z' },
-          true,
-        ),
+        store.updateSleep(9, { started_at: ongoing.started_at, ended_at: '2026-10-12T07:00:00Z' }),
       ).rejects.toBe(rejection)
 
       expect(store.offlineUpdates).toEqual([])
@@ -1393,7 +1498,7 @@ describe('useBabiesStore', () => {
         expect(apiClient.put).toHaveBeenCalledWith(
           '/babies/1/sleeps/77',
           { started_at: '2026-10-12T08:00:00Z', ended_at: '2026-10-12T09:00:00Z' },
-          { timeout: 20000 },
+          { timeout: 20000, signal: expect.any(AbortSignal) },
         )
         expect(store.offlineQueue).toEqual([])
         expect(store.offlineUpdates).toEqual([])
@@ -1413,14 +1518,14 @@ describe('useBabiesStore', () => {
         const older = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:00:00Z' }
         const newer = { started_at: ongoing.started_at, ended_at: '2026-10-12T09:30:00Z' }
 
-        const a = store.updateSleep(9, older, true)
+        const a = store.updateSleep(9, older)
         await vi.advanceTimersByTimeAsync(0)
         // Mientras el primero sigue enviándose, se cambia otra vez.
         vi.advanceTimersByTime(1)
         await new Promise<void>((resolve) => resolve())
         vi.setSystemTime(Date.now() + 5)
         vi.mocked(apiClient.put).mockResolvedValueOnce({ data: { data: { ...ongoing, ...newer } } })
-        const b = store.updateSleep(9, newer, true)
+        const b = store.updateSleep(9, newer)
 
         first.resolve({ data: { data: { ...ongoing, ...older } } })
         await vi.advanceTimersByTimeAsync(1_600)

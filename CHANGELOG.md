@@ -7,6 +7,29 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Modo sin conexión más rápido
+
+- **Reconectar tarda segundos, no ~22 s.** Medido con una prueba end-to-end
+  nueva (`web/e2e/reconnect.spec.ts`: red colgada que vuelve en silencio, como
+  una wifi sin internet): lo pendiente tardaba **22,4 s** en enviarse tras
+  volver la red (el envío colgado esperaba sus 20 s y luego el sondeo de 15 s);
+  ahora **2,9 s**. Cambios (`web/src/lib/backgroundSync.ts`):
+  - La sincronización vive en toda la app, no solo en la pantalla de inicio.
+  - Reintentos cortos (2, 3 y luego 5 s) mientras haya algo pendiente.
+  - Una sonda ligera a `/up` (3 s) antes de enviar; si el servidor contesta y
+    hay un envío colgado de hace más de 5 s, se corta y se reenvía.
+  - Al volver la app a primer plano o la conexión (`online`, `focus`,
+    `pageshow`) se corta lo colgado y se reintenta al instante.
+- **Se despierta la API al abrir la app** (un `/up` sin esperar respuesta):
+  Render la duerme tras ~15 min y tarda hasta ~50 s en arrancar; ahora ya está
+  arrancando mientras se toca la pantalla.
+- **Editar también es "local primero"**: las ediciones desde un formulario de
+  tomas, sueños, pañales y temperaturas se ven al instante y se envían por
+  detrás (antes esperaban a la red hasta 7 s y, sin conexión, fallaban con
+  "hace falta conexión"). Borrar, finalizar y crear ya lo eran.
+- `npm audit fix`: `follow-redirects` 1.16.1 (aviso alto en la 1.16.0; solo se usa
+  en Node, no en el navegador).
+
 ### Seguridad y privacidad
 
 - **Auditoría completa (2026-10-13)**: todo lo marcado como alto y dos de los

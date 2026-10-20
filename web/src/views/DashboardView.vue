@@ -693,8 +693,8 @@ async function onSubmitFeed() {
     }
 
     if (editingFeedId.value) {
-      await babies.updateFeed(editingFeedId.value, payload)
-      toast.show(t('dashboard.feedForm.toastUpdated'))
+      const result = await babies.updateFeed(editingFeedId.value, payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.feedForm.toastUpdated'))
     } else {
       const result = await babies.createFeed(payload)
       toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.feedForm.toastCreated'))
@@ -774,18 +774,14 @@ async function onFinishFeed(feed: Feed) {
   const endedAtMs = Math.min(startedAtMs + roundedMinutes * 60_000, Date.now())
 
   try {
-    const result = await babies.updateFeed(
-      feed.id,
-      {
-        type: feed.type,
-        side: feed.side ?? undefined,
-        milk_type: feed.milk_type ?? undefined,
-        amount_ml: feed.amount_ml ?? undefined,
-        started_at: feed.started_at,
-        ended_at: new Date(endedAtMs).toISOString(),
-      },
-      true,
-    )
+    const result = await babies.updateFeed(feed.id, {
+      type: feed.type,
+      side: feed.side ?? undefined,
+      milk_type: feed.milk_type ?? undefined,
+      amount_ml: feed.amount_ml ?? undefined,
+      started_at: feed.started_at,
+      ended_at: new Date(endedAtMs).toISOString(),
+    })
     if (result === 'queued') {
       toast.show(t('offline.queued'))
       return
@@ -841,11 +837,10 @@ async function onFinishSleep(sleep: Sleep) {
   }
 
   try {
-    const result = await babies.updateSleep(
-      sleep.id,
-      { started_at: sleep.started_at, ended_at: new Date().toISOString() },
-      true,
-    )
+    const result = await babies.updateSleep(sleep.id, {
+      started_at: sleep.started_at,
+      ended_at: new Date().toISOString(),
+    })
     if (result === 'queued') {
       toast.show(t('offline.queued'))
       return
@@ -867,8 +862,8 @@ async function onSubmitSleep() {
     }
 
     if (editingSleepId.value) {
-      await babies.updateSleep(editingSleepId.value, payload)
-      toast.show(t('dashboard.sleepForm.toastUpdated'))
+      const result = await babies.updateSleep(editingSleepId.value, payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.sleepForm.toastUpdated'))
     } else {
       const result = await babies.createSleep(payload)
       toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.sleepForm.toastCreated'))
@@ -989,8 +984,8 @@ async function onSubmitDiaper() {
     }
 
     if (editingDiaperId.value) {
-      await babies.updateDiaperChange(editingDiaperId.value, payload)
-      toast.show(t('dashboard.diaperForm.toastUpdated'))
+      const result = await babies.updateDiaperChange(editingDiaperId.value, payload)
+      toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.diaperForm.toastUpdated'))
     } else {
       const result = await babies.createDiaperChange(payload)
       toast.show(result === 'queued' ? t('offline.queued') : t('dashboard.diaperForm.toastCreated'))
@@ -1130,8 +1125,10 @@ async function onSubmitTemperature() {
     }
 
     if (editingTemperatureId.value) {
-      await babies.updateTemperature(editingTemperatureId.value, payload)
-      toast.show(t('dashboard.temperatureForm.toastUpdated'))
+      const result = await babies.updateTemperature(editingTemperatureId.value, payload)
+      toast.show(
+        result === 'queued' ? t('offline.queued') : t('dashboard.temperatureForm.toastUpdated'),
+      )
     } else {
       const result = await babies.createTemperature(payload)
       toast.show(

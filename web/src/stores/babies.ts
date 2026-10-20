@@ -17,16 +17,11 @@ import {
   updateEndpoint,
   withPendingEntries,
   withPendingUpdates,
-  withoutPendingDeletes,
+  withPendingChanges,
   type QueuedLog,
   type QueuedLogType,
   type QueuedUpdate,
 } from '@/lib/offlineQueue'
-
-// Cuánto espera una EDICIÓN desde un formulario (que no va a la cola: sigue
-// necesitando conexión) antes de darla por "sin respuesta". Las altas, los
-// "Finalizar" y los borrados NO esperan a la red: ver SYNC_GRACE_MS.
-const QUEUED_WRITE_TIMEOUT_MS = 7_000
 
 // REGISTRO LOCAL PRIMERO. Altas, "Finalizar" y borrados de tomas, sueños, pañales
 // y temperaturas se guardan en el propio móvil (la cola de lib/offlineQueue.ts) y
@@ -61,6 +56,10 @@ const MAX_FLUSH_PASSES = 10
 // otra: en los tests, o si la app recrease el store.
 interface FlushState {
   inFlight: Promise<{ sent: number; rejected: number }> | null
+  /** Corta las peticiones del envío en curso (ver abortStuckFlush). */
+  controller: AbortController | null
+  /** Cuándo empezó el envío en curso. */
+  startedAt: number
   awaitingVerdict: Set<string>
   verdictErrors: Map<string, unknown>
 }
@@ -71,7 +70,13 @@ const flushStates = new WeakMap<object, FlushState>()
 function flushStateOf(store: object): FlushState {
   let state = flushStates.get(store)
   if (!state) {
-    state = { inFlight: null, awaitingVerdict: new Set(), verdictErrors: new Map() }
+    state = {
+      inFlight: null,
+      controller: null,
+      startedAt: 0,
+      awaitingVerdict: new Set(),
+      verdictErrors: new Map(),
+    }
     flushStates.set(store, state)
   }
   return state
@@ -872,13 +877,13 @@ export const useBabiesStore = defineStore('babies', {
       this.feedPrediction = body.feed_prediction.data
       this.vitaminDSchedule = body.vitamin_d_schedule.data
       this.vitaminDRecentDoses = body.vitamin_d_schedule.recent_doses
-      this.temperatures = withoutPendingDeletes(
+      this.temperatures = withPendingChanges(
         body.temperatures.data,
         this.offlineUpdates,
         babyId,
         'temperature',
       )
-      this.recentDiaperChanges = withoutPendingDeletes(
+      this.recentDiaperChanges = withPendingChanges(
         body.recent_diaper_changes.data,
         this.offlineUpdates,
         babyId,
@@ -1036,6 +1041,7 @@ export const useBabiesStore = defineStore('babies', {
       this.flushingQueue = true
       state.inFlight = this.runFlush().finally(() => {
         state.inFlight = null
+        state.controller = null
         this.flushingQueue = false
       })
       return state.inFlight
@@ -1058,6 +1064,18 @@ export const useBabiesStore = defineStore('babies', {
         else this.rejectedNotice++
       }
 
+      // Todas las peticiones de este ciclo comparten una señal para poder
+      // cortarlas de golpe (abortStuckFlush) si la conexión se recupera
+      // mientras alguna sigue colgada en la antigua.
+      const controller = new AbortController()
+      state.controller = controller
+      state.startedAt = Date.now()
+      const request = { timeout: FLUSH_REQUEST_TIMEOUT_MS, signal: controller.signal }
+      // Cortar una petición no es un rechazo del servidor: el registro sigue en
+      // la cola y se reenvía (es seguro, ver FLUSH_REQUEST_TIMEOUT_MS).
+      const isUnreachable = (error: unknown) =>
+        isNetworkError(error) || (error as { code?: string }).code === 'ERR_CANCELED'
+
       let offline = false
       for (let pass = 0; pass < MAX_FLUSH_PASSES && !offline; pass++) {
         const logs = [...this.offlineQueue]
@@ -1070,14 +1088,14 @@ export const useBabiesStore = defineStore('babies', {
             const { data } = await apiClient.post(
               endpointFor(log),
               { ...log.payload, client_uuid: log.clientUuid },
-              { timeout: FLUSH_REQUEST_TIMEOUT_MS },
+              request,
             )
             this.carryOverEditsMadeWhileSending(log, sentPayload, data.data?.id)
             this.removeQueued(log.clientUuid)
             if (this.current?.id === log.babyId) this.applyCreatedLog(log.type, data.data)
             sent++
           } catch (error) {
-            if (isNetworkError(error)) {
+            if (isUnreachable(error)) {
               offline = true
               break
             }
@@ -1092,22 +1110,16 @@ export const useBabiesStore = defineStore('babies', {
           const key = `${update.action === 'delete' ? 'delete' : 'update'}:${update.type}:${update.targetId}`
           try {
             if (update.action === 'delete') {
-              await apiClient.delete(updateEndpoint(update), { timeout: FLUSH_REQUEST_TIMEOUT_MS })
+              await apiClient.delete(updateEndpoint(update), request)
               this.removeQueuedUpdate(update)
             } else {
-              const { data } = await apiClient.put(updateEndpoint(update), update.payload, {
-                timeout: FLUSH_REQUEST_TIMEOUT_MS,
-              })
+              const { data } = await apiClient.put(updateEndpoint(update), update.payload, request)
               this.removeQueuedUpdate(update)
-              if (
-                this.current?.id === update.babyId &&
-                (update.type === 'feed' || update.type === 'sleep')
-              )
-                this.applySavedUpdate(update.type, data.data)
+              if (this.current?.id === update.babyId) this.applySavedUpdate(update.type, data.data)
             }
             sent++
           } catch (error) {
-            if (isNetworkError(error)) {
+            if (isUnreachable(error)) {
               offline = true
               break
             }
@@ -1187,20 +1199,59 @@ export const useBabiesStore = defineStore('babies', {
       saveUpdates(this.offlineUpdates)
     },
 
-    applySavedUpdate(type: 'feed' | 'sleep', data: Feed | Sleep) {
-      const entry = { type, at: data.started_at, data } as TimelineEntry
+    /** Pone en pantalla un registro ya guardado (la respuesta del servidor a un
+     * cambio): línea temporal y, para pañales y temperaturas, su lista plana. */
+    applySavedUpdate(type: QueuedLogType, data: Feed | Sleep | DiaperChange | Temperature) {
+      const at =
+        type === 'diaper_change'
+          ? (data as DiaperChange).changed_at
+          : type === 'temperature'
+            ? (data as Temperature).measured_at
+            : (data as Feed | Sleep).started_at
+      const entry = { type, at, data } as TimelineEntry
       this.timeline = upsertTimelineEntry(this.timeline, entry)
       this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
+      if (type === 'diaper_change') {
+        this.recentDiaperChanges = upsertByDate(
+          this.recentDiaperChanges,
+          data as DiaperChange,
+          (c) => c.changed_at,
+        )
+      }
+      if (type === 'temperature') {
+        this.temperatures = upsertByDate(
+          this.temperatures,
+          data as Temperature,
+          (t) => t.measured_at,
+        )
+      }
+    },
+
+    /** Corta las peticiones del envío en curso. Cuando la conexión se recupera
+     * (otra wifi, volver la cobertura) las que seguían colgadas en la antigua
+     * no se enteran y esperarían su tiempo de espera entero (20 s) antes de
+     * reintentarse. Lo pendiente sigue en la cola: el siguiente envío lo manda.
+     * Con `minAgeMs` solo corta si el envío lleva al menos ese tiempo en marcha
+     * (uno recién lanzado puede ser solo lento, no colgado). */
+    abortStuckFlush(minAgeMs = 0) {
+      const state = flushStateOf(this)
+      if (Date.now() - state.startedAt >= minAgeMs) state.controller?.abort()
+    },
+
+    /** Espera a que acabe el envío en curso, si lo hay (tras cortarlo, cuando
+     * termina de recoger los restos), para empezar el siguiente sin que lo
+     * confunda con uno vivo. */
+    async whenFlushIdle(): Promise<void> {
+      await flushStateOf(this).inFlight?.catch(() => {})
     },
 
     /** Guarda un cambio sobre un registro ya existente; si no hay red y
      * `queueIfOffline`, lo deja en cola (y ya visible en la línea
      * temporal) en vez de fallar. Un error con respuesta se relanza. */
     async updateOrQueue(
-      type: 'feed' | 'sleep',
+      type: QueuedLogType,
       targetId: number,
       payload: Record<string, unknown>,
-      queueIfOffline: boolean,
     ): Promise<'saved' | 'queued'> {
       const update: QueuedUpdate = {
         babyId: this.current!.id,
@@ -1210,18 +1261,10 @@ export const useBabiesStore = defineStore('babies', {
         queuedAt: new Date().toISOString(),
       }
 
-      // Edición desde un formulario (el botón muestra "guardando"): sigue
-      // necesitando conexión y espera a la red, con su tiempo de espera.
-      if (!queueIfOffline) {
-        const { data } = await apiClient.put(updateEndpoint(update), payload, {
-          timeout: QUEUED_WRITE_TIMEOUT_MS,
-        })
-        this.applySavedUpdate(type, data.data)
-        return 'saved'
-      }
-
-      // "Finalizar" desde la tarjeta: local primero (la entrada pasa a acabada
-      // al instante, sin esperar a la red) y se envía por detrás.
+      // Local primero, igual que las altas y los borrados: el cambio se ve al
+      // instante (la entrada ya sale editada) y se envía por detrás. Antes las
+      // ediciones desde un formulario esperaban a la red hasta 7 s y, sin
+      // conexión, fallaban con "hace falta conexión".
       this.offlineUpdates = [
         ...this.offlineUpdates.filter((u) => !(u.type === type && u.targetId === targetId)),
         update,
@@ -1229,6 +1272,17 @@ export const useBabiesStore = defineStore('babies', {
       saveUpdates(this.offlineUpdates)
       this.timeline = withPendingUpdates(this.timeline, [update], update.babyId)
       this.dayTimeline = withPendingUpdates(this.dayTimeline, [update], update.babyId)
+      if (type === 'diaper_change') {
+        this.recentDiaperChanges = withPendingChanges(
+          this.recentDiaperChanges,
+          [update],
+          update.babyId,
+          type,
+        )
+      }
+      if (type === 'temperature') {
+        this.temperatures = withPendingChanges(this.temperatures, [update], update.babyId, type)
+      }
 
       try {
         return await this.awaitVerdict(`update:${type}:${targetId}`, () =>
@@ -1273,16 +1327,16 @@ export const useBabiesStore = defineStore('babies', {
       return this.createLog('feed', { ...payload })
     },
 
-    async updateFeed(id: number, payload: CreateFeedPayload, queueIfOffline = false) {
-      return this.updateOrQueue('feed', id, { ...payload }, queueIfOffline)
+    async updateFeed(id: number, payload: CreateFeedPayload) {
+      return this.updateOrQueue('feed', id, { ...payload })
     },
 
     async createSleep(payload: CreateSleepPayload) {
       return this.createLog('sleep', { ...payload })
     },
 
-    async updateSleep(id: number, payload: CreateSleepPayload, queueIfOffline = false) {
-      return this.updateOrQueue('sleep', id, { ...payload }, queueIfOffline)
+    async updateSleep(id: number, payload: CreateSleepPayload) {
+      return this.updateOrQueue('sleep', id, { ...payload })
     },
 
     async createDiaperChange(payload: CreateDiaperChangePayload) {
@@ -1290,22 +1344,7 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async updateDiaperChange(id: number, payload: CreateDiaperChangePayload) {
-      const { data } = await apiClient.put(
-        `/babies/${this.current!.id}/diaper-changes/${id}`,
-        payload,
-      )
-      const entry: TimelineEntry = {
-        type: 'diaper_change',
-        at: data.data.changed_at,
-        data: data.data,
-      }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      this.recentDiaperChanges = upsertByDate(
-        this.recentDiaperChanges,
-        data.data,
-        (c) => c.changed_at,
-      )
+      return this.updateOrQueue('diaper_change', id, { ...payload })
     },
 
     async fetchRecentDiaperChanges() {
@@ -1317,7 +1356,7 @@ export const useBabiesStore = defineStore('babies', {
       const { data } = await apiClient.get(`/babies/${this.current.id}/diaper-changes`, {
         params: { since, compact: 1 },
       })
-      this.recentDiaperChanges = withoutPendingDeletes(
+      this.recentDiaperChanges = withPendingChanges(
         data.data,
         this.offlineUpdates,
         this.current.id,
@@ -1407,7 +1446,7 @@ export const useBabiesStore = defineStore('babies', {
       }
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/temperatures`)
-      this.temperatures = withoutPendingDeletes(
+      this.temperatures = withPendingChanges(
         data.data,
         this.offlineUpdates,
         this.current.id,
@@ -1420,18 +1459,7 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async updateTemperature(id: number, payload: CreateTemperaturePayload) {
-      const { data } = await apiClient.put(
-        `/babies/${this.current!.id}/temperatures/${id}`,
-        payload,
-      )
-      const entry: TimelineEntry = {
-        type: 'temperature',
-        at: data.data.measured_at,
-        data: data.data,
-      }
-      this.timeline = upsertTimelineEntry(this.timeline, entry)
-      this.dayTimeline = upsertTimelineEntry(this.dayTimeline, entry)
-      this.temperatures = upsertByDate(this.temperatures, data.data, (t) => t.measured_at)
+      return this.updateOrQueue('temperature', id, { ...payload })
     },
 
     // Mismo borrado optimista que deleteFeed() más abajo.

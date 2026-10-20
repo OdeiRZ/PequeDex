@@ -132,6 +132,25 @@ export function withoutPendingDeletes<T extends { id: number }>(
   return items.filter((item) => !isPendingDelete(updates, babyId, type, item.id))
 }
 
+/** Lo mismo para una lista plana (pañales, temperaturas): sin lo borrado y con
+ * lo editado sin conexión ya aplicado, para que un refresco del servidor no
+ * deshaga un cambio que todavía está por enviar. */
+export function withPendingChanges<T extends { id: number }>(
+  items: T[],
+  updates: QueuedUpdate[],
+  babyId: number,
+  type: QueuedLogType,
+): T[] {
+  const mine = updates.filter((u) => u.babyId === babyId && u.type === type)
+  if (mine.length === 0) return items
+  return items.flatMap((item) => {
+    const update = mine.find((u) => u.targetId === item.id)
+    if (!update) return [item]
+    if (update.action === 'delete') return []
+    return [{ ...item, ...update.payload }]
+  })
+}
+
 export function saveQueue(queue: QueuedLog[], storage: KeyValueStorage | null = defaultStorage()) {
   try {
     storage?.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue))

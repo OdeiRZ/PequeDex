@@ -740,7 +740,7 @@ export default {
     en: 'English',
   },
   update: {
-    banner: 'Hay una versión nueva de PequeDex.',
+    banner: 'Versión nueva disponible:',
     apply: 'Actualizar',
   },
   emailVerification: {

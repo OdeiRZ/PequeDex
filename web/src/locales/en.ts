@@ -733,7 +733,7 @@ export default {
     en: 'English',
   },
   update: {
-    banner: 'There is a new version of PequeDex.',
+    banner: 'New version available:',
     apply: 'Update',
   },
   emailVerification: {

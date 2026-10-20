@@ -7,6 +7,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Seguridad (dependencias del frontend)
+
+- **`npm audit` a 0 también en desarrollo.** Quedaban 4 avisos altos que eran
+  uno: `braces` ≤ 3.0.3, sin versión corregida, que llegaba por
+  `@vue/eslint-config-typescript` → `fast-glob` → `micromatch`. Se resolvió
+  quitando la causa: `eslint.config.ts` usa `typescript-eslint` y
+  `vue-eslint-parser` directamente y ese paquete ya no es dependencia. Verificado:
+  el lint sigue marcando `any` y variables sin usar en `.ts` y `.vue`, y los
+  tipos, los 421 tests, los 12 e2e y el build pasan. (`follow-redirects` 1.16.1,
+  de producción, está en la sección siguiente.)
+
 ### Modo sin conexión más rápido
 
 - **Reconectar tarda segundos, no ~22 s.** Medido con una prueba end-to-end

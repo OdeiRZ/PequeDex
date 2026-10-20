@@ -30,6 +30,23 @@ correr `npm run format` (o el `--check` directamente) además de
 `build`/`lint`/`test:unit`: el CI ya falló una vez por esto exactamente
 porque la verificación local solo cubría los otros tres.
 
+### `npm audit` limpio (dependencias de desarrollo incluidas)
+
+`npm audit` se mantiene en 0, con y sin `--omit=dev` (el CI y `scripts/verify.ps1`
+solo comprueban producción, pero el de desarrollo también está limpio):
+
+- **`braces` ≤ 3.0.3** ("stack-exhaustion denial of service", GHSA-vfj7-8cjw-p6xm):
+  no tenía versión corregida; llegaba por `@vue/eslint-config-typescript` →
+  `fast-glob` → `micromatch` → `braces` (4 avisos que eran uno). Se quitó la
+  causa: `eslint.config.ts` usa `typescript-eslint` y `vue-eslint-parser`
+  directamente (ese paquete solo añadía este cableado) y
+  `@vue/eslint-config-typescript` ya no es dependencia. Se comprobó que el lint
+  sigue marcando `any` y variables sin usar en `.ts` y en `.vue`, y que la
+  plantilla del service worker (`sw/`) sigue ignorada.
+- **`follow-redirects` 1.16.0** (cabeceras con credenciales entre redirecciones;
+  llega por axios y solo se usa en Node, no en el navegador) → 1.16.1 con
+  `npm audit fix`.
+
 ## Estructura relevante
 
 - `src/lib/api.ts` — instancia de axios con interceptor que añade el token

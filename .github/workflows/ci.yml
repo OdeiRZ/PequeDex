@@ -169,8 +169,10 @@ jobs:
 
   # Prueba de humo de principio a fin: el build de la app contra el API
   # real con una SQLite desechable, en un Chrome de verdad (ver
-  # web/playwright.config.ts). Informativo de momento: NO bloquea el despliegue
-  # (no está en `needs` de deploy/deploy-pages) hasta que demuestre ser estable.
+  # web/playwright.config.ts). Bloquea el despliegue (está en `needs` de
+  # deploy/deploy-pages): cubre el modo sin conexión y la cola de sincronización,
+  # que los tests unitarios no ven. Si un día resulta inestable, se reintenta o
+  # se arregla el test, no se saca de `needs`.
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest
@@ -249,7 +251,7 @@ jobs:
 
   deploy:
     name: Trigger Render deploy
-    needs: [backend, frontend, attribution-guard]
+    needs: [backend, frontend, e2e, attribution-guard]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -271,7 +273,7 @@ jobs:
 
   deploy-pages:
     name: Deploy frontend to GitHub Pages
-    needs: [backend, frontend, attribution-guard]
+    needs: [backend, frontend, e2e, attribution-guard]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:

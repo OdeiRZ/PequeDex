@@ -1448,8 +1448,10 @@ navegador (más rápido y estable que pasar por los formularios).
 explícito: aunque `api/.env` apunte a Neon, nunca toca otra base de datos.
 Las constantes están en `e2e/constants.ts` y no en la configuración porque
 `playwright.config.ts` se vuelve a cargar en cada proceso de test (vaciaba
-la base de datos tras migrarla). En CI es el trabajo `e2e`, informativo de
-momento: no bloquea el despliegue hasta que demuestre ser estable.
+la base de datos tras migrarla). En CI es el trabajo `e2e` y **bloquea el
+despliegue**: si falla (modo sin conexión, cola de sincronización, flujos
+principales), ni el API ni la web se publican. Lo aprobó un historial de
+12 ejecuciones seguidas en verde.
 
 ## Arranque rápido: una petición y la última foto guardada
 

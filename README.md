@@ -30,6 +30,10 @@ Cloudflare Pages.
 
 ## De un vistazo
 
+<p align="center">
+  <img src="docs/inicio.jpg" alt="Pantalla de inicio de PequeDex: resumen del día, ritmo de tomas, sueño y pañales, y línea temporal" width="300">
+</p>
+
 | | |
 |---|---|
 | **Qué resuelve** | Registrar en segundos, desde el móvil y a oscuras, lo que pasa en el día de un bebé, y llevar al pediatra un resumen en PDF. |

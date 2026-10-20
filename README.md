@@ -28,6 +28,22 @@ un refresh en cualquier URL que no sea la raíz — GitHub Pages no tiene
 rewrite de servidor para el modo `history` de vue-router, a diferencia de
 Cloudflare Pages.
 
+## De un vistazo
+
+| | |
+|---|---|
+| **Qué resuelve** | Registrar en segundos, desde el móvil y a oscuras, lo que pasa en el día de un bebé, y llevar al pediatra un resumen en PDF. |
+| **Tiempo real** | Varios cuidadores ven los mismos registros a la vez; sin conexión se guarda en el móvil y se sincroniza al volver la red. |
+| **Stack** | Laravel 12 + Sanctum (API) · Vue 3 + Pinia + TypeScript (PWA) · PostgreSQL en Neon · Render + GitHub Pages |
+| **Calidad** | 389 tests de backend (también contra PostgreSQL real) · 404 de frontend · pruebas end-to-end con Playwright que **bloquean el despliegue** · Sentry · copia de seguridad semanal cifrada |
+
+**Una mejora medida de verdad:** la base de datos consumía **4,29 GB de red en
+12 días** (el avatar en base64 viajaba en cada petición); tras mover la foto
+fuera de las respuestas, añadir un arranque en una sola petición con ETag y
+pasar la base a Fráncfort, el consumo fue de **~48,6 MB en 7 días**. El detalle
+y cómo se midió está en [`api/README.md`](api/README.md) y en el
+[CHANGELOG](CHANGELOG.md).
+
 **Proyecto recién empezado** — este README se irá ampliando a medida que
 avancen los hitos. Ver [CHANGELOG.md](CHANGELOG.md) para el detalle de cada
 uno.

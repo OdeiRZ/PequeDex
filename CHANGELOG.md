@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Atajos del icono de la app instalada
 
+- **Cada atajo tiene su icono**: los mismos dibujos que la app usa para toma
+  (biberón), sueño (luna) y pañal, en blanco sobre el color de cada categoría
+  (`public/icons/shortcut-*.png`, generados con
+  `web/scripts/generate-shortcut-icons.mjs` a partir de `CategoryIcon.vue` y
+  `base.css`). Antes los tres usaban el icono genérico de la app y no se
+  distinguían. Un test comprueba que son tres distintos y que existen.
+
 - **Mantener pulsado el icono ofrece "+ Toma", "+ Sueño" y "+ Pañal"**
   (`shortcuts` en `manifest.webmanifest`). Abren la app directamente en el
   formulario de registro rápido correspondiente, el mismo que los botones de la

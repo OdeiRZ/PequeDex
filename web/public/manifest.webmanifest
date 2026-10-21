@@ -13,19 +13,25 @@
       "name": "Registrar toma",
       "short_name": "+ Toma",
       "url": "/PequeDex/?atajo=toma",
-      "icons": [{ "src": "/PequeDex/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/PequeDex/icons/shortcut-toma.png", "sizes": "192x192", "type": "image/png" }
+      ]
     },
     {
       "name": "Registrar sueño",
       "short_name": "+ Sueño",
       "url": "/PequeDex/?atajo=sueno",
-      "icons": [{ "src": "/PequeDex/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/PequeDex/icons/shortcut-sueno.png", "sizes": "192x192", "type": "image/png" }
+      ]
     },
     {
       "name": "Registrar pañal",
       "short_name": "+ Pañal",
       "url": "/PequeDex/?atajo=panal",
-      "icons": [{ "src": "/PequeDex/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/PequeDex/icons/shortcut-panal.png", "sizes": "192x192", "type": "image/png" }
+      ]
     }
   ],
   "icons": [

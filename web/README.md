@@ -448,6 +448,12 @@ Con la app instalada, mantener pulsado el icono ofrece **+ Toma**, **+ Sueño** 
 registro rápido que los botones de la barra (`readShortcutFromUrl` /
 `openPendingShortcut` en `DashboardView.vue`).
 
+- Cada atajo lleva su icono: el mismo dibujo que la app usa para esa categoría
+  (`CategoryIcon.vue`) en blanco sobre su color. Los PNG de
+  `public/icons/shortcut-*.png` se generan con
+  `node scripts/generate-shortcut-icons.mjs` (hay que repetirlo si cambian los
+  dibujos o los colores de `base.css`); `lib/__tests__/manifest.spec.ts`
+  comprueba que son distintos y existen.
 - Se abre en cuanto hay un bebé, incluido el de la foto guardada
   (`lib/snapshot.ts`): sin conexión y sin esperar a la red, que es cuando más se
   usa (de noche).

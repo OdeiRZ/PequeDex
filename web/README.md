@@ -456,8 +456,8 @@ registro rápido que los botones de la barra (`readShortcutFromUrl` /
 - Un valor desconocido se ignora sin más.
 - Plataformas: Android (Chrome) los muestra al mantener pulsado el icono; iOS
   (Safari) no admite `shortcuts` del manifiesto, así que allí no aparecen.
-- Cubierto por tres pruebas e2e (`e2e/smoke.spec.ts`): el formulario está cerrado
-  sin el atajo, se abre con él y la URL queda limpia.
+- Cubierto por cuatro pruebas e2e (`e2e/smoke.spec.ts`): cada atajo abre su
+  formulario y deja la URL limpia, y un valor desconocido se ignora.
 
 ## Predicciones
 

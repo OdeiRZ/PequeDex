@@ -223,7 +223,13 @@ test('deleting an entry offline is queued and applied when the connection return
 })
 
 // Atajos del icono de la app instalada (manifest.webmanifest > shortcuts): abren
-// el formulario de registro rápido y dejan la URL limpia.
+// el formulario de registro rápido y dejan la URL limpia. El primer pintado del
+// Dashboard con el API de pruebas recién arrancado tarda varios segundos (más en
+// CI): de ahí los tiempos de espera largos.
+const SLOW_FIRST_LOAD_MS = 45_000
+// Las hojas inferiores están siempre en el DOM; las cerradas van con `inert`.
+const OPEN_SHEET = 'div:not([inert]) > [role="dialog"]'
+
 for (const [shortcut, marker] of [
   ['toma', 'Biberón'],
   ['sueno', 'Empieza'],
@@ -233,17 +239,31 @@ for (const [shortcut, marker] of [
     page,
     request,
   }) => {
+    test.setTimeout(90_000)
     const session = await createSession(request)
     await signIn(page, session)
-
-    // Sin el atajo, el formulario no está abierto (si no, la prueba no probaría nada).
-    await page.goto('./')
-    await expect(page.getByRole('button', { name: /Toma/ }).first()).toBeVisible()
-    await expect(page.getByText(marker).first()).toBeHidden()
+    const openSheet = page.locator(OPEN_SHEET)
 
     await page.goto(`./?atajo=${shortcut}`)
 
-    await expect(page.getByText(marker).first()).toBeVisible()
+    await expect(openSheet).toHaveCount(1, { timeout: SLOW_FIRST_LOAD_MS })
+    await expect(openSheet.getByText(marker).first()).toBeVisible()
     expect(page.url()).not.toContain('atajo')
   })
 }
+
+test('an unknown home-screen shortcut is ignored: the dashboard opens with no form', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(90_000)
+  const session = await createSession(request)
+  await signIn(page, session)
+
+  await page.goto('./?atajo=desconocido')
+
+  // Con el Dashboard ya cargado, ningún formulario abierto.
+  await expect(page.getByText('Resumen del día')).toBeVisible({ timeout: SLOW_FIRST_LOAD_MS })
+  await expect(page.locator(OPEN_SHEET)).toHaveCount(0)
+  expect(page.url()).not.toContain('atajo')
+})

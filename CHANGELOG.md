@@ -7,6 +7,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Atajos del icono de la app instalada
+
+- **Mantener pulsado el icono ofrece "+ Toma", "+ Sueño" y "+ Pañal"**
+  (`shortcuts` en `manifest.webmanifest`). Abren la app directamente en el
+  formulario de registro rápido correspondiente, el mismo que los botones de la
+  barra, sin pasar por la pantalla de inicio. Funcionan sin conexión (se abren
+  con el bebé de la foto guardada, sin esperar a la red) y quitan el parámetro
+  `?atajo=` de la URL al leerlo, para que recargar no repita la apertura. Tres
+  pruebas e2e nuevas. Android los muestra al mantener pulsado el icono; en iOS
+  dependen de la versión (Safari no admite los atajos del manifiesto en la
+  pantalla de inicio).
+
 ### Seguridad (dependencias del frontend)
 
 - **`npm audit` a 0 también en desarrollo.** Quedaban 4 avisos altos que eran

@@ -215,9 +215,40 @@ async function onRhythmNextDay() {
 // its initial `true` forever: neither branch below ever ran, so the
 // user was stuck on the loading screen with no error and no way out
 // but a manual page reload.
+// Atajos del icono de la app instalada (manifest.webmanifest > shortcuts): al
+// mantener pulsado el icono se ofrece "+ Toma", "+ Sueño" y "+ Pañal", que abren
+// la app con `?atajo=toma|sueno|panal`. Se abre el mismo formulario de registro
+// rápido que los botones de la barra, en cuanto hay un bebé (el de la foto
+// guardada vale, sin esperar a la red: de noche y sin cobertura es justo cuando
+// más se usa). El parámetro se quita de la URL al leerlo, para que recargar no
+// lo repita.
+const SHORTCUT_SHEETS = { toma: 'feed', sueno: 'sleep', panal: 'diaper' } as const
+let pendingShortcut: (typeof SHORTCUT_SHEETS)[keyof typeof SHORTCUT_SHEETS] | null = null
+
+function readShortcutFromUrl() {
+  const url = new URL(window.location.href)
+  const wanted = url.searchParams.get('atajo')
+  if (wanted === null) return
+
+  url.searchParams.delete('atajo')
+  window.history.replaceState(window.history.state, '', url)
+  pendingShortcut = SHORTCUT_SHEETS[wanted as keyof typeof SHORTCUT_SHEETS] ?? null
+}
+
+function openPendingShortcut() {
+  if (!pendingShortcut || !babies.current) return
+
+  const sheet = pendingShortcut
+  pendingShortcut = null
+  openSheet(sheet)
+}
+
 async function initDashboard() {
   loading.value = !babies.hydratedFromSnapshot
   loadError.value = false
+
+  readShortcutFromUrl()
+  openPendingShortcut()
 
   // En paralelo con `/babies`: el bebé ya se sabe (el de la foto guardada, o
   // el último activo), así que la petición grande no espera a la pequeña.
@@ -233,6 +264,8 @@ async function initDashboard() {
 
     return
   }
+
+  openPendingShortcut()
 
   if (babies.current) {
     // loadBabyData() itself only has a `finally` (its two other callers,

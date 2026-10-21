@@ -440,6 +440,25 @@ encima de lo que diga esta selección, y el propio icono desaparece de
 este selector (`AccountSheet.vue`) para no ofrecer una opción que no
 tendría ningún efecto visible.
 
+## Atajos del icono de la app instalada
+
+Con la app instalada, mantener pulsado el icono ofrece **+ Toma**, **+ Sueño** y
+**+ Pañal** (`shortcuts` en `public/manifest.webmanifest`). Cada uno abre
+`/PequeDex/?atajo=toma|sueno|panal` y el Dashboard abre el mismo formulario de
+registro rápido que los botones de la barra (`readShortcutFromUrl` /
+`openPendingShortcut` en `DashboardView.vue`).
+
+- Se abre en cuanto hay un bebé, incluido el de la foto guardada
+  (`lib/snapshot.ts`): sin conexión y sin esperar a la red, que es cuando más se
+  usa (de noche).
+- El parámetro `?atajo=` se quita de la URL al leerlo, para que recargar o
+  compartir la dirección no vuelva a abrir el formulario.
+- Un valor desconocido se ignora sin más.
+- Plataformas: Android (Chrome) los muestra al mantener pulsado el icono; iOS
+  (Safari) no admite `shortcuts` del manifiesto, así que allí no aparecen.
+- Cubierto por tres pruebas e2e (`e2e/smoke.spec.ts`): el formulario está cerrado
+  sin el atajo, se abre con él y la URL queda limpia.
+
 ## Predicciones
 
 Las tarjetas de próxima toma/próximo sueño (`feedPredictionLabel`/

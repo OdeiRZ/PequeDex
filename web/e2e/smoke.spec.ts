@@ -221,3 +221,29 @@ test('deleting an entry offline is queued and applied when the connection return
   })
   expect((await after.json()).data).toHaveLength(0)
 })
+
+// Atajos del icono de la app instalada (manifest.webmanifest > shortcuts): abren
+// el formulario de registro rápido y dejan la URL limpia.
+for (const [shortcut, marker] of [
+  ['toma', 'Biberón'],
+  ['sueno', 'Empieza'],
+  ['panal', 'Mojado'],
+] as const) {
+  test(`the "${shortcut}" home-screen shortcut opens its quick log form and cleans the URL`, async ({
+    page,
+    request,
+  }) => {
+    const session = await createSession(request)
+    await signIn(page, session)
+
+    // Sin el atajo, el formulario no está abierto (si no, la prueba no probaría nada).
+    await page.goto('./')
+    await expect(page.getByRole('button', { name: /Toma/ }).first()).toBeVisible()
+    await expect(page.getByText(marker).first()).toBeHidden()
+
+    await page.goto(`./?atajo=${shortcut}`)
+
+    await expect(page.getByText(marker).first()).toBeVisible()
+    expect(page.url()).not.toContain('atajo')
+  })
+}

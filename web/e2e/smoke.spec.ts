@@ -263,7 +263,9 @@ test('an unknown home-screen shortcut is ignored: the dashboard opens with no fo
   await page.goto('./?atajo=desconocido')
 
   // Con el Dashboard ya cargado, ningún formulario abierto.
-  await expect(page.getByText('Resumen del día')).toBeVisible({ timeout: SLOW_FIRST_LOAD_MS })
+  await expect(page.getByRole('heading', { name: 'Resumen del día' })).toBeAttached({
+    timeout: SLOW_FIRST_LOAD_MS,
+  })
   await expect(page.locator(OPEN_SHEET)).toHaveCount(0)
   expect(page.url()).not.toContain('atajo')
 })

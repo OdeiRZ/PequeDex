@@ -7,6 +7,38 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### CI y pruebas
+
+- **Las pruebas end-to-end bloquean el despliegue.** El trabajo `e2e` (Playwright)
+  era informativo "hasta demostrar ser estable"; tras 12 ejecuciones seguidas en
+  verde, `deploy` y `deploy-pages` dependen de él (`needs`). Cubre justo lo que
+  los tests unitarios no ven: el modo sin conexión y la cola de sincronización. Hay
+  **16 pruebas** (eran 11): reconexión, ediciones, atajos y su caso de valor
+  desconocido.
+- **El API de pruebas del e2e va sin opcache ni JIT.** Con la configuración por
+  defecto de `setup-php`, el servidor PHP del e2e (un proceso que vive toda la
+  ejecución) falló en dos ejecuciones seguidas con `Carbon\CarbonImmutable::
+  rawAddUnit(): Argument #1 must be of type CarbonImmutable, CarbonImmutable given`
+  en la primera petición (Carbon, un trait con `private static function f(self
+  $date)`), y caían 10 de 12 pruebas, mientras que el mismo código pasaba en local
+  y en el commit anterior. El job pasa `ini-values: opcache.enable_cli=0,
+  opcache.jit=0` e imprime la versión de PHP y esos ajustes. Es un arreglo por
+  hipótesis (fallo del motor con procesos largos): si vuelve a verse ese error con
+  esto puesto, la causa es otra.
+- **Tests de los atajos estables en CI:** comprobaban "formulario cerrado" con un
+  texto que siempre está en el DOM (las hojas cerradas son `inert` y transparentes,
+  no inexistentes). Ahora miran la única hoja abierta y esperan hasta 45 s al primer
+  pintado del Dashboard, que con el API de pruebas recién arrancado tarda varios
+  segundos.
+- **`README.md`** con una sección "De un vistazo" (tabla, captura y la mejora medida
+  de la red de Neon: de 4,29 GB en 12 días a ~48,6 MB en 7).
+
+### Cambiado
+
+- **El aviso de versión nueva es más corto:** "Versión nueva disponible:" (en inglés,
+  "New version available:") justo antes del botón Actualizar, en vez de la frase
+  entera. Se ve en la próxima versión, no en la que ya estaba cargada.
+
 ### Atajos del icono de la app instalada
 
 - **Cada atajo tiene su icono**: los mismos dibujos que la app usa para toma

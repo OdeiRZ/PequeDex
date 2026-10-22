@@ -8,7 +8,8 @@ import type { TimelineEntry } from '@/stores/babies'
 // pierde, el reintento no lo duplica (ver CreatesIdempotently en la API).
 // Además de crear, se puede "Finalizar" sin conexión un sueño o una toma
 // ya guardados (QueuedUpdate): se reenvía como PUT al volver la red.
-// Editar o borrar en general sigue necesitando conexión.
+// Editar y borrar tomas, sueños, pañales y temperaturas también es "local
+// primero" (ver QueuedUpdate); el resto de ediciones sigue necesitando conexión.
 
 export type QueuedLogType = 'feed' | 'sleep' | 'diaper_change' | 'temperature'
 

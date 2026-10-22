@@ -1391,7 +1391,8 @@ o 24 meses (total).
 ## Registro sin conexión
 
 `lib/offlineQueue.ts` + `babies.createLog()`/`flushOfflineQueue()`. Sirve para
-**crear** tomas, sueños, pañales y temperaturas, para "Finalizar" y para borrar.
+**crear** tomas, sueños, pañales y temperaturas, para **editarlos**, para
+"Finalizar" y para borrar.
 
 > **Local primero** (desde 2026-10-14). Estos guardados se escriben PRIMERO en el
 > móvil (la cola) y se ven en la pantalla **al instante**; el envío al servidor va
@@ -1447,8 +1448,16 @@ o 24 meses (total).
   también usan `fetchTimeline()` y `fetchDayTimeline()` para que el
   sondeo no lo deshaga) y `flushOfflineQueue()` lo envía después de las
   altas. Es idempotente (un `PUT`); si el servidor lo rechaza se
-  descarta y se avisa. Solo lo piden esos dos botones
-  (`queueIfOffline`); el formulario de edición no.
+  descarta y se avisa.
+- **Editar** un registro ya guardado desde su formulario (toma, sueño, pañal,
+  temperatura) también es local primero (`updateFeed()`, `updateSleep()`,
+  `updateDiaperChange()` y `updateTemperature()` pasan por `updateOrQueue()`): la
+  entrada sale editada al instante, también en las listas planas de pañales y
+  temperaturas (`withPendingChanges()`, que además impide que un refresco del
+  servidor deshaga una edición todavía por enviar), y el cambio se envía por
+  detrás. Antes esperaban a la red hasta 7 s y, sin conexión, fallaban con "hace
+  falta conexión". Si el servidor rechaza un cambio (p. ej. fin anterior al
+  inicio) llega al formulario como siempre dentro del margen de `SYNC_GRACE_MS`.
 - Borrar un registro **ya guardado** (toma, sueño, pañal, temperatura):
   `deleteFeed()` & co. mantienen el borrado optimista y lo dejan siempre en
   `offlineUpdates` con `action: 'delete'` (`queueDelete()`, vía
@@ -1456,9 +1465,37 @@ o 24 meses (total).
   registro); si el servidor lo rechaza de verdad, se restaura lo que se veía y
   se relanza el error. `withPendingUpdates()` y `withoutPendingDeletes()` impiden
   que el sondeo lo resucite; al enviarlo, un 404 cuenta como hecho.
-- Editar registros ya guardados sigue necesitando conexión
+- Lo que sigue necesitando conexión son las ediciones de otras pantallas
+  (crecimiento, hitos, vacunas...) y todo lo que no está en la lista de arriba
   (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
   muestra "Sin conexión" y cuántos registros quedan por enviar.
+
+### Sincronización en segundo plano y calentamiento de la API
+
+`lib/backgroundSync.ts`, arrancada desde `App.vue` (con sesión iniciada), envía lo
+pendiente desde **cualquier pantalla**, no solo desde el Dashboard. Se midió con
+`e2e/reconnect.spec.ts` (red colgada que vuelve en silencio, como una wifi sin
+internet, que no dispara el evento `online`): lo pendiente tardaba **22,4 s** en
+enviarse tras volver la red (el envío colgado esperaba sus 20 s y luego el sondeo de
+15 s) y ahora **2,9 s**.
+
+- **Reintentos cortos:** 2, 3 y luego cada 5 s mientras haya algo pendiente
+  (`RETRY_DELAYS_MS`), en vez de esperar al sondeo de 15 s.
+- **Sonda previa:** antes de enviar se pide `/up` (3 s de límite, `no-cors`, sin
+  petición previa de CORS); con la API dormida o la red muerta no se lanza un envío
+  que se cuelga 20 s.
+- **Corte de lo colgado:** si el servidor ya contesta y hay un envío sin respuesta
+  de hace más de 5 s (`STUCK_AFTER_MS`), se corta (`babies.abortStuckFlush()`, con
+  una `AbortController` por ciclo) y se reenvía. Un envío cortado conserva su
+  registro en la cola: no cuenta como rechazo. Es seguro por el `client_uuid` y por
+  ser `PUT`.
+- **Reintento inmediato** al volver la conexión o la app (`online`, `focus`,
+  `pageshow`, volver a primer plano).
+- **Calentamiento:** al abrir la app se lanza un `/up` sin esperar la respuesta
+  (`warmUpApi()`), y de nuevo al volver tras más de 5 minutos oculta, porque Render
+  duerme la API tras ~15 min sin tráfico y tarda hasta ~50 s en arrancar. No hay
+  keepalive: los pings desde GitHub Actions ya se probaron y no funcionan, y un
+  servicio despierto 24 h gasta casi toda la cuota gratuita de horas.
 
 ## Pruebas de principio a fin (Playwright)
 
@@ -1475,7 +1512,14 @@ sesión" solo se ven así. `e2e/smoke.spec.ts`:
 - con el API caído en la visita siguiente, se pinta la **última foto
   guardada** con su aviso, no la pantalla de error;
 - **finalizar un sueño sin conexión** se encola y se envía al volver la red;
-- **borrar una entrada sin conexión** se encola y se aplica al volver.
+- **borrar una entrada sin conexión** se encola y se aplica al volver;
+- **los atajos del icono** (`?atajo=toma|sueno|panal`) abren su formulario, dejan la
+  URL limpia, y un valor desconocido se ignora (4 pruebas).
+
+Además, `e2e/offline-shell.spec.ts` (la app abre sin conexión una vez visitada),
+`e2e/offline-slow.spec.ts` (red colgada y API lenta) y `e2e/reconnect.spec.ts`
+(tiempo hasta sincronizar tras volver la red, con presupuesto de 12 s): 16 pruebas
+en total.
 
 `e2e/offline-slow.spec.ts` (la red que NO falla al instante): con la conexión
 **colgada**, "Finalizar" hace desaparecer el botón y muestra "pendiente de enviar"

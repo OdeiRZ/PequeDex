@@ -37,9 +37,10 @@ Cloudflare Pages.
 | | |
 |---|---|
 | **Qué resuelve** | Registrar en segundos, desde el móvil y a oscuras, lo que pasa en el día de un bebé, y llevar al pediatra un resumen en PDF. |
-| **Tiempo real** | Varios cuidadores ven los mismos registros a la vez; sin conexión se guarda en el móvil y se sincroniza al volver la red. |
+| **Tiempo real** | Varios cuidadores ven los mismos registros a la vez; sin conexión se guarda en el móvil y se sincroniza en pocos segundos al volver la red (2,9 s medidos, antes 22,4 s), y las ediciones también son locales primero. |
+| **Atajos** | Con la app instalada en Android, al mantener pulsado el icono: **+ Toma**, **+ Sueño** y **+ Pañal**, cada uno con su icono, abren directamente el registro rápido. |
 | **Stack** | Laravel 12 + Sanctum (API) · Vue 3 + Pinia + TypeScript (PWA) · PostgreSQL en Neon · Render + GitHub Pages |
-| **Calidad** | 389 tests de backend (también contra PostgreSQL real) · 404 de frontend · pruebas end-to-end con Playwright que **bloquean el despliegue** · Sentry · copia de seguridad semanal cifrada |
+| **Calidad** | 389 tests de backend (también contra PostgreSQL real) · 423 de frontend · 16 pruebas end-to-end con Playwright que **bloquean el despliegue** · `npm audit` a 0 · Sentry · copia de seguridad semanal cifrada |
 
 **Una mejora medida de verdad:** la base de datos consumía **4,29 GB de red en
 12 días** (el avatar en base64 viajaba en cada petición); tras mover la foto

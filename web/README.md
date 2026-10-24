@@ -288,7 +288,12 @@ solo comprueban producción, pero el de desarrollo también está limpio):
   completa además de la hora, y es editable, no solo "restablecer".
   `lib/datetimeInput.ts` (extraído de `DashboardView.vue`, que antes lo
   definía inline) centraliza `toLocalInputValue`/`nowForInput`/
-  `toUtcIso`, reutilizado ahora por ambas vistas. La exportación a PDF
+  `toUtcIso`, reutilizado ahora por ambas vistas. La hora local se lee campo
+  a campo (`getHours()`...), nunca sumando el desfase horario y leyendo en
+  UTC: esa suma se hacía en hora local y la noche del cambio de hora de
+  octubre, entre la 1:00 y las 3:00, abría cada registro con una hora de más.
+  `lib/__tests__/datetimeInput.spec.ts` fija los dos cambios de hora con
+  `TZ=Europe/Madrid`. La exportación a PDF
   (`babies.exportContractionsPdf()`) pide el endpoint con
   `responseType: 'blob'` en vez de un `<a href>` directo — la API usa
   token Bearer, no cookies, así que un enlace normal no llevaría la
@@ -772,6 +777,14 @@ verse bien en una captura:
   cambio de tema (ver más abajo) — `@theme` solo las referencia
   (`--color-brand: var(--brand)`), porque sus propios valores quedan
   fijados en el CSS generado en tiempo de compilación.
+- **Fondos con texto blanco encima: tonos "fuertes"** (`--feed-strong`,
+  `--warning-strong`..., clases `bg-*-strong`, `categoryStrongBg` en
+  `lib/category.ts`): las tarjetas del resumen, el botón "Dar" de la vitamina D
+  y los días marcados. Con los colores de categoría el blanco quedaba por debajo
+  del mínimo de contraste 4,5:1 (Tomas 2,9:1; en tema oscuro, más claros,
+  2,1–2,4:1); estos dan al menos 4,8:1 y son iguales en los dos temas. Gráficas,
+  iconos y bordes siguen con los colores normales. Texto sobre `--danger`:
+  `text-surface`, como `.btn-danger`.
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
   con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
   a terceros y disponible sin conexión desde la primera visita);

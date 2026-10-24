@@ -772,6 +772,15 @@ Medidas del API, con el motivo de cada una:
 - **CORS con caché de preflight** (`config/cors.php`, `max_age => 7200`): con
   `0` el navegador repetía la petición OPTIONS antes de **cada** llamada con
   `Authorization` (125-280 ms medidos en producción).
+- **CORS solo desde el frontend propio** (`https://odeirz.github.io`) y
+  `localhost` (desarrollo y e2e); antes `*`. `CORS_ALLOWED_ORIGINS` (separados
+  por comas) cambia la lista sin tocar código. Test en
+  `tests/Feature/Security/CorsOriginsTest.php`.
+- **Índices en todas las claves foráneas:** PostgreSQL no las indexa solo. La
+  migración `2026_10_25_100000_add_missing_foreign_key_indexes` cubre
+  `baby_user.user_id` (los bebés de un usuario, en cada petición) y el `user_id`
+  de autor de doce tablas (borrar una cuenta ya no las recorre enteras).
+  Comprobado migrando en PostgreSQL: ninguna FK queda sin índice.
 - **IP real del cliente** (`App\Http\Middleware\ResolveClientIp`): detrás de
   Render el servidor solo veía la IP de su proxy, así que el límite de login
   era un único cubo compartido por todos. En producción se toma de

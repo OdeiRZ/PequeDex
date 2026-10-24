@@ -214,14 +214,15 @@ describe('service worker', () => {
     expect(sw.skipWaiting).toHaveBeenCalledTimes(1)
   })
 
-  it('guarda las fuentes de Google al vuelo y las sirve aunque falle la red', async () => {
+  it('ya no toca las fuentes de Google (van con la app) y borra su caché antigua', async () => {
     const sw = setup()
-    const font = 'https://fonts.gstatic.com/s/quicksand/v1/font.woff2'
+    await sw.run('install')
+    sw.stores.set('pequedex-fonts-v1', new Map())
 
-    await sw.fetchEvent(font)
-    await Promise.resolve() // deja que termine el guardado en segundo plano
-    await Promise.resolve()
+    await sw.run('activate')
 
-    expect(sw.stores.get('pequedex-fonts-v1')!.has(font)).toBe(true)
+    expect(sw.stores.has('pequedex-fonts-v1')).toBe(false)
+    expect(sw.stores.has('pequedex-shell-v1')).toBe(true)
+    expect(await sw.fetchEvent('https://fonts.gstatic.com/s/quicksand/v1/font.woff2')).toBeNull()
   })
 })

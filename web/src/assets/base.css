@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
+/* Quicksand va con la app (@fontsource-variable/quicksand, importada en main.ts),
+   no desde Google Fonts: sin peticiones a Google desde un diario de bebé, sin la
+   cadena CSS -> Google -> fuente bloqueando la primera carga, y disponible sin
+   conexión desde el primer día porque el service worker la guarda con el resto. */
 @import 'tailwindcss';
 
 /*
@@ -193,7 +196,7 @@
   --color-sound-waves: var(--sound-waves);
   --color-sound-fan: var(--sound-fan);
 
-  --font-display: 'Quicksand', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Quicksand Variable', 'Quicksand', 'Segoe UI', system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   --animate-heartbeat-slow: heartbeat 1.4s ease-in-out infinite;

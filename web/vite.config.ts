@@ -19,8 +19,8 @@ import tailwindcss from '@tailwindcss/vite'
 //  - Imágenes: cualquier https (las fotos de hitos vienen con una URL
 //    temporal de R2), data: (avatares) y blob:.
 //  - Estilos con 'unsafe-inline': Vue y la app ponen atributos `style`.
-//  - Google Fonts (la hoja de estilos de la fuente Quicksand y sus archivos):
-//    el único recurso externo de la app, `@import` en assets/base.css.
+//  - Fuentes: solo del propio origen (Quicksand va con la app, ya no desde
+//    Google Fonts) y data:.
 //
 // `frame-ancestors` no se puede fijar desde un <meta> (el navegador lo ignora).
 function contentSecurityPolicy(apiUrl: string, sentryDsn?: string): Plugin {
@@ -46,10 +46,10 @@ function contentSecurityPolicy(apiUrl: string, sentryDsn?: string): Plugin {
         const policy = [
           "default-src 'self'",
           `script-src 'self' ${inlineScriptHashes.join(' ')}`.trim(),
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https:",
           "media-src 'self' blob:",
-          "font-src 'self' data: https://fonts.gstatic.com",
+          "font-src 'self' data:",
           `connect-src 'self' ${apiOrigin} ${sentryOrigin}`.trim(),
           "worker-src 'self'",
           "manifest-src 'self'",

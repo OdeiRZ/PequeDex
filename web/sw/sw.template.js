@@ -23,8 +23,9 @@ const PRECACHE = __PRECACHE_MANIFEST__
 
 const SHELL_PREFIX = 'pequedex-shell-'
 const SHELL_CACHE = `${SHELL_PREFIX}${VERSION}`
-const FONT_CACHE = 'pequedex-fonts-v1'
-const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com']
+// La caché de las fuentes de Google de versiones anteriores: la fuente ya va con la
+// app (assets/), así que se borra al activarse.
+const LEGACY_FONT_CACHE = 'pequedex-fonts-v1'
 
 // Dirección base donde está registrado (p. ej. https://odeirz.github.io/PequeDex/).
 const SCOPE = self.registration.scope
@@ -62,11 +63,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Borra el armazón de versiones anteriores (no las fuentes).
+      // Borra el armazón de versiones anteriores y la caché de fuentes antigua.
       const names = await caches.keys()
       await Promise.all(
         names
-          .filter((name) => name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE)
+          .filter(
+            (name) =>
+              (name.startsWith(SHELL_PREFIX) && name !== SHELL_CACHE) || name === LEGACY_FONT_CACHE,
+          )
           .map((name) => caches.delete(name)),
       )
       await self.clients.claim()
@@ -83,11 +87,6 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
-
-  if (FONT_HOSTS.includes(url.hostname)) {
-    event.respondWith(staleWhileRevalidate(request, FONT_CACHE))
-    return
-  }
 
   // El API y cualquier otro origen: red normal, sin pasar por aquí.
   if (url.origin !== self.location.origin) return
@@ -131,18 +130,4 @@ async function cacheFirst(request) {
     await cache.put(request, response.clone())
   }
   return response
-}
-
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName)
-  const cached = await cache.match(request)
-  const refreshed = fetch(request)
-    .then(async (response) => {
-      if (response.ok) await cache.put(request, response.clone())
-      return response
-    })
-    .catch(() => undefined)
-
-  if (cached) return cached
-  return (await refreshed) ?? Response.error()
 }

@@ -772,7 +772,9 @@ verse bien en una captura:
   cambio de tema (ver más abajo) — `@theme` solo las referencia
   (`--color-brand: var(--brand)`), porque sus propios valores quedan
   fijados en el CSS generado en tiempo de compilación.
-- **Tipografía**: Quicksand (redondeada, cálida) solo para titulares;
+- **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
+  con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
+  a terceros y disponible sin conexión desde la primera visita);
   el resto usa la fuente del sistema — carga instantánea y cifras
   tabulares (`tabular-nums`) para pesos, percentiles y horas.
 - **Interactividad** — pasada inspirada en cómo se hizo en LudoDex/MIRA
@@ -1633,8 +1635,9 @@ Qué hace y, sobre todo, qué **no** hace:
   navegaciones sin extensión; un enlace directo a un `.js` no devuelve el
   index). Los datos siguen su camino de siempre: sin conexión los cubren la
   foto guardada y la cola de registros.
-- **No toca el API, las escrituras, los audios ni las peticiones por rangos**;
-  las fuentes de Google se guardan al vuelo.
+- **No toca el API, las escrituras, los audios ni las peticiones por rangos**.
+  La fuente va entre los ficheros de la app y se guarda con ellos; al activarse
+  borra la caché de fuentes de Google de versiones anteriores.
 - **Las versiones nuevas no se activan solas.** Quedan esperando y la app
   muestra "Hay una versión nueva — Actualizar" (`UpdateBanner.vue`); al pulsar,
   el service worker nuevo toma el control y la página se recarga. Así nunca se
@@ -1664,8 +1667,8 @@ lo cogen en su siguiente comprobación.
   `index.html`; `connect-src` solo al propio origen y al API (el origen de
   `VITE_API_URL` en el momento del build: sin esa variable el build apunta a
   `localhost` y bloquearía el API real); imágenes de cualquier `https`
-  (fotos de hitos con URL temporal de R2), `data:` y `blob:`; Google Fonts
-  es el único recurso externo (`@import` en `assets/base.css`). El test
+  (fotos de hitos con URL temporal de R2), `data:` y `blob:`; fuentes y estilos solo del propio origen (la app no
+  carga nada de terceros). El test
   e2e de navegación falla ante cualquier violación del CSP.
 - **Errores del frontend a Sentry** (`lib/errorReporting.ts`): se activa solo
   si el build lleva `VITE_SENTRY_DSN` (variable del repositorio en GitHub, no

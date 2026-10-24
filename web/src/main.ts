@@ -1,3 +1,6 @@
+// La fuente de los titulares, servida con la app (ver assets/base.css). Solo se
+// descarga el subconjunto que se usa (latín), por su `unicode-range`.
+import '@fontsource-variable/quicksand/wght.css'
 import './assets/main.css'
 
 import { createApp } from 'vue'

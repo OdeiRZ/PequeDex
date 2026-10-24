@@ -15,6 +15,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@fontsource-variable/quicksand": "^5.3.0",
     "@sentry/vue": "^11.8.0",
     "axios": "^1.20.0",
     "pinia": "^4.1.0",

@@ -5,10 +5,26 @@
 // bug history (see toUtcIso's own comment below), not something worth
 // re-deriving per file.
 
-export function toLocalInputValue(iso: string): string {
+// La hora local se lee campo a campo (getHours()...), nunca sumando el desfase
+// horario a la fecha y leyéndola en UTC: esa suma se hacía en hora local y, la
+// noche del cambio de hora, cruzaba las 3:00. Entre la 1:00 y las 3:00 de esa
+// noche (desfase de verano, +2) sumar 120 minutos caía ya en el horario de
+// invierno (+1), y el formulario mostraba una hora de más (la 1:30 como las
+// 2:30). Visto en vivo la noche del 24 al 25 de octubre de 2026.
+function pad(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function localParts(iso: string): string {
   const date = new Date(iso)
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-  return date.toISOString().slice(0, 16)
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  )
+}
+
+export function toLocalInputValue(iso: string): string {
+  return localParts(iso).slice(0, 16)
 }
 
 // Same as toLocalInputValue, but keeping seconds (":ss") instead of
@@ -18,9 +34,7 @@ export function toLocalInputValue(iso: string): string {
 // the browser's native picker won't expose a seconds field even though
 // the value has one.
 export function toLocalInputValueWithSeconds(iso: string): string {
-  const date = new Date(iso)
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-  return date.toISOString().slice(0, 19)
+  return localParts(iso)
 }
 
 export function nowForInput(): string {

@@ -435,6 +435,20 @@ body::before {
     transform: scale(0.96);
   }
 
+  /* Agranda la zona que se puede tocar de un botón pequeño (un enlace de texto,
+     un icono de 28 px) sin cambiar cómo se ve: una capa invisible que lo
+     desborda `--tap-extra` por cada lado. Pensado para usar la app con una mano
+     y el bebé en brazos. No vale para botones que ya usan su `::after`. */
+  .tap-area {
+    position: relative;
+  }
+
+  .tap-area::after {
+    content: '';
+    position: absolute;
+    inset: calc(-1 * var(--tap-extra, 10px));
+  }
+
   .card {
     border-radius: 1rem;
     background: var(--surface);

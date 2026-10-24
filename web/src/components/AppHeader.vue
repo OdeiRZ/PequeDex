@@ -75,6 +75,7 @@ watch(
       <button
         v-if="auth.user"
         type="button"
+        class="tap-area [--tap-extra:4px]"
         :aria-label="t('profile.title')"
         @click="onOpenAccountSheet"
       >

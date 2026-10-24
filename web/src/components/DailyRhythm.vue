@@ -176,7 +176,7 @@ watch(
       <button
         type="button"
         :disabled="isBirthDay"
-        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-30"
+        class="tap-area grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted [--tap-extra:8px] transition-colors hover:text-text active:text-text disabled:opacity-30"
         :aria-label="t('dashboard.rhythm.prevDay')"
         @click="onPrev"
       >
@@ -205,7 +205,7 @@ watch(
       <button
         type="button"
         :disabled="isToday"
-        class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:text-text active:text-text disabled:opacity-30"
+        class="tap-area grid h-7 w-7 shrink-0 place-items-center rounded-full text-text-muted [--tap-extra:8px] transition-colors hover:text-text active:text-text disabled:opacity-30"
         :aria-label="t('dashboard.rhythm.nextDay')"
         @click="onNext"
       >

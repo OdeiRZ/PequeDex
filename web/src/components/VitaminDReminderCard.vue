@@ -76,7 +76,7 @@ async function onUndo() {
           }}
           <button
             type="button"
-            class="ml-1.5 inline-block border-0 p-0 align-top font-semibold leading-none underline"
+            class="tap-area ml-1.5 inline-block border-0 p-0 align-top font-semibold leading-none underline"
             @click="emit('openHistory')"
           >
             {{ t('dashboard.vitaminD.historyLink') }}
@@ -114,7 +114,7 @@ async function onUndo() {
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
         <button
           type="button"
-          class="mt-0.5 inline-block border-0 p-0 text-xs font-semibold leading-none text-text-muted underline"
+          class="tap-area mt-0.5 inline-block border-0 p-0 text-xs font-semibold leading-none text-text-muted underline"
           @click="emit('openHistory')"
         >
           {{ t('dashboard.vitaminD.historyLink') }}
@@ -122,7 +122,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="mr-[6%] shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
+        class="tap-area mr-[6%] shrink-0 self-center border-0 p-0 text-xs font-semibold leading-none text-text-muted underline disabled:opacity-60"
         :disabled="saving"
         @click="onUndo"
       >

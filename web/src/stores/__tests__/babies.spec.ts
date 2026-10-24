@@ -393,6 +393,29 @@ describe('useBabiesStore', () => {
     expect(store.timeline).toEqual(entries)
   })
 
+  it('joins a timeline request already in flight instead of stacking another', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    vi.mocked(apiClient.get).mockClear()
+
+    let answer!: (value: unknown) => void
+    vi.mocked(apiClient.get).mockReturnValueOnce(new Promise((resolve) => (answer = resolve)))
+    const first = store.fetchTimeline()
+    const second = store.fetchTimeline()
+    expect(apiClient.get).toHaveBeenCalledTimes(1)
+
+    answer({ status: 200, headers: { etag: '"v1"' }, data: { data: [] } })
+    await Promise.all([first, second])
+
+    // Terminada, la siguiente sí sale; y `force` no se une a una condicional.
+    vi.mocked(apiClient.get).mockReturnValueOnce(new Promise(() => {}))
+    void store.fetchTimeline()
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ status: 200, headers: {}, data: { data: [] } })
+    await store.fetchTimeline(true)
+    expect(apiClient.get).toHaveBeenCalledTimes(3)
+  })
+
   it('takes the first conditional token from the bootstrap', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()

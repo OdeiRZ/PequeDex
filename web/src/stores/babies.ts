@@ -66,6 +66,14 @@ interface FlushState {
 
 const flushStates = new WeakMap<object, FlushState>()
 
+/** La petición de la línea temporal en curso, por store (ver fetchTimeline). */
+interface TimelineRequest {
+  babyId: number
+  force: boolean
+  promise: Promise<void>
+}
+const timelineRequests = new WeakMap<object, TimelineRequest>()
+
 /** `store` es el propio objeto del store (`this` en las acciones): único por instancia de Pinia. */
 function flushStateOf(store: object): FlushState {
   let state = flushStates.get(store)
@@ -762,20 +770,41 @@ export const useBabiesStore = defineStore('babies', {
         return
       }
 
+      // Una sola petición a la vez por bebé: con la API dormida (Render tarda
+      // ~30 s en despertar), el sondeo, la vuelta a la app y la reconexión
+      // apilaban hasta tres peticiones iguales esperando al mismo servidor. La
+      // que llega después se une a la que ya está en curso, salvo que pida la
+      // lista completa (`force`) y la de curso sea condicional.
+      const babyId = this.current.id
+      const running = timelineRequests.get(this)
+      if (running && running.babyId === babyId && (running.force || !force)) {
+        return running.promise
+      }
+
+      const promise = this.requestTimeline(babyId, force).finally(() => {
+        if (timelineRequests.get(this)?.promise === promise) timelineRequests.delete(this)
+      })
+      timelineRequests.set(this, { babyId, force, promise })
+      return promise
+    },
+
+    async requestTimeline(babyId: number, force: boolean) {
       // Sondeo condicional: con la huella (ETag) de la última respuesta, el
       // servidor contesta 304 sin cuerpo si nada ha cambiado - casi siempre
       // - y no hay que volver a pintar la lista. `force` pide la completa
       // (red de seguridad contra una huella que no detecte un cambio).
       const headers =
         this.timelineEtag && !force ? { 'If-None-Match': this.timelineEtag } : undefined
-      const response = await apiClient.get(`/babies/${this.current.id}/timeline`, {
+      const response = await apiClient.get(`/babies/${babyId}/timeline`, {
         headers,
         validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
       })
       if (response.status === 304) return
+      // Si se cambió de bebé mientras tanto, la respuesta ya no vale.
+      if (this.current?.id !== babyId) return
 
       this.timelineEtag = response.headers?.etag ?? null
-      this.applyTimeline(response.data.data, this.current.id)
+      this.applyTimeline(response.data.data, babyId)
     },
 
     // Lo que sigue en la cola sin conexión no viene del servidor:

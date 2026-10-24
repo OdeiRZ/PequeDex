@@ -507,7 +507,7 @@ async function onExportPdf() {
                 v-press
                 type="button"
                 :disabled="deletingAll"
-                class="btn-primary flex-1 !bg-danger !text-white"
+                class="btn-primary flex-1 !bg-danger !text-surface"
                 @click="onDeleteAllContractions"
               >
                 {{

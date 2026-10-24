@@ -270,7 +270,7 @@ async function onDeleteCheckup() {
               class="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2"
               :class="
                 vaccination.given_at
-                  ? 'border-growth bg-growth text-white'
+                  ? 'border-growth bg-growth-strong text-white'
                   : 'border-border text-transparent'
               "
               aria-hidden="true"

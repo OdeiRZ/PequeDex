@@ -85,7 +85,7 @@ async function onUndo() {
       </div>
       <button
         type="button"
-        class="shrink-0 rounded-xl bg-warning px-3 py-2 text-sm font-bold text-white disabled:opacity-60"
+        class="shrink-0 rounded-xl bg-warning-strong px-3 py-2 text-sm font-bold text-white disabled:opacity-60"
         :disabled="saving"
         @click="onMarkGiven"
       >

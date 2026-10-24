@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { categorySolidBg, type Category } from '@/lib/category'
+import { categoryStrongBg, type Category } from '@/lib/category'
 import { parseDateOnly } from '@/lib/localDate'
 import CategoryIcon from './CategoryIcon.vue'
 import type { TimelineEntry } from '@/stores/babies'
@@ -183,7 +183,7 @@ onUnmounted(() => {
       v-for="stat in stats"
       :key="stat.category"
       class="card-interactive flex min-w-0 items-center gap-1.5 rounded-2xl p-2.5"
-      :class="[categorySolidBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
+      :class="[categoryStrongBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
     >
       <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25 text-white">
         <CategoryIcon :category="stat.category" class="h-[0.9rem] w-[0.9rem]" />
@@ -192,7 +192,7 @@ onUnmounted(() => {
         <div class="font-display text-lg font-bold tabular-nums">
           {{ displayValue[stat.category] ?? stat.value }}
         </div>
-        <div class="whitespace-normal text-[0.63rem] font-semibold leading-tight text-white/85">
+        <div class="whitespace-normal text-[0.63rem] font-semibold leading-tight text-white">
           {{ stat.label }}
         </div>
       </div>

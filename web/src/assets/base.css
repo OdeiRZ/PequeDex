@@ -33,6 +33,19 @@
      --danger so it doesn't read as "something went wrong". */
   --warning: #b8742e;
 
+  /* Tonos "fuertes" de cada categoría, solo para FONDOS CON TEXTO BLANCO encima
+     (tarjetas del resumen del día, botón "Dar" de la vitamina D, días marcados).
+     Los colores de arriba sirven para iconos, barras y bordes, pero con texto
+     blanco no llegaban al contraste mínimo de 4,5:1 (Tomas 2,9; en tema oscuro,
+     más claros, 2,3). Iguales en los dos temas: cada uno da ≥4,8:1 con blanco. */
+  --feed-strong: #97672e;
+  --sleep-strong: #5b5a8c;
+  --diaper-strong: #5b786a;
+  --growth-strong: #a65a6b;
+  --milestone-strong: #886e22;
+  --temperature-strong: #b1583a;
+  --warning-strong: #9e6428;
+
   --sound-white-noise: #6b7280;
   --sound-rain: #3f72a6;
   --sound-heartbeat: #c94f63;
@@ -189,6 +202,13 @@
   --color-temperature: var(--temperature);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
+  --color-feed-strong: var(--feed-strong);
+  --color-sleep-strong: var(--sleep-strong);
+  --color-diaper-strong: var(--diaper-strong);
+  --color-growth-strong: var(--growth-strong);
+  --color-milestone-strong: var(--milestone-strong);
+  --color-temperature-strong: var(--temperature-strong);
+  --color-warning-strong: var(--warning-strong);
   --color-sound-white-noise: var(--sound-white-noise);
   --color-sound-rain: var(--sound-rain);
   --color-sound-heartbeat: var(--sound-heartbeat);

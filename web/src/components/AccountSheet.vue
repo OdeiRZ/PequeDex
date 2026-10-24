@@ -14,7 +14,7 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import { useFeedback } from '@/composables/useFeedback'
 import {
   ALL_CATEGORIES,
-  categorySolidBg,
+  categoryStrongBg,
   MIN_ACTION_BAR_CATEGORIES,
   type Category,
 } from '@/lib/category'
@@ -902,7 +902,7 @@ watch(
               class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90 group-disabled:shadow-none"
               :class="
                 actionBarSelection.includes(option.category)
-                  ? [categorySolidBg[option.category], 'border-transparent text-white']
+                  ? [categoryStrongBg[option.category], 'border-transparent text-white']
                   : 'border-border bg-surface text-text-muted group-hover:border-text-muted group-disabled:opacity-50'
               "
             >
@@ -910,7 +910,7 @@ watch(
             </span>
             <span
               v-if="actionBarSelection.includes(option.category)"
-              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
+              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-brand-ink"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -945,7 +945,7 @@ watch(
               class="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 shadow-sm transition-[transform,background-color,border-color] duration-150 ease-out group-active:scale-90"
               :class="
                 milestonesEnabled
-                  ? [categorySolidBg.milestone, 'border-transparent text-white']
+                  ? [categoryStrongBg.milestone, 'border-transparent text-white']
                   : 'border-border bg-surface text-text-muted group-hover:border-text-muted'
               "
             >
@@ -953,7 +953,7 @@ watch(
             </span>
             <span
               v-if="milestonesEnabled"
-              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-white"
+              class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface bg-brand text-brand-ink"
             >
               <svg
                 viewBox="0 0 24 24"

@@ -46,6 +46,19 @@ export const categorySolidBg: Record<Category, string> = {
   temperature: 'bg-temperature',
 }
 
+// Fondo sólido para poner TEXTO O ICONOS BLANCOS encima (tarjetas del resumen,
+// chips activos de "Tu cuenta"): el tono "fuerte" de assets/base.css, que da al
+// menos 4,8:1 con blanco en los dos temas. Las barras de las gráficas siguen con
+// categorySolidBg, sin texto encima.
+export const categoryStrongBg: Record<Category, string> = {
+  feed: 'bg-feed-strong',
+  sleep: 'bg-sleep-strong',
+  diaper: 'bg-diaper-strong',
+  growth: 'bg-growth-strong',
+  milestone: 'bg-milestone-strong',
+  temperature: 'bg-temperature-strong',
+}
+
 // Ring in the category's own color, paired with `.card-interactive`'s
 // hover/active lift on EntryCard - the card's rest state already reads
 // as "feed" etc. via categoryBg, so the ring only needs to show up as

@@ -3422,7 +3422,7 @@ const sleepPredictionDue = computed(() => {
                     v-press
                     type="button"
                     :disabled="leaving"
-                    class="btn-primary flex-1 !bg-danger !text-white"
+                    class="btn-primary flex-1 !bg-danger !text-surface"
                     @click="onLeaveBaby"
                   >
                     {{
@@ -3443,7 +3443,7 @@ const sleepPredictionDue = computed(() => {
                     v-press
                     type="button"
                     :disabled="deletingBaby"
-                    class="btn-primary !bg-danger !text-white"
+                    class="btn-primary !bg-danger !text-surface"
                     @click="onDeleteBaby"
                   >
                     {{
@@ -3473,7 +3473,7 @@ const sleepPredictionDue = computed(() => {
                 <button
                   type="button"
                   class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
-                  :class="day.given === true ? 'bg-growth text-white' : 'text-text-muted'"
+                  :class="day.given === true ? 'bg-growth-strong text-white' : 'text-text-muted'"
                   :disabled="savingVitaminDDoseDate === day.date"
                   @click="onToggleVitaminDDose(day.date, true)"
                 >
@@ -3482,7 +3482,7 @@ const sleepPredictionDue = computed(() => {
                 <button
                   type="button"
                   class="rounded-lg px-2 py-1 text-xs font-semibold disabled:opacity-60"
-                  :class="day.given !== true ? 'bg-danger text-white' : 'text-text-muted'"
+                  :class="day.given !== true ? 'bg-danger text-surface' : 'text-text-muted'"
                   :disabled="savingVitaminDDoseDate === day.date"
                   @click="onToggleVitaminDDose(day.date, false)"
                 >

@@ -270,12 +270,27 @@
    enough to read as depth rather than decoration - the flat single-tone
    --surface-sunken this replaces was the single biggest reason the app
    read as "flat": every card sat on an identical background regardless
-   of theme or scroll position. `background-attachment: fixed` keeps the
-   wash anchored to the viewport (not the page) so it doesn't visibly
-   scroll with the content. */
+   of theme or scroll position. Va en una capa fija (`body::before`) y no
+   con `background-attachment: fixed`: ese fondo obliga al navegador a
+   repintarlo en cada fotograma de scroll (scroll menos fluido en móvil);
+   una capa `position: fixed` se compone aparte y no se repinta. */
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(
       ellipse 70% 45% at 15% -8%,
@@ -286,14 +301,7 @@ body {
       ellipse 60% 40% at 100% 15%,
       color-mix(in srgb, var(--brand-teal) 14%, transparent),
       transparent
-    ),
-    var(--surface-sunken);
-  background-attachment: fixed;
-  color: var(--text);
-  font-family: var(--font-sans);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    );
 }
 
 /* Shared form/button treatment, reused across auth forms and the

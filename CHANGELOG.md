@@ -35,6 +35,18 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   el recordatorio de vitamina D salía con el naranja del tema claro.
 - `undici` (dependencia de los tests, vía jsdom) actualizado: `npm audit` sin
   avisos.
+- **El aviso de "actualizando" ya no parece colgado.** Con conexión mostraba el
+  icono de wifi tachado; ahora muestra flechas girando. Y si a los 6 s sigue sin
+  respuesta (la API gratuita dormida tarda hasta ~30 s), dice que el servidor se
+  está despertando y que se puede registrar igual.
+- **Una sola petición de la línea temporal a la vez.** Con la API dormida, el
+  sondeo, la vuelta a la app y la reconexión apilaban hasta tres peticiones
+  iguales (visto en el navegador); ahora la segunda se une a la que está en curso.
+  Una respuesta que llega tras cambiar de bebé ya no se aplica al nuevo.
+- **Zona táctil más grande, mismo aspecto:** "Ver historial" y "Deshacer" de la
+  vitamina D (12 px de alto), las flechas de día del ritmo diario y el avatar de la
+  cabecera (28 px) tienen una capa invisible alrededor (`.tap-area`), para usar la
+  app con una mano.
 
 ### CI y pruebas
 

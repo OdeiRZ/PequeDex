@@ -396,6 +396,23 @@ onMounted(() => {
 const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
 const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineUpdates.length)
 
+// Si lo guardado sigue sin actualizarse a los pocos segundos y hay conexión, casi
+// siempre es la API dormida (Render tarda hasta ~30 s en arrancar): el aviso lo
+// dice, en vez de un "actualizando…" que parece colgado.
+const API_WAKING_AFTER_MS = 6000
+const apiWaking = ref(false)
+let apiWakingTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => babies.hydratedFromSnapshot,
+  (stale) => {
+    clearTimeout(apiWakingTimer)
+    apiWaking.value = false
+    if (stale) apiWakingTimer = setTimeout(() => (apiWaking.value = true), API_WAKING_AFTER_MS)
+  },
+  { immediate: true },
+)
+onUnmounted(() => clearTimeout(apiWakingTimer))
+
 // Envía lo que haya en cola; avisa si el servidor rechazó alguno (p.ej.
 // una fecha que ya no es válida) - se descarta, no se reintenta.
 async function flushQueue() {
@@ -2230,7 +2247,10 @@ const sleepPredictionDue = computed(() => {
               class="flex items-center gap-2 rounded-2xl border border-border bg-surface-sunken px-3 py-2 text-xs text-text-muted"
               role="status"
             >
+              <!-- Sin conexión: wifi tachado. Con conexión el aviso solo dice que
+                   se está actualizando o enviando: flechas girando, no "sin wifi". -->
               <svg
+                v-if="!isOnline"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -2243,9 +2263,29 @@ const sleepPredictionDue = computed(() => {
                 <path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.7" />
                 <path d="M19 13a10 10 0 0 0-3-2M12 20h.01" />
               </svg>
+              <svg
+                v-else
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-4 w-4 shrink-0 motion-safe:animate-spin [animation-duration:1.6s]"
+                aria-hidden="true"
+              >
+                <path d="M21 12a9 9 0 0 1-15.5 6.2M3 12a9 9 0 0 1 15.5-6.2" />
+                <path d="M21 4v4.5h-4.5M3 20v-4.5h4.5" />
+              </svg>
               <span>
                 {{ isOnline ? '' : t('offline.banner') }}
-                {{ babies.hydratedFromSnapshot ? t('offline.stale') : '' }}
+                {{
+                  babies.hydratedFromSnapshot
+                    ? apiWaking && isOnline
+                      ? t('offline.waking')
+                      : t('offline.stale')
+                    : ''
+                }}
                 {{
                   pendingCount > 0
                     ? t('offline.pending', { count: pendingCount }, pendingCount)

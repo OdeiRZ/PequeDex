@@ -597,6 +597,35 @@ body::before {
 main {
   animation: route-enter 0.18s ease;
 }
+
+/* Con la API View Transitions (lib/viewTransition.ts) el cambio de pantalla lo
+   anima el navegador: la pantalla que sale se desvanece y la nueva entra con el
+   mismo pequeño empuje de arriba. Ahí el fundido de `main` de arriba sobra (se
+   sumarían dos). La cabecera tiene su propio nombre para quedarse quieta en vez
+   de fundirse consigo misma. */
+@supports (view-transition-name: none) {
+  main {
+    animation: none;
+  }
+
+  .app-header {
+    view-transition-name: app-header;
+  }
+}
+
+::view-transition-old(root) {
+  animation: view-out 0.14s ease both;
+}
+
+::view-transition-new(root) {
+  animation: route-enter 0.24s ease both;
+}
+
+@keyframes view-out {
+  to {
+    opacity: 0;
+  }
+}
 /* Dashboard's own top-level blocks (baby switcher, baby card,
    TodaySummary, predictions, milestones, DailyRhythm, WeeklySleep,
    línea temporal) fading/sliding up one after another instead of
@@ -661,6 +690,11 @@ main {
   main,
   .wizard-step {
     transition: none !important;
+    animation: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
     animation: none !important;
   }
 

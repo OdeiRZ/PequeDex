@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { installViewTransitions } from '@/lib/viewTransition'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -97,6 +98,10 @@ router.beforeEach((to) => {
     return { name: 'dashboard' }
   }
 })
+
+// Fundido entre pantallas (lib/viewTransition.ts). Después del guard de sesión:
+// una redirección no llega a empezar ninguna transición.
+installViewTransitions(router)
 
 // Cada pantalla salvo el Dashboard se descarga aparte la primera vez que
 // se abre (`() => import(...)` arriba). Si esa descarga falla - justo

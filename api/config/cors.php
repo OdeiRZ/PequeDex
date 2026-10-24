@@ -1,37 +1,38 @@
 <?php
 
-return [
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+|
+| Solo el frontend de la app puede leer las respuestas del API desde un
+| navegador; antes era `*`. El riesgo de `*` era bajo (token Bearer, sin
+| cookies: otra web no tiene el token), pero no hay motivo para que cualquier
+| web pueda hablar con el API. Localhost queda permitido para el desarrollo y
+| los e2e. CORS_ALLOWED_ORIGINS (separados por comas) cambia la lista sin tocar
+| código. Las llamadas de servidor a servidor no pasan por CORS.
+|
+*/
 
-    /*
-    |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |--------------------------------------------------------------------------
-    |
-    | allowed_origins is '*' on purpose: this API is stateless-token auth
-    | (Sanctum Bearer tokens in an Authorization header, not session cookies —
-    | see the root README's architecture notes), so supports_credentials
-    | stays false and there is no cookie/session to leak to a third-party
-    | origin. Browsers only enforce a specific-origin allowlist when
-    | credentials (cookies) are involved, so a wildcard here carries none of
-    | the risk it would for a cookie-based API.
-    |
-    */
+return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('CORS_ALLOWED_ORIGINS', 'https://odeirz.github.io')),
+    ))),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#',
+    ],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => ['ETag'],
 
-    // Cuánto puede recordar el navegador el resultado del preflight (OPTIONS).
-    // Con 0 repetía esa petición antes de CADA llamada con Authorization
-    // (~125-280 ms medidos en producción). Chrome limita esto a 2 h.
     'max_age' => 7200,
 
     'supports_credentials' => false,

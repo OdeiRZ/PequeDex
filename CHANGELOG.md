@@ -7,6 +7,27 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambio de hora, contraste y auditoría
+
+- **Corregido: la hora salía adelantada una hora la noche del cambio de hora.**
+  `nowForInput()` (y los ayudantes de edición) sumaban el desfase horario a la hora
+  local y la leían en UTC; esa suma cruzaba las 3:00 y, entre la 1:00 y las 3:00 de
+  la noche del 24 al 25 de octubre, cada registro nuevo se abría con una hora de más
+  (la 1:30 como las 2:30), desde los atajos y desde la barra. Ahora se lee campo a
+  campo de la fecha local. Tests con `Europe/Madrid` para los dos cambios de hora,
+  que fallan con el código anterior.
+- **Contraste:** el texto blanco de las tarjetas del resumen (Tomas 2,9:1; en tema
+  oscuro 2,1–2,4:1), del botón "Dar" y de los días marcados quedaba por debajo del
+  mínimo de 4,5:1. Esos fondos usan ahora tonos "fuertes" de cada categoría (≥4,8:1,
+  iguales en los dos temas); gráficas, iconos y bordes no cambian. Los botones de
+  peligro usan el color de superficie para el texto, como `.btn-danger`.
+- **Índices** para las claves foráneas que PostgreSQL no indexa solo: los bebés de un
+  usuario (`baby_user.user_id`, en cada petición) y el autor de cada registro (doce
+  tablas; borrar una cuenta ya no las recorre enteras). Validado en PostgreSQL local,
+  con vuelta atrás.
+- **CORS solo desde el frontend propio** (`https://odeirz.github.io`) y localhost;
+  antes `*`. `CORS_ALLOWED_ORIGINS` lo cambia sin tocar código.
+
 ### Fluidez, transiciones y privacidad
 
 - **Transición entre pantallas.** Al cambiar de pantalla, la anterior se desvanece

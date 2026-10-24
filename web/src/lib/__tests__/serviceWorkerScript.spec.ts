@@ -166,7 +166,7 @@ describe('service worker', () => {
     expect(sw.stores.get('pequedex-shell-v1')!.has(`${SCOPE}assets/nuevo-xyz.js`)).toBe(true)
   })
 
-  it('al activarse borra el armazón de versiones anteriores, no las fuentes, y toma el control', async () => {
+  it('al activarse borra el armazón de versiones anteriores y la caché de fuentes antigua, y toma el control', async () => {
     const sw = setup({ version: 'v2' })
     for (const name of [
       'pequedex-shell-v1',
@@ -182,11 +182,7 @@ describe('service worker', () => {
 
     await sw.run('activate')
 
-    expect([...sw.stores.keys()].sort()).toEqual([
-      'otra-cosa',
-      'pequedex-fonts-v1',
-      'pequedex-shell-v2',
-    ])
+    expect([...sw.stores.keys()].sort()).toEqual(['otra-cosa', 'pequedex-shell-v2'])
     expect(sw.claim).toHaveBeenCalled()
   })
 

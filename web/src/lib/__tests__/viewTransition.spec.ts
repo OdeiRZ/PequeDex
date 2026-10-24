@@ -56,7 +56,8 @@ describe('installViewTransitions', () => {
     await router.push('/estadisticas')
 
     expect(router.currentRoute.value.path).toBe('/')
-    if (updates[0]) await expect(updates[0]).resolves.toBeUndefined()
+    expect(updates).toHaveLength(1)
+    await expect(updates[0]).resolves.toBeUndefined()
   })
 
   it('does nothing without the browser API', async () => {

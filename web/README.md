@@ -1608,10 +1608,17 @@ pantalla anuncia como otra página. Sin el `<Transition>`, Vue desmonta la
 vista anterior en el acto (una sola `<main>` tras cualquier número de
 cambios de ruta).
 
-El fundido de entrada sigue existiendo, pero es una animación CSS
-(`route-enter`, en `assets/base.css`) sobre `main`, la raíz visible de todas
-las vistas: no depende de gestionar la salida de nada y se desactiva con
-`prefers-reduced-motion`. **No reintroducir un `<Transition>` en el
+La transición entre pantallas la hace el navegador con la API View
+Transitions (`lib/viewTransition.ts`, instalada en el router):
+`document.startViewTransition` captura la pantalla que sale, Vue cambia la
+vista (desmontando la anterior en el acto) y el navegador funde la captura
+con la nueva (`::view-transition-*` en `assets/base.css`; la cabecera lleva
+su propio `view-transition-name` para quedarse quieta). No hay transición en
+la primera carga, si solo cambia la query (atajos `?atajo=`), con
+`prefers-reduced-motion` ni sin la API; ahí queda el fundido CSS de siempre
+(`route-enter` sobre `main`) o ninguno. Una navegación cancelada libera la
+transición en `afterEach`, para que el navegador no se quede con la
+pantalla congelada. **No reintroducir un `<Transition>` en el
 `<RouterView>`** sin comprobar, con navegaciones reales del router, que el
 número de `<main>` en el DOM no crece.
 

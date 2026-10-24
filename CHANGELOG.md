@@ -7,6 +7,35 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Fluidez, transiciones y privacidad
+
+- **Transición entre pantallas.** Al cambiar de pantalla, la anterior se desvanece
+  y la nueva entra con un pequeño empuje hacia arriba, con la cabecera quieta. Usa
+  la API View Transitions del navegador (`lib/viewTransition.ts`): lo que se anima
+  es una captura, así que Vue sigue desmontando la vista anterior en el acto (el
+  motivo por el que se quitó el `<Transition>` del `RouterView`). Sin la API, con
+  movimiento reducido, en la primera carga o en los atajos (`?atajo=`), cambio
+  normal. 4 tests.
+- **El inicio se asienta en 0,5 s** (antes ~0,8 s): misma entrada escalonada de los
+  bloques, más corta, porque la pantalla se abre muchas veces al día.
+- **La fuente va con la app, ya no desde Google Fonts** (`@fontsource-variable/
+  quicksand`, solo se descarga el subconjunto latino). La primera carga no espera a
+  la cadena CSS → Google → fuente, la IP de quien la abre no llega a Google y la
+  fuente está disponible sin conexión desde la primera visita. La política de
+  contenido ya no admite ningún servidor de terceros para fuentes ni estilos, y el
+  service worker borra la caché de fuentes antigua al activarse.
+- **Scroll más fluido en el móvil:** el fondo degradado va en una capa fija aparte
+  en vez de `background-attachment: fixed`, que obligaba a repintarlo en cada
+  fotograma de scroll. El aspecto no cambia.
+- **Corregido:** la tarjeta de vitamina D podía quedarse con sus dos estados a la
+  vez en pantalla ("Dar" y "dada") al abrir la app con la foto de ayer y llegar los
+  datos de hoy: la tarjeta que salía esperaba el final de una animación que ya
+  había terminado. Ahora el cambio siempre se completa y nunca se ven las dos.
+- **Corregido:** el tema oscuro elegido a mano no tenía su color de aviso, así que
+  el recordatorio de vitamina D salía con el naranja del tema claro.
+- `undici` (dependencia de los tests, vía jsdom) actualizado: `npm audit` sin
+  avisos.
+
 ### CI y pruebas
 
 - **Las pruebas end-to-end bloquean el despliegue.** El trabajo `e2e` (Playwright)

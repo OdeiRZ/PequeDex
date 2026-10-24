@@ -36,7 +36,12 @@ async function onUndo() {
 </script>
 
 <template>
-  <Transition name="confirm-warn">
+  <!-- Duración explícita: la raíz recibe `dash-enter` desde el Dashboard, cuya
+       animación de entrada ya terminó; sin esto Vue esperaba su `animationend`
+       para retirar la tarjeta que sale y nunca llegaba, así que "Dar" y "dada"
+       se quedaban las dos en pantalla (p. ej. al abrir con la foto de ayer y
+       llegar los datos de hoy). `out-in`: nunca se ven las dos a la vez. -->
+  <Transition name="confirm-warn" mode="out-in" :duration="{ enter: 300, leave: 150 }">
     <div
       v-if="cardState === 'pending'"
       class="flex items-center gap-2.5 rounded-2xl border border-warning/40 bg-warning/10 p-3"

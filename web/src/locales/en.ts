@@ -771,14 +771,20 @@ export default {
     passwordError: 'Could not change the password. Check the current one.',
     yourData: {
       title: 'Your data',
+      subtitle: 'Take a copy with you or close the account.',
       exportTitle: 'Download my data',
       exportBody: 'A file with your profile and every record of your babies.',
-      exportAction: 'Download',
+      exportAction: 'Download a copy',
+      exportDone: 'Copy downloaded',
       exportError: 'Could not download your data. Please try again.',
       deleteTitle: 'Delete my account',
-      deleteWarning:
-        'This cannot be undone. Babies only you look after are deleted with their whole history and photos. For shared babies, the other caregiver keeps everything, including what you logged.',
-      deleteStart: 'Delete my account…',
+      deleteSummary: 'Deletes the account and anything you do not share. Cannot be undone.',
+      deleteOwnBabies:
+        'Babies only you look after are deleted with their whole history and photos.',
+      deleteSharedBabies:
+        'For shared babies, the other caregiver keeps everything, including what you logged.',
+      deleteIrreversible: 'This cannot be undone or recovered later.',
+      deleteExportFirst: 'Download a copy first',
       deletePassword: 'Enter your password to confirm',
       deleteConfirm: 'Delete forever',
       deleteCancel: 'Cancel',

@@ -131,6 +131,9 @@ const exportingData = ref(false)
 const deleteOpen = ref(false)
 const deletePassword = ref('')
 const deletingAccount = ref(false)
+// Si ya se descargó la copia en esta apertura de la hoja: el botón lo confirma
+// y, dentro de "Eliminar mi cuenta", deja de proponerla.
+const exportedData = ref(false)
 
 async function onExportData() {
   exportingData.value = true
@@ -143,6 +146,7 @@ async function onExportData() {
     link.download = 'pequedex-datos.json'
     link.click()
     URL.revokeObjectURL(url)
+    exportedData.value = true
   } catch {
     toast.show(t('profile.yourData.exportError'), 'error')
   } finally {
@@ -592,6 +596,9 @@ watch(
     alertsEnabled.value = auth.user?.alerts_enabled ?? true
     temperaturePanelEnabled.value = auth.user?.temperature_panel_enabled ?? true
     milestonesEnabled.value = auth.user?.milestones_enabled ?? true
+    exportedData.value = false
+    deleteOpen.value = false
+    deletePassword.value = ''
   },
 )
 </script>
@@ -1152,64 +1159,159 @@ watch(
       </button>
     </form>
 
-    <section class="mt-6 flex flex-col gap-4 border-t border-border pt-5">
-      <h4 class="-mt-1 font-display text-sm font-bold">{{ t('profile.yourData.title') }}</h4>
+    <!-- "Tus datos": primero lo que se hace a menudo y sin riesgo (llevarse una
+         copia), luego lo irreversible, plegado. Al abrir "Eliminar mi cuenta" se
+         explica qué pasará en puntos separados y se ofrece descargar la copia
+         justo antes, que es cuando más falta hace. -->
+    <section class="mt-6 flex flex-col gap-3 border-t border-border pt-5">
+      <div>
+        <h4 class="font-display text-sm font-bold">{{ t('profile.yourData.title') }}</h4>
+        <p class="text-xs text-text-muted">{{ t('profile.yourData.subtitle') }}</p>
+      </div>
 
-      <div class="flex items-center justify-between gap-3 rounded-xl bg-surface-sunken p-3">
-        <div>
-          <div class="text-sm font-semibold">{{ t('profile.yourData.exportTitle') }}</div>
-          <div class="text-xs text-text-muted">{{ t('profile.yourData.exportBody') }}</div>
+      <div class="flex flex-col gap-3 rounded-xl bg-surface-sunken p-3">
+        <div class="flex items-start gap-3">
+          <span
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface text-brand"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-4 w-4"
+            >
+              <path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold">{{ t('profile.yourData.exportTitle') }}</div>
+            <div class="text-xs text-text-muted">{{ t('profile.yourData.exportBody') }}</div>
+          </div>
         </div>
         <button
           v-press
           type="button"
-          class="btn-ghost shrink-0"
+          class="btn-ghost w-full border border-border bg-surface"
           :disabled="exportingData"
           @click="onExportData"
         >
-          {{ t('profile.yourData.exportAction') }}
+          {{ exportedData ? t('profile.yourData.exportDone') : t('profile.yourData.exportAction') }}
         </button>
       </div>
 
-      <div class="flex flex-col gap-3 rounded-xl border border-danger/40 p-3">
-        <div class="text-sm font-semibold text-danger">{{ t('profile.yourData.deleteTitle') }}</div>
-        <p class="text-xs text-text-muted">{{ t('profile.yourData.deleteWarning') }}</p>
-
+      <div class="overflow-hidden rounded-xl border border-danger/40">
         <button
           v-if="!deleteOpen"
           type="button"
-          class="self-start text-xs font-semibold text-danger"
+          class="flex w-full items-center gap-3 p-3 text-left"
+          aria-expanded="false"
           @click="deleteOpen = true"
         >
-          {{ t('profile.yourData.deleteStart') }}
+          <span
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-4 w-4"
+            >
+              <path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14" />
+            </svg>
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-sm font-semibold text-danger">{{
+              t('profile.yourData.deleteTitle')
+            }}</span>
+            <span class="block text-xs text-text-muted">{{
+              t('profile.yourData.deleteSummary')
+            }}</span>
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-4 w-4 shrink-0 text-text-muted"
+            aria-hidden="true"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
         </button>
 
-        <form v-else class="flex flex-col gap-3" @submit.prevent="onDeleteAccount">
-          <div>
-            <label for="delete-account-password" class="field-label">{{
-              t('profile.yourData.deletePassword')
-            }}</label>
-            <PasswordField
-              id="delete-account-password"
-              v-model="deletePassword"
-              required
-              autocomplete="current-password"
-            />
-          </div>
-          <div class="flex gap-2">
-            <button type="button" class="btn-ghost flex-1" @click="onCancelDelete">
-              {{ t('profile.yourData.deleteCancel') }}
-            </button>
+        <Transition name="confirm-warn">
+          <form
+            v-if="deleteOpen"
+            class="flex flex-col gap-3 bg-danger/5 p-3"
+            @submit.prevent="onDeleteAccount"
+          >
+            <div class="text-sm font-semibold text-danger">
+              {{ t('profile.yourData.deleteTitle') }}
+            </div>
+            <ul class="flex flex-col gap-2 text-xs">
+              <li
+                v-for="key in ['deleteOwnBabies', 'deleteSharedBabies', 'deleteIrreversible']"
+                :key="key"
+                class="flex items-start gap-2"
+              >
+                <span
+                  class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                  :class="key === 'deleteSharedBabies' ? 'bg-text-muted' : 'bg-danger'"
+                  aria-hidden="true"
+                ></span>
+                <span>{{ t(`profile.yourData.${key}`) }}</span>
+              </li>
+            </ul>
+
             <button
-              v-press
-              type="submit"
-              class="btn-danger flex-1"
-              :disabled="deletingAccount || !deletePassword"
+              v-if="!exportedData"
+              type="button"
+              class="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm font-semibold"
+              :disabled="exportingData"
+              @click="onExportData"
             >
-              {{ t('profile.yourData.deleteConfirm') }}
+              {{ t('profile.yourData.deleteExportFirst') }}
             </button>
-          </div>
-        </form>
+            <p v-else class="text-xs font-semibold text-text-muted">
+              ✓ {{ t('profile.yourData.exportDone') }}
+            </p>
+
+            <div>
+              <label for="delete-account-password" class="field-label">{{
+                t('profile.yourData.deletePassword')
+              }}</label>
+              <PasswordField
+                id="delete-account-password"
+                v-model="deletePassword"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="btn-ghost flex-1" @click="onCancelDelete">
+                {{ t('profile.yourData.deleteCancel') }}
+              </button>
+              <button
+                v-press
+                type="submit"
+                class="btn-danger flex-1"
+                :disabled="deletingAccount || !deletePassword"
+              >
+                {{ t('profile.yourData.deleteConfirm') }}
+              </button>
+            </div>
+          </form>
+        </Transition>
       </div>
     </section>
   </BottomSheet>

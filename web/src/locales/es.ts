@@ -779,14 +779,19 @@ export default {
     passwordError: 'No se ha podido cambiar la contraseña. Revisa la actual.',
     yourData: {
       title: 'Tus datos',
+      subtitle: 'Llévate una copia o cierra la cuenta.',
       exportTitle: 'Descargar mis datos',
       exportBody: 'Un archivo con tu perfil y todos los registros de tus bebés.',
-      exportAction: 'Descargar',
+      exportAction: 'Descargar copia',
+      exportDone: 'Copia descargada',
       exportError: 'No se han podido descargar tus datos. Inténtalo de nuevo.',
       deleteTitle: 'Eliminar mi cuenta',
-      deleteWarning:
-        'No se puede deshacer. Los bebés que solo cuidas tú se borran con todo su historial y sus fotos. En los bebés compartidos, el otro cuidador conserva todo, también lo que tú anotaste.',
-      deleteStart: 'Eliminar mi cuenta…',
+      deleteSummary: 'Borra la cuenta y lo que no compartes. No se puede deshacer.',
+      deleteOwnBabies: 'Los bebés que solo cuidas tú se borran con todo su historial y sus fotos.',
+      deleteSharedBabies:
+        'En los bebés compartidos, el otro cuidador lo conserva todo, también lo que anotaste tú.',
+      deleteIrreversible: 'No se puede deshacer ni recuperar después.',
+      deleteExportFirst: 'Descargar una copia antes',
       deletePassword: 'Escribe tu contraseña para confirmar',
       deleteConfirm: 'Eliminar para siempre',
       deleteCancel: 'Cancelar',

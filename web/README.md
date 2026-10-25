@@ -785,6 +785,19 @@ verse bien en una captura:
   2,1–2,4:1); estos dan al menos 4,8:1 y son iguales en los dos temas. Gráficas,
   iconos y bordes siguen con los colores normales. Texto sobre `--danger`:
   `text-surface`, como `.btn-danger`.
+- **Sombras solo en lo que se toca**: `.card` (contenedores: Ritmo, Estadísticas,
+  formularios) lleva un borde fino sin sombra; `.card-interactive` (resumen del día,
+  tarjetas de enlace, filas de vacunas) lleva la sombra en reposo y se eleva al
+  pasar el ratón.
+- **Números para leer** con `lib/formatNumber.ts` (`formatDecimal`,
+  `formatHoursShort`, `formatDurationMinutes`): coma decimal en español, punto en
+  inglés, espacio antes de la unidad ("3,9 h", "3 h 24 min"). Los campos de
+  formulario no pasan por ahí (necesitan el punto).
+- **`overflow-x: clip` en el contenedor de `App.vue`, no `hidden`**: `hidden` lo
+  convierte en contenedor de desplazamiento y anula cualquier `position: sticky`
+  de dentro sin avisar. Gracias a eso el día de la línea temporal se queda fijo
+  arriba al bajar (`groupTimelineByDay` añade el recuento del día solo cuando el
+  día está entero en la lista); lo comprueba `e2e/sticky-day.spec.ts`.
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
   con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
   a terceros y disponible sin conexión desde la primera visita);

@@ -7,6 +7,36 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Lavado de cara y medias de Estadísticas
+
+- **Corregido: las medias "al día" contaban el día de hoy, que acaba de empezar.**
+  A las 5:00, con 3 tomas, Estadísticas mostraba 11,7 tomas al día (−4,6) en vez de
+  ≈13, y marcaba el sueño "por debajo de lo recomendado" con más distancia de la
+  real. Tomas, sueños, sueño total y su reparto día/noche, tramo más largo y pañales
+  por día usan ahora solo días terminados, el mismo criterio que ya seguía la
+  comparación semanal. Los recuentos, las franjas, los récords y la última caca
+  siguen viendo hoy; sin ningún día terminado (el primer día de uso) no cambia nada.
+- **Resumen del día con "hace cuánto"**: bajo cada cifra, cuánto hace de la última
+  toma, del último sueño (o cuánto lleva durmiendo) y del último pañal. Solo hoy; los
+  bloques mantienen su color sólido.
+- **Tarjeta del bebé con la edad completa**: "5 semanas y 3 días" en vez de "5
+  semanas" toda la semana.
+- **Ritmo de hoy**: las tomas con duración se dibujan de su inicio a su fin, como los
+  sueños (antes eran todas la misma marca fina), y una marca de "ahora" separa lo
+  pasado del resto del día. No se dibuja nada previsto.
+- **El día se queda fijo arriba** al bajar por la línea temporal, con el recuento de
+  registros y tomas del día (solo en los días completos de la lista). Para que
+  `position: sticky` funcione, el contenedor de la app usa `overflow-x: clip` en vez
+  de `hidden`, que lo anulaba sin avisar; por eso la cabecera de la app nunca se había
+  quedado fija pese a su clase `sticky` (sigue desplazándose como siempre). Con un e2e
+  que falla con el ajuste antiguo.
+- **Números en español**: "3,9 h", "11,7", "3 h 24 min" en vez de "3.9h" o "3h 24min"
+  (punto decimal en inglés), en el resumen, la línea temporal, el sueño semanal y
+  Estadísticas, desde un único módulo (`lib/formatNumber.ts`).
+- **Sombras donde se toca**: los contenedores pasan a un borde fino sin sombra y las
+  tarjetas pulsables llevan la sombra en reposo (antes era al revés). Los campos de
+  formulario usan el mismo radio que los botones.
+
 ### Contracciones: pantalla siempre encendida
 
 - **La pantalla no se bloquea mientras se cuentan contracciones**: con una en marcha

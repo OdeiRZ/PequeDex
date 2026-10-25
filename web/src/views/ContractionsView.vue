@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useBabiesStore, type Contraction } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useFeedback } from '@/composables/useFeedback'
+import { useScreenWakeLock } from '@/composables/useScreenWakeLock'
 import BottomSheet from '@/components/BottomSheet.vue'
 import ContractionTimeline from '@/components/ContractionTimeline.vue'
 import {
@@ -105,6 +106,16 @@ const sinceLastAriaLabel = computed<string | undefined>(() =>
 )
 
 const stats = computed(() => summarizeRecentContractions(babies.contractions, now.value))
+
+// Pantalla siempre encendida mientras se están contando: con una contracción en
+// marcha o si la última terminó hace menos de LONG_GAP_MINUTES (el mismo umbral a
+// partir del cual la pantalla ya da el parto por "en pausa"). Pasado eso, el móvil
+// vuelve a bloquearse solo y no gasta batería.
+useScreenWakeLock(() => {
+  if (activeContraction.value) return true
+  const endedAt = lastStoppedContraction.value?.ended_at
+  return !!endedAt && now.value.getTime() - new Date(endedAt).getTime() < LONG_GAP_MINUTES * 60_000
+})
 
 function formatStat(seconds: number | null): string {
   if (seconds === null) return '-'

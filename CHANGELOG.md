@@ -7,6 +7,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Contracciones: pantalla siempre encendida
+
+- **La pantalla no se bloquea mientras se cuentan contracciones**: con una en marcha
+  o si la última terminó hace menos de 60 minutos (el mismo umbral a partir del cual
+  la pantalla ya da el parto por "en pausa"). Antes había que desbloquear el móvil
+  cada pocos minutos para pulsar empezar o terminar. Usa la API Screen Wake Lock
+  (`composables/useScreenWakeLock.ts`): se vuelve a pedir al volver a la app, se
+  suelta al salir de la pantalla o pasada la pausa, y sin la API (Firefox, Safari
+  antiguo) no cambia nada. 4 tests unitarios y un e2e en Chrome real (pide el bloqueo
+  al empezar, lo mantiene entre contracciones y lo suelta al salir).
+
 ### Cambio de hora, contraste y auditoría
 
 - **Corregido: la hora salía adelantada una hora la noche del cambio de hora.**

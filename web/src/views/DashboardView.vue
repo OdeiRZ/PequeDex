@@ -2427,18 +2427,20 @@ const sleepPredictionDue = computed(() => {
                 class="relative flex flex-col gap-2"
               >
                 <template v-for="(item, index) in groupedTimeline" :key="item.key">
+                  <!-- Fijo arriba al desplazar: al bajar
+                       por las entradas de un día se sigue viendo de qué día son, hasta que
+                       el separador del día siguiente lo tapa. Con el recuento del día solo
+                       si el día está entero en la lista (ver groupTimelineByDay). -->
                   <li
                     v-if="item.kind === 'separator'"
-                    class="my-1 flex items-center gap-3"
+                    class="sticky top-0 z-10 -mx-1 flex items-baseline justify-between gap-3 border-b border-border bg-bg px-1 pt-2 pb-1.5"
                     :style="{ '--stagger-index': index }"
                   >
-                    <span class="h-px flex-1 bg-border"></span>
-                    <span
-                      class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
+                    <span class="font-display text-sm font-bold text-brand">{{ item.label }}</span>
+                    <span v-if="item.counts" class="shrink-0 text-xs text-text-muted tabular-nums"
+                      >{{ t('dashboard.timeline.dayCounts.entries', item.counts.entries) }} ·
+                      {{ t('dashboard.timeline.dayCounts.feeds', item.counts.feeds) }}</span
                     >
-                      {{ item.label }}
-                    </span>
-                    <span class="h-px flex-1 bg-border"></span>
                   </li>
                   <EntryCard
                     v-else

@@ -254,8 +254,15 @@ function entryEnd(entry: TimelineEntry, now: Date): Date {
   return new Date(entry.at)
 }
 
+/** Recuento del día bajo su separador. Solo cuando se sabe que el día está
+ * entero en la lista (ver groupTimelineByDay). */
+export interface DayCounts {
+  entries: number
+  feeds: number
+}
+
 export type TimelineListItem =
-  | { kind: 'separator'; key: string; label: string }
+  | { kind: 'separator'; key: string; label: string; counts: DayCounts | null }
   | { kind: 'entry'; key: string; entry: TimelineEntry }
 
 // Un separador de día entre entradas de distinto día de calendario -
@@ -273,17 +280,41 @@ export function groupTimelineByDay(
   fixedDay?: Date,
 ): TimelineListItem[] {
   const items: TimelineListItem[] = []
+  const separators: { item: Extract<TimelineListItem, { kind: 'separator' }>; dayKey: string }[] =
+    []
   let previousDayKey: string | null = null
 
   for (const entry of timeline) {
     const at = fixedDay ?? new Date(entry.at)
     const dayKey = at.toLocaleDateString('en-CA')
     if (dayKey !== previousDayKey) {
-      items.push({ kind: 'separator', key: `day-${dayKey}`, label: formatDayLabel(at) })
+      const separator = {
+        kind: 'separator' as const,
+        key: `day-${dayKey}`,
+        label: formatDayLabel(at),
+        counts: null,
+      }
+      items.push(separator)
+      separators.push({ item: separator, dayKey })
       previousDayKey = dayKey
     }
     items.push({ kind: 'entry', key: `${entry.type}-${entry.data.id}`, entry })
   }
+
+  // Recuento por día, solo donde es seguro: en "hoy" la lista son las N entradas
+  // más recientes, así que el día MÁS ANTIGUO puede estar cortado y un "31
+  // registros" sería falso. Los demás días (y el día fijo de un día pasado)
+  // están enteros. Solo cuenta lo que es de ese día de calendario: lo arrastrado
+  // de la víspera en un día pasado no suma.
+  separators.forEach(({ item, dayKey }, index) => {
+    const isOldest = index === separators.length - 1
+    if (isOldest && !fixedDay) return
+    const ofDay = timeline.filter((e) => new Date(e.at).toLocaleDateString('en-CA') === dayKey)
+    item.counts = {
+      entries: ofDay.length,
+      feeds: ofDay.filter((e) => e.type === 'feed').length,
+    }
+  })
 
   return items
 }

@@ -54,7 +54,7 @@ watch(
 
 <template>
   <header
-    class="app-header sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
+    class="app-header relative z-20 flex items-center justify-between gap-2 border-b border-border bg-bg px-4 py-3"
   >
     <RouterLink
       :to="{ name: auth.user ? 'dashboard' : 'welcome' }"

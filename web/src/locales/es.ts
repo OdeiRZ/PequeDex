@@ -679,6 +679,10 @@ export default {
       solidSummary: 'Sólido',
       sleepDone: 'Sueño (terminado)',
       sleepOngoing: 'Sueño (en curso)',
+      dayCounts: {
+        entries: '{n} registro | {n} registros',
+        feeds: '{n} toma | {n} tomas',
+      },
       diaperSummary: 'Pañal ({type})',
       finishSleep: 'Finalizar',
       finishFeed: 'Finalizar',

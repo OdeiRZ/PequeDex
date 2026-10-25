@@ -370,6 +370,36 @@ describe('groupTimelineByDay', () => {
     expect(items[0]).toMatchObject({ kind: 'separator', label: 'label-7' })
   })
 
+  it('counts each day only when the whole day is in the list', () => {
+    // De más reciente a más antigua, como llega del API: el día 7 está entero
+    // (después viene el 6), pero el 6 es el más antiguo y puede estar cortado.
+    const items = groupTimelineByDay(
+      [
+        feedEntry({ started_at: local(2026, 8, 7, 9, 0) }),
+        diaperEntry({ changed_at: local(2026, 8, 7, 8, 0) }),
+        feedEntry({ started_at: local(2026, 8, 7, 6, 0) }),
+        feedEntry({ started_at: local(2026, 8, 6, 23, 0) }),
+      ],
+      (at) => `label-${at.getDate()}`,
+    )
+
+    expect(items[0]).toMatchObject({ label: 'label-7', counts: { entries: 3, feeds: 2 } })
+    expect(items[4]).toMatchObject({ label: 'label-6', counts: null })
+  })
+
+  it('counts a fixed past day without what was carried over from the day before', () => {
+    const items = groupTimelineByDay(
+      [
+        diaperEntry({ changed_at: local(2026, 8, 7, 8, 0) }),
+        sleepEntry({ started_at: local(2026, 8, 6, 22, 0), ended_at: local(2026, 8, 7, 6, 0) }),
+      ],
+      (at) => `label-${at.getDate()}`,
+      new Date(2026, 7, 7),
+    )
+
+    expect(items[0]).toMatchObject({ counts: { entries: 1, feeds: 0 } })
+  })
+
   it('returns an empty list for an empty timeline, no stray separator', () => {
     expect(groupTimelineByDay([], () => 'unused')).toEqual([])
   })

@@ -84,9 +84,7 @@ onUnmounted(stopSync)
 </script>
 
 <template>
-  <div
-    class="relative mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-bg text-text"
-  >
+  <div class="relative mx-auto flex min-h-screen max-w-md flex-col overflow-x-clip bg-bg text-text">
     <!-- Not shown on WelcomeView - it carries its own "Iniciar sesión"
          pill and brand mark over the animated hero, and the sticky
          header's own bg-bg bar would clip that background at the top of

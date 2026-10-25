@@ -224,29 +224,27 @@ onUnmounted(() => {
     <div
       v-for="stat in stats"
       :key="stat.category"
-      class="card-interactive flex min-w-0 items-center gap-1.5 rounded-2xl p-2.5"
+      class="card-interactive flex min-w-0 flex-col gap-1 rounded-2xl p-2.5 text-white"
       :class="[categoryStrongBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
     >
-      <!-- La cifra va en la pastilla redonda y el icono, pequeño, junto a la
-           etiqueta: una línea menos por tarjeta. La pastilla crece a lo ancho
-           para "10,5 h". -->
-      <span
-        class="grid h-9 min-w-9 shrink-0 place-items-center rounded-full bg-white/25 px-1.5 font-display text-base leading-none font-bold whitespace-nowrap text-white tabular-nums"
-        data-testid="summary-value"
-      >
-        {{ displayValue[stat.category] ?? stat.value }}
-      </span>
-      <div class="min-w-0 leading-tight text-white">
-        <div
-          class="flex items-center gap-1 text-[0.63rem] leading-tight font-semibold whitespace-normal text-white"
+      <!-- Arriba el icono en su círculo y la cifra en grande; debajo, a todo el
+           ancho de la tarjeta, la etiqueta y el "hace…". Con la cifra al lado
+           de un círculo que crecía ("10,7 h"), el texto se quedaba sin sitio y
+           se partía palabra a palabra. -->
+      <div class="flex min-w-0 items-center gap-1.5">
+        <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25">
+          <CategoryIcon :category="stat.category" class="h-[0.9rem] w-[0.9rem]" />
+        </span>
+        <span
+          class="min-w-0 truncate font-display text-lg leading-none font-bold tabular-nums"
+          data-testid="summary-value"
         >
-          <CategoryIcon :category="stat.category" class="h-3 w-3 shrink-0" />
-          <span class="min-w-0">{{ stat.label }}</span>
-        </div>
-        <div
-          v-if="sinceLabel[stat.category]"
-          class="mt-0.5 whitespace-normal text-[0.6rem] leading-tight text-white"
-        >
+          {{ displayValue[stat.category] ?? stat.value }}
+        </span>
+      </div>
+      <div class="min-w-0 leading-tight">
+        <div class="text-[0.68rem] font-semibold">{{ stat.label }}</div>
+        <div v-if="sinceLabel[stat.category]" class="text-[0.62rem]">
           {{ sinceLabel[stat.category] }}
         </div>
       </div>

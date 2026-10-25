@@ -418,6 +418,7 @@ export default {
       eyebrow: 'Today with {name}',
       eyebrowGeneric: 'Today',
       ageDaysUnit: 'day | days',
+      ageExtraDays: 'and {count} day | and {count} days',
       ageWeeksUnit: 'week | weeks',
       countdownToday: 'Could be today!',
       bornOn: 'Born on {date}',

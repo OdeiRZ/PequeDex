@@ -1458,15 +1458,26 @@ interface HeroHeadline {
   value: number | null
   unit: string | null
   special: string | null
+  /** "y 3 días" tras las semanas: la edad completa, como la cuenta el pediatra
+   * en los primeros meses ("5 semanas y 3 días"), no redondeada a la semana. */
+  extra?: string | null
 }
 
 const heroHeadline = computed<HeroHeadline>(() => {
   const info = babyAgeInfo.value
 
   if (info.type === 'born') {
-    return info.underOneMonth
-      ? { value: info.days, unit: t('dashboard.hero.ageDaysUnit', info.days), special: null }
-      : { value: info.weeks, unit: t('dashboard.hero.ageWeeksUnit', info.weeks), special: null }
+    if (info.underOneMonth) {
+      return { value: info.days, unit: t('dashboard.hero.ageDaysUnit', info.days), special: null }
+    }
+    const extraDays = info.days % 7
+    return {
+      value: info.weeks,
+      unit: t('dashboard.hero.ageWeeksUnit', info.weeks),
+      special: null,
+      extra:
+        extraDays > 0 ? t('dashboard.hero.ageExtraDays', { count: extraDays }, extraDays) : null,
+    }
   }
 
   if (info.type === 'expecting') {
@@ -2165,6 +2176,9 @@ const sleepPredictionDue = computed(() => {
                     heroHeadline.value
                   }}</span>
                   <span class="font-display text-base font-bold">{{ heroHeadline.unit }}</span>
+                  <span v-if="heroHeadline.extra" class="font-display text-base font-bold">{{
+                    heroHeadline.extra
+                  }}</span>
                 </span>
                 <span v-else class="font-display text-xl font-bold text-balance">
                   {{ babies.current.name ?? t('dashboard.defaultBabyName') }}

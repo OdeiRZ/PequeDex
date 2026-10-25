@@ -420,6 +420,7 @@ export default {
       eyebrowGeneric: 'Hoy',
       ageDaysUnit: 'día | días',
       ageWeeksUnit: 'semana | semanas',
+      ageExtraDays: 'y {count} día | y {count} días',
       countdownToday: '¡Puede ser hoy!',
       bornOn: 'Nació el {date}',
       dueOn: 'Fecha prevista: {date}',

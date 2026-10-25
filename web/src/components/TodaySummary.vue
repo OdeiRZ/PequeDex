@@ -227,19 +227,19 @@ onUnmounted(() => {
       class="card-interactive flex min-w-0 flex-col gap-1 rounded-2xl p-2.5 text-white"
       :class="[categoryStrongBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
     >
-      <!-- Arriba el icono en su círculo y la cifra en grande; debajo, a todo el
-           ancho de la tarjeta, la etiqueta y el "hace…". Con la cifra al lado
-           de un círculo que crecía ("10,7 h"), el texto se quedaba sin sitio y
-           se partía palabra a palabra. -->
-      <div class="flex min-w-0 items-center gap-1.5">
-        <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25">
-          <CategoryIcon :category="stat.category" class="h-[0.9rem] w-[0.9rem]" />
-        </span>
+      <!-- Arriba la cifra en grande y, al otro lado, el icono en su círculo;
+           debajo, a todo el ancho de la tarjeta, la etiqueta y el "hace…". Con
+           la cifra dentro de un círculo que crecía ("10,7 h"), el texto se
+           quedaba sin sitio y se partía palabra a palabra. -->
+      <div class="flex min-w-0 items-center justify-between gap-1.5">
         <span
           class="min-w-0 truncate font-display text-lg leading-none font-bold tabular-nums"
           data-testid="summary-value"
         >
           {{ displayValue[stat.category] ?? stat.value }}
+        </span>
+        <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25">
+          <CategoryIcon :category="stat.category" class="h-[0.9rem] w-[0.9rem]" />
         </span>
       </div>
       <div class="min-w-0 leading-tight">

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TodaySummary from '@/components/TodaySummary.vue'
 import { i18n } from '@/i18n'
@@ -83,5 +83,30 @@ describe('TodaySummary pluralization', () => {
 
     expect(wrapper.text()).toContain('tomas')
     expect(wrapper.text()).toContain('pañales')
+  })
+})
+
+describe('TodaySummary "time since"', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('says how long ago the last feed and diaper were, only for today', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 20, 5, 10))
+    const timeline = [feedEntry(1, '2026-10-20T05:00:00'), diaperEntry(2, '2026-10-20T01:40:00')]
+
+    const today = mount(TodaySummary, {
+      props: { timeline, enabledCategories: ['feed', 'diaper'], day: '2026-10-20' },
+      global: { plugins: [i18n] },
+    })
+    expect(today.text()).toContain('última hace 10min')
+    expect(today.text()).toContain('último hace 3h 30min')
+
+    const pastDay = mount(TodaySummary, {
+      props: { timeline, enabledCategories: ['feed', 'diaper'], day: '2026-10-19' },
+      global: { plugins: [i18n] },
+    })
+    expect(pastDay.text()).not.toContain('hace')
   })
 })

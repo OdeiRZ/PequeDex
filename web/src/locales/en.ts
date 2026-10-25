@@ -505,6 +505,12 @@ export default {
       feed: 'feed | feeds',
       sleep: 'asleep',
       diaper: 'diaper | diapers',
+      since: {
+        feed: 'last {time} ago',
+        sleepOngoing: 'asleep for {time}',
+        sleep: 'last sleep {time} ago',
+        diaper: 'last {time} ago',
+      },
     },
     vitaminD: {
       title: 'Vitamin D',

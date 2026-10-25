@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onUnmounted, reactive, watch } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { categoryStrongBg, type Category } from '@/lib/category'
-import { parseDateOnly } from '@/lib/localDate'
+import { parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
+import { formatMinutesShort } from '@/lib/sleepReference'
 import CategoryIcon from './CategoryIcon.vue'
 import type { TimelineEntry } from '@/stores/babies'
 
@@ -94,6 +95,46 @@ const stats = computed<Stat[]>(() => {
   return result
 })
 
+// "Hace cuánto" bajo cada cifra: lo que se pregunta de madrugada ("¿cuándo
+// comió?") sin bajar a la línea temporal. Solo para el día de hoy (navegando
+// un día pasado no tiene sentido) y sobre lo más reciente de toda la línea
+// temporal, aunque fuera ayer. El reloj avanza cada 30 s; con la app oculta el
+// navegador ya frena el temporizador.
+const clock = ref(Date.now())
+const clockTimer = setInterval(() => (clock.value = Date.now()), 30_000)
+
+const isToday = computed(() => {
+  void clock.value
+  return props.day === todayDateOnlyString()
+})
+
+function ago(fromIso: string): string {
+  return formatMinutesShort(Math.max(0, (clock.value - new Date(fromIso).getTime()) / 60_000))
+}
+
+const sinceLabel = computed<Partial<Record<Category, string>>>(() => {
+  if (!isToday.value) return {}
+  const labels: Partial<Record<Category, string>> = {}
+  // La línea temporal llega de más reciente a más antigua.
+  const lastFeed = props.timeline.find((e) => e.type === 'feed')
+  if (lastFeed?.type === 'feed') {
+    labels.feed = t('dashboard.todaySummary.since.feed', { time: ago(lastFeed.data.started_at) })
+  }
+  const lastSleep = props.timeline.find((e) => e.type === 'sleep')
+  if (lastSleep?.type === 'sleep') {
+    labels.sleep = lastSleep.data.ended_at
+      ? t('dashboard.todaySummary.since.sleep', { time: ago(lastSleep.data.ended_at) })
+      : t('dashboard.todaySummary.since.sleepOngoing', { time: ago(lastSleep.data.started_at) })
+  }
+  const lastDiaper = props.timeline.find((e) => e.type === 'diaper_change')
+  if (lastDiaper?.type === 'diaper_change') {
+    labels.diaper = t('dashboard.todaySummary.since.diaper', {
+      time: ago(lastDiaper.data.changed_at),
+    })
+  }
+  return labels
+})
+
 // Counts up to a changed value instead of snapping to it, and flashes
 // the card that changed - otherwise every card looks the same whether
 // it's the one that just got a new entry or one that didn't. Keyed by
@@ -170,6 +211,7 @@ watch(
 onUnmounted(() => {
   for (const frame of tweenFrames.values()) cancelAnimationFrame(frame)
   for (const timer of flashTimers.values()) clearTimeout(timer)
+  clearInterval(clockTimer)
 })
 </script>
 
@@ -194,6 +236,12 @@ onUnmounted(() => {
         </div>
         <div class="whitespace-normal text-[0.63rem] font-semibold leading-tight text-white">
           {{ stat.label }}
+        </div>
+        <div
+          v-if="sinceLabel[stat.category]"
+          class="mt-0.5 whitespace-normal text-[0.6rem] leading-tight text-white"
+        >
+          {{ sinceLabel[stat.category] }}
         </div>
       </div>
     </div>

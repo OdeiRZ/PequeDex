@@ -508,6 +508,12 @@ export default {
       feed: 'toma | tomas',
       sleep: 'de sueño',
       diaper: 'pañal | pañales',
+      since: {
+        feed: 'última hace {time}',
+        sleepOngoing: 'lleva {time} durmiendo',
+        sleep: 'último sueño hace {time}',
+        diaper: 'último hace {time}',
+      },
     },
     vitaminD: {
       title: 'Vitamina D',

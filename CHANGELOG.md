@@ -10,78 +10,85 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 ### Retoques del lavado de cara y "Tus datos"
 
 - **Resumen del día más corto**: la cifra va en el círculo de la izquierda (se
-  ensancha para "10,5 h") y el icono, pequeño, delante de la etiqueta, con una línea
-  menos por tarjeta. Debajo pone solo "hace 10 min", "hace 2 h" o "hace 3 h", sin
-  "última/último" ni "sueño" (el sueño en curso sigue con "lleva 40 min durmiendo").
-- **"Ahora" bajo la barra del Ritmo**: la etiqueta pasa de encima de la barra a la
-  fila de las horas, justo bajo su marca; la hora que quedaría pegada se oculta.
-- **"Tus datos" reordenado**: "Descargar copia" va primero con un botón a todo el
-  ancho que pasa a "Copia descargada". "Eliminar mi cuenta" queda plegado en una fila
-  con un resumen; al abrirlo explica en tres puntos qué se borra y qué no, ofrece
-  descargar una copia antes si aún no se ha hecho y después pide la contraseña.
-  Reabrir la hoja lo pliega y vacía la contraseña.
+  ensancha para "10,5 h") y el icono, pequeño, delante de la etiqueta, con una
+  línea menos por tarjeta. Debajo pone solo "hace 10 min", "hace 2 h" o "hace
+  3 h", sin "última/último" ni "sueño" (el sueño en curso sigue con "lleva 40
+  min durmiendo").
+- **"Ahora" bajo la barra del Ritmo**: la etiqueta pasa de encima de la barra
+  a la fila de las horas, justo bajo su marca; la hora que quedaría pegada se
+  oculta.
+- **"Tus datos" reordenado**: "Descargar copia" va primero con un botón a todo
+  el ancho que pasa a "Copia descargada". "Eliminar mi cuenta" queda plegado
+  en una fila con un resumen; al abrirlo explica en tres puntos qué se borra y
+  qué no, ofrece descargar una copia antes si aún no se ha hecho y después
+  pide la contraseña. Reabrir la hoja lo pliega y vacía la contraseña.
 
 ### Lavado de cara y medias de Estadísticas
 
-- **Corregido: las medias "al día" contaban el día de hoy, que acaba de empezar.**
-  A las 5:00, con 3 tomas, Estadísticas mostraba 11,7 tomas al día (−4,6) en vez de
-  ≈13, y marcaba el sueño "por debajo de lo recomendado" con más distancia de la
-  real. Tomas, sueños, sueño total y su reparto día/noche, tramo más largo y pañales
-  por día usan ahora solo días terminados, el mismo criterio que ya seguía la
-  comparación semanal. Los recuentos, las franjas, los récords y la última caca
-  siguen viendo hoy; sin ningún día terminado (el primer día de uso) no cambia nada.
-- **Resumen del día con "hace cuánto"**: bajo cada cifra, cuánto hace de la última
-  toma, del último sueño (o cuánto lleva durmiendo) y del último pañal. Solo hoy; los
-  bloques mantienen su color sólido.
+- **Corregido: las medias "al día" contaban el día de hoy, que acaba de
+  empezar.** A las 5:00, con 3 tomas, Estadísticas mostraba 11,7 tomas al día
+  (−4,6) en vez de ≈13, y marcaba el sueño "por debajo de lo recomendado" con
+  más distancia de la real. Tomas, sueños, sueño total y su reparto día/noche,
+  tramo más largo y pañales por día usan ahora solo días terminados, el mismo
+  criterio que ya seguía la comparación semanal. Los recuentos, las franjas,
+  los récords y la última caca siguen viendo hoy; sin ningún día terminado (el
+  primer día de uso) no cambia nada.
+- **Resumen del día con "hace cuánto"**: bajo cada cifra, cuánto hace de la
+  última toma, del último sueño (o cuánto lleva durmiendo) y del último pañal.
+  Solo hoy; los bloques mantienen su color sólido.
 - **Tarjeta del bebé con la edad completa**: "5 semanas y 3 días" en vez de "5
   semanas" toda la semana.
-- **Ritmo de hoy**: las tomas con duración se dibujan de su inicio a su fin, como los
-  sueños (antes eran todas la misma marca fina), y una marca de "ahora" separa lo
-  pasado del resto del día. No se dibuja nada previsto.
-- **El día se queda fijo arriba** al bajar por la línea temporal, con el recuento de
-  registros y tomas del día (solo en los días completos de la lista). Para que
-  `position: sticky` funcione, el contenedor de la app usa `overflow-x: clip` en vez
-  de `hidden`, que lo anulaba sin avisar; por eso la cabecera de la app nunca se había
-  quedado fija pese a su clase `sticky` (sigue desplazándose como siempre). Con un e2e
-  que falla con el ajuste antiguo.
-- **Números en español**: "3,9 h", "11,7", "3 h 24 min" en vez de "3.9h" o "3h 24min"
-  (punto decimal en inglés), en el resumen, la línea temporal, el sueño semanal y
-  Estadísticas, desde un único módulo (`lib/formatNumber.ts`).
-- **Sombras donde se toca**: los contenedores pasan a un borde fino sin sombra y las
-  tarjetas pulsables llevan la sombra en reposo (antes era al revés). Los campos de
-  formulario usan el mismo radio que los botones.
+- **Ritmo de hoy**: las tomas con duración se dibujan de su inicio a su fin,
+  como los sueños (antes eran todas la misma marca fina), y una marca de
+  "ahora" separa lo pasado del resto del día. No se dibuja nada previsto.
+- **El día se queda fijo arriba** al bajar por la línea temporal, con el
+  recuento de registros y tomas del día (solo en los días completos de la
+  lista). Para que `position: sticky` funcione, el contenedor de la app usa
+  `overflow-x: clip` en vez de `hidden`, que lo anulaba sin avisar; por eso la
+  cabecera de la app nunca se había quedado fija pese a su clase `sticky`
+  (sigue desplazándose como siempre). Con un e2e que falla con el ajuste
+  antiguo.
+- **Números en español**: "3,9 h", "11,7", "3 h 24 min" en vez de "3.9h" o "3h
+  24min" (punto decimal en inglés), en el resumen, la línea temporal, el sueño
+  semanal y Estadísticas, desde un único módulo (`lib/formatNumber.ts`).
+- **Sombras donde se toca**: los contenedores pasan a un borde fino sin sombra
+  y las tarjetas pulsables llevan la sombra en reposo (antes era al revés).
+  Los campos de formulario usan el mismo radio que los botones.
 
 ### Contracciones: pantalla siempre encendida
 
-- **La pantalla no se bloquea mientras se cuentan contracciones**: con una en marcha
-  o si la última terminó hace menos de 60 minutos (el mismo umbral a partir del cual
-  la pantalla ya da el parto por "en pausa"). Antes había que desbloquear el móvil
-  cada pocos minutos para pulsar empezar o terminar. Usa la API Screen Wake Lock
-  (`composables/useScreenWakeLock.ts`): se vuelve a pedir al volver a la app, se
-  suelta al salir de la pantalla o pasada la pausa, y sin la API (Firefox, Safari
-  antiguo) no cambia nada. 4 tests unitarios y un e2e en Chrome real (pide el bloqueo
-  al empezar, lo mantiene entre contracciones y lo suelta al salir).
+- **La pantalla no se bloquea mientras se cuentan contracciones**: con una en
+  marcha o si la última terminó hace menos de 60 minutos (el mismo umbral a
+  partir del cual la pantalla ya da el parto por "en pausa"). Antes había que
+  desbloquear el móvil cada pocos minutos para pulsar empezar o terminar. Usa
+  la API Screen Wake Lock (`composables/useScreenWakeLock.ts`): se vuelve a
+  pedir al volver a la app, se suelta al salir de la pantalla o pasada la
+  pausa, y sin la API (Firefox, Safari antiguo) no cambia nada. 4 tests
+  unitarios y un e2e en Chrome real (pide el bloqueo al empezar, lo mantiene
+  entre contracciones y lo suelta al salir).
 
 ### Cambio de hora, contraste y auditoría
 
-- **Corregido: la hora salía adelantada una hora la noche del cambio de hora.**
-  `nowForInput()` (y los ayudantes de edición) sumaban el desfase horario a la hora
-  local y la leían en UTC; esa suma cruzaba las 3:00 y, entre la 1:00 y las 3:00 de
-  la noche del 24 al 25 de octubre, cada registro nuevo se abría con una hora de más
-  (la 1:30 como las 2:30), desde los atajos y desde la barra. Ahora se lee campo a
-  campo de la fecha local. Tests con `Europe/Madrid` para los dos cambios de hora,
-  que fallan con el código anterior.
-- **Contraste:** el texto blanco de las tarjetas del resumen (Tomas 2,9:1; en tema
-  oscuro 2,1–2,4:1), del botón "Dar" y de los días marcados quedaba por debajo del
-  mínimo de 4,5:1. Esos fondos usan ahora tonos "fuertes" de cada categoría (≥4,8:1,
-  iguales en los dos temas); gráficas, iconos y bordes no cambian. Los botones de
-  peligro usan el color de superficie para el texto, como `.btn-danger`.
-- **Índices** para las claves foráneas que PostgreSQL no indexa solo: los bebés de un
-  usuario (`baby_user.user_id`, en cada petición) y el autor de cada registro (doce
-  tablas; borrar una cuenta ya no las recorre enteras). Validado en PostgreSQL local,
-  con vuelta atrás.
-- **CORS solo desde el frontend propio** (`https://odeirz.github.io`) y localhost;
-  antes `*`. `CORS_ALLOWED_ORIGINS` lo cambia sin tocar código.
+- **Corregido: la hora salía adelantada una hora la noche del cambio de
+  hora.** `nowForInput()` (y los ayudantes de edición) sumaban el desfase
+  horario a la hora local y la leían en UTC; esa suma cruzaba las 3:00 y,
+  entre la 1:00 y las 3:00 de la noche del 24 al 25 de octubre, cada registro
+  nuevo se abría con una hora de más (la 1:30 como las 2:30), desde los atajos
+  y desde la barra. Ahora se lee campo a campo de la fecha local. Tests con
+  `Europe/Madrid` para los dos cambios de hora, que fallan con el código
+  anterior.
+- **Contraste:** el texto blanco de las tarjetas del resumen (Tomas 2,9:1; en
+  tema oscuro 2,1–2,4:1), del botón "Dar" y de los días marcados quedaba por
+  debajo del mínimo de 4,5:1. Esos fondos usan ahora tonos "fuertes" de cada
+  categoría (≥4,8:1, iguales en los dos temas); gráficas, iconos y bordes no
+  cambian. Los botones de peligro usan el color de superficie para el texto,
+  como `.btn-danger`.
+- **Índices** para las claves foráneas que PostgreSQL no indexa solo: los
+  bebés de un usuario (`baby_user.user_id`, en cada petición) y el autor de
+  cada registro (doce tablas; borrar una cuenta ya no las recorre enteras).
+  Validado en PostgreSQL local, con vuelta atrás.
+- **CORS solo desde el frontend propio** (`https://odeirz.github.io`) y
+  localhost; antes `*`. `CORS_ALLOWED_ORIGINS` lo cambia sin tocar código.
 
 ### Fluidez, transiciones y privacidad
 
@@ -111,18 +118,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   el recordatorio de vitamina D salía con el naranja del tema claro.
 - `undici` (dependencia de los tests, vía jsdom) actualizado: `npm audit` sin
   avisos.
-- **El aviso de "actualizando" ya no parece colgado.** Con conexión mostraba el
-  icono de wifi tachado; ahora muestra flechas girando. Y si a los 6 s sigue sin
-  respuesta (la API gratuita dormida tarda hasta ~30 s), dice que el servidor se
-  está despertando y que se puede registrar igual.
+- **El aviso de "actualizando" ya no parece colgado.** Con conexión mostraba
+  el icono de wifi tachado; ahora muestra flechas girando. Y si a los 6 s
+  sigue sin respuesta (la API gratuita dormida tarda hasta ~30 s), dice que el
+  servidor se está despertando y que se puede registrar igual.
 - **Una sola petición de la línea temporal a la vez.** Con la API dormida, el
   sondeo, la vuelta a la app y la reconexión apilaban hasta tres peticiones
-  iguales (visto en el navegador); ahora la segunda se une a la que está en curso.
-  Una respuesta que llega tras cambiar de bebé ya no se aplica al nuevo.
-- **Zona táctil más grande, mismo aspecto:** "Ver historial" y "Deshacer" de la
-  vitamina D (12 px de alto), las flechas de día del ritmo diario y el avatar de la
-  cabecera (28 px) tienen una capa invisible alrededor (`.tap-area`), para usar la
-  app con una mano.
+  iguales (visto en el navegador); ahora la segunda se une a la que está en
+  curso. Una respuesta que llega tras cambiar de bebé ya no se aplica al
+  nuevo.
+- **Zona táctil más grande, mismo aspecto:** "Ver historial" y "Deshacer" de
+  la vitamina D (12 px de alto), las flechas de día del ritmo diario y el
+  avatar de la cabecera (28 px) tienen una capa invisible alrededor
+  (`.tap-area`), para usar la app con una mano.
 
 ### CI y pruebas
 

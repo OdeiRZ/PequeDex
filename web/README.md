@@ -249,103 +249,95 @@ solo comprueban producción, pero el de desarrollo también está limpio):
   al lado, es un control aparte que no colapsa ni expande nada al
   pulsarlo.
 - **Contador de contracciones** (`src/views/ContractionsView.vue`,
-  `src/components/ContractionTimeline.vue`, ruta `/contracciones`) —
-  vista propia, no una categoría más de la barra de accesos: el
-  cronómetro en vivo y la línea temporal con intervalos no encajan en
-  el patrón de hoja-inferior del resto de categorías, y solo tiene
-  sentido antes de nacer el bebé. Se enlaza desde una tarjeta en el
-  dashboard visible solo mientras `babies.current.birth_date` está
-  vacío — desaparece sola en cuanto se rellena, sin quedar como enlace
-  muerto. `lib/contractionStats.ts` es una función pura (ventana de los
-  últimos 60 minutos) para "veces por hora / duración media / intervalo
-  medio", testeable sin montar Pinia. `ContractionsView.vue` mantiene un
-  único `now` (un `setInterval` de 1s) que pasa como prop a
-  `ContractionTimeline.vue`, para que el contador en vivo de la fila
-  activa y las estadísticas del encabezado no se desincronicen por
-  llevar cada uno su propio intervalo. Ese mismo `now` alimenta
-  `sinceLastLabel` ("Desde la última: mm:ss", justo encima de la fila
-  más reciente de la línea temporal — vivió primero sobre el botón de
-  inicio, en la barra flotante, pero quedaba lejos de la contracción a
-  la que se refiere): mientras no hay ninguna contracción en marcha
-  pero ya existe una anterior, cuenta en vivo el tiempo transcurrido
-  desde su `ended_at` - desaparece en cuanto se inicia una nueva y
-  vuelve a empezar desde cero al detenerla, sin dato nuevo que guardar
-  (es el mismo cálculo que ya hacía `ContractionTimeline.vue` para el
-  chip de intervalo, solo que en vivo en vez de a posteriori). Ese
-  mismo chip de intervalo pasa el umbral de "demasiado largo" de 50 a
-  60 minutos (`LONG_GAP_MINUTES`, también en el PDF exportado). La
-  hoja de edición usa `toLocalInputValueWithSeconds()` (hermana de
-  `toLocalInputValue()`, que se queda igual para el resto de
-  formularios del dashboard) junto con `step="1"` en sus dos campos,
-  para poder ajustar los segundos de inicio/fin, no solo el minuto -
-  sin esto los segundos reales se perdían nada más abrir la hoja.
-  Intensidad en 3
-  niveles — Leve/
-  Moderada/Intensa — en vez de los 4 del original de referencia (pedido
-  explícito). El registro de rotura de bolsa de aguas
-  (`babies.current.water_broke_at`, vía `updateBaby()`, sin acción de
-  store nueva) mejora el original en dos puntos pedidos: se ve la fecha
-  completa además de la hora, y es editable, no solo "restablecer".
-  `lib/datetimeInput.ts` (extraído de `DashboardView.vue`, que antes lo
-  definía inline) centraliza `toLocalInputValue`/`nowForInput`/
-  `toUtcIso`, reutilizado ahora por ambas vistas. La hora local se lee campo
-  a campo (`getHours()`...), nunca sumando el desfase horario y leyendo en
-  UTC: esa suma se hacía en hora local y la noche del cambio de hora de
-  octubre, entre la 1:00 y las 3:00, abría cada registro con una hora de más.
+  `src/components/ContractionTimeline.vue`, ruta `/contracciones`) — vista
+  propia, no una categoría más de la barra de accesos: el cronómetro en vivo
+  y la línea temporal con intervalos no encajan en el patrón de
+  hoja-inferior del resto de categorías, y solo tiene sentido antes de nacer
+  el bebé. Se enlaza desde una tarjeta en el dashboard visible solo mientras
+  `babies.current.birth_date` está vacío — desaparece sola en cuanto se
+  rellena, sin quedar como enlace muerto. `lib/contractionStats.ts` es una
+  función pura (ventana de los últimos 60 minutos) para "veces por hora /
+  duración media / intervalo medio", testeable sin montar Pinia.
+  `ContractionsView.vue` mantiene un único `now` (un `setInterval` de 1s)
+  que pasa como prop a `ContractionTimeline.vue`, para que el contador en
+  vivo de la fila activa y las estadísticas del encabezado no se
+  desincronicen por llevar cada uno su propio intervalo. Ese mismo `now`
+  alimenta `sinceLastLabel` ("Desde la última: mm:ss", justo encima de la
+  fila más reciente de la línea temporal — vivió primero sobre el botón de
+  inicio, en la barra flotante, pero quedaba lejos de la contracción a la
+  que se refiere): mientras no hay ninguna contracción en marcha pero ya
+  existe una anterior, cuenta en vivo el tiempo transcurrido desde su
+  `ended_at` - desaparece en cuanto se inicia una nueva y vuelve a empezar
+  desde cero al detenerla, sin dato nuevo que guardar (es el mismo cálculo
+  que ya hacía `ContractionTimeline.vue` para el chip de intervalo, solo que
+  en vivo en vez de a posteriori). Ese mismo chip de intervalo pasa el
+  umbral de "demasiado largo" de 50 a 60 minutos (`LONG_GAP_MINUTES`,
+  también en el PDF exportado). La hoja de edición usa
+  `toLocalInputValueWithSeconds()` (hermana de `toLocalInputValue()`, que se
+  queda igual para el resto de formularios del dashboard) junto con
+  `step="1"` en sus dos campos, para poder ajustar los segundos de
+  inicio/fin, no solo el minuto - sin esto los segundos reales se perdían
+  nada más abrir la hoja. Intensidad en 3 niveles — Leve/ Moderada/Intensa —
+  en vez de los 4 del original de referencia (pedido explícito). El registro
+  de rotura de bolsa de aguas (`babies.current.water_broke_at`, vía
+  `updateBaby()`, sin acción de store nueva) mejora el original en dos
+  puntos pedidos: se ve la fecha completa además de la hora, y es editable,
+  no solo "restablecer". `lib/datetimeInput.ts` (extraído de
+  `DashboardView.vue`, que antes lo definía inline) centraliza
+  `toLocalInputValue`/`nowForInput`/ `toUtcIso`, reutilizado ahora por ambas
+  vistas. La hora local se lee campo a campo (`getHours()`...), nunca
+  sumando el desfase horario y leyendo en UTC: esa suma se hacía en hora
+  local y la noche del cambio de hora de octubre, entre la 1:00 y las 3:00,
+  abría cada registro con una hora de más.
   `lib/__tests__/datetimeInput.spec.ts` fija los dos cambios de hora con
   `TZ=Europe/Madrid`. La exportación a PDF
-  (`babies.exportContractionsPdf()`) pide el endpoint con
-  `responseType: 'blob'` en vez de un `<a href>` directo — la API usa
-  token Bearer, no cookies, así que un enlace normal no llevaría la
-  cabecera de autorización — y dispara la descarga con un `<a download>`
-  temporal sobre un `URL.createObjectURL(blob)`. Bug real encontrado
-  al probar en vivo: `ContractionController@store` no pasaba
-  `ended_at` a `create()`, así que Eloquent omitía la clave del JSON
-  de respuesta en vez de mandar `null` — como el frontend detecta la
-  contracción en marcha comparando `ended_at === null`, el botón de
-  inicio/detener se quedaba atascado y `contractionStats.ts` contaba
-  la fila activa como "completada", dando `NaN:NaN` en la duración
-  media (ver la nota del mismo problema con `intensity` en
-  `api/README.md`). `ContractionTimeline.vue` fue rediseñado tras una
-  segunda pasada para acercarse más a la app de referencia: filas en
-  píldora con la hora y el número de contracción grandes junto al
-  círculo (conectados por una línea gruesa), duración/intensidad/menú
-  más discretos dentro de la píldora, separador de día entre grupos, y
-  chip de intervalo alineado a la derecha en vez de centrado. Los
-  botones de "Inicio de contracción"/"Detener" y de rotura de bolsa
-  dejaron de estar en el flujo normal de la página y pasaron a un pie
-  fijo teletransportado a `<body>` (mismo patrón que `BottomSheet.vue`,
-  para no depender de que ningún ancestro tenga `transform`), flotando
-  sobre el historial en la parte inferior de la pantalla. `sinceLastLabel`
-  pasó luego por dos ajustes: primero a la misma píldora con borde
-  alineada a la derecha que usan los chips de intervalo (antes texto
-  centrado aparte), congelando su texto en "> 60 min" al superar
-  `LONG_GAP_MINUTES` sin dejar de contar por debajo; después de
-  `ContractionsView.vue` a `ContractionTimeline.vue` como prop, porque
-  vivir antes del propio componente la dejaba pegada al separador de
+  (`babies.exportContractionsPdf()`) pide el endpoint con `responseType:
+  'blob'` en vez de un `<a href>` directo — la API usa token Bearer, no
+  cookies, así que un enlace normal no llevaría la cabecera de autorización
+  — y dispara la descarga con un `<a download>` temporal sobre un
+  `URL.createObjectURL(blob)`. Bug real encontrado al probar en vivo:
+  `ContractionController@store` no pasaba `ended_at` a `create()`, así que
+  Eloquent omitía la clave del JSON de respuesta en vez de mandar `null` —
+  como el frontend detecta la contracción en marcha comparando `ended_at ===
+  null`, el botón de inicio/detener se quedaba atascado y
+  `contractionStats.ts` contaba la fila activa como "completada", dando
+  `NaN:NaN` en la duración media (ver la nota del mismo problema con
+  `intensity` en `api/README.md`). `ContractionTimeline.vue` fue rediseñado
+  tras una segunda pasada para acercarse más a la app de referencia: filas
+  en píldora con la hora y el número de contracción grandes junto al círculo
+  (conectados por una línea gruesa), duración/intensidad/menú más discretos
+  dentro de la píldora, separador de día entre grupos, y chip de intervalo
+  alineado a la derecha en vez de centrado. Los botones de "Inicio de
+  contracción"/"Detener" y de rotura de bolsa dejaron de estar en el flujo
+  normal de la página y pasaron a un pie fijo teletransportado a `<body>`
+  (mismo patrón que `BottomSheet.vue`, para no depender de que ningún
+  ancestro tenga `transform`), flotando sobre el historial en la parte
+  inferior de la pantalla. `sinceLastLabel` pasó luego por dos ajustes:
+  primero a la misma píldora con borde alineada a la derecha que usan los
+  chips de intervalo (antes texto centrado aparte), congelando su texto en
+  "> 60 min" al superar `LONG_GAP_MINUTES` sin dejar de contar por debajo;
+  después de `ContractionsView.vue` a `ContractionTimeline.vue` como prop,
+  porque vivir antes del propio componente la dejaba pegada al separador de
   día en vez de a la fila de la contracción cuando esta era de un día
-  distinto al de "ahora". El icono de la tarjeta de enlace del
-  dashboard cambió de una gota (ya usada dentro de esta misma vista
-  para la rotura de bolsa de aguas, así que sugería "agua") a un
-  cronómetro. Botón "Eliminar todas las contracciones" (mismo patrón de
-  confirmación en dos pasos que "Dejar de cuidar al bebé") que llama a
-  `babies.deleteAllContractions()` — útil tras una falsa alarma, sin
-  tener que borrar fila por fila. Vivió primero en los ajustes del bebé
-  (`DashboardView.vue`, junto a "Dejar de cuidar"), siempre visible
-  aunque no hubiera ninguna contracción que borrar; se movió al final
-  de la propia `ContractionsView.vue` — la página que de hecho sabe si
-  hay contracciones cargadas — y ahora solo aparece cuando las hay. El
-  PDF exportado se ordenó de más
-  reciente a más antigua (igual que en pantalla — antes salía al
-  revés) y recibió una pasada de legibilidad para papel: tipografía
-  más grande, separador de día centrado, columnas reequilibradas
-  (duración más estrecha, el resto más ancho) y contenido alineado a
-  la derecha. Ganó también cabecera con estadísticas y fecha de
-  generación, pie de página con el logo de la app, y la rotura de
-  bolsa de aguas integrada como una fila más en su hueco cronológico
-  dentro de la propia línea temporal, en azul para distinguirse como
-  evento aparte (ver `api/README.md` para el detalle del lado
-  backend).
+  distinto al de "ahora". El icono de la tarjeta de enlace del dashboard
+  cambió de una gota (ya usada dentro de esta misma vista para la rotura de
+  bolsa de aguas, así que sugería "agua") a un cronómetro. Botón "Eliminar
+  todas las contracciones" (mismo patrón de confirmación en dos pasos que
+  "Dejar de cuidar al bebé") que llama a `babies.deleteAllContractions()` —
+  útil tras una falsa alarma, sin tener que borrar fila por fila. Vivió
+  primero en los ajustes del bebé (`DashboardView.vue`, junto a "Dejar de
+  cuidar"), siempre visible aunque no hubiera ninguna contracción que
+  borrar; se movió al final de la propia `ContractionsView.vue` — la página
+  que de hecho sabe si hay contracciones cargadas — y ahora solo aparece
+  cuando las hay. El PDF exportado se ordenó de más reciente a más antigua
+  (igual que en pantalla — antes salía al revés) y recibió una pasada de
+  legibilidad para papel: tipografía más grande, separador de día centrado,
+  columnas reequilibradas (duración más estrecha, el resto más ancho) y
+  contenido alineado a la derecha. Ganó también cabecera con estadísticas y
+  fecha de generación, pie de página con el logo de la app, y la rotura de
+  bolsa de aguas integrada como una fila más en su hueco cronológico dentro
+  de la propia línea temporal, en azul para distinguirse como evento aparte
+  (ver `api/README.md` para el detalle del lado backend).
 - **Sexo al crear el bebé, eliminar bebé para el cuidador único**
   (`DashboardView.vue`) — el formulario de onboarding ("Empieza con tu
   bebé") solo pedía nombre y fecha prevista de parto; el sexo (opcional,
@@ -779,25 +771,26 @@ verse bien en una captura:
   fijados en el CSS generado en tiempo de compilación.
 - **Fondos con texto blanco encima: tonos "fuertes"** (`--feed-strong`,
   `--warning-strong`..., clases `bg-*-strong`, `categoryStrongBg` en
-  `lib/category.ts`): las tarjetas del resumen, el botón "Dar" de la vitamina D
-  y los días marcados. Con los colores de categoría el blanco quedaba por debajo
-  del mínimo de contraste 4,5:1 (Tomas 2,9:1; en tema oscuro, más claros,
-  2,1–2,4:1); estos dan al menos 4,8:1 y son iguales en los dos temas. Gráficas,
-  iconos y bordes siguen con los colores normales. Texto sobre `--danger`:
-  `text-surface`, como `.btn-danger`.
-- **Sombras solo en lo que se toca**: `.card` (contenedores: Ritmo, Estadísticas,
-  formularios) lleva un borde fino sin sombra; `.card-interactive` (resumen del día,
-  tarjetas de enlace, filas de vacunas) lleva la sombra en reposo y se eleva al
-  pasar el ratón.
+  `lib/category.ts`): las tarjetas del resumen, el botón "Dar" de la
+  vitamina D y los días marcados. Con los colores de categoría el blanco
+  quedaba por debajo del mínimo de contraste 4,5:1 (Tomas 2,9:1; en tema
+  oscuro, más claros, 2,1–2,4:1); estos dan al menos 4,8:1 y son iguales en
+  los dos temas. Gráficas, iconos y bordes siguen con los colores normales.
+  Texto sobre `--danger`: `text-surface`, como `.btn-danger`.
+- **Sombras solo en lo que se toca**: `.card` (contenedores: Ritmo,
+  Estadísticas, formularios) lleva un borde fino sin sombra;
+  `.card-interactive` (resumen del día, tarjetas de enlace, filas de
+  vacunas) lleva la sombra en reposo y se eleva al pasar el ratón.
 - **Números para leer** con `lib/formatNumber.ts` (`formatDecimal`,
-  `formatHoursShort`, `formatDurationMinutes`): coma decimal en español, punto en
-  inglés, espacio antes de la unidad ("3,9 h", "3 h 24 min"). Los campos de
-  formulario no pasan por ahí (necesitan el punto).
-- **`overflow-x: clip` en el contenedor de `App.vue`, no `hidden`**: `hidden` lo
-  convierte en contenedor de desplazamiento y anula cualquier `position: sticky`
-  de dentro sin avisar. Gracias a eso el día de la línea temporal se queda fijo
-  arriba al bajar (`groupTimelineByDay` añade el recuento del día solo cuando el
-  día está entero en la lista); lo comprueba `e2e/sticky-day.spec.ts`.
+  `formatHoursShort`, `formatDurationMinutes`): coma decimal en español,
+  punto en inglés, espacio antes de la unidad ("3,9 h", "3 h 24 min"). Los
+  campos de formulario no pasan por ahí (necesitan el punto).
+- **`overflow-x: clip` en el contenedor de `App.vue`, no `hidden`**:
+  `hidden` lo convierte en contenedor de desplazamiento y anula cualquier
+  `position: sticky` de dentro sin avisar. Gracias a eso el día de la línea
+  temporal se queda fijo arriba al bajar (`groupTimelineByDay` añade el
+  recuento del día solo cuando el día está entero en la lista); lo comprueba
+  `e2e/sticky-day.spec.ts`.
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
   con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
   a terceros y disponible sin conexión desde la primera visita);
@@ -835,22 +828,21 @@ verse bien en una captura:
   más allá del color del texto) inclinan su icono y suben el círculo
   ligeramente al pasar el ratón, vía clases `group-hover`/`motion-reduce`
   de Tailwind en vez de CSS aparte.
-- **Jerarquía visual** — la pasada de interactividad de arriba no bastó
-  por sí sola: la app seguía leyendo "plana" porque cada sección era el
-  mismo bloque blanco de mismo tamaño apilado, sin nada que rompiera el
-  ritmo. `TodaySummary.vue` (justo bajo la cabecera del bebé) resuelve
-  eso con una fila de estadísticas de hoy en relleno sólido por
-  categoría y cifras grandes (`font-display`) — el primer sitio de la
-  página con una escala tipográfica real, no texto uniforme. Desde
-  octubre de 2026 la cifra va dentro del círculo de la izquierda y el
-  icono, pequeño, delante de la etiqueta, con una línea menos por
-  tarjeta. El fondo de `body` en `base.css` pasa de `--surface-sunken`
-  plano a ese mismo tono más dos veladuras radiales fijas (`background-attachment:
-  fixed`) en `--brand`/`--brand-teal` vía `color-mix()`, muy tenues,
-  para que las tarjetas blancas lean como si flotasen sobre algo en vez
-  de fundirse con el fondo. Los títulos de sección sueltos (Hitos,
-  Línea temporal, Crecimiento) ganan una barrita de acento de color
-  junto al texto.
+- **Jerarquía visual** — la pasada de interactividad de arriba no bastó por
+  sí sola: la app seguía leyendo "plana" porque cada sección era el mismo
+  bloque blanco de mismo tamaño apilado, sin nada que rompiera el ritmo.
+  `TodaySummary.vue` (justo bajo la cabecera del bebé) resuelve eso con una
+  fila de estadísticas de hoy en relleno sólido por categoría y cifras
+  grandes (`font-display`) — el primer sitio de la página con una escala
+  tipográfica real, no texto uniforme. Desde octubre de 2026 la cifra va
+  dentro del círculo de la izquierda y el icono, pequeño, delante de la
+  etiqueta, con una línea menos por tarjeta. El fondo de `body` en
+  `base.css` pasa de `--surface-sunken` plano a ese mismo tono más dos
+  veladuras radiales fijas (`background-attachment: fixed`) en
+  `--brand`/`--brand-teal` vía `color-mix()`, muy tenues, para que las
+  tarjetas blancas lean como si flotasen sobre algo en vez de fundirse con
+  el fondo. Los títulos de sección sueltos (Hitos, Línea temporal,
+  Crecimiento) ganan una barrita de acento de color junto al texto.
 - **`src/theme.ts` / `ThemeToggle.vue`**: claro/oscuro/sistema,
   persistido en `localStorage` (`pequedex_theme`) y aplicado antes del
   montaje en `main.ts` para que no parpadee el tema equivocado en la
@@ -1731,12 +1723,12 @@ lo cogen en su siguiente comprobación.
   bolsa de Contracciones tiene nombre; el Dashboard tiene un `h1` solo para
   lectores de pantalla. Comprobado con axe-core (sin violaciones en las cinco
   pantallas principales).
-- **Tus datos** (Tu cuenta, abajo): primero "Descargar copia", que baja un JSON
-  con todo y pasa a "Copia descargada"; debajo, "Eliminar mi cuenta" plegado en
-  una fila con un resumen de una línea. Al abrirlo explica en tres puntos qué se
-  borra y qué no, ofrece "Descargar una copia antes" si aún no se ha bajado y solo
-  entonces pide la contraseña. Al volver a abrir la hoja se pliega y se vacía la
-  contraseña. Detalle en `api/README.md`.
+- **Tus datos** (Tu cuenta, abajo): primero "Descargar copia", que baja un
+  JSON con todo y pasa a "Copia descargada"; debajo, "Eliminar mi cuenta"
+  plegado en una fila con un resumen de una línea. Al abrirlo explica en
+  tres puntos qué se borra y qué no, ofrece "Descargar una copia antes" si
+  aún no se ha bajado y solo entonces pide la contraseña. Al volver a abrir
+  la hoja se pliega y se vacía la contraseña. Detalle en `api/README.md`.
 
 ## Vacunas y revisiones (`/vacunas`)
 

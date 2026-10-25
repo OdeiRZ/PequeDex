@@ -1,4 +1,5 @@
 import { parseDateOnly } from '@/lib/localDate'
+import { formatDurationMinutes } from '@/lib/formatNumber'
 import type { TimelineEntry } from '@/stores/babies'
 
 // Referencias de sueño por edad, para comparar el sueño real del bebé
@@ -67,11 +68,7 @@ export function wakeWindowReference(months: number | null): RangeReference | nul
 
 /** "1h", "1h 15min", "45min". */
 export function formatMinutesShort(minutes: number): string {
-  const rounded = Math.round(minutes)
-  const hours = Math.floor(rounded / 60)
-  const rest = rounded % 60
-  if (hours === 0) return `${rest}min`
-  return rest === 0 ? `${hours}h` : `${hours}h ${rest}min`
+  return formatDurationMinutes(minutes)
 }
 
 /** "1h–2h", "1h 15min–2h 30min". */

@@ -11,6 +11,7 @@ import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
 import { DIAPER_PEE_COLOR, DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { MILK_TYPE_DROPLET_FILL } from '@/lib/milkType'
+import { formatDurationMinutes } from '@/lib/formatNumber'
 import { parseDateOnly } from '@/lib/localDate'
 
 /** Firma de `t()` de vue-i18n - se pasa tal cual desde el componente,
@@ -64,10 +65,11 @@ export function formatDuration(
   const start = new Date(startedAt).getTime()
   const end = endedAt ? new Date(endedAt).getTime() : now()
   const minutes = Math.max(0, Math.round((end - start) / 60_000))
+  // "3 h 24 min", "10 min" (antes "3h 24min"); con horas exactas se deja la
+  // forma completa ("2 h 0 min"), que en la línea temporal se lee mejor como
+  // duración medida que un "2 h" suelto.
   const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-
-  return hours > 0 ? `${hours}h ${remainingMinutes}min` : `${remainingMinutes}min`
+  return hours > 0 ? `${hours} h ${minutes % 60} min` : formatDurationMinutes(minutes)
 }
 
 export function formatTime(at: string, locale?: string): string {

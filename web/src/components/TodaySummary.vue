@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { categoryStrongBg, type Category } from '@/lib/category'
 import { parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
 import { formatMinutesShort } from '@/lib/sleepReference'
+import { formatHoursShort } from '@/lib/formatNumber'
 import CategoryIcon from './CategoryIcon.vue'
 import type { TimelineEntry } from '@/stores/babies'
 
@@ -71,11 +72,10 @@ const stats = computed<Stat[]>(() => {
         minutes += (clippedEnd.getTime() - clippedStart.getTime()) / 60_000
       }
     }
-    const hours = (minutes / 60).toFixed(1).replace(/\.0$/, '')
     result.push({
       category: 'sleep',
       raw: minutes,
-      value: minutes > 0 ? `${hours}h` : '0h',
+      value: formatSleep(minutes),
       label: t('dashboard.todaySummary.sleep'),
     })
   }
@@ -149,9 +149,9 @@ const flashing = reactive<Partial<Record<Category, boolean>>>({})
 const tweenFrames = new Map<Category, number>()
 const flashTimers = new Map<Category, ReturnType<typeof setTimeout>>()
 
+// "3,9 h" en español, "3.9 h" en inglés (formatHoursShort).
 function formatSleep(minutes: number): string {
-  const hours = (minutes / 60).toFixed(1).replace(/\.0$/, '')
-  return minutes > 0 ? `${hours}h` : '0h'
+  return formatHoursShort(Math.round((minutes / 60) * 10) / 10)
 }
 
 function animateStat(stat: Stat, fromRaw: number) {

@@ -141,21 +141,23 @@ describe('entrySleepEmoji / entrySleepPulsing', () => {
 
 describe('formatDuration', () => {
   it('formats minutes under an hour as just minutes', () => {
-    expect(formatDuration('2026-08-07T10:00:00.000Z', '2026-08-07T10:25:00.000Z')).toBe('25min')
+    expect(formatDuration('2026-08-07T10:00:00.000Z', '2026-08-07T10:25:00.000Z')).toBe('25 min')
   })
 
   it('formats an hour or more as hours and minutes', () => {
-    expect(formatDuration('2026-08-07T10:00:00.000Z', '2026-08-07T11:30:00.000Z')).toBe('1h 30min')
+    expect(formatDuration('2026-08-07T10:00:00.000Z', '2026-08-07T11:30:00.000Z')).toBe(
+      '1 h 30 min',
+    )
   })
 
   it('uses the injected clock when still ongoing (no endedAt)', () => {
     const now = () => new Date('2026-08-07T10:45:00.000Z').getTime()
-    expect(formatDuration('2026-08-07T10:00:00.000Z', null, now)).toBe('45min')
+    expect(formatDuration('2026-08-07T10:00:00.000Z', null, now)).toBe('45 min')
   })
 
   it('never goes negative, even against a clock skew', () => {
     const now = () => new Date('2026-08-07T09:00:00.000Z').getTime()
-    expect(formatDuration('2026-08-07T10:00:00.000Z', null, now)).toBe('0min')
+    expect(formatDuration('2026-08-07T10:00:00.000Z', null, now)).toBe('0 min')
   })
 })
 
@@ -172,7 +174,7 @@ describe('entryEndTime / entryDuration', () => {
       ended_at: '2026-08-07T11:15:00.000Z',
     })
     expect(entryEndTime(entry)).toBe(formatTime('2026-08-07T11:15:00.000Z'))
-    expect(entryDuration(entry)).toBe('1h 15min')
+    expect(entryDuration(entry)).toBe('1 h 15 min')
   })
 
   it('reports both for a finished breastfeed, neither for a bottle/solid feed', () => {
@@ -182,7 +184,7 @@ describe('entryEndTime / entryDuration', () => {
       ended_at: '2026-08-07T10:15:00.000Z',
     })
     expect(entryEndTime(breastfeed)).toBe(formatTime('2026-08-07T10:15:00.000Z'))
-    expect(entryDuration(breastfeed)).toBe('15min')
+    expect(entryDuration(breastfeed)).toBe('15 min')
 
     const bottle = feedEntry({ type: 'biberon', ended_at: '2026-08-07T10:15:00.000Z' })
     expect(entryEndTime(bottle)).toBeUndefined()

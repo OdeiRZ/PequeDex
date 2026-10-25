@@ -100,8 +100,8 @@ describe('TodaySummary "time since"', () => {
       props: { timeline, enabledCategories: ['feed', 'diaper'], day: '2026-10-20' },
       global: { plugins: [i18n] },
     })
-    expect(today.text()).toContain('última hace 10min')
-    expect(today.text()).toContain('último hace 3h 30min')
+    expect(today.text()).toContain('última hace 10 min')
+    expect(today.text()).toContain('último hace 3 h 30 min')
 
     const pastDay = mount(TodaySummary, {
       props: { timeline, enabledCategories: ['feed', 'diaper'], day: '2026-10-19' },

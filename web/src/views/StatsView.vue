@@ -40,6 +40,7 @@ import { ALL_CATEGORIES, type Category } from '@/lib/category'
 import { DIAPER_RESIDUE_COLOR_HEX } from '@/lib/diaperResidueColor'
 import { FEVER_THRESHOLD_CELSIUS, formatCelsius } from '@/lib/timelineEntry'
 import { parseDateOnly } from '@/lib/localDate'
+import { formatDecimal, formatDurationMinutes, formatHoursShort } from '@/lib/formatNumber'
 import {
   ageInMonths,
   compareToRange,
@@ -196,7 +197,7 @@ function formatMinutesDelta(minutes: number): string {
 
 function formatPerDayDelta(value: number): string {
   if (Math.abs(value) < 0.05) return t('stats.period.noChange')
-  return `${value > 0 ? '+' : '−'}${Math.abs(value).toFixed(1)}`
+  return `${value > 0 ? '+' : '−'}${formatDecimal(Math.abs(value))}`
 }
 
 const deltaSuffix = computed(() =>
@@ -246,7 +247,7 @@ const diaperWeeklyPoints = computed(() =>
 )
 
 function formatHours(value: number): string {
-  return `${value}h`
+  return formatHoursShort(value)
 }
 
 const weekComparison = computed(() => summarizeWeekComparison(weeklyTrend.value))
@@ -254,7 +255,7 @@ const weekComparison = computed(() => summarizeWeekComparison(weeklyTrend.value)
 function formatDelta(delta: number, decimals = 0): string {
   const rounded = Math.abs(delta) < 0.05 ? 0 : delta
   const sign = rounded > 0 ? '+' : ''
-  return `${sign}${rounded.toFixed(decimals)}`
+  return `${sign}${formatDecimal(rounded, decimals)}`
 }
 
 const comparisonTiles = computed(() => {
@@ -292,11 +293,9 @@ const comparisonTiles = computed(() => {
   return tiles
 })
 
+// "1 h 5 min", "45 min" (lib/formatNumber.ts).
 function formatMinutes(minutes: number): string {
-  const rounded = Math.round(minutes)
-  const hours = Math.floor(rounded / 60)
-  const remaining = rounded % 60
-  return hours > 0 ? `${hours}h ${remaining}min` : `${remaining}min`
+  return formatDurationMinutes(minutes)
 }
 
 function formatCount(count: number): string {
@@ -305,7 +304,7 @@ function formatCount(count: number): string {
 
 function formatGain(value: number, decimals: number, unit: string): string {
   const sign = value > 0 ? '+' : ''
-  return `${sign}${value.toFixed(decimals)} ${unit}`
+  return `${sign}${formatDecimal(value, decimals)} ${unit}`
 }
 
 // Qué parte de la barra de reparto día/noche pinta de color sólido -
@@ -695,7 +694,7 @@ async function onExportPdf(mode: StatsExportMode) {
             <div v-if="feedStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">
               <div class="text-xs text-text-muted">{{ t('stats.feed.perDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ feedStats.averagePerDay.toFixed(1) }}
+                {{ formatDecimal(feedStats.averagePerDay) }}
               </div>
               <div
                 v-if="periodDeltas?.feedsPerDay != null"
@@ -769,7 +768,7 @@ async function onExportPdf(mode: StatsExportMode) {
             >
               <div class="text-xs text-text-muted">{{ t('stats.sleep.sleepsPerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ sleepStats.averageSleepsPerDay.toFixed(1) }}
+                {{ formatDecimal(sleepStats.averageSleepsPerDay) }}
               </div>
             </div>
             <div class="rounded-xl bg-surface-sunken p-3">
@@ -903,7 +902,7 @@ async function onExportPdf(mode: StatsExportMode) {
             >
               <div class="text-xs text-text-muted">{{ t('stats.diaper.peePerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ diaperStats.averagePeePerDay.toFixed(1) }}
+                {{ formatDecimal(diaperStats.averagePeePerDay) }}
               </div>
               <div
                 v-if="periodDeltas?.peePerDay != null"
@@ -918,7 +917,7 @@ async function onExportPdf(mode: StatsExportMode) {
             >
               <div class="text-xs text-text-muted">{{ t('stats.diaper.poopPerDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ diaperStats.averagePoopPerDay.toFixed(1) }}
+                {{ formatDecimal(diaperStats.averagePoopPerDay) }}
               </div>
               <div
                 v-if="periodDeltas?.poopPerDay != null"
@@ -930,7 +929,7 @@ async function onExportPdf(mode: StatsExportMode) {
             <div v-if="diaperStats.averagePerDay !== null" class="rounded-xl bg-surface-sunken p-3">
               <div class="text-xs text-text-muted">{{ t('stats.diaper.perDayLabel') }}</div>
               <div class="text-lg font-bold tabular-nums">
-                {{ diaperStats.averagePerDay.toFixed(1) }}
+                {{ formatDecimal(diaperStats.averagePerDay) }}
               </div>
             </div>
             <div
@@ -1159,7 +1158,12 @@ async function onExportPdf(mode: StatsExportMode) {
                 />
                 <div class="mt-1 flex items-baseline justify-between">
                   <span class="text-lg font-bold tabular-nums">
-                    {{ metric.stat.latestValue?.toFixed(metric.decimals) }} {{ metric.unit }}
+                    {{
+                      metric.stat.latestValue === null || metric.stat.latestValue === undefined
+                        ? ''
+                        : formatDecimal(metric.stat.latestValue, metric.decimals)
+                    }}
+                    {{ metric.unit }}
                   </span>
                   <span
                     v-if="metric.stat.gained !== null"
@@ -1178,7 +1182,12 @@ async function onExportPdf(mode: StatsExportMode) {
                 </div>
               </template>
               <div v-else class="text-lg font-bold tabular-nums">
-                {{ metric.stat.latestValue?.toFixed(metric.decimals) }} {{ metric.unit }}
+                {{
+                  metric.stat.latestValue === null || metric.stat.latestValue === undefined
+                    ? ''
+                    : formatDecimal(metric.stat.latestValue, metric.decimals)
+                }}
+                {{ metric.unit }}
               </div>
             </template>
           </div>

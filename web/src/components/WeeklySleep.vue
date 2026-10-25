@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { summarizeSleepByDay } from '@/lib/sleepHistory'
 import type { Sleep } from '@/stores/babies'
+import { formatDecimal } from '@/lib/formatNumber'
 
 const props = defineProps<{ sleeps: Sleep[]; dateLocale: string }>()
 
@@ -60,7 +61,7 @@ function isToday(dateKey: string): boolean {
 }
 
 function hoursLabel(hours: number): string {
-  return hours > 0 ? `${hours.toFixed(1)} h` : ''
+  return hours > 0 ? `${formatDecimal(hours)} h` : ''
 }
 </script>
 

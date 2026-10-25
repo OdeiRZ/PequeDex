@@ -722,6 +722,7 @@ export default {
     },
     rhythm: {
       title: "Today's rhythm",
+      now: 'now',
       empty: 'Nothing logged yet today.',
       emptyOtherDay: 'Nothing logged that day.',
       prevDay: 'Previous day',

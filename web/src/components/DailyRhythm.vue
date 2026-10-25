@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
@@ -47,10 +47,22 @@ interface RhythmSegment {
 
 interface RhythmData {
   feedTicks: RhythmTick[]
+  /** Tomas con duración (pecho con hora de fin): de su inicio a su fin, como
+   * los sueños. Las que no la tienen (biberón, sólido, "sin indicar") siguen
+   * siendo una marca en `feedTicks`. */
+  feedSegments: RhythmSegment[]
   diaperTicks: RhythmTick[]
   sleepSegments: RhythmSegment[]
   hasData: boolean
+  /** Dónde cae "ahora" en la barra; `null` si no se está viendo hoy. */
+  nowLeft: number | null
 }
+
+// Reloj de la barra: mueve la marca de "ahora" y alarga el sueño en curso sin
+// esperar a otro cambio. Cada minuto basta (un minuto son 0,07 % del ancho).
+const clock = ref(Date.now())
+const clockTimer = setInterval(() => (clock.value = Date.now()), 60_000)
+onUnmounted(() => clearInterval(clockTimer))
 
 const dayLabel = computed(() => formatWeekdayDateLabel(parseDateOnly(props.day), props.dateLocale))
 
@@ -83,7 +95,7 @@ function onNext() {
 // end, same as before; `toPercent`'s own clamp already keeps that
 // inside the shown day's bounds regardless of which day that is.
 const rhythm = computed<RhythmData>(() => {
-  const now = new Date()
+  const now = new Date(clock.value)
   const start = parseDateOnly(props.day)
   const end = new Date(start)
   end.setHours(23, 59, 59, 999)
@@ -97,6 +109,7 @@ const rhythm = computed<RhythmData>(() => {
     date.toLocaleTimeString(props.dateLocale, { hour: '2-digit', minute: '2-digit' })
 
   const feedTicks: Omit<RhythmTick, 'order'>[] = []
+  const feedSegments: Omit<RhythmSegment, 'order'>[] = []
   const diaperTicks: Omit<RhythmTick, 'order'>[] = []
   const sleepSegments: Omit<RhythmSegment, 'order'>[] = []
 
@@ -104,7 +117,18 @@ const rhythm = computed<RhythmData>(() => {
     if (entry.type === 'feed') {
       if (!props.enabledCategories.includes('feed')) continue
       const at = new Date(entry.data.started_at)
-      if (at >= start && at <= end) feedTicks.push({ left: toPercent(at), time: toTime(at) })
+      if (entry.data.ended_at) {
+        const feedEnd = new Date(entry.data.ended_at)
+        if (feedEnd < start || at > end) continue
+        const left = toPercent(at)
+        feedSegments.push({
+          left,
+          width: toPercent(feedEnd) - left,
+          time: `${toTime(at)}–${toTime(feedEnd)}`,
+        })
+      } else if (at >= start && at <= end) {
+        feedTicks.push({ left: toPercent(at), time: toTime(at) })
+      }
     } else if (entry.type === 'diaper_change') {
       if (!props.enabledCategories.includes('diaper')) continue
       const at = new Date(entry.data.changed_at)
@@ -127,16 +151,18 @@ const rhythm = computed<RhythmData>(() => {
   // Every mark's `left`, across all 3 categories, ranked together so
   // the stagger below reads left-to-right on the bar itself rather than
   // "all feeds, then all diapers, then all naps".
-  const allLefts = [...feedTicks, ...diaperTicks, ...sleepSegments]
+  const allLefts = [...feedTicks, ...feedSegments, ...diaperTicks, ...sleepSegments]
     .map((m) => m.left)
     .sort((a, b) => a - b)
   const orderOf = (left: number) => allLefts.indexOf(left)
 
   return {
     feedTicks: feedTicks.map((m) => ({ ...m, order: orderOf(m.left) })),
+    feedSegments: feedSegments.map((m) => ({ ...m, order: orderOf(m.left) })),
     diaperTicks: diaperTicks.map((m) => ({ ...m, order: orderOf(m.left) })),
     sleepSegments: sleepSegments.map((m) => ({ ...m, order: orderOf(m.left) })),
-    hasData: feedTicks.length > 0 || diaperTicks.length > 0 || sleepSegments.length > 0,
+    hasData: allLefts.length > 0,
+    nowLeft: props.isToday ? toPercent(now) : null,
   }
 })
 
@@ -245,6 +271,25 @@ watch(
             toggleTick({ label: t('dashboard.rhythm.sleep'), time: seg.time, left: seg.left })
           "
         ></button>
+        <!-- Toma con duración: un tramo como el sueño. Un mínimo de 5 px, el mismo
+             ancho que la marca de una toma sin duración: una de 10 minutos son
+             0,7 % del día y, a su tamaño real, quedaba más fina que esa marca. -->
+        <button
+          v-for="(seg, i) in rhythm.feedSegments"
+          :key="`feed-seg-${i}`"
+          type="button"
+          :title="`${t('dashboard.rhythm.feed')} ${seg.time}`"
+          :aria-label="`${t('dashboard.rhythm.feed')} ${seg.time}`"
+          class="mark-pop absolute top-[3px] bottom-[3px] min-w-[5px] rounded-full bg-feed transition-transform duration-150 hover:z-10 hover:scale-y-125 active:z-10 active:scale-y-125"
+          :style="{
+            left: `${seg.left}%`,
+            width: `${seg.width}%`,
+            animationDelay: `${seg.order * 45}ms`,
+          }"
+          @click.stop="
+            toggleTick({ label: t('dashboard.rhythm.feed'), time: seg.time, left: seg.left })
+          "
+        ></button>
         <button
           v-for="(tick, i) in rhythm.feedTicks"
           :key="`feed-${i}`"
@@ -269,6 +314,19 @@ watch(
             toggleTick({ label: t('dashboard.rhythm.diaper'), time: tick.time, left: tick.left })
           "
         ></button>
+
+        <!-- "Ahora": separa lo que ya ha pasado de lo que queda del día. Solo hoy. -->
+        <div
+          v-if="rhythm.nowLeft !== null"
+          class="pointer-events-none absolute -top-1 -bottom-1 w-0.5 -translate-x-1/2 rounded-full bg-text"
+          :style="{ left: `${rhythm.nowLeft}%` }"
+          data-testid="rhythm-now"
+        >
+          <span
+            class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[0.6rem] leading-none font-bold whitespace-nowrap text-text"
+            >{{ t('dashboard.rhythm.now') }}</span
+          >
+        </div>
 
         <div
           v-if="activeTick"

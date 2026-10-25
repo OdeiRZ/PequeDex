@@ -729,6 +729,7 @@ export default {
     },
     rhythm: {
       title: 'Ritmo de hoy',
+      now: 'ahora',
       empty: 'Todavía no hay nada registrado hoy.',
       emptyOtherDay: 'Todavía no hay nada registrado ese día.',
       prevDay: 'Día anterior',

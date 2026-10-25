@@ -9,11 +9,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
-- **Resumen del día más corto**: la cifra va en el círculo de la izquierda (se
-  ensancha para "10,5 h") y el icono, pequeño, delante de la etiqueta, con una
-  línea menos por tarjeta. Debajo pone solo "hace 10 min", "hace 2 h" o "hace
-  3 h", sin "última/último" ni "sueño" (el sueño en curso sigue con "lleva 40
-  min durmiendo").
+- **Resumen del día más corto y con el texto a todo el ancho**: arriba, la cifra
+  en grande a la izquierda y el icono en su círculo a la derecha; debajo, a todo
+  el ancho de la tarjeta, la etiqueta y el "hace…". Una primera versión metía la
+  cifra en el círculo, que se ensanchaba con "10,7 h" y dejaba al texto sin
+  sitio: en el móvil "de sueño" se salía de la tarjeta y "lleva 58 min
+  durmiendo" se partía palabra a palabra. Debajo pone solo "hace 10 min", "hace
+  2 h" o "hace 3 h", sin "última/último" ni "sueño" (el sueño en curso sigue con
+  "lleva 40 min durmiendo").
 - **"Ahora" bajo la barra del Ritmo**: la etiqueta pasa de encima de la barra
   a la fila de las horas, justo bajo su marca; la hora que quedaría pegada se
   oculta.

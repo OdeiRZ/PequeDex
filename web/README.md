@@ -834,9 +834,10 @@ verse bien en una captura:
   `TodaySummary.vue` (justo bajo la cabecera del bebé) resuelve eso con una
   fila de estadísticas de hoy en relleno sólido por categoría y cifras
   grandes (`font-display`) — el primer sitio de la página con una escala
-  tipográfica real, no texto uniforme. Desde octubre de 2026 la cifra va
-  dentro del círculo de la izquierda y el icono, pequeño, delante de la
-  etiqueta, con una línea menos por tarjeta. El fondo de `body` en
+  tipográfica real, no texto uniforme. Desde octubre de 2026 cada tarjeta
+  lleva arriba la cifra a la izquierda y el icono en su círculo a la derecha, y
+  debajo, a todo el ancho, la etiqueta y el "hace…" (con la cifra dentro del
+  círculo, este se ensanchaba y el texto se partía). El fondo de `body` en
   `base.css` pasa de `--surface-sunken` plano a ese mismo tono más dos
   veladuras radiales fijas (`background-attachment: fixed`) en
   `--brand`/`--brand-teal` vía `color-mix()`, muy tenues, para que las

@@ -510,10 +510,10 @@ export default {
       sleep: 'de sueño',
       diaper: 'pañal | pañales',
       since: {
-        feed: 'última hace {time}',
+        feed: 'hace {time}',
         sleepOngoing: 'lleva {time} durmiendo',
-        sleep: 'último sueño hace {time}',
-        diaper: 'último hace {time}',
+        sleep: 'sueño hace {time}',
+        diaper: 'hace {time}',
       },
     },
     vitaminD: {

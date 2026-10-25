@@ -507,10 +507,10 @@ export default {
       sleep: 'asleep',
       diaper: 'diaper | diapers',
       since: {
-        feed: 'last {time} ago',
+        feed: '{time} ago',
         sleepOngoing: 'asleep for {time}',
-        sleep: 'last sleep {time} ago',
-        diaper: 'last {time} ago',
+        sleep: 'sleep {time} ago',
+        diaper: '{time} ago',
       },
     },
     vitaminD: {

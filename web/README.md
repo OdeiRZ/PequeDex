@@ -1729,9 +1729,12 @@ lo cogen en su siguiente comprobación.
   bolsa de Contracciones tiene nombre; el Dashboard tiene un `h1` solo para
   lectores de pantalla. Comprobado con axe-core (sin violaciones en las cinco
   pantallas principales).
-- **Tus datos** (Tu cuenta, abajo): "Descargar mis datos" baja un JSON con
-  todo y "Eliminar mi cuenta" pide la contraseña y explica qué se borra y qué
-  no antes de pedirla. Detalle en `api/README.md`.
+- **Tus datos** (Tu cuenta, abajo): primero "Descargar copia", que baja un JSON
+  con todo y pasa a "Copia descargada"; debajo, "Eliminar mi cuenta" plegado en
+  una fila con un resumen de una línea. Al abrirlo explica en tres puntos qué se
+  borra y qué no, ofrece "Descargar una copia antes" si aún no se ha bajado y solo
+  entonces pide la contraseña. Al volver a abrir la hoja se pliega y se vacía la
+  contraseña. Detalle en `api/README.md`.
 
 ## Vacunas y revisiones (`/vacunas`)
 

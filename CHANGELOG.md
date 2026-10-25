@@ -7,6 +7,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Retoques del lavado de cara y "Tus datos"
+
+- **Resumen del día más corto**: bajo cada cifra pone solo "hace 10 min", "sueño hace
+  2 h" o "hace 3 h", sin "última/último" (el sueño en curso sigue con "lleva 40 min
+  durmiendo").
+- **"Ahora" bajo la barra del Ritmo**: la etiqueta pasa de encima de la barra a la
+  fila de las horas, justo bajo su marca; la hora que quedaría pegada se oculta.
+- **"Tus datos" reordenado**: "Descargar copia" va primero con un botón a todo el
+  ancho que pasa a "Copia descargada". "Eliminar mi cuenta" queda plegado en una fila
+  con un resumen; al abrirlo explica en tres puntos qué se borra y qué no, ofrece
+  descargar una copia antes si aún no se ha hecho y después pide la contraseña.
+  Reabrir la hoja lo pliega y vacía la contraseña.
+
 ### Lavado de cara y medias de Estadísticas
 
 - **Corregido: las medias "al día" contaban el día de hoy, que acaba de empezar.**

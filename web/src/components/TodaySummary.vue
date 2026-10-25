@@ -227,11 +227,11 @@ onUnmounted(() => {
       class="card-interactive flex min-w-0 flex-col gap-1 rounded-2xl p-2.5 text-white"
       :class="[categoryStrongBg[stat.category], flashing[stat.category] && 'stat-card-flash']"
     >
-      <!-- Arriba la cifra en grande y, al otro lado, el icono en su círculo;
+      <!-- Arriba la cifra en grande con el icono en su círculo pegado a ella;
            debajo, a todo el ancho de la tarjeta, la etiqueta y el "hace…". Con
            la cifra dentro de un círculo que crecía ("10,7 h"), el texto se
            quedaba sin sitio y se partía palabra a palabra. -->
-      <div class="flex min-w-0 items-center justify-between gap-1.5">
+      <div class="flex min-w-0 items-center gap-2">
         <span
           class="min-w-0 truncate font-display text-lg leading-none font-bold tabular-nums"
           data-testid="summary-value"

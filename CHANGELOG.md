@@ -10,7 +10,7 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 ### Retoques del lavado de cara y "Tus datos"
 
 - **Resumen del día más corto y con el texto a todo el ancho**: arriba, la cifra
-  en grande a la izquierda y el icono en su círculo a la derecha; debajo, a todo
+  en grande y el icono en su círculo pegado a ella; debajo, a todo
   el ancho de la tarjeta, la etiqueta y el "hace…". Una primera versión metía la
   cifra en el círculo, que se ensanchaba con "10,7 h" y dejaba al texto sin
   sitio: en el móvil "de sueño" se salía de la tarjeta y "lleva 58 min

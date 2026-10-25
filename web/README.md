@@ -835,7 +835,7 @@ verse bien en una captura:
   fila de estadísticas de hoy en relleno sólido por categoría y cifras
   grandes (`font-display`) — el primer sitio de la página con una escala
   tipográfica real, no texto uniforme. Desde octubre de 2026 cada tarjeta
-  lleva arriba la cifra a la izquierda y el icono en su círculo a la derecha, y
+  lleva arriba la cifra y, pegado a ella, el icono en su círculo, y
   debajo, a todo el ancho, la etiqueta y el "hace…" (con la cifra dentro del
   círculo, este se ensanchaba y el texto se partía). El fondo de `body` en
   `base.css` pasa de `--surface-sunken` plano a ese mismo tono más dos

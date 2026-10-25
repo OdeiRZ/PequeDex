@@ -509,7 +509,7 @@ export default {
       since: {
         feed: '{time} ago',
         sleepOngoing: 'asleep for {time}',
-        sleep: 'sleep {time} ago',
+        sleep: '{time} ago',
         diaper: '{time} ago',
       },
     },

@@ -512,7 +512,7 @@ export default {
       since: {
         feed: 'hace {time}',
         sleepOngoing: 'lleva {time} durmiendo',
-        sleep: 'sueño hace {time}',
+        sleep: 'hace {time}',
         diaper: 'hace {time}',
       },
     },

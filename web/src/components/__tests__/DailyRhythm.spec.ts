@@ -67,7 +67,16 @@ describe('DailyRhythm', () => {
     expect(now.exists()).toBe(true)
     expect(now.attributes('style')).toContain('left: 25%')
 
+    // La etiqueta va debajo, en la fila de las horas; a las 6:00 "6h" queda
+    // pegada y se oculta.
+    const label = today.find('[data-testid="rhythm-now-label"]')
+    expect(label.text()).toBe('ahora')
+    expect(label.attributes('style')).toContain('left: 25%')
+    const sixAm = today.findAll('span').find((s) => s.text() === '6h')
+    expect(sixAm?.attributes('style')).toContain('display: none')
+
     const pastDay = mountRhythm([feed('2026-10-20T05:00:00', null)], false)
     expect(pastDay.find('[data-testid="rhythm-now"]').exists()).toBe(false)
+    expect(pastDay.find('[data-testid="rhythm-now-label"]').exists()).toBe(false)
   })
 })

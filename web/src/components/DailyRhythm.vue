@@ -166,6 +166,21 @@ const rhythm = computed<RhythmData>(() => {
   }
 })
 
+// Horas del eje; la que cae a menos de 8 % de "ahora" se oculta (su etiqueta
+// ocupa la misma fila, debajo de la barra).
+const hourMarks = computed(() =>
+  [
+    { label: '0h', at: 0, class: 'left-0' },
+    { label: '6h', at: 25, class: 'left-1/4 -translate-x-1/2' },
+    { label: '12h', at: 50, class: 'left-1/2 -translate-x-1/2' },
+    { label: '18h', at: 75, class: 'left-3/4 -translate-x-1/2' },
+    { label: '24h', at: 100, class: 'right-0' },
+  ].map((mark) => ({
+    ...mark,
+    hidden: rhythm.value.nowLeft !== null && Math.abs(mark.at - rhythm.value.nowLeft) < 8,
+  })),
+)
+
 // The exact time behind each mark used to live only in a `title`
 // attribute - a hover-only native tooltip, unreachable by touch on the
 // mobile-first majority of use. Marks are real `<button>`s now, and
@@ -321,12 +336,7 @@ watch(
           class="pointer-events-none absolute -top-1 -bottom-1 w-0.5 -translate-x-1/2 rounded-full bg-text"
           :style="{ left: `${rhythm.nowLeft}%` }"
           data-testid="rhythm-now"
-        >
-          <span
-            class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[0.6rem] leading-none font-bold whitespace-nowrap text-text"
-            >{{ t('dashboard.rhythm.now') }}</span
-          >
-        </div>
+        ></div>
 
         <div
           v-if="activeTick"
@@ -336,12 +346,24 @@ watch(
           {{ activeTick.label }} {{ activeTick.time }}
         </div>
       </div>
+      <!-- Horas bajo la barra, y "ahora" en la misma fila, justo bajo su marca. La
+           hora que quedaría pegada a "ahora" se oculta para que no se monten. -->
       <div class="relative mb-2.5 h-4 text-xs tabular-nums text-text-muted">
-        <span class="absolute left-0">0h</span>
-        <span class="absolute left-1/4 -translate-x-1/2">6h</span>
-        <span class="absolute left-1/2 -translate-x-1/2">12h</span>
-        <span class="absolute left-3/4 -translate-x-1/2">18h</span>
-        <span class="absolute right-0">24h</span>
+        <span
+          v-for="hourMark in hourMarks"
+          v-show="!hourMark.hidden"
+          :key="hourMark.label"
+          class="absolute"
+          :class="hourMark.class"
+          >{{ hourMark.label }}</span
+        >
+        <span
+          v-if="rhythm.nowLeft !== null"
+          class="absolute -translate-x-1/2 font-bold whitespace-nowrap text-text"
+          :style="{ left: `${Math.min(96, Math.max(4, rhythm.nowLeft))}%` }"
+          data-testid="rhythm-now-label"
+          >{{ t('dashboard.rhythm.now') }}</span
+        >
       </div>
       <div class="flex flex-wrap gap-3 text-xs text-text-muted">
         <span v-if="enabledCategories.includes('feed')" class="flex items-center gap-1.5"

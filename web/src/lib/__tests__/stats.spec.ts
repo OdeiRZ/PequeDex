@@ -68,6 +68,47 @@ function diaperChange(overrides: Partial<DiaperChange> = {}): DiaperChange {
   }
 }
 
+describe('per-day averages only count finished days', () => {
+  // Domingo 25 a las 5:00: seis días completos de 13 tomas y 7 cambios, y hoy
+  // solo 3 tomas y 1 cambio. Antes, hoy contaba como un día entero.
+  const now = new Date(2026, 9, 25, 5, 0)
+  const feeds: Feed[] = []
+  const changes: DiaperChange[] = []
+  for (let day = 19; day <= 24; day++) {
+    for (let i = 0; i < 13; i++) feeds.push(feed({ started_at: local(2026, 10, day, i + 1, 30) }))
+    for (let i = 0; i < 7; i++) {
+      changes.push(diaperChange({ changed_at: local(2026, 10, day, i * 3 + 1), type: 'ambos' }))
+    }
+  }
+  for (const hour of [1, 2, 4]) feeds.push(feed({ started_at: local(2026, 10, 25, hour) }))
+  changes.push(diaperChange({ changed_at: local(2026, 10, 25, 1, 40), type: 'mojado' }))
+
+  it('leaves today out of feeds and diapers per day', () => {
+    expect(summarizeFeedStats(feeds, now).averagePerDay).toBeCloseTo(13, 5)
+    const diapers = summarizeDiaperStats(changes, now)
+    expect(diapers.averagePerDay).toBeCloseTo(7, 5)
+    expect(diapers.averagePoopPerDay).toBeCloseTo(7, 5)
+    // Los recuentos y la última caca siguen viendo lo de hoy.
+    expect(summarizeFeedStats(feeds, now).total).toBe(81)
+    expect(diapers.total).toBe(43)
+  })
+
+  it('leaves a sleep that started today out of the daily sleep total', () => {
+    const sleeps: Sleep[] = []
+    for (let day = 19; day <= 24; day++) {
+      sleeps.push(sleep(local(2026, 10, day, 9), local(2026, 10, day, 21)))
+    }
+    sleeps.push(sleep(local(2026, 10, 25, 1), local(2026, 10, 25, 4)))
+
+    expect(summarizeSleepStats(sleeps, now).averageTotalSleepMinutes).toBeCloseTo(12 * 60, 5)
+  })
+
+  it('keeps today when it is the only day there is', () => {
+    const firstDay = [1, 2, 4].map((hour) => feed({ started_at: local(2026, 10, 25, hour) }))
+    expect(summarizeFeedStats(firstDay, now).averagePerDay).toBe(3)
+  })
+})
+
 describe('summarizeSleepStats', () => {
   it('reports not enough data below the minimum sample size', () => {
     const result = summarizeSleepStats([sleep(local(2026, 8, 7, 10), local(2026, 8, 7, 11))])

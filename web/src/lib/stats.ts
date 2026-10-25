@@ -168,6 +168,20 @@ function averagePerDay(timestamps: string[]): number | null {
   return timestamps.length / daysSpanned(timestamps)
 }
 
+// Las medias "al día" solo cuentan días ya terminados: el de hoy acaba de
+// empezar y, contado como un día entero, hundía todas las medias (a las 5:00,
+// con 3 tomas, "11,7 tomas al día" en vez de ≈13) y llegaba a marcar el sueño
+// "por debajo de lo recomendado" sin serlo. Mismo criterio que ya usa la
+// comparación semanal con la semana en curso. Los recuentos, franjas y récords
+// siguen incluyendo hoy. Sin ningún día terminado todavía (el primer día de
+// uso) se queda todo, como antes: mejor una media provisional que ninguna.
+function completeDaysOnly<T>(items: T[], at: (item: T) => string, now: Date): T[] {
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
+  const complete = items.filter((item) => new Date(at(item)) < todayStart)
+  return complete.length > 0 ? complete : items
+}
+
 export interface HourBucketStat {
   key: HourBucketKey
   value: number
@@ -353,14 +367,16 @@ export function summarizeSleepStats(sleeps: Sleep[], now: Date = new Date()): Sl
     if (bucket) bucket.value += minutes
   }
 
-  const { nightMinutes, dayMinutes, totalMinutes } = dailySleepSplit(completed)
+  // Medias por día: solo días terminados (ver completeDaysOnly).
+  const completeDays = completeDaysOnly(completed, (s) => s.started_at, now)
+  const { nightMinutes, dayMinutes, totalMinutes } = dailySleepSplit(completeDays)
 
   return {
     hasEnoughData: true,
     averageDurationMinutes: average(durations),
     averageWakeWindowMinutes: average(wakeWindows),
-    averageSleepsPerDay: averagePerDay(completed.map((s) => s.started_at)),
-    averageLongestStretchMinutes: averageLongestStretch(completed),
+    averageSleepsPerDay: averagePerDay(completeDays.map((s) => s.started_at)),
+    averageLongestStretchMinutes: averageLongestStretch(completeDays),
     byHourBucket: buckets,
     averageNightSleepMinutes: nightMinutes,
     averageDaySleepMinutes: dayMinutes,
@@ -399,7 +415,7 @@ export interface FeedStats {
   gapStdDevMinutes: number | null
 }
 
-export function summarizeFeedStats(feeds: Feed[]): FeedStats {
+export function summarizeFeedStats(feeds: Feed[], now: Date = new Date()): FeedStats {
   const byType: Record<FeedType, number> = { pecho: 0, biberon: 0, solido: 0 }
   const pechoSideCounts: Record<FeedSide, number> = { izquierdo: 0, derecho: 0, ambos: 0 }
   const bottleAmounts: number[] = []
@@ -465,7 +481,9 @@ export function summarizeFeedStats(feeds: Feed[]): FeedStats {
     averageBottleAmountMl: average(bottleAmounts),
     averagePechoDurationMinutes: average(pechoDurations),
     averageGapMinutes: average(gaps),
-    averagePerDay: averagePerDay(sorted.map((f) => f.started_at)),
+    averagePerDay: averagePerDay(
+      completeDaysOnly(sorted, (f) => f.started_at, now).map((f) => f.started_at),
+    ),
     byHourBucket: buckets,
     gapStdDevMinutes: standardDeviation(gaps),
   }
@@ -506,7 +524,7 @@ export interface DiaperStats {
   poopColors: Record<DiaperResidueColor | 'unspecified', number>
 }
 
-export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
+export function summarizeDiaperStats(changes: DiaperChange[], now: Date = new Date()): DiaperStats {
   const bySize: Record<DiaperSize | 'unspecified', number> = {
     '0': 0,
     '1': 0,
@@ -550,7 +568,9 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     }
   }
 
-  const days = daysSpanned(changes.map((c) => c.changed_at))
+  // Medias por día: solo días terminados (ver completeDaysOnly).
+  const completeDays = completeDaysOnly(changes, (c) => c.changed_at, now)
+  const days = daysSpanned(completeDays.map((c) => c.changed_at))
   const times = changes.map((c) => new Date(c.changed_at).getTime()).sort((a, b) => a - b)
   const gaps: number[] = []
   for (let i = 1; i < times.length; i++) {
@@ -562,9 +582,9 @@ export function summarizeDiaperStats(changes: DiaperChange[]): DiaperStats {
     hasEnoughData: true,
     total: changes.length,
     bySize,
-    averagePerDay: changes.length / days,
-    averagePeePerDay: changes.filter(hasPee).length / days,
-    averagePoopPerDay: changes.filter(hasPoop).length / days,
+    averagePerDay: completeDays.length / days,
+    averagePeePerDay: completeDays.filter(hasPee).length / days,
+    averagePoopPerDay: completeDays.filter(hasPoop).length / days,
     averageGapMinutes: average(gaps),
     byHourBucket,
     poopColors,

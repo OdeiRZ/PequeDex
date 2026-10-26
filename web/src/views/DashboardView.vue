@@ -91,8 +91,10 @@ import {
   filterTimelineToDay,
   formatTime,
   groupTimelineByDay,
+  type DayCounts,
   type TimelineListItem,
 } from '@/lib/timelineEntry'
+import { formatDurationMinutes } from '@/lib/formatNumber'
 
 const auth = useAuthStore()
 const babies = useBabiesStore()
@@ -190,6 +192,24 @@ const groupedTimeline = computed<TimelineListItem[]>(() =>
     isRhythmToday.value ? undefined : parseDateOnly(rhythmDate.value),
   ),
 )
+
+// "12 registros · 2 h 15 min de pecho · 240 ml de biberón": el número de tomas
+// ya está en las tarjetas del resumen, así que aquí va cuánto tiempo estuvo al
+// pecho y cuánto biberón tomó ese día; cada parte solo si hubo.
+function dayCountsText(counts: DayCounts): string {
+  const parts = [t('dashboard.timeline.dayCounts.entries', counts.entries)]
+  if (counts.breastMinutes > 0) {
+    parts.push(
+      t('dashboard.timeline.dayCounts.breast', {
+        time: formatDurationMinutes(counts.breastMinutes),
+      }),
+    )
+  }
+  if (counts.bottleMl > 0) {
+    parts.push(t('dashboard.timeline.dayCounts.bottle', { ml: counts.bottleMl }))
+  }
+  return parts.join(' · ')
+}
 
 async function onRhythmPrevDay() {
   if (isRhythmBirthDay.value) return
@@ -2437,9 +2457,10 @@ const sleepPredictionDue = computed(() => {
                     :style="{ '--stagger-index': index }"
                   >
                     <span class="font-display text-sm font-bold text-brand">{{ item.label }}</span>
-                    <span v-if="item.counts" class="shrink-0 text-xs text-text-muted tabular-nums"
-                      >{{ t('dashboard.timeline.dayCounts.entries', item.counts.entries) }} ·
-                      {{ t('dashboard.timeline.dayCounts.feeds', item.counts.feeds) }}</span
+                    <span
+                      v-if="item.counts"
+                      class="shrink-0 text-xs text-text-muted tabular-nums"
+                      >{{ dayCountsText(item.counts) }}</span
                     >
                   </li>
                   <EntryCard

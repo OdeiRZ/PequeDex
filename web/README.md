@@ -790,7 +790,12 @@ verse bien en una captura:
   `position: sticky` de dentro sin avisar. Gracias a eso el día de la línea
   temporal se queda fijo arriba al bajar (`groupTimelineByDay` añade el
   recuento del día solo cuando el día está entero en la lista); lo comprueba
-  `e2e/sticky-day.spec.ts`.
+  `e2e/sticky-day.spec.ts`. Ese recuento (`DayCounts`) lleva los registros del
+  día, los minutos de pecho (solo tomas `pecho` ya terminadas, de `started_at`
+  a `ended_at`) y los ml de biberón (`amount_ml` de las `biberon`); el número
+  de tomas no va porque ya lo dan las tarjetas del resumen. `DashboardView`
+  lo escribe con `dayCountsText()` ("12 registros · 2 h 15 min de pecho · 240
+  ml de biberón"), cada parte solo si hubo, y se recalcula al cambiar de día.
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
   con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
   a terceros y disponible sin conexión desde la primera visita);

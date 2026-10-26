@@ -9,6 +9,13 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
+- **Pecho y biberón del día en la cabecera de la línea temporal**: junto al
+  recuento de registros, en lugar del número de tomas (que ya está en las
+  tarjetas del resumen), ahora va cuánto tiempo estuvo al pecho el bebé ese día,
+  en horas y minutos ("2 h 15 min de pecho"), y los mililitros de biberón
+  tomados ("240 ml de biberón"). Cada parte sale solo si hubo. El pecho suma
+  las tomas ya terminadas, con su duración; una sin terminar no suma. Se
+  recalcula al cambiar de día, igual que el resto del recuento.
 - **Resumen del día más corto y con el texto a todo el ancho**: arriba, la cifra
   en grande y el icono en su círculo pegado a ella; debajo, a todo
   el ancho de la tarjeta, la etiqueta y el "hace…". Una primera versión metía la
@@ -45,8 +52,8 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   como los sueños (antes eran todas la misma marca fina), y una marca de
   "ahora" separa lo pasado del resto del día. No se dibuja nada previsto.
 - **El día se queda fijo arriba** al bajar por la línea temporal, con el
-  recuento de registros y tomas del día (solo en los días completos de la
-  lista). Para que `position: sticky` funcione, el contenedor de la app usa
+  recuento de registros del día (solo en los días completos de la lista; ver
+  más arriba lo que lleva además de pecho y biberón). Para que `position: sticky` funcione, el contenedor de la app usa
   `overflow-x: clip` en vez de `hidden`, que lo anulaba sin avisar; por eso la
   cabecera de la app nunca se había quedado fija pese a su clase `sticky`
   (sigue desplazándose como siempre). Con un e2e que falla con el ajuste

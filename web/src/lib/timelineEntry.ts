@@ -260,7 +260,11 @@ function entryEnd(entry: TimelineEntry, now: Date): Date {
  * entero en la lista (ver groupTimelineByDay). */
 export interface DayCounts {
   entries: number
-  feeds: number
+  /** Minutos de pecho del día (solo las tomas de pecho ya terminadas: sin
+   * `ended_at` no hay duración que sumar). */
+  breastMinutes: number
+  /** Mililitros de biberón del día. */
+  bottleMl: number
 }
 
 export type TimelineListItem =
@@ -312,9 +316,25 @@ export function groupTimelineByDay(
     const isOldest = index === separators.length - 1
     if (isOldest && !fixedDay) return
     const ofDay = timeline.filter((e) => new Date(e.at).toLocaleDateString('en-CA') === dayKey)
+    // El número de tomas ya está en las tarjetas del resumen del día: aquí
+    // se cuenta cuánto tiempo estuvo al pecho y cuánto biberón tomó.
+    let breastMs = 0
+    let bottleMl = 0
+    for (const e of ofDay) {
+      if (e.type !== 'feed') continue
+      if (e.data.type === 'pecho' && e.data.ended_at) {
+        breastMs += Math.max(
+          0,
+          new Date(e.data.ended_at).getTime() - new Date(e.data.started_at).getTime(),
+        )
+      } else if (e.data.type === 'biberon') {
+        bottleMl += e.data.amount_ml ?? 0
+      }
+    }
     item.counts = {
       entries: ofDay.length,
-      feeds: ofDay.filter((e) => e.type === 'feed').length,
+      breastMinutes: Math.round(breastMs / 60_000),
+      bottleMl,
     }
   })
 

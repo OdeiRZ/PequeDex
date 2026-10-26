@@ -385,7 +385,10 @@ describe('groupTimelineByDay', () => {
       (at) => `label-${at.getDate()}`,
     )
 
-    expect(items[0]).toMatchObject({ label: 'label-7', counts: { entries: 3, feeds: 2 } })
+    expect(items[0]).toMatchObject({
+      label: 'label-7',
+      counts: { entries: 3, breastMinutes: 0, bottleMl: 0 },
+    })
     expect(items[4]).toMatchObject({ label: 'label-6', counts: null })
   })
 
@@ -399,7 +402,43 @@ describe('groupTimelineByDay', () => {
       new Date(2026, 7, 7),
     )
 
-    expect(items[0]).toMatchObject({ counts: { entries: 1, feeds: 0 } })
+    expect(items[0]).toMatchObject({ counts: { entries: 1, breastMinutes: 0, bottleMl: 0 } })
+  })
+
+  it('adds up the minutes at the breast and the bottle ml of each day', () => {
+    // Pecho de 20 min + pecho de 15 min + un pecho sin terminar (no suma) + tres
+    // biberones (90, 60 y uno sin cantidad) + un sólido, todo el día 7; el pecho
+    // del día 6 no cuenta para el 7.
+    const items = groupTimelineByDay(
+      [
+        feedEntry({
+          type: 'pecho',
+          started_at: local(2026, 8, 7, 22, 0),
+          ended_at: local(2026, 8, 7, 22, 20),
+        }),
+        feedEntry({ type: 'biberon', amount_ml: 90, started_at: local(2026, 8, 7, 18, 0) }),
+        feedEntry({
+          type: 'pecho',
+          started_at: local(2026, 8, 7, 14, 0),
+          ended_at: local(2026, 8, 7, 14, 15),
+        }),
+        feedEntry({ type: 'biberon', amount_ml: null, started_at: local(2026, 8, 7, 12, 0) }),
+        feedEntry({ type: 'biberon', amount_ml: 60, started_at: local(2026, 8, 7, 10, 0) }),
+        feedEntry({ type: 'pecho', started_at: local(2026, 8, 7, 8, 0), ended_at: null }),
+        feedEntry({ type: 'solido', started_at: local(2026, 8, 7, 7, 0) }),
+        feedEntry({
+          type: 'pecho',
+          started_at: local(2026, 8, 6, 23, 0),
+          ended_at: local(2026, 8, 6, 23, 30),
+        }),
+      ],
+      (at) => `label-${at.getDate()}`,
+    )
+
+    expect(items[0]).toMatchObject({
+      label: 'label-7',
+      counts: { entries: 7, breastMinutes: 35, bottleMl: 150 },
+    })
   })
 
   it('returns an empty list for an empty timeline, no stray separator', () => {

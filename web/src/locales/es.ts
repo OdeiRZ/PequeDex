@@ -681,7 +681,8 @@ export default {
       sleepOngoing: 'Sueño (en curso)',
       dayCounts: {
         entries: '{n} registro | {n} registros',
-        feeds: '{n} toma | {n} tomas',
+        breast: '{time} de pecho',
+        bottle: '{ml} ml de biberón',
       },
       diaperSummary: 'Pañal ({type})',
       finishSleep: 'Finalizar',

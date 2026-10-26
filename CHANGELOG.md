@@ -12,10 +12,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - **Pecho y biberón del día en la cabecera de la línea temporal**: junto al
   recuento de registros, en lugar del número de tomas (que ya está en las
   tarjetas del resumen), ahora va cuánto tiempo estuvo al pecho el bebé ese día,
-  en horas y minutos ("2 h 15 min de pecho"), y los mililitros de biberón
-  tomados ("240 ml de biberón"). Cada parte sale solo si hubo. El pecho suma
+  en horas y minutos ("2 h 15 min pecho"), y los mililitros de biberón
+  tomados ("240 ml biberón"). Cada parte sale solo si hubo. El pecho suma
   las tomas ya terminadas, con su duración; una sin terminar no suma. Se
-  recalcula al cambiar de día, igual que el resto del recuento.
+  recalcula al cambiar de día, igual que el resto del recuento. Para que
+  quepa en una pantalla de 360 px el recuento va en letra más pequeña (0,65
+  rem) y, por debajo de 400 px, la fecha va abreviada ("Mié 28 oct" en vez de
+  "Miércoles 28 de octubre"); la fecha nunca parte línea y, si el recuento no
+  cupiera (muchas horas y mililitros a la vez), es él quien baja a dos líneas.
 - **Resumen del día más corto y con el texto a todo el ancho**: arriba, la cifra
   en grande y el icono en su círculo pegado a ella; debajo, a todo
   el ancho de la tarjeta, la etiqueta y el "hace…". Una primera versión metía la

@@ -794,8 +794,13 @@ verse bien en una captura:
   día, los minutos de pecho (solo tomas `pecho` ya terminadas, de `started_at`
   a `ended_at`) y los ml de biberón (`amount_ml` de las `biberon`); el número
   de tomas no va porque ya lo dan las tarjetas del resumen. `DashboardView`
-  lo escribe con `dayCountsText()` ("12 registros · 2 h 15 min de pecho · 240
-  ml de biberón"), cada parte solo si hubo, y se recalcula al cambiar de día.
+  lo escribe con `dayCountsText()` ("12 registros · 2 h 15 min pecho · 240 ml
+  biberón"), cada parte solo si hubo, y se recalcula al cambiar de día. En la
+  cabecera del día, la fecha va en un `whitespace-nowrap` y por debajo de 400 px
+  se enseña `shortLabel` ("Mié 28 oct", de `formatWeekdayShortDateLabel`) en
+  vez de la larga; el recuento, en `text-[0.65rem]`, es el que baja a dos líneas
+  si no cabe (medido a 360 px: 214 px de ancho con "4 registros · 1 h 55 min
+  pecho · 150 ml biberón", en una línea).
 - **Tipografía**: Quicksand (redondeada, cálida) solo para titulares, servida
   con la app (`@fontsource-variable/quicksand`, sin Google Fonts: sin peticiones
   a terceros y disponible sin conexión desde la primera visita);

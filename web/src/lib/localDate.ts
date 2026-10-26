@@ -38,3 +38,13 @@ export function formatWeekdayDateLabel(date: Date, locale?: string): string {
     .replace(',', '')
   return raw.charAt(0).toUpperCase() + raw.slice(1)
 }
+
+// "Mié 28 oct": la misma fecha abreviada, para donde la larga ("Miércoles 28 de
+// octubre") no cabe junto a otro texto en una pantalla de 360 px. Sin comas ni
+// puntos de la abreviatura ("mié." → "Mié").
+export function formatWeekdayShortDateLabel(date: Date, locale?: string): string {
+  const raw = date
+    .toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
+    .replace(/[,.]/g, '')
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}

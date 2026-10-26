@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { toDateOnlyString, addDays, parseDateOnly } from '@/lib/localDate'
+import {
+  toDateOnlyString,
+  addDays,
+  parseDateOnly,
+  formatWeekdayDateLabel,
+  formatWeekdayShortDateLabel,
+} from '@/lib/localDate'
+
+describe('formatWeekdayShortDateLabel', () => {
+  it('abbreviates the day, without commas or the abbreviation dot', () => {
+    const date = new Date(2026, 9, 28)
+
+    expect(formatWeekdayShortDateLabel(date, 'es-ES')).toBe('Mié 28 oct')
+    expect(formatWeekdayDateLabel(date, 'es-ES')).toBe('Miércoles 28 de octubre')
+    // En inglés llega con el mes delante y sin puntos.
+    expect(formatWeekdayShortDateLabel(date, 'en-US')).toBe('Wed Oct 28')
+  })
+})
 
 describe('toDateOnlyString', () => {
   it('formats a local date as YYYY-MM-DD', () => {

@@ -268,7 +268,15 @@ export interface DayCounts {
 }
 
 export type TimelineListItem =
-  | { kind: 'separator'; key: string; label: string; counts: DayCounts | null }
+  | {
+      kind: 'separator'
+      key: string
+      label: string
+      /** La misma fecha abreviada, para pantallas estrechas; igual que
+       * `label` si no se da un formateador corto. */
+      shortLabel: string
+      counts: DayCounts | null
+    }
   | { kind: 'entry'; key: string; entry: TimelineEntry }
 
 // Un separador de día entre entradas de distinto día de calendario -
@@ -284,6 +292,7 @@ export function groupTimelineByDay(
   timeline: TimelineEntry[],
   formatDayLabel: (at: Date) => string,
   fixedDay?: Date,
+  formatShortDayLabel: (at: Date) => string = formatDayLabel,
 ): TimelineListItem[] {
   const items: TimelineListItem[] = []
   const separators: { item: Extract<TimelineListItem, { kind: 'separator' }>; dayKey: string }[] =
@@ -298,6 +307,7 @@ export function groupTimelineByDay(
         kind: 'separator' as const,
         key: `day-${dayKey}`,
         label: formatDayLabel(at),
+        shortLabel: formatShortDayLabel(at),
         counts: null,
       }
       items.push(separator)

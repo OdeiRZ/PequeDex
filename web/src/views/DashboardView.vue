@@ -69,6 +69,7 @@ import { REGIONS, nextUpcoming } from '@/lib/vaccinations'
 import {
   addDays,
   formatWeekdayDateLabel,
+  formatWeekdayShortDateLabel,
   parseDateOnly,
   toDateOnlyString,
   todayDateOnlyString,
@@ -190,6 +191,7 @@ const groupedTimeline = computed<TimelineListItem[]>(() =>
     visibleTimeline.value,
     (at) => formatWeekdayDateLabel(at, dateLocale.value),
     isRhythmToday.value ? undefined : parseDateOnly(rhythmDate.value),
+    (at) => formatWeekdayShortDateLabel(at, dateLocale.value),
   ),
 )
 
@@ -2456,10 +2458,18 @@ const sleepPredictionDue = computed(() => {
                     class="sticky top-0 z-10 -mx-1 flex items-baseline justify-between gap-3 border-b border-border bg-bg px-1 pt-2 pb-1.5"
                     :style="{ '--stagger-index': index }"
                   >
-                    <span class="font-display text-sm font-bold text-brand">{{ item.label }}</span>
+                    <!-- La fecha nunca parte línea: abreviada por debajo de 400 px
+                         ("Mié 28 oct"), y el recuento, más pequeño, es el que cede
+                         (a dos líneas si hace falta) en vez de empujarla. -->
+                    <span
+                      class="shrink-0 font-display text-sm font-bold whitespace-nowrap text-brand"
+                    >
+                      <span class="min-[400px]:hidden">{{ item.shortLabel }}</span>
+                      <span class="hidden min-[400px]:inline">{{ item.label }}</span>
+                    </span>
                     <span
                       v-if="item.counts"
-                      class="shrink-0 text-xs text-text-muted tabular-nums"
+                      class="min-w-0 text-right text-[0.65rem] leading-tight text-text-muted tabular-nums"
                       >{{ dayCountsText(item.counts) }}</span
                     >
                   </li>

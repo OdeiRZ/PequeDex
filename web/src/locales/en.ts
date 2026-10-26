@@ -678,7 +678,7 @@ export default {
       sleepOngoing: 'Sleep (ongoing)',
       dayCounts: {
         entries: '{n} entry | {n} entries',
-        breast: '{time} breastfeeding',
+        breast: '{time} breast',
         bottle: '{ml} ml bottle',
       },
       diaperSummary: 'Diaper ({type})',

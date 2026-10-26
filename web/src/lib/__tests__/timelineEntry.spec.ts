@@ -351,7 +351,7 @@ describe('groupTimelineByDay', () => {
     )
 
     expect(items.map((i) => i.kind)).toEqual(['separator', 'entry', 'entry', 'separator', 'entry'])
-    expect(items[0]).toMatchObject({ kind: 'separator', label: 'label-6' })
+    expect(items[0]).toMatchObject({ kind: 'separator', label: 'label-6', shortLabel: 'label-6' })
     expect(items[3]).toMatchObject({ kind: 'separator', label: 'label-7' })
   })
 

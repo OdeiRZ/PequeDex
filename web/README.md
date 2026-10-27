@@ -80,7 +80,9 @@ solo comprueban producción, pero el de desarrollo también está limpio):
   desde la raíz — vive ahí para que funcione sin importar en qué pantalla
   aterrice la recarga, no solo en el dashboard.
 - `src/views/{Login,Register}View.vue` — formularios con la identidad
-  visual del proyecto, probados de punta a punta contra la API real.
+  visual del proyecto, probados de punta a punta contra la API real. El
+  registro muestra la causa concreta del fallo (email ya registrado,
+  contraseña, límite de intentos, servidor o conexión), no un mensaje único.
 - `src/stores/babies.ts` — el bebé del usuario (crear/unirse por código),
   su línea temporal combinada, y CRUD completo de tomas/sueño/pañales
   (`updateFeed`/`updateSleep`/`updateDiaperChange` reutilizan el mismo

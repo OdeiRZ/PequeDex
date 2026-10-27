@@ -51,7 +51,8 @@ export default {
       error: 'No se ha podido crear la cuenta.',
       inviteCodeError: 'Ese código de invitación no es válido.',
       emailTaken: 'Ese email no es válido o ya tiene una cuenta. Prueba a iniciar sesión.',
-      passwordError: 'La contraseña no es válida: usa al menos 8 caracteres y que coincidan las dos.',
+      passwordError:
+        'La contraseña no es válida: usa al menos 8 caracteres y que coincidan las dos.',
       throttled: 'Demasiados intentos. Espera un minuto y vuelve a probar.',
       serverError: 'El servidor no ha respondido bien. Espera unos segundos y vuelve a intentarlo.',
       networkError: 'No hay conexión con el servidor. Revisa tu internet y vuelve a intentarlo.',

@@ -9,6 +9,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
+- **El registro dice por qué falla**: al crear la cuenta, el formulario
+  mostraba siempre "No se ha podido crear la cuenta" salvo con un código de
+  invitación erróneo. Ahora distingue email no válido o ya registrado,
+  contraseña rechazada, límite de intentos (429), fallo del servidor y falta
+  de conexión, en español e inglés.
 - **Pecho y biberón del día en la cabecera de la línea temporal**: junto al
   recuento de registros, en lugar del número de tomas (que ya está en las
   tarjetas del resumen), ahora va cuánto tiempo estuvo al pecho el bebé ese día,

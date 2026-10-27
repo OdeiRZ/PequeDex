@@ -35,6 +35,22 @@ onMounted(() => {
   }
 })
 
+// Shows the actual cause instead of one generic message: a bad invite code,
+// an e-mail that already has an account, a password the API rejects, the
+// register throttle (429) or a server/network failure.
+function registerErrorMessage(err: unknown): string {
+  if (!axios.isAxiosError(err)) return t('auth.register.error')
+  if (!err.response) return t('auth.register.networkError')
+
+  const { status, data } = err.response
+  if (status === 429) return t('auth.register.throttled')
+  if (data?.errors?.invite_code) return t('auth.register.inviteCodeError')
+  if (data?.errors?.email) return t('auth.register.emailTaken')
+  if (data?.errors?.password) return t('auth.register.passwordError')
+  if (status >= 500) return t('auth.register.serverError')
+  return t('auth.register.error')
+}
+
 async function onSubmit() {
   error.value = null
   submitting.value = true
@@ -49,13 +65,7 @@ async function onSubmit() {
     })
     router.push({ name: 'dashboard' })
   } catch (err) {
-    // Surfaces the specific "código no válido" message when that's the
-    // actual cause (RegisterRequest's exists:babies,invite_code rule) -
-    // the generic error otherwise, same as before this field existed.
-    error.value =
-      axios.isAxiosError(err) && err.response?.data?.errors?.invite_code
-        ? t('auth.register.inviteCodeError')
-        : t('auth.register.error')
+    error.value = registerErrorMessage(err)
   } finally {
     submitting.value = false
   }

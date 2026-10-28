@@ -40,7 +40,7 @@ Cloudflare Pages.
 | **Tiempo real** | Varios cuidadores ven los mismos registros a la vez; sin conexión se guarda en el móvil y se sincroniza en pocos segundos al volver la red (2,9 s medidos, antes 22,4 s), y las ediciones también son locales primero. |
 | **Atajos** | Con la app instalada en Android, al mantener pulsado el icono: **+ Toma**, **+ Sueño** y **+ Pañal**, cada uno con su icono, abren directamente el registro rápido. |
 | **Stack** | Laravel 12 + Sanctum (API) · Vue 3 + Pinia + TypeScript (PWA) · PostgreSQL en Neon · Render + GitHub Pages |
-| **Calidad** | 389 tests de backend (también contra PostgreSQL real) · 423 de frontend · 16 pruebas end-to-end con Playwright que **bloquean el despliegue** · `npm audit` a 0 · Sentry · copia de seguridad semanal cifrada |
+| **Calidad** | 395 tests de backend (también contra PostgreSQL real) · 450 de frontend · 18 pruebas end-to-end con Playwright que **bloquean el despliegue** · `npm audit` a 0 · Sentry · copia de seguridad semanal cifrada |
 
 **Una mejora medida de verdad:** la base de datos consumía **4,29 GB de red en
 12 días** (el avatar en base64 viajaba en cada petición); tras mover la foto
@@ -49,9 +49,8 @@ pasar la base a Fráncfort, el consumo fue de **~48,6 MB en 7 días**. El detall
 y cómo se midió está en [`api/README.md`](api/README.md) y en el
 [CHANGELOG](CHANGELOG.md).
 
-**Proyecto recién empezado** — este README se irá ampliando a medida que
-avancen los hitos. Ver [CHANGELOG.md](CHANGELOG.md) para el detalle de cada
-uno.
+**Proyecto en uso diario** — este README se amplía a medida que avanzan los
+hitos. Ver [CHANGELOG.md](CHANGELOG.md) para el detalle de cada uno.
 
 ## Estructura
 
@@ -169,6 +168,13 @@ Repo único con dos aplicaciones independientes, cada una con su propio
     cacas y, si se escriben, las preguntas para el pediatra al final.
     Se elige en una hoja con dos filas iguales (para ti / para el
     pediatra).
+21. ✅ Retoques tras usarla a diario: tarjetas del resumen del día con la
+    cifra y su icono juntos, ritmo del día con la hora actual bajo la
+    barra, cabecera de cada día de la línea temporal con los minutos de
+    pecho y los ml de biberón (cabe en 360 px), "Tus datos" con copia
+    descargable y eliminación de cuenta con advertencias, y un registro
+    que dice por qué falla (email ya registrado, contraseña, límite de
+    intentos, servidor o conexión) — ver `web/README.md`.
 
 ## Copias de seguridad
 

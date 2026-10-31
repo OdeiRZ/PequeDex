@@ -118,7 +118,11 @@ const sinceLabel = computed<Partial<Record<Category, string>>>(() => {
   // La línea temporal llega de más reciente a más antigua.
   const lastFeed = props.timeline.find((e) => e.type === 'feed')
   if (lastFeed?.type === 'feed') {
-    labels.feed = t('dashboard.todaySummary.since.feed', { time: ago(lastFeed.data.started_at) })
+    // Desde que terminó la toma (una de pecho larga no debe contar desde que
+    // empezó); sin fin registrado (biberón), desde su hora.
+    labels.feed = t('dashboard.todaySummary.since.feed', {
+      time: ago(lastFeed.data.ended_at ?? lastFeed.data.started_at),
+    })
   }
   const lastSleep = props.timeline.find((e) => e.type === 'sleep')
   if (lastSleep?.type === 'sleep') {

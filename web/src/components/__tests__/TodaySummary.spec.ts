@@ -109,4 +109,20 @@ describe('TodaySummary "time since"', () => {
     })
     expect(pastDay.text()).not.toContain('hace')
   })
+
+  it('counts from the end of a breast feed, not from when it started', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 20, 5, 10))
+    const feed = feedEntry(1, '2026-10-20T04:30:00')
+    if (feed.type === 'feed') {
+      feed.data.type = 'pecho'
+      feed.data.ended_at = '2026-10-20T05:00:00'
+    }
+
+    const wrapper = mount(TodaySummary, {
+      props: { timeline: [feed], enabledCategories: ['feed'], day: '2026-10-20' },
+      global: { plugins: [i18n] },
+    })
+    expect(wrapper.text()).toContain('hace 10 min')
+  })
 })

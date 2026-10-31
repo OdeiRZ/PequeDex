@@ -849,7 +849,9 @@ verse bien en una captura:
   tipográfica real, no texto uniforme. Desde octubre de 2026 cada tarjeta
   lleva arriba la cifra y, pegado a ella, el icono en su círculo, y
   debajo, a todo el ancho, la etiqueta y el "hace…" (con la cifra dentro del
-  círculo, este se ensanchaba y el texto se partía). El fondo de `body` en
+  círculo, este se ensanchaba y el texto se partía). Ese "hace…" cuenta desde
+  que termina la toma o el sueño, no desde que empiezan (sin hora de fin,
+  como el biberón, desde su hora). El fondo de `body` en
   `base.css` pasa de `--surface-sunken` plano a ese mismo tono más dos
   veladuras radiales fijas (`background-attachment: fixed`) en
   `--brand`/`--brand-teal` vía `color-mix()`, muy tenues, para que las

@@ -9,6 +9,10 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
+- **El "hace…" de la toma cuenta desde que termina**: en la tarjeta de tomas,
+  una de pecho que empezó hace 40 min y terminó hace 10 decía "hace 40 min".
+  Ahora dice "hace 10 min". Sin hora de fin (biberón), sigue contando desde
+  su hora. El sueño ya contaba desde que termina y el pañal es un instante.
 - **El registro dice por qué falla**: al crear la cuenta, el formulario
   mostraba siempre "No se ha podido crear la cuenta" salvo con un código de
   invitación erróneo. Ahora distingue email no válido o ya registrado,

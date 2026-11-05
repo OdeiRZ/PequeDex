@@ -1502,10 +1502,29 @@ o 24 meses (total).
   registro); si el servidor lo rechaza de verdad, se restaura lo que se veía y
   se relanza el error. `withPendingUpdates()` y `withoutPendingDeletes()` impiden
   que el sondeo lo resucite; al enviarlo, un 404 cuenta como hecho.
-- Lo que sigue necesitando conexión son las ediciones de otras pantallas
-  (crecimiento, hitos, vacunas...) y todo lo que no está en la lista de arriba
-  (`saveErrorMessage()` lo dice claro). Un aviso arriba del Dashboard
-  muestra "Sin conexión" y cuántos registros quedan por enviar.
+- **Opciones de la cuenta, ajustes del bebé, vitamina D y ediciones de
+  crecimiento, vacunas y revisiones** también son locales primero, con una cola
+  aparte más simple (`lib/pendingWrites.ts` y `stores/pendingWrites.ts`, en
+  `pequedex.pendingWrites`): ninguna crea nada, así que no hace falta
+  identificador para no duplicar. Cada cambio lleva una `key`
+  (`user:/user/alerts`, `baby:1`, `vitd-dose:1:2026-11-02`, `growth:12`,
+  `vacc:7`, `checkup:3`) y el último de cada `key` gana. El store que lo cambia
+  lo aplica en pantalla al instante (`savePreference()` en `auth`,
+  `commitWrite()` en `babies`) y `commit()` lo envía esperando `COMMIT_GRACE_MS`
+  (1,5 s): si el servidor contesta en ese margen, un rechazo llega al
+  formulario y el cambio se deshace; si no, queda pendiente y sube solo. Tras
+  cada lectura del servidor (`fetchCurrentUser()`, `fetchCurrent()`, el
+  arranque, crecimiento, vitamina D y vacunas) se vuelve a poner encima lo
+  pendiente (`reapplyPending()` y `reapplyPendingWrites()`), para que un valor
+  viejo del servidor no lo pise. La cola no importa `lib/api`: recibe el
+  transporte (`apiClient`) de quien la usa, porque `lib/api` importa los
+  stores. `App.vue` la envía junto a la otra y cuenta sus pendientes en el
+  aviso; lo que el servidor rechaza por detrás avisa y vuelve a leer lo
+  guardado.
+- Lo que sigue necesitando conexión es **crear** una medida, vacuna o revisión
+  nuevas, los hitos con foto, las contracciones y cambiar nombre, email,
+  contraseña o foto (`saveErrorMessage()` lo dice claro). Un aviso arriba del
+  Dashboard muestra "Sin conexión" y cuántos cambios quedan por enviar.
 
 ### Sincronización en segundo plano y calentamiento de la API
 

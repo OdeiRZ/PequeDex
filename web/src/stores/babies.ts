@@ -732,7 +732,7 @@ export const useBabiesStore = defineStore('babies', {
           const existing = doses.find((dose) => dose.date === date)
           const dose: VitaminDDose = existing
             ? { ...existing, given }
-            : { id: -Number(date.replaceAll('-', '')), baby_id: id, date, given }
+            : { id: -Number(date.replace(/-/g, '')), baby_id: id, date, given }
           return upsertByDate(doses, dose, (d) => d.date)
         }
         this.vitaminDRecentDoses = apply(this.vitaminDRecentDoses)

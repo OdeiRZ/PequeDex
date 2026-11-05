@@ -9,6 +9,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
+- **Más cosas se pueden cambiar sin conexión**: las opciones de "Tu cuenta"
+  (interruptores, valores por defecto, barra de accesos), los ajustes del bebé,
+  marcar la vitamina D y editar o borrar una medida de crecimiento, una vacuna
+  o una revisión. Se ven al instante, se guardan en el móvil y suben solas al
+  volver la red; abrir la app con red y un valor viejo en el servidor ya no
+  los pisa. Si el servidor rechaza uno, se deshace y avisa. Crear algo nuevo
+  (una medida, vacuna o revisión), los hitos con foto y las contracciones siguen
+  necesitando conexión, porque al reenviar podrían duplicarse. El mensaje de
+  fallo sin conexión ahora dice "Para guardar esto hace falta conexión".
+- **Los accesos del icono de la app**: el manifiesto lleva ahora un `id`
+  explícito (igual que la dirección de inicio, así que no crea otra app
+  instalada). Android regenera los atajos (+ Toma, + Sueño, + Pañal) al ver el
+  manifiesto cambiado; si no vuelven, hay que reinstalar la app desde Chrome.
 - **El "hace…" de la toma cuenta desde que termina**: en la tarjeta de tomas,
   una de pecho que empezó hace 40 min y terminó hace 10 decía "hace 40 min".
   Ahora dice "hace 10 min". Sin hora de fin (biberón), sigue contando desde

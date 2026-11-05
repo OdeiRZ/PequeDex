@@ -9,7 +9,8 @@ import type { TimelineEntry } from '@/stores/babies'
 // Además de crear, se puede "Finalizar" sin conexión un sueño o una toma
 // ya guardados (QueuedUpdate): se reenvía como PUT al volver la red.
 // Editar y borrar tomas, sueños, pañales y temperaturas también es "local
-// primero" (ver QueuedUpdate); el resto de ediciones sigue necesitando conexión.
+// primero" (ver QueuedUpdate). Las opciones de la cuenta, los ajustes del bebé y las
+// ediciones de crecimiento, vacunas y vitamina D van en otra cola (lib/pendingWrites.ts).
 
 export type QueuedLogType = 'feed' | 'sleep' | 'diaper_change' | 'temperature'
 

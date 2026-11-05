@@ -1066,14 +1066,14 @@ watch(
       <span class="field-label">{{ t('profile.defaultFeedDuration.title') }}</span>
       <p class="text-xs text-text-muted">{{ t('profile.defaultFeedDuration.description') }}</p>
       <div
-        class="mt-2 flex flex-wrap items-center gap-2"
+        class="mt-2 flex flex-wrap items-center gap-1.5"
         role="radiogroup"
         :aria-label="t('profile.defaultFeedDuration.title')"
       >
         <button
           type="button"
           role="radio"
-          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          class="rounded-full border-2 px-2.5 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultFeedDurationMinutes === null
               ? 'border-brand bg-brand/10 text-brand'
@@ -1089,7 +1089,7 @@ watch(
           :key="minutes"
           type="button"
           role="radio"
-          class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
+          class="rounded-full border-2 px-2.5 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultFeedDurationMinutes === minutes
               ? 'border-brand bg-brand/10 text-brand'

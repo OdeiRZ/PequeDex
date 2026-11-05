@@ -2,10 +2,13 @@ import { expect, test, type Locator } from '@playwright/test'
 import { createSession, signIn } from './session'
 
 // Las duraciones de una toma al pecho ("Sin indicar" y 5, 10, 15, 20, 30, 45+ min)
-// tienen que caber en dos líneas en una pantalla de 360 px, el ancho del móvil
-// de uso diario: con más, el formulario se alarga y empuja el botón de guardar.
-// Depende del CSS real (anchos de texto, huecos, saltos de línea), así que se mide
-// en un Chrome real contando las filas distintas que ocupan los botones.
+// tienen que caber en dos líneas en el móvil de uso diario (360 px): con más, el
+// formulario se alarga y empuja el botón de guardar. Depende del CSS real (anchos
+// de texto, huecos, saltos de línea), así que se mide en un Chrome real contando
+// las filas distintas que ocupan los botones. Se mide a 340 px, más estricto que
+// 360, a propósito: los botones usan la tipografía del sistema, que cambia de un
+// equipo a otro (Windows, el Linux de CI, Android), y a 360 px justos un test que
+// pasa en un sitio falla en otro.
 const SLOW_FIRST_LOAD_MS = 45_000
 const OPEN_SHEET = 'div:not([inert]) > [role="dialog"]'
 
@@ -16,14 +19,14 @@ async function rowsOf(group: Locator): Promise<number> {
   })
 }
 
-test('the breast feed durations fit in two lines at 360 px, in the form and in the account', async ({
+test('the breast feed durations fit in two lines on a phone, in the form and in the account', async ({
   page,
   request,
 }) => {
   test.setTimeout(90_000)
   const session = await createSession(request)
   await signIn(page, session)
-  await page.setViewportSize({ width: 360, height: 740 })
+  await page.setViewportSize({ width: 340, height: 740 })
 
   // Formulario "+ Toma": abre con "Pecho" elegido.
   await page.goto('./?atajo=toma')

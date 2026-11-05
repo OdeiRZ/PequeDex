@@ -282,6 +282,10 @@ it('sets and clears a default feed duration, defaulting to none', function () {
         ->assertJsonPath('default_feed_duration_minutes', 20);
     expect($user->refresh()->default_feed_duration_minutes)->toBe(20);
 
+    $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => 5])
+        ->assertOk()
+        ->assertJsonPath('default_feed_duration_minutes', 5);
+
     $this->putJson('/api/user/default-feed-duration', ['default_feed_duration_minutes' => null])
         ->assertOk()
         ->assertJsonPath('default_feed_duration_minutes', null);

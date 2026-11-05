@@ -703,10 +703,11 @@ function onSelectFeedMilkType(value: MilkType) {
 
 // Minutos estándar para una toma al pecho - igual que el color de las
 // heces del pañal, "Sin indicar" (null) es una opción más, no un estado
-// de error: no todo el mundo cronometra cuánto dura cada toma. 4 valores,
-// no más - menos que la lista original (5/10/15/20/30/45) a petición
-// expresa, para que el selector se lea de un vistazo.
-const feedDurationOptions = [10, 15, 20, 30, 45]
+// de error: no todo el mundo cronometra cuánto dura cada toma. Se quitó el 5
+// para que el selector se leyera de un vistazo y se ha vuelto a poner a
+// petición expresa, con la condición de que el bloque no pase de dos líneas
+// en una pantalla de 360 px (lo comprueba e2e/feed-duration-layout.spec.ts).
+const feedDurationOptions = [5, 10, 15, 20, 30, 45]
 
 // The last option reads "45+", not "45" - a flat "45" implies an exact
 // reading nobody actually took (nothing here times a feed to the
@@ -2625,7 +2626,7 @@ const sleepPredictionDue = computed(() => {
             </div>
             <div v-if="feedType === 'pecho'">
               <span class="field-label">{{ t('dashboard.feedForm.durationLabel') }}</span>
-              <div class="flex flex-wrap items-center gap-2.5">
+              <div class="flex flex-wrap items-center gap-2" data-testid="feed-duration-options">
                 <button
                   type="button"
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"

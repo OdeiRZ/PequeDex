@@ -450,7 +450,7 @@ async function onSelectDefaultTemperatureMethod(value: TemperatureMethod | '') {
 
 // --- Ajustes: duración de toma al pecho por defecto ---
 
-const DEFAULT_FEED_DURATION_OPTIONS = [10, 15, 20, 30, 45]
+const DEFAULT_FEED_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45]
 
 // Misma razón que el selector del propio formulario "+ Toma" en
 // DashboardView.vue: "45+" es honesto sobre ser un cajón abierto, no

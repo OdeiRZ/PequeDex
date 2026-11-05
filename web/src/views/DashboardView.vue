@@ -2626,10 +2626,13 @@ const sleepPredictionDue = computed(() => {
             </div>
             <div v-if="feedType === 'pecho'">
               <span class="field-label">{{ t('dashboard.feedForm.durationLabel') }}</span>
-              <div class="flex flex-wrap items-center gap-1.5" data-testid="feed-duration-options">
+              <div
+                class="grid grid-cols-4 items-center gap-1.5"
+                data-testid="feed-duration-options"
+              >
                 <button
                   type="button"
-                  class="rounded-full border-2 px-2.5 py-1.5 text-sm font-semibold transition-colors"
+                  class="col-span-2 rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
                   :class="
                     feedDurationMinutes === null
                       ? 'border-brand bg-brand/10 text-brand'
@@ -2644,7 +2647,7 @@ const sleepPredictionDue = computed(() => {
                   v-for="minutes in feedDurationOptions"
                   :key="minutes"
                   type="button"
-                  class="rounded-full border-2 px-2.5 py-1.5 text-sm font-semibold transition-colors"
+                  class="rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
                   :class="
                     feedDurationMinutes === minutes
                       ? 'border-brand bg-brand/10 text-brand'

@@ -8,11 +8,20 @@ import { describe, expect, it } from 'vitest'
 // vio en el móvil la primera vez.
 const publicDir = path.resolve(__dirname, '../../../public')
 const manifest = JSON.parse(readFileSync(path.join(publicDir, 'manifest.webmanifest'), 'utf8')) as {
+  id: string
+  start_url: string
   scope: string
   shortcuts: { name: string; url: string; icons: { src: string }[] }[]
 }
 
 describe('manifest shortcuts', () => {
+  // El `id` fija la identidad de la app instalada (con el mismo valor que la
+  // dirección de inicio, que es el que Chrome deduce si falta, para no crear
+  // una app nueva) y hace que Android regenere los atajos al cambiar el manifiesto.
+  it('has an explicit id equal to the start URL', () => {
+    expect(manifest.id).toBe(manifest.start_url)
+  })
+
   it('offers the three quick logs, inside the app scope', () => {
     expect(
       manifest.shortcuts.map((s) => new URL(s.url, 'https://x.test').searchParams.get('atajo')),

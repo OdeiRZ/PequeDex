@@ -2,6 +2,7 @@
   "name": "PequeDex",
   "short_name": "PequeDex",
   "description": "Diario y seguimiento de bebé compartido entre cuidadores: tomas, sueño, pañales, hitos y crecimiento.",
+  "id": "/PequeDex/",
   "start_url": "/PequeDex/",
   "scope": "/PequeDex/",
   "display": "standalone",

@@ -9,6 +9,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Retoques del lavado de cara y "Tus datos"
 
+- **5 min como duración de una toma al pecho**: vuelve a la lista (queda Sin
+  indicar, 5, 10, 15, 20, 30 y 45+ min), en el formulario "+ Toma" y en la
+  duración por defecto de "Tu cuenta" (el backend también la acepta). Los siete
+  botones caben en dos filas a 360 px, y una prueba e2e (`feed-duration-layout`)
+  lo mide en un Chrome real. Al pulsar *Finalizar*, una toma de menos de 5
+  minutos se queda ahora en 5 y no en 10.
 - **Más cosas se pueden cambiar sin conexión**: las opciones de "Tu cuenta"
   (interruptores, valores por defecto, barra de accesos), los ajustes del bebé,
   marcar la vitamina D y editar o borrar una medida de crecimiento, una vacuna

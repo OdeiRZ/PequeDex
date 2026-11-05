@@ -172,7 +172,7 @@ solo comprueban producción, pero el de desarrollo también está limpio):
   rueda parte igualmente de "ahora mismo" por si se apaga el
   interruptor, no de un valor vacío que no sabría representar. Una
   toma al pecho también lleva un selector de
-  duración (`feedDurationOptions`, chips "Sin indicar"/10/20/30/45 min,
+  duración (`feedDurationOptions`, chips "Sin indicar"/5/10/15/20/30/45+ min,
   mismo estilo que el color de las heces del pañal) - se manda como
   `feedStartedAt` + los minutos elegidos convertidos a un `ended_at`
   absoluto (`feedEndedAtIso()`), no como un valor aparte, así que si se

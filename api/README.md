@@ -99,7 +99,7 @@ vendor/bin/phpstan analyse   # análisis estático (Larastan, nivel 5)
   `users.default_diaper_size` (nullable, `App\Enums\DiaperSize`) y
   `users.default_feed_duration_minutes` (nullable, `unsignedSmallInteger`),
   `PUT /user/default-diaper-size` / `PUT /user/default-feed-duration`,
-  validados con `Rule::enum`/`Rule::in([10,20,30,45])` - mismas opciones
+  validados con `Rule::enum`/`Rule::in([5,10,15,20,30,45])` - mismas opciones
   que ofrecen los propios formularios "+ Pañal"/"+ Toma". Ver
   `web/README.md` para cómo se usan al preseleccionar un formulario
   nuevo. `updateSoundsEnabled()`/`updateStatsEnabled()` (columnas

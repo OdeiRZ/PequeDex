@@ -2,9 +2,11 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterView, useRoute } from 'vue-router'
+import { apiClient } from '@/lib/api'
 import { startBackgroundSync, type BackgroundSync } from '@/lib/backgroundSync'
 import { useAuthStore } from '@/stores/auth'
 import { useBabiesStore } from '@/stores/babies'
+import { usePendingWritesStore } from '@/stores/pendingWrites'
 import { useToastStore } from '@/stores/toast'
 import AccountSheet from '@/components/AccountSheet.vue'
 import AppHeader from '@/components/AppHeader.vue'
@@ -24,6 +26,10 @@ const route = useRoute()
 // Dashboard, lib/snapshot.ts): lo pintado al abrir puede estar desfasado.
 onMounted(() => {
   if (auth.isAuthenticated) {
+    // Lo cambiado sin conexión y aún sin subir se pone encima de lo guardado en
+    // el móvil, por si la foto se hizo antes de ese cambio.
+    auth.reapplyPending()
+    useBabiesStore().reapplyPendingWrites()
     auth.fetchCurrentUser()
   }
 })
@@ -34,7 +40,10 @@ onMounted(() => {
 const babies = useBabiesStore()
 const toast = useToastStore()
 const { t } = useI18n()
-const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineUpdates.length)
+const pendingWrites = usePendingWritesStore()
+const pendingCount = computed(
+  () => babies.offlineQueue.length + babies.offlineUpdates.length + pendingWrites.count,
+)
 let sync: BackgroundSync | null = null
 
 function stopSync() {
@@ -51,7 +60,9 @@ watch(
       pendingCount: () => pendingCount.value,
       flush: async () => {
         await babies.whenFlushIdle()
-        return babies.flushOfflineQueue()
+        const logs = await babies.flushOfflineQueue()
+        const changes = await pendingWrites.flush(apiClient)
+        return { sent: logs.sent + changes.sent }
       },
       abortStuck: (minAgeMs) => babies.abortStuckFlush(minAgeMs),
       onSent: (count) => toast.show(t('offline.sent', { count }, count)),
@@ -64,6 +75,20 @@ watch(
 watch(pendingCount, (now, before) => {
   if (now > before) sync?.notifyPending()
 })
+
+// Lo que el servidor rechaza de los cambios enviados por detrás (ver
+// stores/pendingWrites.ts) ya no se corresponde con lo pintado: se avisa y se
+// vuelve a leer lo guardado.
+watch(
+  () => pendingWrites.rejectedNotice,
+  (now, before) => {
+    const count = now - before
+    if (count <= 0) return
+    toast.show(t('offline.rejected', { count }, count), 'error')
+    void auth.fetchCurrentUser()
+    void babies.fetchBootstrap().catch(() => {})
+  },
+)
 
 onUnmounted(stopSync)
 

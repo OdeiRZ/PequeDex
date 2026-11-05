@@ -218,9 +218,11 @@ describe('useAuthStore', () => {
     await store.updateActionBarCategories(['feed', 'diaper', 'growth'])
 
     expect(store.user).toEqual(updated)
-    expect(apiClient.put).toHaveBeenCalledWith('/user/action-bar', {
-      action_bar_categories: ['feed', 'diaper', 'growth'],
-    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/user/action-bar',
+      { action_bar_categories: ['feed', 'diaper', 'growth'] },
+      { timeout: 20_000 },
+    )
   })
 
   it('removes the avatar locally after the request succeeds', async () => {

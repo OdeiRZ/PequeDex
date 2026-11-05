@@ -177,10 +177,10 @@ export default {
     pending: '{count} registro pendiente de enviar. | {count} registros pendientes de enviar.',
     pendingBadge: 'Pendiente',
     pendingNoEdit: 'Todavía no se ha enviado. Podrás editarlo cuando haya conexión.',
-    needsConnection: 'Sin conexión. Para editar o borrar hace falta conexión.',
+    needsConnection: 'Sin conexión. Para guardar esto hace falta conexión.',
     sent: 'Enviado {count} registro guardado sin conexión. | Enviados {count} registros guardados sin conexión.',
     rejected:
-      'No se ha podido guardar {count} registro hecho sin conexión. | No se han podido guardar {count} registros hechos sin conexión.',
+      'No se ha podido guardar {count} cambio hecho sin conexión. | No se han podido guardar {count} cambios hechos sin conexión.',
   },
   regions: {
     andalucia: 'Andalucía',

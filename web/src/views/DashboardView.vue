@@ -53,6 +53,7 @@ import { getBabyAge } from '@/lib/babyAge'
 import { isUnderThreeMonths, recentTemperatures } from '@/lib/temperature'
 import { computeDailyAlerts } from '@/lib/dailyAlerts'
 import { isNetworkError } from '@/lib/offlineQueue'
+import { usePendingWritesStore } from '@/stores/pendingWrites'
 import {
   formatPredictionAt,
   formatPredictionRange,
@@ -74,7 +75,7 @@ import {
   toDateOnlyString,
   todayDateOnlyString,
 } from '@/lib/localDate'
-import { extractValidationMessage } from '@/lib/api'
+import { apiClient, extractValidationMessage } from '@/lib/api'
 import {
   entryCategory,
   entryDiaperSizeLabel,
@@ -416,7 +417,10 @@ onMounted(() => {
 // --- Registro sin conexión (lib/offlineQueue.ts) ---
 
 const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
-const pendingCount = computed(() => babies.offlineQueue.length + babies.offlineUpdates.length)
+const pendingWrites = usePendingWritesStore()
+const pendingCount = computed(
+  () => babies.offlineQueue.length + babies.offlineUpdates.length + pendingWrites.count,
+)
 
 // Si lo guardado sigue sin actualizarse a los pocos segundos y hay conexión, casi
 // siempre es la API dormida (Render tarda hasta ~30 s en arrancar): el aviso lo
@@ -439,7 +443,9 @@ onUnmounted(() => clearTimeout(apiWakingTimer))
 // una fecha que ya no es válida) - se descarta, no se reintenta.
 async function flushQueue() {
   if (pendingCount.value === 0) return
-  const { sent } = await babies.flushOfflineQueue()
+  const logs = await babies.flushOfflineQueue()
+  const changes = await pendingWrites.flush(apiClient)
+  const sent = logs.sent + changes.sent
   if (sent > 0) toast.show(t('offline.sent', { count: sent }, sent))
 }
 

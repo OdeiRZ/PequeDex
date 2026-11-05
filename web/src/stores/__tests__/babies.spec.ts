@@ -934,10 +934,11 @@ describe('useBabiesStore', () => {
     await store.updateBaby({ sex: 'nino', birth_date: '2026-09-01' })
 
     expect(store.current).toEqual(updated)
-    expect(apiClient.put).toHaveBeenCalledWith('/babies/1', {
-      sex: 'nino',
-      birth_date: '2026-09-01',
-    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/babies/1',
+      { sex: 'nino', birth_date: '2026-09-01' },
+      { timeout: 20_000 },
+    )
   })
 
   it('fetches growth measurements for the current baby', async () => {
@@ -987,7 +988,9 @@ describe('useBabiesStore', () => {
 
     await pending
 
-    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/growth-measurements/5')
+    expect(apiClient.delete).toHaveBeenCalledWith('/babies/1/growth-measurements/5', {
+      timeout: 20_000,
+    })
     expect(apiClient.get).not.toHaveBeenCalled()
   })
 
@@ -1219,9 +1222,11 @@ describe('useBabiesStore', () => {
     await store.updateBaby({ water_broke_at: '2026-09-20T17:24:00Z' })
 
     expect(store.current?.water_broke_at).toBe('2026-09-20T17:24:00Z')
-    expect(apiClient.put).toHaveBeenCalledWith('/babies/1', {
-      water_broke_at: '2026-09-20T17:24:00Z',
-    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/babies/1',
+      { water_broke_at: '2026-09-20T17:24:00Z' },
+      { timeout: 20_000 },
+    )
   })
 
   it('fetches the vitamin D schedule and its recent doses', async () => {
@@ -1295,12 +1300,13 @@ describe('useBabiesStore', () => {
 
     await store.upsertVitaminDDose('2026-10-08', false)
 
-    expect(store.vitaminDRecentDoses.map((d) => d.id)).toEqual([2, 1])
-    expect(store.vitaminDAllDoses.map((d) => d.id)).toEqual([2, 1])
-    expect(apiClient.put).toHaveBeenCalledWith('/babies/1/vitamin-d-doses', {
-      date: '2026-10-08',
-      given: false,
-    })
+    expect(store.vitaminDRecentDoses.map((d) => d.date)).toEqual(['2026-10-08', '2026-10-07'])
+    expect(store.vitaminDAllDoses.map((d) => d.date)).toEqual(['2026-10-08', '2026-10-07'])
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/babies/1/vitamin-d-doses',
+      { date: '2026-10-08', given: false },
+      { timeout: 20_000 },
+    )
   })
 
   it('fetches the full vitamin D dose history, unbounded by the 14-day recent window', async () => {

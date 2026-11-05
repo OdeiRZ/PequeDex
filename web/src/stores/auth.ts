@@ -4,6 +4,7 @@ import type { Category } from '@/lib/category'
 import { clearSnapshot, loadSnapshot } from '@/lib/snapshot'
 import type { DiaperSize, TemperatureMethod } from './babies'
 import { useBabiesStore } from './babies'
+import { usePendingWritesStore } from './pendingWrites'
 
 export interface User {
   id: number
@@ -180,87 +181,100 @@ export const useAuthStore = defineStore('auth', {
       this.user = data
     },
 
+    /** Cambia una opción de la cuenta "local primero": se ve al instante y se
+     * envía por detrás, así que también se puede cambiar sin conexión (queda
+     * pendiente y sube sola al volver la red, ver stores/pendingWrites.ts).
+     * Si el servidor la rechaza, se deshace y el error llega a quien llama. */
+    async savePreference(url: string, body: Partial<User>) {
+      const keys = Object.keys(body) as (keyof User)[]
+      const before = this.user ? { ...this.user } : null
+      if (this.user) this.user = { ...this.user, ...body }
+
+      try {
+        await usePendingWritesStore().commit(
+          { key: `user:${url}`, method: 'put', url, body },
+          apiClient,
+        )
+      } catch (error) {
+        if (before && this.user) {
+          const restored: Record<string, unknown> = { ...this.user }
+          for (const key of keys) restored[key] = before[key]
+          this.user = restored as unknown as User
+        }
+        throw error
+      }
+    },
+
+    /** Tras traer el usuario del servidor (o al abrir la app): vuelve a poner
+     * encima las opciones cambiadas que aún no han subido, para que no se
+     * pisen con el valor viejo. */
+    reapplyPending() {
+      if (!this.user) return
+      let user = this.user
+      for (const write of usePendingWritesStore().items) {
+        if (write.key.startsWith('user:')) user = { ...user, ...(write.body as Partial<User>) }
+      }
+      if (user !== this.user) this.user = user
+    },
+
     async updateActionBarCategories(categories: Category[]) {
-      const { data } = await apiClient.put('/user/action-bar', {
-        action_bar_categories: categories,
-      })
-      this.user = data
+      await this.savePreference('/user/action-bar', { action_bar_categories: categories })
     },
 
     async updatePredictionsEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/predictions', {
-        predictions_enabled: enabled,
-      })
-      this.user = data
+      await this.savePreference('/user/predictions', { predictions_enabled: enabled })
     },
 
     async updateSwipeToDeleteEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/swipe-to-delete', {
-        swipe_to_delete_enabled: enabled,
-      })
-      this.user = data
+      await this.savePreference('/user/swipe-to-delete', { swipe_to_delete_enabled: enabled })
     },
 
     async updateTodaySummaryEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/today-summary', {
-        today_summary_enabled: enabled,
-      })
-      this.user = data
+      await this.savePreference('/user/today-summary', { today_summary_enabled: enabled })
     },
 
     async updateInteractionFeedbackEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/interaction-feedback', {
+      await this.savePreference('/user/interaction-feedback', {
         interaction_feedback_enabled: enabled,
       })
-      this.user = data
     },
 
     async updateDefaultDiaperSize(size: DiaperSize | null) {
-      const { data } = await apiClient.put('/user/default-diaper-size', {
-        default_diaper_size: size,
-      })
-      this.user = data
+      await this.savePreference('/user/default-diaper-size', { default_diaper_size: size })
     },
 
     async updateDefaultTemperatureMethod(method: TemperatureMethod | null) {
-      const { data } = await apiClient.put('/user/default-temperature-method', {
+      await this.savePreference('/user/default-temperature-method', {
         default_temperature_method: method,
       })
-      this.user = data
     },
 
     async updateDefaultFeedDuration(minutes: number | null) {
-      const { data } = await apiClient.put('/user/default-feed-duration', {
+      await this.savePreference('/user/default-feed-duration', {
         default_feed_duration_minutes: minutes,
       })
-      this.user = data
     },
 
     async updateSoundsEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/sounds', { sounds_enabled: enabled })
-      this.user = data
+      await this.savePreference('/user/sounds', { sounds_enabled: enabled })
     },
 
     async updateAlertsEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/alerts', { alerts_enabled: enabled })
-      this.user = data
+      await this.savePreference('/user/alerts', { alerts_enabled: enabled })
     },
 
     async updateTemperaturePanelEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/temperature-panel', {
+      await this.savePreference('/user/temperature-panel', {
         temperature_panel_enabled: enabled,
       })
-      this.user = data
     },
 
     async updateStatsEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/stats', { stats_enabled: enabled })
-      this.user = data
+      await this.savePreference('/user/stats', { stats_enabled: enabled })
     },
 
     async updateMilestonesEnabled(enabled: boolean) {
-      const { data } = await apiClient.put('/user/milestones', { milestones_enabled: enabled })
-      this.user = data
+      await this.savePreference('/user/milestones', { milestones_enabled: enabled })
     },
 
     async updatePassword(payload: UpdatePasswordPayload) {
@@ -293,6 +307,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const { data } = await apiClient.get('/user')
         this.user = data
+        this.reapplyPending()
       } catch {
         // Un 401 (token caducado o revocado) ya lo gestiona el interceptor
         // de lib/api.ts, que cierra la sesión. Cualquier otro fallo - sin
@@ -317,6 +332,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       clearStoredToken()
       clearSnapshot()
+      usePendingWritesStore().clear()
       useBabiesStore().$reset()
     },
   },

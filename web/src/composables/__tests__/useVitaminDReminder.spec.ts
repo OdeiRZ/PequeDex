@@ -169,9 +169,10 @@ describe('useVitaminDReminder', () => {
 
     await markToday(true)
 
-    expect(apiClient.put).toHaveBeenCalledWith('/babies/1/vitamin-d-doses', {
-      date: today,
-      given: true,
-    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/babies/1/vitamin-d-doses',
+      { date: today, given: true },
+      { timeout: 20_000 },
+    )
   })
 })

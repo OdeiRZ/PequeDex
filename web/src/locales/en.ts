@@ -175,10 +175,10 @@ export default {
     pending: '{count} log waiting to be sent. | {count} logs waiting to be sent.',
     pendingBadge: 'Pending',
     pendingNoEdit: 'Not sent yet. You can edit it once you are back online.',
-    needsConnection: 'Offline. Editing or deleting needs a connection.',
+    needsConnection: 'Offline. Saving this needs a connection.',
     sent: 'Sent {count} log saved offline. | Sent {count} logs saved offline.',
     rejected:
-      'Could not save {count} log made offline. | Could not save {count} logs made offline.',
+      'Could not save {count} change made offline. | Could not save {count} changes made offline.',
   },
   regions: {
     andalucia: 'Andalusia',

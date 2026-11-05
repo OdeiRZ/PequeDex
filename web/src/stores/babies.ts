@@ -5,6 +5,8 @@ import type { StatsExportPayload } from '@/lib/stats'
 import type { GrowthReferenceCurves } from '@/lib/growthReference'
 import { ALERTS_WINDOW_DAYS } from '@/lib/dailyAlerts'
 import { loadSnapshot } from '@/lib/snapshot'
+import type { PendingWrite } from '@/lib/pendingWrites'
+import { usePendingWritesStore } from './pendingWrites'
 import {
   endpointFor,
   isNetworkError,
@@ -679,6 +681,7 @@ export const useBabiesStore = defineStore('babies', {
       if (this.current) {
         storeActiveBabyId(this.current.id)
       }
+      this.reapplyPendingWrites()
     },
 
     /** Switches which already-loaded baby is shown - the caller (e.g.
@@ -709,14 +712,107 @@ export const useBabiesStore = defineStore('babies', {
       storeActiveBabyId(data.data.id)
     },
 
+    /** Aplica en pantalla una escritura pendiente (ver lib/pendingWrites.ts).
+     * Es lo que hace "local primero" posible: el cambio se ve al instante y
+     * también se vuelve a aplicar tras cada lectura del servidor
+     * (reapplyPendingWrites) mientras no haya subido. */
+    applyPendingWrite(write: Pick<PendingWrite, 'key' | 'method' | 'body'>) {
+      const [kind, ...rest] = write.key.split(':')
+      const body = (write.body ?? {}) as Record<string, unknown>
+      const id = Number(rest[0])
+      const isDelete = write.method === 'delete'
+
+      if (kind === 'baby') {
+        this.babies = this.babies.map((baby) => (baby.id === id ? { ...baby, ...body } : baby))
+        if (this.current?.id === id) this.current = { ...this.current, ...body }
+      } else if (kind === 'vitd-dose') {
+        const date = body.date as string
+        const given = body.given as boolean
+        const apply = (doses: VitaminDDose[]) => {
+          const existing = doses.find((dose) => dose.date === date)
+          const dose: VitaminDDose = existing
+            ? { ...existing, given }
+            : { id: -Number(date.replaceAll('-', '')), baby_id: id, date, given }
+          return upsertByDate(doses, dose, (d) => d.date)
+        }
+        this.vitaminDRecentDoses = apply(this.vitaminDRecentDoses)
+        this.vitaminDAllDoses = apply(this.vitaminDAllDoses)
+      } else if (kind === 'vitd-schedule') {
+        if (this.vitaminDSchedule) this.vitaminDSchedule = { ...this.vitaminDSchedule, ...body }
+      } else if (kind === 'growth') {
+        const existing = this.growthMeasurements.find((m) => m.id === id)
+        if (isDelete) {
+          this.growthMeasurements = this.growthMeasurements.filter((m) => m.id !== id)
+        } else if (existing) {
+          this.growthMeasurements = upsertByDate(
+            this.growthMeasurements,
+            { ...existing, ...body },
+            (m) => m.measured_at,
+          )
+        }
+      } else if (kind === 'vacc') {
+        this.vaccinations = isDelete
+          ? this.vaccinations.filter((v) => v.id !== id)
+          : sortVaccinations(this.vaccinations.map((v) => (v.id === id ? { ...v, ...body } : v)))
+      } else if (kind === 'checkup') {
+        this.checkups = isDelete
+          ? this.checkups.filter((c) => c.id !== id)
+          : this.checkups
+              .map((c) => (c.id === id ? { ...c, ...body } : c))
+              .sort(
+                (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
+              )
+      }
+    },
+
+    /** Tras traer datos del servidor: vuelve a poner encima lo que aún no ha
+     * subido, para que una lectura no pise un cambio hecho sin conexión. */
+    reapplyPendingWrites() {
+      for (const write of usePendingWritesStore().items) this.applyPendingWrite(write)
+    },
+
+    /** Cambia algo que ya existe "local primero": lo aplica en pantalla, lo
+     * deja en cola y lo envía por detrás (sin red queda pendiente y sube solo).
+     * Si el servidor lo rechaza, lo deja como estaba y relanza el error. */
+    async commitWrite(
+      change: Pick<PendingWrite, 'key' | 'method' | 'url' | 'body'>,
+    ): Promise<'saved' | 'queued'> {
+      const before = {
+        babies: this.babies,
+        current: this.current,
+        vitaminDRecentDoses: this.vitaminDRecentDoses,
+        vitaminDAllDoses: this.vitaminDAllDoses,
+        vitaminDSchedule: this.vitaminDSchedule,
+        growthMeasurements: this.growthMeasurements,
+        vaccinations: this.vaccinations,
+        checkups: this.checkups,
+      }
+      this.applyPendingWrite(change)
+      try {
+        return await usePendingWritesStore().commit(change, apiClient)
+      } catch (error) {
+        Object.assign(this, before)
+        throw error
+      }
+    },
+
     async updateBaby(payload: UpdateBabyPayload) {
-      const previousBirthDate = this.current!.birth_date
-      const { data } = await apiClient.put(`/babies/${this.current!.id}`, payload)
-      this.current = data.data
-      this.babies = this.babies.map((baby) => (baby.id === data.data.id ? data.data : baby))
-      // El servidor recalcula las fechas previstas de las vacunas
-      // pendientes al cambiar la fecha de nacimiento: se recargan.
-      if (data.data.birth_date !== previousBirthDate && data.data.vaccinations_enabled) {
+      const baby = this.current!
+      const result = await this.commitWrite({
+        key: `baby:${baby.id}`,
+        method: 'put',
+        url: `/babies/${baby.id}`,
+        body: payload,
+      })
+      // El servidor recalcula las fechas previstas de las vacunas pendientes al
+      // cambiar la fecha de nacimiento: se recargan (si ya está guardado; si
+      // sigue pendiente, el servidor aún no lo sabe).
+      if (
+        result === 'saved' &&
+        payload.birth_date !== undefined &&
+        payload.birth_date !== baby.birth_date &&
+        this.current?.vaccinations_enabled
+      ) {
         await this.fetchVaccinations()
       }
     },
@@ -926,6 +1022,7 @@ export const useBabiesStore = defineStore('babies', {
         this.vaccinations = []
         this.checkups = []
       }
+      this.reapplyPendingWrites()
       this.hydratedFromSnapshot = false
     },
 
@@ -1408,6 +1505,7 @@ export const useBabiesStore = defineStore('babies', {
       this.vaccinations = vaccinations.data.data
       this.vaccinationTemplate = vaccinations.data.template
       this.checkups = checkups.data.data
+      this.reapplyPendingWrites()
     },
 
     /** Activa/desactiva y elige la comunidad; el backend genera (o
@@ -1428,30 +1526,43 @@ export const useBabiesStore = defineStore('babies', {
 
     async saveVaccination(id: number | null, payload: SaveVaccinationPayload) {
       const babyId = this.current!.id
-      const { data } = id
-        ? await apiClient.put(`/babies/${babyId}/vaccinations/${id}`, payload)
-        : await apiClient.post(`/babies/${babyId}/vaccinations`, payload)
+      // Editar una que ya existe es "local primero"; crear una nueva sigue
+      // necesitando conexión (no hay forma de evitar duplicarla al reenviar).
+      if (id) {
+        await this.commitWrite({
+          key: `vacc:${id}`,
+          method: 'put',
+          url: `/babies/${babyId}/vaccinations/${id}`,
+          body: payload,
+        })
+        return
+      }
+      const { data } = await apiClient.post(`/babies/${babyId}/vaccinations`, payload)
       const saved: Vaccination = data.data
       const others = this.vaccinations.filter((v) => v.id !== saved.id)
       this.vaccinations = sortVaccinations([...others, saved])
     },
 
     async deleteVaccination(id: number) {
-      const previous = this.vaccinations
-      this.vaccinations = this.vaccinations.filter((v) => v.id !== id)
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/vaccinations/${id}`)
-      } catch (error) {
-        this.vaccinations = previous
-        throw error
-      }
+      await this.commitWrite({
+        key: `vacc:${id}`,
+        method: 'delete',
+        url: `/babies/${this.current!.id}/vaccinations/${id}`,
+      })
     },
 
     async saveCheckup(id: number | null, payload: SaveCheckupPayload) {
       const babyId = this.current!.id
-      const { data } = id
-        ? await apiClient.put(`/babies/${babyId}/checkups/${id}`, payload)
-        : await apiClient.post(`/babies/${babyId}/checkups`, payload)
+      if (id) {
+        await this.commitWrite({
+          key: `checkup:${id}`,
+          method: 'put',
+          url: `/babies/${babyId}/checkups/${id}`,
+          body: payload,
+        })
+        return
+      }
+      const { data } = await apiClient.post(`/babies/${babyId}/checkups`, payload)
       const saved: Checkup = data.data
       this.checkups = [...this.checkups.filter((c) => c.id !== saved.id), saved].sort(
         (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
@@ -1459,14 +1570,11 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async deleteCheckup(id: number) {
-      const previous = this.checkups
-      this.checkups = this.checkups.filter((c) => c.id !== id)
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/checkups/${id}`)
-      } catch (error) {
-        this.checkups = previous
-        throw error
-      }
+      await this.commitWrite({
+        key: `checkup:${id}`,
+        method: 'delete',
+        url: `/babies/${this.current!.id}/checkups/${id}`,
+      })
     },
 
     async fetchTemperatures() {
@@ -1593,6 +1701,7 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/growth-measurements`)
       this.growthMeasurements = data.data
+      this.reapplyPendingWrites()
     },
 
     async fetchGrowthReference() {
@@ -1617,27 +1726,20 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async updateGrowthMeasurement(id: number, payload: CreateGrowthMeasurementPayload) {
-      const { data } = await apiClient.put(
-        `/babies/${this.current!.id}/growth-measurements/${id}`,
-        payload,
-      )
-      this.growthMeasurements = upsertByDate(
-        this.growthMeasurements,
-        data.data,
-        (m) => m.measured_at,
-      )
+      await this.commitWrite({
+        key: `growth:${id}`,
+        method: 'put',
+        url: `/babies/${this.current!.id}/growth-measurements/${id}`,
+        body: payload,
+      })
     },
 
     async deleteGrowthMeasurement(id: number) {
-      const previous = this.growthMeasurements
-      this.growthMeasurements = this.growthMeasurements.filter((m) => m.id !== id)
-
-      try {
-        await apiClient.delete(`/babies/${this.current!.id}/growth-measurements/${id}`)
-      } catch (error) {
-        this.growthMeasurements = previous
-        throw error
-      }
+      await this.commitWrite({
+        key: `growth:${id}`,
+        method: 'delete',
+        url: `/babies/${this.current!.id}/growth-measurements/${id}`,
+      })
     },
 
     async fetchVitaminDSchedule() {
@@ -1648,6 +1750,7 @@ export const useBabiesStore = defineStore('babies', {
       const { data } = await apiClient.get(`/babies/${this.current.id}/vitamin-d-schedule`)
       this.vitaminDSchedule = data.data
       this.vitaminDRecentDoses = data.recent_doses
+      this.reapplyPendingWrites()
     },
 
     async upsertVitaminDSchedule(payload: {
@@ -1655,6 +1758,17 @@ export const useBabiesStore = defineStore('babies', {
       start_date: string
       end_date: string
     }) {
+      // Con la pauta ya cargada es "local primero"; la primera vez (crearla)
+      // necesita al servidor, que le pone identificador.
+      if (this.vitaminDSchedule) {
+        await this.commitWrite({
+          key: `vitd-schedule:${this.current!.id}`,
+          method: 'put',
+          url: `/babies/${this.current!.id}/vitamin-d-schedule`,
+          body: payload,
+        })
+        return
+      }
       const { data } = await apiClient.put(
         `/babies/${this.current!.id}/vitamin-d-schedule`,
         payload,
@@ -1663,12 +1777,12 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     async upsertVitaminDDose(date: string, given: boolean) {
-      const { data } = await apiClient.put(`/babies/${this.current!.id}/vitamin-d-doses`, {
-        date,
-        given,
+      await this.commitWrite({
+        key: `vitd-dose:${this.current!.id}:${date}`,
+        method: 'put',
+        url: `/babies/${this.current!.id}/vitamin-d-doses`,
+        body: { date, given },
       })
-      this.vitaminDRecentDoses = upsertByDate(this.vitaminDRecentDoses, data.data, (d) => d.date)
-      this.vitaminDAllDoses = upsertByDate(this.vitaminDAllDoses, data.data, (d) => d.date)
     },
 
     /** Full history, unbounded by the 14-day window fetchVitaminDSchedule()
@@ -1681,6 +1795,7 @@ export const useBabiesStore = defineStore('babies', {
 
       const { data } = await apiClient.get(`/babies/${this.current.id}/vitamin-d-doses`)
       this.vitaminDAllDoses = data.data
+      this.reapplyPendingWrites()
     },
 
     async fetchMilestones() {

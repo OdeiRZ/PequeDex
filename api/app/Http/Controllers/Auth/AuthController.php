@@ -73,11 +73,29 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('PequeDex')->plainTextToken;
+        $this->pruneExpiredTokens($user);
 
         return response()->json([
             'user' => $user,
             'token' => $token,
         ]);
+    }
+
+    /**
+     * Cada inicio de sesión crea un token y los caducados (más viejos que
+     * sanctum.expiration, que se cuenta desde created_at porque expires_at
+     * queda vacío con la caducidad global) ya no sirven para nada pero se
+     * quedaban en la tabla para siempre: no hay planificador que corra
+     * sanctum:prune-expired en Render. Se borran los de esta persona aquí.
+     */
+    private function pruneExpiredTokens(User $user): void
+    {
+        $minutes = config('sanctum.expiration');
+        if (! $minutes) {
+            return;
+        }
+
+        $user->tokens()->where('created_at', '<', now()->subMinutes((int) $minutes))->delete();
     }
 
     public function logout(Request $request): JsonResponse

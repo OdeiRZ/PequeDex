@@ -148,6 +148,29 @@ it('logs in an existing user with correct credentials', function () {
     $response->assertOk()->assertJsonStructure(['user', 'token']);
 });
 
+it('deletes the user’s expired tokens on login, keeping the live ones', function () {
+    $user = User::factory()->create(['email' => 'odei@example.com', 'password' => bcrypt('correct-password')]);
+    $otro = User::factory()->create();
+    $caducado = $user->createToken('PequeDex')->accessToken;
+    $caducado->forceFill(['created_at' => now()->subDays(121)])->save();
+    $vivo = $user->createToken('PequeDex')->accessToken;
+    $deOtro = $otro->createToken('PequeDex')->accessToken;
+    $deOtro->forceFill(['created_at' => now()->subDays(200)])->save();
+
+    $this->postJson('/api/login', ['email' => 'odei@example.com', 'password' => 'correct-password'])->assertOk();
+
+    $ids = $user->tokens()->pluck('id');
+    expect($ids)->not->toContain($caducado->id)
+        ->and($ids)->toContain($vivo->id)
+        ->and($ids)->toHaveCount(2)
+        // Solo los suyos: los de otra cuenta los limpia su propio inicio de sesión.
+        ->and($otro->tokens()->pluck('id'))->toContain($deOtro->id);
+});
+
+it('does not serve files from the private local disk', function () {
+    $this->get('/storage/cualquier-cosa.txt')->assertNotFound();
+});
+
 it('rejects login with an incorrect password', function () {
     User::factory()->create([
         'email' => 'odei@example.com',

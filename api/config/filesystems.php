@@ -48,7 +48,10 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Sin GET/PUT /storage/{path}: nada sirve ficheros de este disco
+            // (las fotos van por `public` en local y R2 en producción), y una
+            // ruta que no se usa es una ruta menos que proteger.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

@@ -112,7 +112,7 @@ const rows = computed<Row[]>(() => {
       <div v-if="row.showDaySeparator" class="my-4 flex items-center gap-3">
         <span class="h-px flex-1 bg-border"></span>
         <span
-          class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand"
+          class="shrink-0 rounded-full bg-surface-sunken px-4 py-1.5 text-sm font-bold text-brand-text"
         >
           {{ row.dayLabel }}
         </span>
@@ -157,7 +157,7 @@ const rows = computed<Row[]>(() => {
           >
             <span
               class="text-base font-bold tabular-nums"
-              :class="row.isRunning ? 'text-brand' : ''"
+              :class="row.isRunning ? 'text-brand-text' : ''"
             >
               {{ row.durationLabel }}
             </span>

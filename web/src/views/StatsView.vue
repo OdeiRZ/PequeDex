@@ -1063,7 +1063,7 @@ async function onExportPdf(mode: StatsExportMode) {
           </h2>
           <RouterLink
             :to="{ name: 'vaccinations' }"
-            class="text-xs font-semibold text-brand underline"
+            class="text-xs font-semibold text-brand-text underline"
             @click="feedback.nav()"
             >{{ t('stats.vaccinations.open') }}</RouterLink
           >
@@ -1340,7 +1340,7 @@ async function onExportPdf(mode: StatsExportMode) {
           <button
             v-if="!exportQuestionsOpen && !exportQuestions"
             type="button"
-            class="self-start text-xs font-semibold text-brand"
+            class="self-start text-xs font-semibold text-brand-text"
             aria-expanded="false"
             @click="exportQuestionsOpen = true"
           >

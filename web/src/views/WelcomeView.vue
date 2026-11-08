@@ -40,7 +40,7 @@ const inviteCode = computed(() =>
         <RouterLink
           v-press
           :to="{ name: 'login' }"
-          class="rounded-full border-2 border-brand bg-surface/60 px-4 py-2 text-sm font-display font-bold text-brand backdrop-blur-sm transition-transform active:scale-[0.98]"
+          class="rounded-full border-2 border-brand bg-surface/60 px-4 py-2 text-sm font-display font-bold text-brand-text backdrop-blur-sm transition-transform active:scale-[0.98]"
         >
           {{ t('auth.welcome.loginPill') }}
         </RouterLink>

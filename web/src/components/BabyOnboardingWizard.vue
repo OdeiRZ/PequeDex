@@ -222,7 +222,9 @@ defineExpose({ reset })
         >
           <span aria-hidden="true">{{ option.icon }}</span>
           {{ t(option.labelKey) }}
-          <span v-if="sex === option.value" class="ml-auto text-brand" aria-hidden="true">✓</span>
+          <span v-if="sex === option.value" class="ml-auto text-brand-text" aria-hidden="true"
+            >✓</span
+          >
         </button>
       </div>
       <div class="mt-auto pt-6">

@@ -453,7 +453,7 @@ async function onExportPdf() {
           >
             {{ t('contractions.stats.perHour') }}
           </div>
-          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand-text">
             {{ stats.perHour ?? '-' }}
           </div>
         </div>
@@ -463,7 +463,7 @@ async function onExportPdf() {
           >
             {{ t('contractions.stats.avgDuration') }}
           </div>
-          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand-text">
             {{ formatStat(stats.avgDurationSec) }}
           </div>
         </div>
@@ -473,7 +473,7 @@ async function onExportPdf() {
           >
             {{ t('contractions.stats.avgInterval') }}
           </div>
-          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand">
+          <div class="mt-1.5 font-display text-xl font-bold tabular-nums text-brand-text">
             {{ formatStat(stats.avgIntervalSec) }}
           </div>
         </div>

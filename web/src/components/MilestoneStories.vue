@@ -65,7 +65,7 @@ const { t } = useI18n()
       @click="$emit('create')"
     >
       <span
-        class="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border bg-surface-sunken text-xl font-bold text-brand transition-[border-color,transform] duration-200 group-hover:scale-110 group-hover:border-brand"
+        class="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-border bg-surface-sunken text-xl font-bold text-brand-text transition-[border-color,transform] duration-200 group-hover:scale-110 group-hover:border-brand"
       >
         +
       </span>

@@ -15,9 +15,10 @@
   --surface: #ffffff;
   --surface-sunken: #f3ece4;
   --text: #2b2420;
-  --text-muted: #7a6f66;
+  --text-muted: #6a6058;
   --border: #e8ddd0;
   --brand: #a65a6b;
+  --brand-text: #8b4b59;
   --brand-ink: #ffffff;
   --brand-teal: #2f6e68;
   --focus: #a65a6b;
@@ -65,6 +66,7 @@
     --text-muted: #a79e97;
     --border: #3a3844;
     --brand: #e08fa0;
+    --brand-text: var(--brand);
     --brand-ink: #201118;
     --brand-teal: #6cb3ab;
     --shadow-color: 0 0 0;
@@ -95,6 +97,7 @@
   --text-muted: #a79e97;
   --border: #3a3844;
   --brand: #e08fa0;
+  --brand-text: var(--brand);
   --brand-ink: #201118;
   --brand-teal: #6cb3ab;
   --shadow-color: 0 0 0;
@@ -130,18 +133,21 @@
  */
 :root[data-sex='nina'] {
   --brand: #c1557a;
+  --brand-text: #97425f;
   --brand-teal: #8a5a96;
   --focus: #c1557a;
 }
 
 :root[data-sex='nino'] {
   --brand: #3f7ea6;
+  --brand-text: #326483;
   --brand-teal: #5b8f6d;
   --focus: #3f7ea6;
 }
 
 :root[data-sex='combo'] {
   --brand: #806890;
+  --brand-text: #6b5778;
   --brand-teal: #c1557a;
   --focus: #806890;
 }
@@ -149,18 +155,21 @@
 @media (prefers-color-scheme: dark) {
   :root[data-sex='nina']:not([data-theme='light']) {
     --brand: #f0a3c0;
+    --brand-text: var(--brand);
     --brand-teal: #caa3d9;
     --focus: #f0a3c0;
   }
 
   :root[data-sex='nino']:not([data-theme='light']) {
     --brand: #8fc6e6;
+    --brand-text: var(--brand);
     --brand-teal: #9fd0ab;
     --focus: #8fc6e6;
   }
 
   :root[data-sex='combo']:not([data-theme='light']) {
     --brand: #bfb4d3;
+    --brand-text: var(--brand);
     --brand-teal: #f0a3c0;
     --focus: #bfb4d3;
   }
@@ -168,18 +177,21 @@
 
 :root[data-theme='dark'][data-sex='nina'] {
   --brand: #f0a3c0;
+  --brand-text: var(--brand);
   --brand-teal: #caa3d9;
   --focus: #f0a3c0;
 }
 
 :root[data-theme='dark'][data-sex='nino'] {
   --brand: #8fc6e6;
+  --brand-text: var(--brand);
   --brand-teal: #9fd0ab;
   --focus: #8fc6e6;
 }
 
 :root[data-theme='dark'][data-sex='combo'] {
   --brand: #bfb4d3;
+  --brand-text: var(--brand);
   --brand-teal: #f0a3c0;
   --focus: #bfb4d3;
 }
@@ -192,6 +204,7 @@
   --color-text-muted: var(--text-muted);
   --color-border: var(--border);
   --color-brand: var(--brand);
+  --color-brand-text: var(--brand-text);
   --color-brand-ink: var(--brand-ink);
   --color-brand-teal: var(--brand-teal);
   --color-feed: var(--feed);

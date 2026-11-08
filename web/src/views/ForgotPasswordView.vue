@@ -63,7 +63,7 @@ async function onSubmit() {
     </form>
 
     <p v-if="!submitted" class="text-center text-sm text-text-muted">
-      <RouterLink :to="{ name: 'login' }" class="font-semibold text-brand">{{
+      <RouterLink :to="{ name: 'login' }" class="font-semibold text-brand-text">{{
         t('auth.forgotPassword.backToLogin')
       }}</RouterLink>
     </p>

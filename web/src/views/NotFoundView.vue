@@ -12,7 +12,7 @@ const { t } = useI18n()
     <h1 class="font-display text-2xl font-bold">{{ t('notFound.title') }}</h1>
     <RouterLink
       :to="{ name: auth.isAuthenticated ? 'dashboard' : 'login' }"
-      class="font-semibold text-brand"
+      class="font-semibold text-brand-text"
     >
       {{ t('notFound.back') }}
     </RouterLink>

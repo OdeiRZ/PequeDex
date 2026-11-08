@@ -2469,7 +2469,7 @@ const sleepPredictionDue = computed(() => {
                          ("Mié 28 oct"), y el recuento, más pequeño, es el que cede
                          (a dos líneas si hace falta) en vez de empujarla. -->
                     <span
-                      class="shrink-0 font-display text-sm font-bold whitespace-nowrap text-brand"
+                      class="shrink-0 font-display text-sm font-bold whitespace-nowrap text-brand-text"
                     >
                       <span class="min-[400px]:hidden">{{ item.shortLabel }}</span>
                       <span class="hidden min-[400px]:inline">{{ item.label }}</span>
@@ -2604,7 +2604,7 @@ const sleepPredictionDue = computed(() => {
                   class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-semibold transition-colors"
                   :class="
                     feedMilkType === option.value
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="feedMilkType === option.value"
@@ -2635,7 +2635,7 @@ const sleepPredictionDue = computed(() => {
                   class="col-span-2 rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
                   :class="
                     feedDurationMinutes === null
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="feedDurationMinutes === null"
@@ -2650,7 +2650,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
                   :class="
                     feedDurationMinutes === minutes
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="feedDurationMinutes === minutes"
@@ -2667,7 +2667,7 @@ const sleepPredictionDue = computed(() => {
               <div class="flex items-center gap-2">
                 <button
                   type="button"
-                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand-text transition-transform active:scale-90 active:bg-brand/10"
                   :aria-label="t('dashboard.feedForm.amountDecrease')"
                   @pointerdown="startFeedAmountRepeat(-10)"
                   @pointerup="stopFeedAmountRepeat"
@@ -2686,7 +2686,7 @@ const sleepPredictionDue = computed(() => {
                 />
                 <button
                   type="button"
-                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand-text transition-transform active:scale-90 active:bg-brand/10"
                   :aria-label="t('dashboard.feedForm.amountIncrease')"
                   @pointerdown="startFeedAmountRepeat(10)"
                   @pointerup="stopFeedAmountRepeat"
@@ -2807,7 +2807,7 @@ const sleepPredictionDue = computed(() => {
               <div class="flex items-center gap-2">
                 <button
                   type="button"
-                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand-text transition-transform active:scale-90 active:bg-brand/10"
                   :aria-label="t('dashboard.temperatureForm.decrease')"
                   @click="adjustTemperature(-0.1)"
                 >
@@ -2832,7 +2832,7 @@ const sleepPredictionDue = computed(() => {
                 </div>
                 <button
                   type="button"
-                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand transition-transform active:scale-90 active:bg-brand/10"
+                  class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border text-lg font-bold text-brand-text transition-transform active:scale-90 active:bg-brand/10"
                   :aria-label="t('dashboard.temperatureForm.increase')"
                   @click="adjustTemperature(0.1)"
                 >
@@ -2853,7 +2853,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
                   :class="
                     temperatureMethod === ''
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-checked="temperatureMethod === ''"
@@ -2869,7 +2869,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
                   :class="
                     temperatureMethod === method
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-checked="temperatureMethod === method"
@@ -2923,7 +2923,7 @@ const sleepPredictionDue = computed(() => {
                 class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
                 :class="
                   diaperType === 'mojado'
-                    ? 'border-brand bg-brand/10 text-brand'
+                    ? 'border-brand bg-brand/10 text-brand-text'
                     : 'border-border text-text-muted'
                 "
                 :aria-pressed="diaperType === 'mojado'"
@@ -2946,7 +2946,7 @@ const sleepPredictionDue = computed(() => {
                 class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
                 :class="
                   diaperType === 'sucio'
-                    ? 'border-brand bg-brand/10 text-brand'
+                    ? 'border-brand bg-brand/10 text-brand-text'
                     : 'border-border text-text-muted'
                 "
                 :aria-pressed="diaperType === 'sucio'"
@@ -2972,7 +2972,7 @@ const sleepPredictionDue = computed(() => {
                 class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-2 py-2 text-sm font-semibold transition-colors"
                 :class="
                   diaperType === 'ambos'
-                    ? 'border-brand bg-brand/10 text-brand'
+                    ? 'border-brand bg-brand/10 text-brand-text'
                     : 'border-border text-text-muted'
                 "
                 :aria-label="t('dashboard.diaperForm.both')"
@@ -3012,7 +3012,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
                   :class="
                     diaperResidueColor === ''
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-pressed="diaperResidueColor === ''"
@@ -3064,7 +3064,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
                   :class="
                     diaperSize === ''
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-checked="diaperSize === ''"
@@ -3080,7 +3080,7 @@ const sleepPredictionDue = computed(() => {
                   class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
                   :class="
                     diaperSize === size
-                      ? 'border-brand bg-brand/10 text-brand'
+                      ? 'border-brand bg-brand/10 text-brand-text'
                       : 'border-border text-text-muted'
                   "
                   :aria-checked="diaperSize === size"
@@ -3286,7 +3286,7 @@ const sleepPredictionDue = computed(() => {
                 id="milestone-photo"
                 type="file"
                 accept="image/*"
-                class="w-full text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand/15 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand"
+                class="w-full text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand/15 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-text"
                 @change="onMilestonePhotoChange"
               />
             </div>
@@ -3449,7 +3449,7 @@ const sleepPredictionDue = computed(() => {
           <div class="mt-6 flex flex-col gap-3 border-t border-border pt-5">
             <button
               type="button"
-              class="text-center text-sm font-semibold text-brand"
+              class="text-center text-sm font-semibold text-brand-text"
               @click="openSheet('addBaby')"
             >
               {{ t('dashboard.babySettings.addAnotherBaby') }}

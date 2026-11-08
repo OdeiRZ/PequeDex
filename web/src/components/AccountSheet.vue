@@ -609,7 +609,7 @@ watch(
       <h3 class="font-display text-base font-bold">{{ t('profile.title') }}</h3>
       <button
         type="button"
-        class="text-sm font-semibold text-brand"
+        class="text-sm font-semibold text-brand-text"
         @click="ui.closeAccountSheet()"
       >
         {{ t('common.close') }}
@@ -992,7 +992,7 @@ watch(
           class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultDiaperSize === ''
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultDiaperSize === ''"
@@ -1008,7 +1008,7 @@ watch(
           class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultDiaperSize === size
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultDiaperSize === size"
@@ -1035,7 +1035,7 @@ watch(
           class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultTemperatureMethod === ''
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultTemperatureMethod === ''"
@@ -1051,7 +1051,7 @@ watch(
           class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors"
           :class="
             defaultTemperatureMethod === method
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultTemperatureMethod === method"
@@ -1076,7 +1076,7 @@ watch(
           class="col-span-2 rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
           :class="
             defaultFeedDurationMinutes === null
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultFeedDurationMinutes === null"
@@ -1092,7 +1092,7 @@ watch(
           class="rounded-full border-2 px-1 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors"
           :class="
             defaultFeedDurationMinutes === minutes
-              ? 'border-brand bg-brand/10 text-brand'
+              ? 'border-brand bg-brand/10 text-brand-text'
               : 'border-border text-text-muted'
           "
           :aria-checked="defaultFeedDurationMinutes === minutes"
@@ -1172,7 +1172,7 @@ watch(
       <div class="flex flex-col gap-3 rounded-xl bg-surface-sunken p-3">
         <div class="flex items-start gap-3">
           <span
-            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface text-brand"
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface text-brand-text"
             aria-hidden="true"
           >
             <svg

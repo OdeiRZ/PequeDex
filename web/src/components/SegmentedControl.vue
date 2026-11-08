@@ -24,7 +24,9 @@ function onSelect(value: T) {
       :key="option.value"
       type="button"
       class="rounded-lg px-2 py-2 text-sm font-semibold transition-colors"
-      :class="modelValue === option.value ? 'bg-surface text-brand shadow-sm' : 'text-text-muted'"
+      :class="
+        modelValue === option.value ? 'bg-surface text-brand-text shadow-sm' : 'text-text-muted'
+      "
       :aria-pressed="modelValue === option.value"
       @click="onSelect(option.value)"
     >

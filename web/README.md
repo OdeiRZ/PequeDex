@@ -779,6 +779,15 @@ verse bien en una captura:
   oscuro, más claros, 2,1–2,4:1); estos dan al menos 4,8:1 y son iguales en
   los dos temas. Gráficas, iconos y bordes siguen con los colores normales.
   Texto sobre `--danger`: `text-surface`, como `.btn-danger`.
+- **Texto con el color de marca: `text-brand-text`, no `text-brand`.**
+  `--brand-text` es, en los temas claros, un tono entre un 17 y un 22 % más
+  oscuro que el `--brand` de cada tema (neutro, niña, niño y combo). Así llega
+  a 4,5:1 sobre blanco, el fondo crema y los chips `bg-brand/10`, que con
+  `--brand` se quedaban en 3,1–3,5. En los temas oscuros es igual que
+  `--brand`. Bordes, rellenos y botones siguen con `--brand`.
+  `--text-muted` claro es `#6a6058`. Lo vigila `e2e/accessibility.spec.ts`,
+  que pasa axe (WCAG 2.1 AA) por las pantallas principales, la hoja
+  "+ Toma" y "Tu cuenta" en claro y en oscuro.
 - **Sombras solo en lo que se toca**: `.card` (contenedores: Ritmo,
   Estadísticas, formularios) lleva un borde fino sin sombra;
   `.card-interactive` (resumen del día, tarjetas de enlace, filas de

@@ -18,6 +18,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   descartarlo"). Si la sesión caduca sola, se conservan y se envían al volver
   a entrar la misma persona. Antes, en ese caso, los ajustes pendientes se
   perdían.
+- **Contraste suficiente en tema claro.** axe encontró por debajo de 4,5:1 el
+  gris de los textos secundarios en las tarjetas de predicción (3,7-4,0) y en
+  los selectores (4,2), y el texto con el color de marca de los chips elegidos
+  (3,1-3,5, según el tema del bebé). El gris pasa a `#6a6058`, y el texto de
+  marca usa un tono un poco más oscuro del mismo color (`--brand-text`); los
+  bordes, rellenos y botones no cambian. El tema oscuro ya cumplía.
+- **Accesibilidad comprobada en cada push.** Una prueba e2e nueva pasa axe
+  (WCAG 2.1 AA) por las pantallas principales, la hoja "+ Toma" y "Tu cuenta",
+  en claro y en oscuro.
+- **Limpieza.** Al iniciar sesión se borran los tokens caducados de esa
+  persona (antes se quedaban para siempre: no hay planificador en Render), y
+  el disco privado `local` deja de servir ficheros por `/storage/{path}`, una
+  ruta que nada usaba.
 - **Dependencias sin avisos de seguridad.** Composer tenía 9 avisos en 6
   paquetes de Symfony, y npm uno alto en producción (`follow-redirects`) y 15
   en las herramientas de desarrollo (minimatch y glob, fijados con

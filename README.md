@@ -40,7 +40,7 @@ Cloudflare Pages.
 | **Tiempo real** | Varios cuidadores ven los mismos registros a la vez; sin conexión se guarda en el móvil y se sincroniza en pocos segundos al volver la red (2,9 s medidos, antes 22,4 s), y las ediciones también son locales primero. |
 | **Atajos** | Con la app instalada en Android, al mantener pulsado el icono: **+ Toma**, **+ Sueño** y **+ Pañal**, cada uno con su icono, abren directamente el registro rápido. |
 | **Stack** | Laravel 12 + Sanctum (API) · Vue 3 + Pinia + TypeScript (PWA) · PostgreSQL en Neon · Render + GitHub Pages |
-| **Calidad** | 395 tests de backend (también contra PostgreSQL real) · 450 de frontend · 18 pruebas end-to-end con Playwright que **bloquean el despliegue** · `npm audit` a 0 · Sentry · copia de seguridad semanal cifrada |
+| **Calidad** | 397 tests de backend (también contra PostgreSQL real) · 472 de frontend · 21 pruebas end-to-end con Playwright que **bloquean el despliegue**, accesibilidad WCAG 2.1 AA con axe incluida · `npm audit` y `composer audit` a 0, comprobados en la CI · Sentry · copia de seguridad semanal cifrada |
 
 **Una mejora medida de verdad:** la base de datos consumía **4,29 GB de red en
 12 días** (el avatar en base64 viajaba en cada petición); tras mover la foto

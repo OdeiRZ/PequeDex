@@ -9,10 +9,16 @@ import { createSession, signIn } from './session'
 // con qué colores.
 const SLOW_FIRST_LOAD_MS = 45_000
 const OPEN_SHEET = 'div:not([inert]) > [role="dialog"]'
+// Sin transiciones ni animaciones: axe tiene que medir los colores finales, no
+// los de mitad de un fundido (la CI, más lenta, llegó a medir un botón a medio
+// cambiar de color justo al abrirse "Tu cuenta").
+const NO_MOTION =
+  '*, *::before, *::after { transition: none !important; animation: none !important; }'
 const SCREENS = ['./', './estadisticas', './vacunas', './contracciones', './sonidos']
 
 // Con una hoja abierta, solo la hoja: lo de detrás está atenuado e inerte.
 async function violations(page: Page, only?: string): Promise<string[]> {
+  await page.addStyleTag({ content: NO_MOTION })
   const builder = new AxeBuilder({ page })
   if (only) builder.include(only)
   const result = await builder.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()

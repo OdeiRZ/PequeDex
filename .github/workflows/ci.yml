@@ -52,7 +52,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
-          php-version: "8.2"
+          php-version: "8.3"
           extensions: pdo_pgsql, mbstring, bcmath, ctype, fileinfo, gd, exif
           coverage: none
 
@@ -88,7 +88,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
-          php-version: "8.2"
+          php-version: "8.3"
           extensions: sqlite3, mbstring, bcmath, ctype, fileinfo
           coverage: none
 
@@ -115,6 +115,38 @@ jobs:
 
       - name: Tests (Pest)
         run: vendor/bin/pest
+
+  # Avisos de seguridad de las dependencias de producción (npm y Composer).
+  # Fuera de `needs` del despliegue, como en MIRA: un aviso nuevo de un tercero
+  # pone la CI en rojo (se ve en el momento) pero no bloquea desplegar un
+  # cambio que no tiene nada que ver. Antes no había este paso y los avisos se
+  # acumulaban sin que fallara nada.
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: npm audit (production)
+        working-directory: web
+        run: npm ci && npm audit --omit=dev --audit-level=high
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: composer audit (production)
+        working-directory: api
+        run: composer audit --no-dev --locked
 
   frontend:
     name: Frontend (Vue)
@@ -183,7 +215,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
-          php-version: "8.2"
+          php-version: "8.3"
           extensions: sqlite3, mbstring, bcmath, ctype, fileinfo, gd, exif
           coverage: none
           # El API de pruebas es un proceso PHP que vive toda la ejecución. Con el

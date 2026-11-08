@@ -237,4 +237,46 @@ describe('useAuthStore', () => {
 
     expect(store.user?.avatar).toBeNull()
   })
+
+  // Colas de cambios sin enviar ligadas a la cuenta - ver lib/queueOwner.ts.
+  describe('unsent changes', () => {
+    const cola =
+      '[{"tempId":-1,"babyId":5,"type":"feed","payload":{},"queuedAt":"2026-11-08T08:00:00Z"}]'
+
+    it('discards the unsent changes on a deliberate logout', async () => {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+      const store = useAuthStore()
+      await store.login({ email: user.email, password: 'secreto123' })
+      localStorage.setItem('pequedex.offlineQueue', cola)
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
+
+      store.logout()
+
+      expect(localStorage.getItem('pequedex.offlineQueue')).toBeNull()
+      expect(localStorage.getItem('pequedex.queueOwner')).toBeNull()
+    })
+
+    it('keeps them when the session just expires, for the same person to send', async () => {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+      const store = useAuthStore()
+      await store.login({ email: user.email, password: 'secreto123' })
+      localStorage.setItem('pequedex.offlineQueue', cola)
+
+      store.clearSession()
+
+      expect(localStorage.getItem('pequedex.offlineQueue')).toBe(cola)
+    })
+
+    it("drops another account's unsent changes when someone else logs in", async () => {
+      localStorage.setItem('pequedex.queueOwner', '42')
+      localStorage.setItem('pequedex.offlineQueue', cola)
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { user, token: 'abc123' } })
+      const store = useAuthStore()
+
+      await store.login({ email: user.email, password: 'secreto123' })
+
+      expect(localStorage.getItem('pequedex.offlineQueue')).toBeNull()
+      expect(localStorage.getItem('pequedex.queueOwner')).toBe('1')
+    })
+  })
 })

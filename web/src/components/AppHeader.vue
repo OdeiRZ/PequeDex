@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useBabiesStore } from '@/stores/babies'
+import { usePendingWritesStore } from '@/stores/pendingWrites'
 import { useToastStore } from '@/stores/toast'
 import { useUiStore } from '@/stores/ui'
 import { useFeedback } from '@/composables/useFeedback'
@@ -22,7 +24,28 @@ function onOpenAccountSheet() {
   ui.openAccountSheet()
 }
 
+// Cerrar sesión descarta lo que quede sin enviar (ver lib/queueOwner.ts):
+// si hay algo, el primer toque avisa y solo el segundo, en unos segundos,
+// cierra la sesión.
+const CONFIRM_WINDOW_MS = 6000
+const babies = useBabiesStore()
+const pendingWrites = usePendingWritesStore()
+const pendingCount = computed(
+  () => babies.offlineQueue.length + babies.offlineUpdates.length + pendingWrites.count,
+)
+let confirmUntil = 0
+
 function onLogout() {
+  if (pendingCount.value > 0 && Date.now() > confirmUntil) {
+    confirmUntil = Date.now() + CONFIRM_WINDOW_MS
+    feedback.tap()
+    toast.show(
+      t('common.logoutPending', { count: pendingCount.value }, pendingCount.value),
+      'error',
+    )
+    return
+  }
+  confirmUntil = 0
   // auth.logout() clears the local session synchronously and only fires
   // the actual /logout request in the background - calling it and pushing
   // the route back to back, in the same tick, lets Vue batch both

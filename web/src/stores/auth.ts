@@ -5,6 +5,7 @@ import { clearSnapshot, loadSnapshot } from '@/lib/snapshot'
 import type { DiaperSize, TemperatureMethod } from './babies'
 import { useBabiesStore } from './babies'
 import { usePendingWritesStore } from './pendingWrites'
+import { claimQueuesFor, discardAllQueues } from '@/lib/queueOwner'
 
 export interface User {
   id: number
@@ -136,7 +137,9 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       const token = getStoredToken()
 
-      this.clearSession()
+      // A propósito: lo que quedara sin enviar se descarta (AppHeader avisa
+      // antes si había algo), para no dejar datos en un móvil compartido.
+      this.clearSession({ discardPending: true })
 
       if (token) {
         apiClient
@@ -166,7 +169,7 @@ export const useAuthStore = defineStore('auth', {
     // se borran allí con su historial; ver AccountDeleter en el API.
     async deleteAccount(currentPassword: string) {
       await apiClient.delete('/user', { data: { current_password: currentPassword } })
-      this.clearSession()
+      this.clearSession({ discardPending: true })
     },
 
     // Todos los datos de la cuenta en un JSON (portabilidad). Devuelve el
@@ -307,6 +310,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const { data } = await apiClient.get('/user')
         this.user = data
+        this.claimQueues(data.id)
         this.reapplyPending()
       } catch {
         // Un 401 (token caducado o revocado) ya lo gestiona el interceptor
@@ -321,18 +325,34 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       this.token = token
       storeToken(token)
+      this.claimQueues(user.id)
+    },
+
+    // Las colas de cambios sin enviar son de una cuenta: si eran de otra, se
+    // descartan y los stores se recargan vacíos - ver lib/queueOwner.ts.
+    claimQueues(userId: number) {
+      if (claimQueuesFor(userId)) {
+        usePendingWritesStore().$reset()
+        useBabiesStore().$reset()
+      }
     },
 
     /** Only ever clears *this* store's own state - without also resetting
      * the babies store here, whoever's timeline was already loaded in
      * memory would briefly leak into a next account logging in on the
      * same tab (see LudoDex's own auth store for the same pattern). */
-    clearSession() {
+    // discardPending: al cerrar sesión o borrar la cuenta a propósito. Sin él
+    // (la sesión caducó, un 401) las colas se conservan para cuando vuelva a
+    // entrar la misma persona - ver lib/queueOwner.ts.
+    clearSession({ discardPending = false }: { discardPending?: boolean } = {}) {
       this.user = null
       this.token = null
       clearStoredToken()
       clearSnapshot()
-      usePendingWritesStore().clear()
+      if (discardPending) discardAllQueues()
+      // $reset vuelve a leer las colas de localStorage: vacías si se acaban de
+      // descartar, las mismas si se conservan.
+      usePendingWritesStore().$reset()
       useBabiesStore().$reset()
     },
   },

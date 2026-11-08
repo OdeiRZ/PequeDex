@@ -1475,6 +1475,16 @@ o 24 meses (total).
   descarta y se avisa. El servidor reconoce un `client_uuid` repetido y
   devuelve el registro ya creado, así que un reintento tras un corte no
   duplica nada (ver `api/README.md`).
+- **Las colas son de una cuenta** (`lib/queueOwner.ts`, clave
+  `pequedex.queueOwner`). Esta cola, la de cambios (`offlineUpdates`) y la de
+  `pendingWrites` se marcan con el id del usuario al iniciar sesión.
+  - Si entra **otra cuenta**, se descartan antes de que nada las envíe. Antes
+    se le mandaban como suyas, o se perdían con un 403.
+  - **Cerrar sesión a propósito** las borra, para no dejar datos en un móvil
+    compartido. Si hay algo sin enviar, el botón de salir avisa primero y
+    solo el segundo toque, en los 6 segundos siguientes, cierra la sesión.
+  - Si la sesión **caduca sola** (un 401) se conservan, y se envían cuando
+    vuelve a entrar la misma persona.
 - Pendientes: borrar los quita de la cola; "Finalizar" (sueño en curso,
   toma de pecho) cambia el registro en la cola (`updateQueued()`);
   abrirlos para editar avisa de que hay que esperar al envío.

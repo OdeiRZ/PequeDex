@@ -7,6 +7,26 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Auditoría del 8 de noviembre
+
+- **Corregido: los cambios sin enviar no eran de nadie.** Las tomas, sueños,
+  pañales y temperaturas guardados sin conexión (y los ajustes pendientes) se
+  quedaban en el móvil al cerrar sesión. Si entraba otra cuenta, se le enviaban
+  como suyos. Ahora cada cola guarda de qué cuenta es: si entra otra, se
+  descartan; si se cierra sesión a propósito, se borran, y el botón de salir
+  avisa antes si había algo pendiente ("toca otra vez para cerrar sesión y
+  descartarlo"). Si la sesión caduca sola, se conservan y se envían al volver
+  a entrar la misma persona. Antes, en ese caso, los ajustes pendientes se
+  perdían.
+- **Dependencias sin avisos de seguridad.** Composer tenía 9 avisos en 6
+  paquetes de Symfony, y npm uno alto en producción (`follow-redirects`) y 15
+  en las herramientas de desarrollo (minimatch y glob, fijados con
+  `overrides`). Los dos quedan en 0.
+- **La CI comprueba las dependencias.** Un trabajo nuevo pasa `npm audit` y
+  `composer audit` sobre las dependencias de producción, sin bloquear el
+  despliegue. Antes no había ninguno y los avisos se acumulaban sin que fallara
+  nada. La CI pasa además de PHP 8.2 a 8.3, la versión de producción.
+
 ### Retoques del lavado de cara y "Tus datos"
 
 - **5 min como duración de una toma al pecho**: vuelve a la lista (queda Sin

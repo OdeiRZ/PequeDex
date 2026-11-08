@@ -7,6 +7,8 @@ export default {
     loadError: 'No se ha podido cargar. Puede que la API esté despertando tras un rato inactiva.',
     retry: 'Reintentar',
     logout: 'Cerrar sesión',
+    logoutPending:
+      'Tienes {count} cambio sin enviar. Toca otra vez para cerrar sesión y descartarlo. | Tienes {count} cambios sin enviar. Toca otra vez para cerrar sesión y descartarlos.',
     save: 'Guardar',
     saving: 'Guardando...',
     cancel: 'Cancelar',

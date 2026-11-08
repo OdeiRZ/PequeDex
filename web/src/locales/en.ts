@@ -7,6 +7,8 @@ export default {
     loadError: 'Could not load. The API may be waking up after a while idle.',
     retry: 'Retry',
     logout: 'Log out',
+    logoutPending:
+      'You have {count} unsent change. Tap again to log out and discard it. | You have {count} unsent changes. Tap again to log out and discard them.',
     save: 'Save',
     saving: 'Saving...',
     cancel: 'Cancel',

@@ -1,21 +1,52 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToastStore } from '@/stores/toast'
 import { useVitaminDReminder } from '@/composables/useVitaminDReminder'
+import { formatWeekdayShortDateLabel, parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
 
+// `day`: el día abierto en "Ritmo" (YYYY-MM-DD). La tarjeta dice si se dio
+// la vitamina ese día y "Dar"/"Deshacer" lo marcan; sin él, hoy.
+const props = withDefaults(defineProps<{ day?: string }>(), { day: undefined })
 const emit = defineEmits<{ openHistory: [] }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToastStore()
-const { cardState, yesterdayAlsoMissing, markToday } = useVitaminDReminder()
+const { isToday, cardState, dayBeforeAlsoMissing, markDay } = useVitaminDReminder(
+  () => props.day ?? todayDateOnlyString(),
+)
+
+// "Lun 16 nov", para los textos de un día que no es hoy.
+const dayLabel = computed(() =>
+  formatWeekdayShortDateLabel(
+    parseDateOnly(props.day ?? todayDateOnlyString()),
+    locale.value === 'es' ? 'es-ES' : 'en-GB',
+  ),
+)
+
+const pendingText = computed(() => {
+  if (isToday.value) {
+    return dayBeforeAlsoMissing.value
+      ? t('dashboard.vitaminD.missedYesterday')
+      : t('dashboard.vitaminD.pendingToday')
+  }
+  return dayBeforeAlsoMissing.value
+    ? t('dashboard.vitaminD.missedDayBefore', { day: dayLabel.value })
+    : t('dashboard.vitaminD.pendingDay', { day: dayLabel.value })
+})
+
+const confirmedText = computed(() =>
+  isToday.value
+    ? t('dashboard.vitaminD.confirmedToday')
+    : t('dashboard.vitaminD.confirmedDay', { day: dayLabel.value }),
+)
 
 const saving = ref(false)
 
 async function onMarkGiven() {
   saving.value = true
   try {
-    await markToday(true)
+    await markDay(true)
   } catch {
     toast.show(t('dashboard.vitaminD.markError'), 'error')
   } finally {
@@ -26,7 +57,7 @@ async function onMarkGiven() {
 async function onUndo() {
   saving.value = true
   try {
-    await markToday(false)
+    await markDay(false)
   } catch {
     toast.show(t('dashboard.vitaminD.markError'), 'error')
   } finally {
@@ -69,11 +100,7 @@ async function onUndo() {
       <div class="min-w-0 max-w-[58%] flex-1">
         <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.title') }}</div>
         <div class="text-xs text-text-muted">
-          {{
-            yesterdayAlsoMissing
-              ? t('dashboard.vitaminD.missedYesterday')
-              : t('dashboard.vitaminD.pendingToday')
-          }}
+          {{ pendingText }}
           <button
             type="button"
             class="tap-area ml-1.5 inline-block border-0 p-0 align-top font-semibold leading-none underline"
@@ -111,7 +138,7 @@ async function onUndo() {
         </svg>
       </span>
       <div class="min-w-0 flex-1">
-        <div class="text-sm font-semibold">{{ t('dashboard.vitaminD.confirmedToday') }}</div>
+        <div class="text-sm font-semibold">{{ confirmedText }}</div>
         <button
           type="button"
           class="tap-area mt-0.5 inline-block border-0 p-0 text-xs font-semibold leading-none text-text-muted underline"

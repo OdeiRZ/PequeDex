@@ -1907,9 +1907,21 @@ tocar el DOM, para poder testearlo sin montar el componente:
 `[start_date, end_date]` (al llegar `end_date` se oculta sola, sin
 aviso previo - el resultado final queda en Estadísticas); si no,
 `pending` u `confirmed` según si ya hay una dosis de hoy con
-`given:true`. `yesterdayAlsoMissing` refuerza el mensaje solo cuando
-la pauta ya estaba corriendo ayer también (una pauta activada hoy
-mismo no tiene "ayer" que haya podido fallar).
+`given:true`. `dayBeforeAlsoMissing` refuerza el mensaje solo cuando
+la pauta ya estaba corriendo el día anterior también (una pauta
+activada ese mismo día no tiene "día anterior" que haya podido fallar).
+
+**Sigue al día abierto en "Ritmo".** El Dashboard pasa `:day="rhythmDate"`
+a la tarjeta y el composable recibe ese día (sin él, hoy): al ir a un día
+anterior con las flechas de "Ritmo", la tarjeta dice si se dio la vitamina
+ESE día ("Sin marcar la dosis de vitamina D del Mar 10 nov." / "Vitamina D
+del Lun 9 nov, dada.") y "Dar"/"Deshacer" marcan ese día, no hoy (la API ya
+admite cualquier día desde el inicio de la pauta). Antes miraba siempre hoy,
+aunque el resto de la pantalla estuviera en otro día. Las dosis de los
+últimos 14 días llegan con la pauta (`vitaminDRecentDoses`); para un día
+más antiguo el composable busca también en `vitaminDAllDoses`, y el
+Dashboard pide ese historial completo (`fetchAllVitaminDDoses()`) una vez
+por bebé al navegar hasta un día fuera de esa ventana.
 
 Color de alerta: token nuevo `--warning` (`web/src/assets/base.css`,
 mismo patrón claro/oscuro que `--danger`) en vez de reutilizar

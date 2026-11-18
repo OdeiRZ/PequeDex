@@ -154,4 +154,44 @@ describe('VitaminDReminderCard', () => {
       { timeout: 20_000 },
     )
   })
+
+  it('talks about the day open in Ritmo, and marks that day', async () => {
+    const babies = useBabiesStore()
+    babies.vitaminDSchedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: '2026-11-01',
+      end_date: addDays(today, 365),
+    }
+    babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: '2026-11-09', given: true }]
+
+    const wrapper = mount(VitaminDReminderCard, {
+      props: { day: '2026-11-10' },
+      global: { plugins: [i18n] },
+    })
+    expect(wrapper.text()).toContain('Sin marcar la dosis de vitamina D del Mar 10 nov.')
+
+    await wrapper.setProps({ day: '2026-11-09' })
+    await new Promise((r) => setTimeout(r, 400))
+    expect(wrapper.text()).toContain('Vitamina D del Lun 9 nov, dada.')
+  })
+
+  it('mentions the day before when that one was missed too', () => {
+    const babies = useBabiesStore()
+    babies.vitaminDSchedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: '2026-11-01',
+      end_date: addDays(today, 365),
+    }
+
+    const wrapper = mount(VitaminDReminderCard, {
+      props: { day: '2026-11-10' },
+      global: { plugins: [i18n] },
+    })
+
+    expect(wrapper.text()).toContain('Sin marcar el Mar 10 nov, ni el día anterior.')
+  })
 })

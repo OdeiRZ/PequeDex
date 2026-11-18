@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBabiesStore } from '@/stores/babies'
 import { useVitaminDReminder } from '@/composables/useVitaminDReminder'
@@ -118,7 +119,7 @@ describe('useVitaminDReminder', () => {
     expect(cardState.value).toBe('pending')
   })
 
-  it('flags yesterdayAlsoMissing when pending and yesterday was not given, pauta already running then', () => {
+  it('flags dayBeforeAlsoMissing when pending and yesterday was not given, pauta already running then', () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {
       id: 1,
@@ -128,11 +129,11 @@ describe('useVitaminDReminder', () => {
       end_date: addDays(today, 355),
     }
 
-    const { yesterdayAlsoMissing } = useVitaminDReminder()
-    expect(yesterdayAlsoMissing.value).toBe(true)
+    const { dayBeforeAlsoMissing } = useVitaminDReminder()
+    expect(dayBeforeAlsoMissing.value).toBe(true)
   })
 
-  it('does not flag yesterdayAlsoMissing when the pauta started today (no "yesterday" to have missed)', () => {
+  it('does not flag dayBeforeAlsoMissing when the pauta started today (no "yesterday" to have missed)', () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {
       id: 1,
@@ -142,11 +143,11 @@ describe('useVitaminDReminder', () => {
       end_date: addDays(today, 365),
     }
 
-    const { yesterdayAlsoMissing } = useVitaminDReminder()
-    expect(yesterdayAlsoMissing.value).toBe(false)
+    const { dayBeforeAlsoMissing } = useVitaminDReminder()
+    expect(dayBeforeAlsoMissing.value).toBe(false)
   })
 
-  it('does not flag yesterdayAlsoMissing when yesterday was given', () => {
+  it('does not flag dayBeforeAlsoMissing when yesterday was given', () => {
     const babies = useBabiesStore()
     babies.vitaminDSchedule = {
       id: 1,
@@ -157,22 +158,91 @@ describe('useVitaminDReminder', () => {
     }
     babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: yesterday, given: true }]
 
-    const { yesterdayAlsoMissing } = useVitaminDReminder()
-    expect(yesterdayAlsoMissing.value).toBe(false)
+    const { dayBeforeAlsoMissing } = useVitaminDReminder()
+    expect(dayBeforeAlsoMissing.value).toBe(false)
   })
 
-  it('markToday calls the store action with the right date', async () => {
+  it('markDay calls the store action with the right date', async () => {
     vi.mocked(apiClient.put).mockResolvedValueOnce({
       data: { data: { id: 1, baby_id: 1, date: today, given: true } },
     })
-    const { markToday } = useVitaminDReminder()
+    const { markDay } = useVitaminDReminder()
 
-    await markToday(true)
+    await markDay(true)
 
     expect(apiClient.put).toHaveBeenCalledWith(
       '/babies/1/vitamin-d-doses',
       { date: today, given: true },
       { timeout: 20_000 },
     )
+  })
+
+  describe('on a day other than today (the one open in Ritmo)', () => {
+    const schedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: addDays(today, -60),
+      end_date: addDays(today, 300),
+    }
+
+    it('reads the dose of that day, not the one of today', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      babies.vitaminDRecentDoses = [
+        { id: 1, baby_id: 1, date: today, given: true },
+        { id: 2, baby_id: 1, date: addDays(today, -3), given: false },
+      ]
+
+      expect(useVitaminDReminder(today).cardState.value).toBe('confirmed')
+      const hace3 = useVitaminDReminder(addDays(today, -3))
+      expect(hace3.cardState.value).toBe('pending')
+      expect(hace3.isToday.value).toBe(false)
+    })
+
+    it('follows the day as it changes', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: yesterday, given: true }]
+      const day = ref(today)
+
+      const { cardState } = useVitaminDReminder(day)
+      expect(cardState.value).toBe('pending')
+
+      day.value = yesterday
+      expect(cardState.value).toBe('confirmed')
+    })
+
+    it('finds a dose older than the 14-day window in the full history', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      babies.vitaminDAllDoses = [{ id: 9, baby_id: 1, date: addDays(today, -40), given: true }]
+
+      expect(useVitaminDReminder(addDays(today, -40)).cardState.value).toBe('confirmed')
+    })
+
+    it('is hidden for a day before the pauta started', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+
+      expect(useVitaminDReminder(addDays(today, -61)).cardState.value).toBe('hidden')
+    })
+
+    it('marks that day, not today', async () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      const dia = addDays(today, -5)
+      vi.mocked(apiClient.put).mockResolvedValueOnce({
+        data: { data: { id: 3, baby_id: 1, date: dia, given: true } },
+      })
+
+      await useVitaminDReminder(dia).markDay(true)
+
+      expect(apiClient.put).toHaveBeenCalledWith(
+        '/babies/1/vitamin-d-doses',
+        { date: dia, given: true },
+        { timeout: 20_000 },
+      )
+    })
   })
 })

@@ -214,6 +214,25 @@ function dayCountsText(counts: DayCounts): string {
   return parts.join(' · ')
 }
 
+// La tarjeta de vitamina D sigue al día de "Ritmo" (ver
+// VitaminDReminderCard). Las dosis de los últimos 14 días llegan con la
+// pauta; para un día más antiguo hace falta el historial completo, que se
+// pide una vez por bebé al llegar hasta él (si falla, la tarjeta sale como
+// "sin marcar" y se reintenta en la siguiente navegación).
+const vitaminDAllDosesLoadedFor = ref<number | null>(null)
+
+watch(rhythmDate, (day) => {
+  const babyId = babies.current?.id
+  if (!babyId || !babies.vitaminDSchedule?.enabled) return
+  if (day >= addDays(todayDateOnlyString(), -13)) return
+  if (vitaminDAllDosesLoadedFor.value === babyId) return
+
+  vitaminDAllDosesLoadedFor.value = babyId
+  babies.fetchAllVitaminDDoses().catch(() => {
+    vitaminDAllDosesLoadedFor.value = null
+  })
+})
+
 async function onRhythmPrevDay() {
   if (isRhythmBirthDay.value) return
 
@@ -2338,6 +2357,7 @@ const sleepPredictionDue = computed(() => {
             </div>
             <VitaminDReminderCard
               class="dash-enter -mb-2"
+              :day="rhythmDate"
               @open-history="openSheet('vitaminDHistory')"
             />
             <!-- Solo mientras haya alguna medición en las últimas 48 h,

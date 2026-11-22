@@ -3,26 +3,26 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToastStore } from '@/stores/toast'
 import { useVitaminDReminder } from '@/composables/useVitaminDReminder'
-import { formatWeekdayShortDateLabel, parseDateOnly, todayDateOnlyString } from '@/lib/localDate'
+import { formatWeekdayShortDateLabel, parseDateOnly } from '@/lib/localDate'
 
 // `day`: el día abierto en "Ritmo" (YYYY-MM-DD). La tarjeta dice si se dio
-// la vitamina ese día y "Dar"/"Deshacer" lo marcan; sin él, hoy.
-const props = withDefaults(defineProps<{ day?: string }>(), { day: undefined })
+// la vitamina ese día y "Dar"/"Deshacer" lo marcan.
+const props = defineProps<{ day: string }>()
 const emit = defineEmits<{ openHistory: [] }>()
 
 const { t, locale } = useI18n()
 const toast = useToastStore()
-const { isToday, cardState, dayBeforeAlsoMissing, markDay } = useVitaminDReminder(
-  () => props.day ?? todayDateOnlyString(),
+const { isToday, cardState, markedNotGiven, dayBeforeAlsoMissing, markDay } = useVitaminDReminder(
+  () => props.day,
 )
 
-// "Lun 16 nov", para los textos de un día que no es hoy.
-const dayLabel = computed(() =>
-  formatWeekdayShortDateLabel(
-    parseDateOnly(props.day ?? todayDateOnlyString()),
-    locale.value === 'es' ? 'es-ES' : 'en-GB',
-  ),
-)
+// "lun 16 nov" / "Mon 16 Nov", para los textos de un día que no es hoy: en
+// español el día de la semana va en minúscula dentro de la frase.
+const dayLabel = computed(() => {
+  const es = locale.value === 'es'
+  const label = formatWeekdayShortDateLabel(parseDateOnly(props.day), es ? 'es-ES' : 'en-GB')
+  return es ? label.charAt(0).toLowerCase() + label.slice(1) : label
+})
 
 const pendingText = computed(() => {
   if (isToday.value) {
@@ -30,6 +30,7 @@ const pendingText = computed(() => {
       ? t('dashboard.vitaminD.missedYesterday')
       : t('dashboard.vitaminD.pendingToday')
   }
+  if (markedNotGiven.value) return t('dashboard.vitaminD.notGivenDay', { day: dayLabel.value })
   return dayBeforeAlsoMissing.value
     ? t('dashboard.vitaminD.missedDayBefore', { day: dayLabel.value })
     : t('dashboard.vitaminD.pendingDay', { day: dayLabel.value })

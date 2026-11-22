@@ -25,6 +25,7 @@ import {
 } from '@/stores/babies'
 import { useToastStore } from '@/stores/toast'
 import { useFeedback } from '@/composables/useFeedback'
+import { needsFullVitaminDHistory, VITAMIN_D_RECENT_DAYS } from '@/composables/useVitaminDReminder'
 import ActionBar from '@/components/ActionBar.vue'
 import AppMark from '@/components/AppMark.vue'
 import BabyOnboardingWizard from '@/components/BabyOnboardingWizard.vue'
@@ -216,22 +217,34 @@ function dayCountsText(counts: DayCounts): string {
 
 // La tarjeta de vitamina D sigue al día de "Ritmo" (ver
 // VitaminDReminderCard). Las dosis de los últimos 14 días llegan con la
-// pauta; para un día más antiguo hace falta el historial completo, que se
-// pide una vez por bebé al llegar hasta él (si falla, la tarjeta sale como
-// "sin marcar" y se reintenta en la siguiente navegación).
-const vitaminDAllDosesLoadedFor = ref<number | null>(null)
+// pauta; para un día más antiguo (dentro de la pauta) hace falta el historial
+// completo, que se pide una vez por bebé (el store recuerda de quién es).
+// Mientras no llega, o si falla, la tarjeta se oculta en vez de decir "sin
+// marcar"; se reintenta al volver a tocar el día, el bebé o la pauta.
+let vitaminDHistoryRequested: number | null = null
 
-watch(rhythmDate, (day) => {
-  const babyId = babies.current?.id
-  if (!babyId || !babies.vitaminDSchedule?.enabled) return
-  if (day >= addDays(todayDateOnlyString(), -13)) return
-  if (vitaminDAllDosesLoadedFor.value === babyId) return
+watch(
+  [
+    rhythmDate,
+    () => babies.current?.id,
+    () => babies.vitaminDSchedule,
+    () => babies.vitaminDAllDosesFor,
+  ],
+  ([day, babyId, schedule, loadedFor]) => {
+    if (!babyId || !schedule?.enabled) return
+    if (day < schedule.start_date || day > schedule.end_date) return
+    if (!needsFullVitaminDHistory(day)) return
+    if (loadedFor === babyId || vitaminDHistoryRequested === babyId) return
 
-  vitaminDAllDosesLoadedFor.value = babyId
-  babies.fetchAllVitaminDDoses().catch(() => {
-    vitaminDAllDosesLoadedFor.value = null
-  })
-})
+    vitaminDHistoryRequested = babyId
+    babies
+      .fetchAllVitaminDDoses()
+      .catch(() => {})
+      .finally(() => {
+        vitaminDHistoryRequested = null
+      })
+  },
+)
 
 async function onRhythmPrevDay() {
   if (isRhythmBirthDay.value) return
@@ -1454,7 +1467,7 @@ const vitaminDRecentDosesByDate = computed(() => {
   // active for less than 14 days shouldn't list days before it began
   // (marking one would fail validation anyway, and it read as an
   // unbounded list with no visible stopping point).
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < VITAMIN_D_RECENT_DAYS; i++) {
     const date = addDays(todayDateOnlyString(), -i)
     if (date < startDate) break
     days.push({ date, given: byDate.get(date) ?? null })

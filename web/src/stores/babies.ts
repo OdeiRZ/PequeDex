@@ -505,6 +505,10 @@ interface BabiesState {
    * vitaminDAllDoses/fetchAllVitaminDDoses()). */
   vitaminDRecentDoses: VitaminDDose[]
   vitaminDAllDoses: VitaminDDose[]
+  /** De qué bebé es vitaminDAllDoses (null: sin cargar). Quien lo lea para
+   * otra cosa que no sea Estadísticas debe comprobarlo: el array no se
+   * vacía solo al cambiar de bebé. */
+  vitaminDAllDosesFor: number | null
 }
 
 // Inserts (or, if one with the same type+id already exists, replaces
@@ -642,6 +646,7 @@ export const useBabiesStore = defineStore('babies', {
     vitaminDSchedule: null,
     vitaminDRecentDoses: [],
     vitaminDAllDoses: [],
+    vitaminDAllDosesFor: null,
     hydratedFromSnapshot: false,
     timelineEtag: null,
     bootstrapEtag: null,
@@ -694,6 +699,8 @@ export const useBabiesStore = defineStore('babies', {
 
       this.current = baby
       storeActiveBabyId(baby.id)
+      this.vitaminDAllDoses = []
+      this.vitaminDAllDosesFor = null
     },
 
     async create(payload: { name?: string; due_date?: string; sex?: BabySex }) {
@@ -726,6 +733,8 @@ export const useBabiesStore = defineStore('babies', {
         this.babies = this.babies.map((baby) => (baby.id === id ? { ...baby, ...body } : baby))
         if (this.current?.id === id) this.current = { ...this.current, ...body }
       } else if (kind === 'vitd-dose') {
+        // Una escritura pendiente de otro bebé no se pinta en el actual.
+        if (id !== this.current?.id) return
         const date = body.date as string
         const given = body.given as boolean
         const apply = (doses: VitaminDDose[]) => {
@@ -736,8 +745,11 @@ export const useBabiesStore = defineStore('babies', {
           return upsertByDate(doses, dose, (d) => d.date)
         }
         this.vitaminDRecentDoses = apply(this.vitaminDRecentDoses)
-        this.vitaminDAllDoses = apply(this.vitaminDAllDoses)
+        if (this.vitaminDAllDosesFor === id) {
+          this.vitaminDAllDoses = apply(this.vitaminDAllDoses)
+        }
       } else if (kind === 'vitd-schedule') {
+        if (id !== this.current?.id) return
         if (this.vitaminDSchedule) this.vitaminDSchedule = { ...this.vitaminDSchedule, ...body }
       } else if (kind === 'growth') {
         const existing = this.growthMeasurements.find((m) => m.id === id)
@@ -782,6 +794,7 @@ export const useBabiesStore = defineStore('babies', {
         current: this.current,
         vitaminDRecentDoses: this.vitaminDRecentDoses,
         vitaminDAllDoses: this.vitaminDAllDoses,
+        vitaminDAllDosesFor: this.vitaminDAllDosesFor,
         vitaminDSchedule: this.vitaminDSchedule,
         growthMeasurements: this.growthMeasurements,
         vaccinations: this.vaccinations,
@@ -984,6 +997,11 @@ export const useBabiesStore = defineStore('babies', {
 
       // Cambió de bebé mientras tanto: esa respuesta ya no vale.
       if (this.current?.id !== babyId) return
+
+      if (this.vitaminDAllDosesFor !== babyId) {
+        this.vitaminDAllDoses = []
+        this.vitaminDAllDosesFor = null
+      }
 
       // 304: no ha cambiado nada desde la última vez (la foto guardada, o lo
       // ya cargado, sigue siendo lo último): no hay nada que aplicar.
@@ -1786,15 +1804,21 @@ export const useBabiesStore = defineStore('babies', {
     },
 
     /** Full history, unbounded by the 14-day window fetchVitaminDSchedule()
-     * embeds - only Estadísticas needs this (for "dadas/días transcurridos"
-     * over the whole pauta, not just the Dashboard's recent editor). */
+     * embeds. Lo usan Estadísticas (para "dadas/días transcurridos" sobre
+     * toda la pauta) y la tarjeta de vitamina D del Dashboard cuando "Ritmo"
+     * enseña un día fuera de esa ventana. */
     async fetchAllVitaminDDoses() {
       if (!this.current) {
         return
       }
 
-      const { data } = await apiClient.get(`/babies/${this.current.id}/vitamin-d-doses`)
+      const babyId = this.current.id
+      const { data } = await apiClient.get(`/babies/${babyId}/vitamin-d-doses`)
+      // Cambió de bebé mientras tanto: esa respuesta ya no vale.
+      if (this.current?.id !== babyId) return
+
       this.vitaminDAllDoses = data.data
+      this.vitaminDAllDosesFor = babyId
       this.reapplyPendingWrites()
     },
 

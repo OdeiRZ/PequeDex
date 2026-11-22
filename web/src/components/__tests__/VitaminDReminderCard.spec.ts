@@ -17,8 +17,8 @@ vi.mock('@/lib/api', async (importOriginal) => {
 
 const today = todayDateOnlyString()
 
-function mountCard() {
-  return mount(VitaminDReminderCard, { global: { plugins: [i18n] } })
+function mountCard(day = today) {
+  return mount(VitaminDReminderCard, { props: { day }, global: { plugins: [i18n] } })
 }
 
 beforeEach(() => {
@@ -37,6 +37,8 @@ beforeEach(() => {
     invite_code: 'ABCD1234',
     water_broke_at: null,
   }
+  // Los tests con días fijos de noviembre caen fuera de las dosis recientes.
+  babies.vitaminDAllDosesFor = 1
 })
 
 describe('VitaminDReminderCard', () => {
@@ -166,15 +168,42 @@ describe('VitaminDReminderCard', () => {
     }
     babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: '2026-11-09', given: true }]
 
-    const wrapper = mount(VitaminDReminderCard, {
-      props: { day: '2026-11-10' },
-      global: { plugins: [i18n] },
+    vi.mocked(apiClient.put).mockResolvedValueOnce({
+      data: { data: { id: 2, baby_id: 1, date: '2026-11-10', given: true } },
     })
-    expect(wrapper.text()).toContain('Sin marcar la dosis de vitamina D del Mar 10 nov.')
+
+    const wrapper = mountCard('2026-11-10')
+    expect(wrapper.text()).toContain('Sin marcar la dosis de vitamina D del mar 10 nov.')
 
     await wrapper.setProps({ day: '2026-11-09' })
-    await new Promise((r) => setTimeout(r, 400))
-    expect(wrapper.text()).toContain('Vitamina D del Lun 9 nov, dada.')
+    expect(wrapper.text()).toContain('Vitamina D del lun 9 nov, dada.')
+
+    await wrapper.setProps({ day: '2026-11-10' })
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Dar')!
+      .trigger('click')
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/babies/1/vitamin-d-doses',
+      { date: '2026-11-10', given: true },
+      { timeout: 20_000 },
+    )
+  })
+
+  it('says "marked as not given" when the day was logged as not given', () => {
+    const babies = useBabiesStore()
+    babies.vitaminDSchedule = {
+      id: 1,
+      baby_id: 1,
+      enabled: true,
+      start_date: '2026-11-01',
+      end_date: addDays(today, 365),
+    }
+    babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: '2026-11-10', given: false }]
+
+    expect(mountCard('2026-11-10').text()).toContain(
+      'Vitamina D del mar 10 nov: marcada como no dada.',
+    )
   })
 
   it('mentions the day before when that one was missed too', () => {
@@ -187,11 +216,8 @@ describe('VitaminDReminderCard', () => {
       end_date: addDays(today, 365),
     }
 
-    const wrapper = mount(VitaminDReminderCard, {
-      props: { day: '2026-11-10' },
-      global: { plugins: [i18n] },
-    })
+    const wrapper = mountCard('2026-11-10')
 
-    expect(wrapper.text()).toContain('Sin marcar el Mar 10 nov, ni el día anterior.')
+    expect(wrapper.text()).toContain('Sin dar el mar 10 nov, ni el día anterior.')
   })
 })

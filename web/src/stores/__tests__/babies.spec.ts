@@ -1293,6 +1293,7 @@ describe('useBabiesStore', () => {
     await store.create({})
     store.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
     store.vitaminDAllDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
+    store.vitaminDAllDosesFor = 1
 
     vi.mocked(apiClient.put).mockResolvedValueOnce({
       data: { data: { id: 2, baby_id: 1, date: '2026-10-08', given: false } },
@@ -1307,6 +1308,40 @@ describe('useBabiesStore', () => {
       { date: '2026-10-08', given: false },
       { timeout: 20_000 },
     )
+  })
+
+  it('does not paint a pending vitamin D dose of another baby on the current one', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+
+    store.applyPendingWrite({
+      key: 'vitd-dose:99:2026-10-08',
+      method: 'put',
+      body: { date: '2026-10-08', given: true },
+    })
+
+    expect(store.vitaminDRecentDoses).toEqual([])
+    expect(store.vitaminDAllDoses).toEqual([])
+  })
+
+  it('drops the full vitamin D history when switching baby, and ignores a late response', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
+    const store = useBabiesStore()
+    await store.create({})
+    store.babies = [baby, { ...baby, id: 2 }]
+    store.vitaminDAllDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
+    store.vitaminDAllDosesFor = 1
+
+    let resolve!: (value: unknown) => void
+    vi.mocked(apiClient.get).mockReturnValueOnce(new Promise((r) => (resolve = r)))
+    const pending = store.fetchAllVitaminDDoses()
+    store.switchBaby(2)
+    resolve({ data: { data: [{ id: 5, baby_id: 1, date: '2026-10-09', given: true }] } })
+    await pending
+
+    expect(store.vitaminDAllDoses).toEqual([])
+    expect(store.vitaminDAllDosesFor).toBeNull()
   })
 
   it('fetches the full vitamin D dose history, unbounded by the 14-day recent window', async () => {

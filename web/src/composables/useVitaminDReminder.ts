@@ -5,6 +5,18 @@ import { useFeedback } from './useFeedback'
 
 export type VitaminDCardState = 'pending' | 'confirmed' | 'hidden'
 
+/** Días de dosis que el servidor manda con la pauta (VitaminDScheduleController::show). */
+export const VITAMIN_D_RECENT_DAYS = 14
+
+/**
+ * ¿Hace falta el historial completo para hablar de `day`? Las dosis recientes
+ * cubren desde hoy-14 en UTC, que al oeste de UTC es hoy-13 en local; y la
+ * tarjeta también mira el día anterior, de ahí el margen de 2.
+ */
+export function needsFullVitaminDHistory(day: string): boolean {
+  return day < addDays(todayDateOnlyString(), -(VITAMIN_D_RECENT_DAYS - 2))
+}
+
 /**
  * Pure derivation of the Dashboard reminder card's state from the
  * store, so the 3-state logic (pending/confirmed/hidden) can be tested
@@ -24,13 +36,16 @@ export function useVitaminDReminder(day: MaybeRefOrGetter<string> = todayDateOnl
 
   // Las de los últimos 14 días llegan con la pauta; un día más antiguo solo
   // está en el historial completo (vitaminDAllDoses), que el Dashboard pide
-  // al navegar hasta él.
+  // al navegar hasta él. Ese array solo vale si es del bebé actual.
+  const historyLoaded = computed(
+    () => babies.vitaminDAllDosesFor !== null && babies.vitaminDAllDosesFor === babies.current?.id,
+  )
+
   function doseOn(date: string) {
-    return (
-      babies.vitaminDRecentDoses.find((d) => d.date === date) ??
-      babies.vitaminDAllDoses.find((d) => d.date === date) ??
-      null
-    )
+    const recent = babies.vitaminDRecentDoses.find((d) => d.date === date)
+    if (recent) return recent
+    if (!historyLoaded.value) return null
+    return babies.vitaminDAllDoses.find((d) => d.date === date) ?? null
   }
 
   const cardState = computed<VitaminDCardState>(() => {
@@ -39,8 +54,13 @@ export function useVitaminDReminder(day: MaybeRefOrGetter<string> = todayDateOnl
     if (selectedDay.value < schedule.start_date || selectedDay.value > schedule.end_date) {
       return 'hidden'
     }
+    // Sin el historial no se sabe si se dio: mejor nada que "sin marcar" en falso.
+    if (needsFullVitaminDHistory(selectedDay.value) && !historyLoaded.value) return 'hidden'
     return doseOn(selectedDay.value)?.given ? 'confirmed' : 'pending'
   })
+
+  // Hay registro y es "No dada": no es lo mismo que no haber marcado nada.
+  const markedNotGiven = computed(() => doseOn(selectedDay.value)?.given === false)
 
   // Only reinforces the message when the pauta was already running the
   // day before too - a schedule activated that same day has no previous
@@ -67,6 +87,7 @@ export function useVitaminDReminder(day: MaybeRefOrGetter<string> = todayDateOnl
     selectedDay,
     isToday,
     cardState,
+    markedNotGiven,
     dayBeforeAlsoMissing,
     markDay,
   }

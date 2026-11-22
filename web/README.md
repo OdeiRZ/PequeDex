@@ -1903,25 +1903,32 @@ toggles de perfil - cada bebé puede tener su propia pauta). El
 composable deriva un `cardState: 'pending' | 'confirmed' | 'hidden'`
 puro a partir de `babies.vitaminDSchedule`/`vitaminDRecentDoses`, sin
 tocar el DOM, para poder testearlo sin montar el componente:
-`hidden` si el ajuste está desactivado o la fecha de hoy cae fuera de
+`hidden` si el ajuste está desactivado o el día que se mira cae fuera de
 `[start_date, end_date]` (al llegar `end_date` se oculta sola, sin
 aviso previo - el resultado final queda en Estadísticas); si no,
-`pending` u `confirmed` según si ya hay una dosis de hoy con
-`given:true`. `dayBeforeAlsoMissing` refuerza el mensaje solo cuando
-la pauta ya estaba corriendo el día anterior también (una pauta
+`pending` u `confirmed` según si ya hay una dosis de ese día con
+`given:true`. `markedNotGiven` distingue un día marcado "No dada" de uno
+sin marcar (otro texto). `dayBeforeAlsoMissing` refuerza el mensaje solo
+cuando la pauta ya estaba corriendo el día anterior también (una pauta
 activada ese mismo día no tiene "día anterior" que haya podido fallar).
 
 **Sigue al día abierto en "Ritmo".** El Dashboard pasa `:day="rhythmDate"`
 a la tarjeta y el composable recibe ese día (sin él, hoy): al ir a un día
 anterior con las flechas de "Ritmo", la tarjeta dice si se dio la vitamina
-ESE día ("Sin marcar la dosis de vitamina D del Mar 10 nov." / "Vitamina D
-del Lun 9 nov, dada.") y "Dar"/"Deshacer" marcan ese día, no hoy (la API ya
+ESE día ("Sin marcar la dosis de vitamina D del mar 10 nov." / "Vitamina D
+del lun 9 nov, dada.") y "Dar"/"Deshacer" marcan ese día, no hoy (la API ya
 admite cualquier día desde el inicio de la pauta). Antes miraba siempre hoy,
 aunque el resto de la pantalla estuviera en otro día. Las dosis de los
 últimos 14 días llegan con la pauta (`vitaminDRecentDoses`); para un día
-más antiguo el composable busca también en `vitaminDAllDoses`, y el
-Dashboard pide ese historial completo (`fetchAllVitaminDDoses()`) una vez
-por bebé al navegar hasta un día fuera de esa ventana.
+más antiguo (`needsFullVitaminDHistory`: antes de hoy-12, porque la
+tarjeta también mira el día anterior y la ventana del servidor cuenta en
+UTC) hace falta el historial completo, que el Dashboard pide
+(`fetchAllVitaminDDoses()`) una vez por bebé si el día está dentro de la
+pauta. El store guarda de qué bebé es (`vitaminDAllDosesFor`), lo vacía al
+cambiar de bebé y descarta la respuesta si llega tarde; el composable solo
+lo lee si es del bebé actual. Mientras no llega (o si falla) la tarjeta se
+oculta en vez de decir "sin marcar" en falso. Una escritura pendiente de
+otro bebé ya no se pinta en el actual.
 
 Color de alerta: token nuevo `--warning` (`web/src/assets/base.css`,
 mismo patrón claro/oscuro que `--danger`) en vez de reutilizar
@@ -1930,7 +1937,7 @@ destructiva" (botones de borrar), y un recordatorio de cuidado
 pendiente no debería leerse como un error. El estado `pending` entra
 con la transición `confirm-warn` ya existente (el mismo "shake" sutil
 que usan los paneles de confirmación de borrado) cuando además
-`yesterdayAlsoMissing` es verdadero - un pequeño énfasis extra para el
+`dayBeforeAlsoMissing` es verdadero - un pequeño énfasis extra para el
 caso que de verdad importa recordar.
 
 La activación vive en la hoja de "Ajustes del bebé" (`DashboardView.vue`),

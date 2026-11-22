@@ -217,8 +217,38 @@ describe('useVitaminDReminder', () => {
       const babies = useBabiesStore()
       babies.vitaminDSchedule = schedule
       babies.vitaminDAllDoses = [{ id: 9, baby_id: 1, date: addDays(today, -40), given: true }]
+      babies.vitaminDAllDosesFor = 1
 
       expect(useVitaminDReminder(addDays(today, -40)).cardState.value).toBe('confirmed')
+    })
+
+    it('is hidden, not "pending", while the full history is not loaded', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+
+      expect(useVitaminDReminder(addDays(today, -40)).cardState.value).toBe('hidden')
+    })
+
+    it('ignores a full history that belongs to another baby', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      babies.vitaminDAllDoses = [
+        { id: 9, baby_id: 2, date: today, given: true },
+        { id: 10, baby_id: 2, date: addDays(today, -40), given: true },
+      ]
+      babies.vitaminDAllDosesFor = 2
+
+      expect(useVitaminDReminder(today).cardState.value).toBe('pending')
+      expect(useVitaminDReminder(addDays(today, -40)).cardState.value).toBe('hidden')
+    })
+
+    it('tells a day logged as not given apart from one never marked', () => {
+      const babies = useBabiesStore()
+      babies.vitaminDSchedule = schedule
+      babies.vitaminDRecentDoses = [{ id: 1, baby_id: 1, date: addDays(today, -3), given: false }]
+
+      expect(useVitaminDReminder(addDays(today, -3)).markedNotGiven.value).toBe(true)
+      expect(useVitaminDReminder(addDays(today, -4)).markedNotGiven.value).toBe(false)
     })
 
     it('is hidden for a day before the pauta started', () => {

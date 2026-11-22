@@ -12,11 +12,19 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - **La tarjeta de vitamina D sigue al día que se mira en "Ritmo".** Antes
   decía siempre si se había dado hoy, aunque con las flechas se estuviera
   viendo otro día. Ahora, al cambiar de día, dice si se dio ese día ("Sin
-  marcar la dosis de vitamina D del Mar 10 nov." / "Vitamina D del Lun 9 nov,
+  marcar la dosis de vitamina D del mar 10 nov." / "Vitamina D del lun 9 nov,
   dada.") y "Dar"/"Deshacer" marcan ese día. Un día anterior al inicio de la
   pauta (o posterior al fin) oculta la tarjeta, como hoy fuera de la pauta.
-- Para un día de hace más de 14 días se pide una vez el historial completo de
-  dosis, que antes solo usaba Estadísticas.
+- Un día marcado "No dada" ya no se lee como "sin marcar" ("marcada como no
+  dada"), y el día de la semana va en minúscula dentro de la frase.
+- Para un día de hace más de 12 días se pide el historial completo de dosis
+  (antes solo lo usaba Estadísticas). Mientras llega, la tarjeta se oculta en
+  vez de decir "sin marcar" sin saberlo.
+- **Corregido: la dosis de un bebé podía aparecer en la tarjeta de otro.** El
+  historial completo no se vaciaba al cambiar de bebé, una respuesta tardía
+  del bebé anterior lo pisaba y una escritura pendiente de otro bebé se
+  pintaba en el actual. Ahora el store guarda de quién es el historial, lo
+  vacía al cambiar y descarta lo que llega tarde.
 
 ### Auditoría del 8 de noviembre
 

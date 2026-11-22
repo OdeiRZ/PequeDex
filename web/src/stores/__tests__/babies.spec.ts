@@ -1329,7 +1329,7 @@ describe('useBabiesStore', () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: baby } })
     const store = useBabiesStore()
     await store.create({})
-    store.babies = [baby, { ...baby, id: 2 }]
+    store.babies = [store.current!, { ...store.current!, id: 2 }]
     store.vitaminDAllDoses = [{ id: 1, baby_id: 1, date: '2026-10-07', given: true }]
     store.vitaminDAllDosesFor = 1
 

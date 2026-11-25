@@ -262,13 +262,26 @@ watch(
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
-      <h2 class="relative h-5 min-w-0 flex-1 overflow-hidden font-display text-sm font-bold">
+      <h2 class="group relative h-5 min-w-0 flex-1 overflow-hidden font-display text-sm font-bold">
         <Transition :name="direction === 1 ? 'day-forward' : 'day-back'">
-          <span
-            :key="title"
-            class="absolute inset-0 flex items-center justify-center truncate px-1"
-          >
-            {{ title }}
+          <span :key="title" class="absolute inset-0 flex items-center justify-center gap-1.5 px-1">
+            <span class="truncate">{{ title }}</span>
+            <!-- Avisa de que el título abre un calendario (el input transparente de
+                 abajo): sin esto parecía texto normal. -->
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-3.5 w-3.5 shrink-0 text-text-muted transition-colors group-hover:text-text group-active:text-text"
+              aria-hidden="true"
+              data-testid="rhythm-day-picker-icon"
+            >
+              <rect x="3" y="4.5" width="18" height="16.5" rx="3" />
+              <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+            </svg>
           </span>
         </Transition>
         <input

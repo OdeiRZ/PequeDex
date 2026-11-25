@@ -1016,7 +1016,9 @@ verse bien en una captura:
   "ahora" en vez de extenderse hacia el resto del día, que todavía no
   ha pasado. Gana flechas prev/next (la de avanzar se desactiva en
   "hoy") para navegar a días anteriores, y un **selector de fecha**: el
-  título del día es un botón que abre el calendario del navegador (un
+  título del día, con un icono de calendario al lado para que se vea que
+  es pulsable (decorativo, `aria-hidden`; el nombre accesible lo lleva el
+  input), es un botón que abre el calendario del navegador (un
   `<input type="date">` transparente encima del título, igual que los
   demás selectores de fecha de la app; el toque lo abre solo en el móvil
   y `showPicker()` en el escritorio), con `min` en el nacimiento del bebé

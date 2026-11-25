@@ -11,8 +11,8 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 - **Un calendario para saltar a cualquier día.** Hasta ahora, para ver un día
   antiguo de "Ritmo" había que pulsar la flecha de "día anterior" una vez por
-  día. Ahora el título del día es un botón que abre el calendario del
-  navegador, limitado entre el nacimiento del bebé y hoy, y lleva directamente
+  día. Ahora el título del día, con un icono de calendario al lado para que
+  se vea que se puede pulsar, abre el calendario del navegador, limitado entre el nacimiento del bebé y hoy, y lleva directamente
   a ese día. La tarjeta de vitamina D y el resto de lo que sigue a "Ritmo"
   cambian con él, como con las flechas. Las flechas siguen igual.
 

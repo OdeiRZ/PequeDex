@@ -101,6 +101,14 @@ describe('DailyRhythm', () => {
       expect(input.attributes('aria-label')).toBe('Elegir un día')
     })
 
+    it('shows a calendar icon next to the title so it reads as pressable, hidden from screen readers', () => {
+      const wrapper = mountRhythm([], false)
+
+      const icon = wrapper.find('[data-testid="rhythm-day-picker-icon"]')
+      expect(icon.exists()).toBe(true)
+      expect(icon.attributes('aria-hidden')).toBe('true')
+    })
+
     it('emits select with the picked day', async () => {
       const wrapper = mountRhythm([], true, { minDay: '2026-09-01' })
 

@@ -7,6 +7,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Selector de fecha en "Ritmo"
+
+- **Un calendario para saltar a cualquier día.** Hasta ahora, para ver un día
+  antiguo de "Ritmo" había que pulsar la flecha de "día anterior" una vez por
+  día. Ahora el título del día es un botón que abre el calendario del
+  navegador, limitado entre el nacimiento del bebé y hoy, y lleva directamente
+  a ese día. La tarjeta de vitamina D y el resto de lo que sigue a "Ritmo"
+  cambian con él, como con las flechas. Las flechas siguen igual.
+
 ### Vitamina D según el día de "Ritmo"
 
 - **La tarjeta de vitamina D sigue al día que se mira en "Ritmo".** Antes

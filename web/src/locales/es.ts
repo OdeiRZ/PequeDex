@@ -751,6 +751,7 @@ export default {
       emptyOtherDay: 'Todavía no hay nada registrado ese día.',
       prevDay: 'Día anterior',
       nextDay: 'Día siguiente',
+      pickDay: 'Elegir un día',
       feed: 'Toma',
       sleep: 'Sueño',
       diaper: 'Pañal',

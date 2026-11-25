@@ -1015,7 +1015,17 @@ verse bien en una captura:
   nueva a la API. Una siesta sin `ended_at` (en curso) se recorta a
   "ahora" en vez de extenderse hacia el resto del día, que todavía no
   ha pasado. Gana flechas prev/next (la de avanzar se desactiva en
-  "hoy") para navegar a días anteriores: recibe `day`/`isToday` como
+  "hoy") para navegar a días anteriores, y un **selector de fecha**: el
+  título del día es un botón que abre el calendario del navegador (un
+  `<input type="date">` transparente encima del título, igual que los
+  demás selectores de fecha de la app; el toque lo abre solo en el móvil
+  y `showPicker()` en el escritorio), con `min` en el nacimiento del bebé
+  y `max` en hoy. Emite `select(day)`, que ignora un valor vacío, el día
+  que ya se ve o uno fuera del rango, y `onRhythmSelectDay()` del
+  Dashboard vuelve a comprobar el rango (el valor también se puede
+  escribir a mano) y pide la línea de ese día. La tarjeta de vitamina D
+  y las predicciones siguen al día elegido igual que con las flechas.
+  Recibe `day`/`isToday` como
   props en vez de calcular siempre "hoy" internamente, y
   `DashboardView.vue` guarda el día mostrado en `rhythmDate`
   (reseteado a hoy en cada `loadBabyData()`). Mientras se ve "hoy"

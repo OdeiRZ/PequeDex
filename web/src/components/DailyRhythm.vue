@@ -3,7 +3,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineEntry } from '@/stores/babies'
 import type { Category } from '@/lib/category'
-import { parseDateOnly, formatWeekdayDateLabel } from '@/lib/localDate'
+import { parseDateOnly, formatWeekdayDateLabel, todayDateOnlyString } from '@/lib/localDate'
 import { useFeedback } from '@/composables/useFeedback'
 
 const props = defineProps<{
@@ -20,9 +20,11 @@ const props = defineProps<{
    * nothing to browse further back than that, so "anterior" disables
    * here same as "siguiente" already does once `day` reaches today. */
   isBirthDay: boolean
+  /** "YYYY-MM-DD" del primer día al que se puede ir (el nacimiento); sin él, sin tope. */
+  minDay?: string
 }>()
 
-const emit = defineEmits<{ prev: []; next: [] }>()
+const emit = defineEmits<{ prev: []; next: []; select: [day: string] }>()
 
 const { t } = useI18n()
 const feedback = useFeedback()
@@ -86,6 +88,33 @@ function onNext() {
   feedback.tap()
   direction.value = 1
   emit('next')
+}
+
+// Selector de fecha: el título es un botón que abre el calendario del navegador
+// (el mismo `<input type="date">` que el resto de la app), para ir a cualquier día
+// sin pulsar la flecha decenas de veces. El input va encima, transparente: en el
+// móvil el toque lo abre solo, y `showPicker()` cubre el escritorio.
+const dayInput = ref<HTMLInputElement | null>(null)
+
+function openPicker() {
+  try {
+    dayInput.value?.showPicker()
+  } catch {
+    // Sin showPicker() (navegadores antiguos) el propio toque sobre el input basta.
+  }
+}
+
+function onPickDay(event: Event) {
+  const picked = (event.target as HTMLInputElement).value
+  const today = todayDateOnlyString()
+
+  // Vacío (se borró), el mismo día, o fuera del rango navegable: no se hace nada.
+  if (!picked || picked === props.day || picked > today) return
+  if (props.minDay && picked < props.minDay) return
+
+  feedback.tap()
+  direction.value = picked > props.day ? 1 : -1
+  emit('select', picked)
 }
 
 // The shown day, not always today - browsing to a previous day (see
@@ -242,6 +271,18 @@ watch(
             {{ title }}
           </span>
         </Transition>
+        <input
+          ref="dayInput"
+          type="date"
+          data-testid="rhythm-day-picker"
+          class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          :value="day"
+          :min="minDay"
+          :max="todayDateOnlyString()"
+          :aria-label="t('dashboard.rhythm.pickDay')"
+          @click="openPicker"
+          @change="onPickDay"
+        />
       </h2>
       <button
         type="button"

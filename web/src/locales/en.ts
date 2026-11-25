@@ -743,6 +743,7 @@ export default {
       emptyOtherDay: 'Nothing logged that day.',
       prevDay: 'Previous day',
       nextDay: 'Next day',
+      pickDay: 'Pick a day',
       feed: 'Feed',
       sleep: 'Sleep',
       diaper: 'Diaper',

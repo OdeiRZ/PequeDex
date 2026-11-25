@@ -264,6 +264,19 @@ async function onRhythmNextDay() {
   }
 }
 
+// Salto directo a un día desde el selector de fecha de "Ritmo". Se vuelve a
+// comprobar el rango aunque el input ya lo limita: el valor también se puede
+// escribir a mano.
+async function onRhythmSelectDay(day: string) {
+  const birth = babies.current?.birth_date
+  if (day > todayDateOnlyString() || (birth && day < birth)) return
+
+  rhythmDate.value = day
+  if (!isRhythmToday.value) {
+    await babies.fetchDayTimeline(day)
+  }
+}
+
 // Also the retry action below - without a try/catch here, a failed
 // fetchCurrent() (offline, or the API "despertando" after ~50s of
 // inactivity on Render's free tier, see the README) left `loading` at
@@ -2471,8 +2484,10 @@ const sleepPredictionDue = computed(() => {
               :day="rhythmDate"
               :is-today="isRhythmToday"
               :is-birth-day="isRhythmBirthDay"
+              :min-day="babies.current?.birth_date ?? undefined"
               @prev="onRhythmPrevDay"
               @next="onRhythmNextDay"
+              @select="onRhythmSelectDay"
             />
             <section class="dash-enter flex flex-col gap-2">
               <h2 class="flex items-center gap-2 font-display text-base font-bold">

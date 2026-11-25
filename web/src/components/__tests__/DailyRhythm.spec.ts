@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import DailyRhythm from '@/components/DailyRhythm.vue'
 import { i18n } from '@/i18n'
 import type { TimelineEntry } from '@/stores/babies'
@@ -23,7 +24,11 @@ function feed(startedAt: string, endedAt: string | null): TimelineEntry {
   }
 }
 
-function mountRhythm(timeline: TimelineEntry[], isToday: boolean) {
+function mountRhythm(
+  timeline: TimelineEntry[],
+  isToday: boolean,
+  extra: Record<string, unknown> = {},
+) {
   return mount(DailyRhythm, {
     props: {
       timeline,
@@ -32,6 +37,7 @@ function mountRhythm(timeline: TimelineEntry[], isToday: boolean) {
       isToday,
       isBirthDay: false,
       dateLocale: 'es-ES',
+      ...extra,
     },
     global: { plugins: [i18n] },
   })
@@ -78,5 +84,42 @@ describe('DailyRhythm', () => {
     const pastDay = mountRhythm([feed('2026-10-20T05:00:00', null)], false)
     expect(pastDay.find('[data-testid="rhythm-now"]').exists()).toBe(false)
     expect(pastDay.find('[data-testid="rhythm-now-label"]').exists()).toBe(false)
+  })
+
+  describe('day picker', () => {
+    // feedback.tap() lee el perfil del usuario desde un store.
+    beforeEach(() => setActivePinia(createPinia()))
+
+    // Hoy simulado: 20/10/2026.
+    it('offers the day shown, capped between the birth date and today', () => {
+      const wrapper = mountRhythm([], false, { minDay: '2026-09-01' })
+      const input = wrapper.find<HTMLInputElement>('[data-testid="rhythm-day-picker"]')
+
+      expect(input.element.value).toBe('2026-10-20')
+      expect(input.attributes('min')).toBe('2026-09-01')
+      expect(input.attributes('max')).toBe('2026-10-20')
+      expect(input.attributes('aria-label')).toBe('Elegir un día')
+    })
+
+    it('emits select with the picked day', async () => {
+      const wrapper = mountRhythm([], true, { minDay: '2026-09-01' })
+
+      await wrapper.find('[data-testid="rhythm-day-picker"]').setValue('2026-09-15')
+
+      expect(wrapper.emitted('select')).toEqual([['2026-09-15']])
+    })
+
+    it.each([
+      ['empty (cleared)', ''],
+      ['the day already shown', '2026-10-20'],
+      ['a day in the future', '2026-10-25'],
+      ['a day before the birth date', '2026-08-31'],
+    ])('ignores %s', async (_label, value) => {
+      const wrapper = mountRhythm([], true, { minDay: '2026-09-01' })
+
+      await wrapper.find('[data-testid="rhythm-day-picker"]').setValue(value)
+
+      expect(wrapper.emitted('select')).toBeUndefined()
+    })
   })
 })
